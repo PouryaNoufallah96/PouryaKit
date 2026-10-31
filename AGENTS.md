@@ -84,7 +84,8 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig`; `SampleNamespaceTests` for the Proving Sample, partial types included |
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
 | A commit runs its hooks | `.agents/hooks/guard.py` denies `--no-verify` on a commit or merge; `docs/agents/brief-template.md` gives parallel packages the path that needs no bypass |
-| C# and project files are formatted with CSharpier | CI's `format` job runs `dotnet csharpier check .`; `.csharpierignore` leaves out EF migrations and the docs site |
+| C# and project files are formatted with CSharpier, and the docs site with Biome | CI's `format` and `website` jobs; `.githooks/pre-commit` on the files a commit stages; `.csharpierignore` names what stays out |
+| A local CI reproduction runs every job and step CI does | `test_ci_local.py` compares `.agents/scripts/ci-local.sh` with `.github/workflows/ci.yml` |
 | Every public member of a Kit package has a summary | CS1591 in the build where `IsKitPackage` is true (`Directory.Build.props`) |
 | Docs name real code, paths and tests | `check-docs.py` (names, also in `website/content/**/*.mdx` and `src/*/README.md`; links, Kit paths, acceptance pointers) |
 | No tracker number in the docs: no `#` number of two digits or more, no PR, issue, ticket or spec number, and no link to this repository's issues or pull requests; a third party's issue link passes | `check-docs.py` (tracker numbers), over `README.md`, `GLOSSARY.md`, `AGENTS.md`, `src/*/README.md`, `docs/**/*.md` but `docs/agents/issue-tracker.md`, the Kit skill and `.claude/rules/*.md` |

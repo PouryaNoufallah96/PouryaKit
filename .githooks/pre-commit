@@ -18,6 +18,27 @@ if [ -n "$partial" ]; then echo "pre-commit: staged in part, so the checks would
 # ranges that fit the indexed file; a change below every cited range passes. The other docs rules retain the
 # working-tree boundary above. About a second.
 (cd "$top" && python3 .agents/scripts/check-docs.py --staged) || { echo "pre-commit: check-docs.py --staged failed; fix the docs or the diagram, or run it un-piped to see the lines" >&2; exit 1; }
+# The formatters CI runs, on the files this commit stages: a formatting failure otherwise waits for the release gate.
+# A clone with no site install or no restored tool says so, and leaves it to CI's job and ci-local.sh.
+kept=$(git diff --cached --name-only --diff-filter=ACMR)
+site=$(printf '%s\n' "$kept" | sed -n 's#^website/##p')
+if [ -n "$site" ]; then
+  if [ -x "$top/website/node_modules/.bin/biome" ]; then
+    printf '%s\n' "$site" | (cd "$top/website" && xargs ./node_modules/.bin/biome check --no-errors-on-unmatched --files-ignore-unknown=true) \
+      || { echo "pre-commit: biome check failed; run pnpm --dir website lint" >&2; exit 1; }
+  else
+    echo "pre-commit: no website/node_modules, so Biome did not run" >&2
+  fi
+fi
+csharp=$(printf '%s\n' "$kept" | grep -E '\.(cs|csproj|props|targets|slnx)$' || true)
+if [ -n "$csharp" ]; then
+  if (cd "$top" && dotnet tool run csharpier --version >/dev/null 2>&1); then
+    printf '%s\n' "$csharp" | (cd "$top" && xargs dotnet tool run csharpier check) \
+      || { echo "pre-commit: csharpier check failed; run dotnet csharpier format ." >&2; exit 1; }
+  else
+    echo "pre-commit: no restored CSharpier, so the format check did not run; run dotnet tool restore" >&2
+  fi
+fi
 if printf '%s\n' "$staged" | grep -qE '^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$|skills-lock\.json$)'; then
   (cd "$top" && python3 .agents/scripts/check-ai-setup.py) || { echo "pre-commit: check-ai-setup.py failed" >&2; exit 1; }
 fi

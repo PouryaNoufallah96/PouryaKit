@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local reproduction of CI's three jobs on the checked-out commit while hosted runs are unavailable (docs/ci.md): every
+# Local reproduction of CI's jobs on the checked-out commit while hosted runs are unavailable (docs/ci.md): every
 # `run:` step of the `ai-setup` job, of the package validation job except the two evidence.py steps, which read
 # the Actions run, and of the `website` job. Each step's full output is kept, so a failure can be read afterwards (Wave 3 session 5 lost one to a
 # `tail -3`), and the PASS line carries the Release test totals, so nothing is lost when the evidence directory goes.
@@ -14,6 +14,9 @@ echo "== ai-setup"
 python3 .agents/scripts/check-ai-setup.py; echo "rc=$?"
 python3 .agents/scripts/check-docs.py; echo "rc=$?"
 python3 -m unittest discover -s .agents/scripts -p 'test_*.py'; echo "rc=$?"
+echo "== format"
+dotnet tool restore; echo "rc=$?"
+dotnet csharpier check .; echo "rc=$?"
 echo "== build-and-test"
 python3 -m unittest discover -s scripts/ci -p 'test_*.py'; echo "rc=$?"
 python3 -m unittest discover -s scripts/packaging -p 'test_*.py'; echo "rc=$?"

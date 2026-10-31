@@ -78,6 +78,31 @@ class PreCommitTests(unittest.TestCase):
         self.assertIn(f"FAIL  {PAGE}:3: `Retitle` names nothing in the code", refused.stdout + refused.stderr)  # git sends a hook's output to either
         self.assertEqual(self.base, self.head())
 
+    def install_biome(self, script: str) -> None:
+        self.write("website/node_modules/.bin/biome", script)
+        (self.repo / "website/node_modules/.bin/biome").chmod(0o755)
+
+    def test_a_staged_site_file_biome_refuses_is_not_committed(self) -> None:
+        self.install_biome('#!/bin/sh\necho "$@" > called.txt\nexit 1\n')
+        self.write("website/lib/rules.ts", "const a =\n  'wrapped';\n")
+        self.git("add", "website/lib/rules.ts")
+        refused = self.commit()
+        self.assertIn("pre-commit: biome check failed", refused.stderr)
+        self.assertIn("lib/rules.ts", (self.repo / "website/called.txt").read_text(encoding="utf-8"))
+        self.assertEqual(self.base, self.head())
+
+    def test_a_staged_site_file_biome_accepts_is_committed(self) -> None:
+        self.install_biome("#!/bin/sh\nexit 0\n")
+        self.write("website/lib/rules.ts", "const a = 'wrapped';\n")
+        self.git("add", "website/lib/rules.ts")
+        self.assertEqual(0, self.commit().returncode)
+        self.assertNotEqual(self.base, self.head())
+
+    def test_a_clone_with_no_site_install_says_biome_did_not_run(self) -> None:
+        self.write("website/lib/rules.ts", "const a = 'wrapped';\n")
+        self.git("add", "website/lib/rules.ts")
+        self.assertIn("so Biome did not run", self.commit().stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
