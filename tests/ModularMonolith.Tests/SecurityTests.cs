@@ -27,7 +27,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task An_endpoint_outside_every_module_requires_an_authenticated_caller_unless_it_allows_anonymous_ones()
     {
-        await using var host = AppFixture.ComposeHost("Production", Fixture.ConnectionString, new RecordedLogs());
+        await using var host = AppFixture.ComposeHost(
+            "Production",
+            Fixture.ConnectionString,
+            new RecordedLogs()
+        );
         host.MapGet("/outside", () => "served");
         host.MapGet("/outside/public", () => "served").AllowAnonymous();
         await host.StartAsync(TestContext.Current.CancellationToken);
@@ -36,12 +40,31 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var refused = await anonymous.GetAsync("/outside", TestContext.Current.CancellationToken);
 
-        Assert.Equal(401, (await ProblemAsync(refused, HttpStatusCode.Unauthorized)).GetProperty("status").GetInt32());
-        Assert.Equal(HttpStatusCode.OK, (await anonymous.GetAsync("/outside/public", TestContext.Current.CancellationToken)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await ada.GetAsync("/outside", TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Equal(
+            401,
+            (await ProblemAsync(refused, HttpStatusCode.Unauthorized))
+                .GetProperty("status")
+                .GetInt32()
+        );
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (
+                await anonymous.GetAsync("/outside/public", TestContext.Current.CancellationToken)
+            ).StatusCode
+        );
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (await ada.GetAsync("/outside", TestContext.Current.CancellationToken)).StatusCode
+        );
         // A path no route matches has no endpoint either: the fallback policy answers before routing's 404.
-        await ProblemAsync(await anonymous.GetAsync("/nowhere", TestContext.Current.CancellationToken), HttpStatusCode.Unauthorized);
-        await ProblemAsync(await ada.GetAsync("/nowhere", TestContext.Current.CancellationToken), HttpStatusCode.NotFound);
+        await ProblemAsync(
+            await anonymous.GetAsync("/nowhere", TestContext.Current.CancellationToken),
+            HttpStatusCode.Unauthorized
+        );
+        await ProblemAsync(
+            await ada.GetAsync("/nowhere", TestContext.Current.CancellationToken),
+            HttpStatusCode.NotFound
+        );
     }
 
     [Fact]
@@ -54,7 +77,10 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         services.AddPouryaKitWeb();
 
         using var provider = services.BuildServiceProvider();
-        Assert.Same(applications, provider.GetRequiredService<IOptions<AuthorizationOptions>>().Value.FallbackPolicy);
+        Assert.Same(
+            applications,
+            provider.GetRequiredService<IOptions<AuthorizationOptions>>().Value.FallbackPolicy
+        );
     }
 
     [Fact]
@@ -81,12 +107,20 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
                 Fixture.ConnectionString,
                 new RecordedLogs(),
                 // The Stub Module's application authorizer of StampNoteCommand stays: it is not the permission check.
-                builder => RemovePermissionChecks(builder.Services, typeof(StampNoteCommand), typeof(ReadStampLedgerQuery))
+                builder =>
+                    RemovePermissionChecks(
+                        builder.Services,
+                        typeof(StampNoteCommand),
+                        typeof(ReadStampLedgerQuery)
+                    )
             )
         );
 
         Assert.Equal(
-            [UncheckedPermission(typeof(ReadStampLedgerQuery)), UncheckedPermission(typeof(StampNoteCommand))],
+            [
+                UncheckedPermission(typeof(ReadStampLedgerQuery)),
+                UncheckedPermission(typeof(StampNoteCommand)),
+            ],
             thrown.Message.Split(Environment.NewLine).Order(StringComparer.Ordinal)
         );
     }
@@ -100,7 +134,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
             new RecordedLogs(),
             builder =>
             {
-                RemovePermissionChecks(builder.Services, typeof(StampNoteCommand), typeof(ReadStampLedgerQuery));
+                RemovePermissionChecks(
+                    builder.Services,
+                    typeof(StampNoteCommand),
+                    typeof(ReadStampLedgerQuery)
+                );
                 builder.AddPouryaKitModules(modules => modules.Add<StubPermissionsModule>());
             }
         );
@@ -108,7 +146,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         // The check registered elsewhere still runs in the Stub Module's Operation.
         var refused = await host
             .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
-            .QueryAsync(new ReadStampLedgerQuery(), new OperationContext(Actor.Person("ada")), TestContext.Current.CancellationToken);
+            .QueryAsync(
+                new ReadStampLedgerQuery(),
+                new OperationContext(Actor.Person("ada")),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(PermissionErrors.Denied, Assert.Single(refused.Errors));
     }
@@ -116,16 +158,26 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_host_whose_modules_declare_no_permission_builds_and_serves_without_any_permission_registration()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<QueryOnlyModule>());
 
         using var host = builder.Build();
         var served = await host
             .Services.GetRequiredService<IGatewayProcessor<QueryOnlyModule>>()
-            .QueryAsync(new ReadOperationContextQuery(), new OperationContext(Actor.Person("ada")), TestContext.Current.CancellationToken);
+            .QueryAsync(
+                new ReadOperationContextQuery(),
+                new OperationContext(Actor.Person("ada")),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(Actor.Person("ada"), served.Value.Actor);
-        Assert.DoesNotContain(builder.Services, descriptor => descriptor.ServiceType == typeof(IActorPermissions));
+        Assert.DoesNotContain(
+            builder.Services,
+            descriptor => descriptor.ServiceType == typeof(IActorPermissions)
+        );
     }
 
     [Fact]
@@ -139,7 +191,10 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
         // The tests' own Actor is granted it (TestActorPermissions).
-        var served = await stub.QueryAsync(new ReadStampLedgerQuery(), TestContext.Current.CancellationToken);
+        var served = await stub.QueryAsync(
+            new ReadStampLedgerQuery(),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(PermissionErrors.Denied, Assert.Single(refused.Errors));
         Assert.Equal(ReadStampLedgerQuery.Ledger, served.Value);
@@ -150,7 +205,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_caller_holding_the_declared_permission_commits_the_command()
     {
         var lamp = await CreateLampAsync();
-        using var client = Fixture.Client("ada", AppFixture.TestTenant, RemoveProductsCommand.Permission);
+        using var client = Fixture.Client(
+            "ada",
+            AppFixture.TestTenant,
+            RemoveProductsCommand.Permission
+        );
 
         var response = await client.PostAsJsonAsync(
             "/stub/catalog-products/removal",
@@ -159,8 +218,18 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("1", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        Assert.Equal([[true, "ada"]], await Fixture.RowsAsync($"select is_deleted, deleted_by from catalog.products where id = '{lamp}'"));
+        Assert.Equal(
+            "1",
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
+        Assert.Equal(
+            [
+                [true, "ada"],
+            ],
+            await Fixture.RowsAsync(
+                $"select is_deleted, deleted_by from catalog.products where id = '{lamp}'"
+            )
+        );
     }
 
     [Fact]
@@ -178,9 +247,19 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         var problem = await ProblemAsync(response, HttpStatusCode.Forbidden);
         Assert.Equal(
             [PermissionErrors.Denied.Code],
-            problem.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("code").GetString())
+            problem
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error => error.GetProperty("code").GetString())
         );
-        Assert.Equal([[false, 1L]], await Fixture.RowsAsync($"select is_deleted, version from catalog.products where id = '{lamp}'"));
+        Assert.Equal(
+            [
+                [false, 1L],
+            ],
+            await Fixture.RowsAsync(
+                $"select is_deleted, version from catalog.products where id = '{lamp}'"
+            )
+        );
     }
     #endregion
 
@@ -193,7 +272,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         // Ada holds no permission to stamp: sent by her, the command is refused.
         var direct = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new StampNoteCommand(text), new OperationContext(ada), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new StampNoteCommand(text),
+                new OperationContext(ada),
+                TestContext.Current.CancellationToken
+            );
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
             () =>
                 Fixture
@@ -238,7 +321,12 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
             context =>
                 Assert.Equal(
                     (raising.Actor, raising.Tenant, raising.CorrelationId, true),
-                    (context.Actor, context.Tenant, context.CorrelationId, context.IsTrustedContinuation)
+                    (
+                        context.Actor,
+                        context.Tenant,
+                        context.CorrelationId,
+                        context.IsTrustedContinuation
+                    )
                 )
         );
     }
@@ -257,7 +345,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         var query = await stub.QueryAsync(
             new ReadStampLedgerQuery(),
-            new OperationContext(ada, correlationId: Guid.CreateVersion7(), causationId: Guid.CreateVersion7()),
+            new OperationContext(
+                ada,
+                correlationId: Guid.CreateVersion7(),
+                causationId: Guid.CreateVersion7()
+            ),
             TestContext.Current.CancellationToken
         );
 
@@ -274,7 +366,11 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         // Ada holds no permission to read the ledger: sent by her directly, the query is refused.
         var answered = await Fixture
             .Gateway<StubModule>()
-            .QueryAsync(new AskStampLedgerQuery(text), new OperationContext(Actor.Person("ada")), TestContext.Current.CancellationToken);
+            .QueryAsync(
+                new AskStampLedgerQuery(text),
+                new OperationContext(Actor.Person("ada")),
+                TestContext.Current.CancellationToken
+            );
         var probe = Fixture.Host.Services.GetRequiredService<ContinuationProbes>().For(text);
         probe.Ended.SetResult();
 
@@ -292,17 +388,44 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         var stub = Fixture.Gateway<StubModule>();
         var neverRun = new OperationContext(Actor.Person("ada"));
         var ran = new OperationContext(Actor.Person("ada"));
-        Assert.True((await stub.QueryAsync(new ReadOperationContextQuery(), ran, TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True(
+            (
+                await stub.QueryAsync(
+                    new ReadOperationContextQuery(),
+                    ran,
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
 
         Result[] refused =
         [
-            await stub.SendAsync(new StampNoteCommand(text), neverRun.Continue(), TestContext.Current.CancellationToken),
-            await stub.QueryAsync(new ReadStampLedgerQuery(), neverRun.Continue(), TestContext.Current.CancellationToken),
-            await stub.SendAsync(new StampNoteCommand(text), ran.Continue(), TestContext.Current.CancellationToken),
-            await stub.QueryAsync(new ReadStampLedgerQuery(), ran.Continue(), TestContext.Current.CancellationToken),
+            await stub.SendAsync(
+                new StampNoteCommand(text),
+                neverRun.Continue(),
+                TestContext.Current.CancellationToken
+            ),
+            await stub.QueryAsync(
+                new ReadStampLedgerQuery(),
+                neverRun.Continue(),
+                TestContext.Current.CancellationToken
+            ),
+            await stub.SendAsync(
+                new StampNoteCommand(text),
+                ran.Continue(),
+                TestContext.Current.CancellationToken
+            ),
+            await stub.QueryAsync(
+                new ReadStampLedgerQuery(),
+                ran.Continue(),
+                TestContext.Current.CancellationToken
+            ),
         ];
 
-        Assert.All(refused, result => Assert.Equal(PermissionErrors.Denied, Assert.Single(result.Errors)));
+        Assert.All(
+            refused,
+            result => Assert.Equal(PermissionErrors.Denied, Assert.Single(result.Errors))
+        );
         Assert.Equal(0L, await StampsOfAsync(text));
     }
 
@@ -311,24 +434,38 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         var catalog = Fixture.Gateway<CatalogModule>();
         var lamps = Guid.CreateVersion7();
         var lamp = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateProductCommand(lamp, lamps, "Lamp"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(lamps, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
+        await catalog.SendAsync(
+            new CreateProductCommand(lamp, lamps, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
         return lamp;
     }
 
     private Task<long> StampsOfAsync(string text) =>
-        Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{StampNoteCommand.Stamped(text)}'");
+        Fixture.ScalarAsync<long>(
+            $"select count(*) from stub.notes where text = '{StampNoteCommand.Stamped(text)}'"
+        );
 
     // Leaves every other authorizer of the operations registered.
-    private static void RemovePermissionChecks(IServiceCollection services, params Type[] operations)
+    private static void RemovePermissionChecks(
+        IServiceCollection services,
+        params Type[] operations
+    )
     {
-        var checks = operations.Select(operation => typeof(IAuthorizer<>).MakeGenericType(operation)).ToHashSet();
+        var checks = operations
+            .Select(operation => typeof(IAuthorizer<>).MakeGenericType(operation))
+            .ToHashSet();
         foreach (
             var check in services
                 .Where(descriptor =>
                     !descriptor.IsKeyedService
                     && checks.Contains(descriptor.ServiceType)
-                    && descriptor.ImplementationType?.Assembly == typeof(RequiresPermissionAttribute).Assembly
+                    && descriptor.ImplementationType?.Assembly
+                        == typeof(RequiresPermissionAttribute).Assembly
                 )
                 .ToList()
         )
@@ -346,5 +483,6 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
 // Registers the permission checks of the Stub Module's commands and queries from another Module's Composition Root.
 public sealed class StubPermissionsModule : IModuleDefinition
 {
-    public void Configure(ModuleBuilder module) => module.AddPouryaKitPermissions(typeof(StubModule).Assembly);
+    public void Configure(ModuleBuilder module) =>
+        module.AddPouryaKitPermissions(typeof(StubModule).Assembly);
 }

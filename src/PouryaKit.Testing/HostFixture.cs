@@ -41,7 +41,8 @@ public abstract class HostFixture : IAsyncLifetime
     public string ConnectionString => _postgres.GetConnectionString();
 
     /// <summary>The started Host.</summary>
-    public IHost Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
+    public IHost Host =>
+        _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
 
     /// <summary>
     /// Builds the application's Host, not yet started, with <paramref name="connectionString"/> as the connection
@@ -51,7 +52,8 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>The Gateway of <typeparamref name="TModule"/>, for sending Operations as the application does.</summary>
     public IGatewayProcessor<TModule> Gateway<TModule>()
-        where TModule : IModuleDefinition => Host.Services.GetRequiredService<IGatewayProcessor<TModule>>();
+        where TModule : IModuleDefinition =>
+        Host.Services.GetRequiredService<IGatewayProcessor<TModule>>();
 
     /// <summary>
     /// Waits until every delivery an earlier test caused has finished, then deletes every row except the migrations
@@ -78,7 +80,10 @@ public abstract class HostFixture : IAsyncLifetime
                 TablesToIgnore =
                 [
                     new Table(HistoryRepository.DefaultTableName),
-                    .. (deliveries?.StoreTables ?? []).Select(table => new Table(table.Schema, table.Name)),
+                    .. (deliveries?.StoreTables ?? []).Select(table => new Table(
+                        table.Schema,
+                        table.Name
+                    )),
                 ],
             }
         );
@@ -102,7 +107,8 @@ public abstract class HostFixture : IAsyncLifetime
     )
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var store = Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
+        var store =
+            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
 
         var outcome = await operation();
@@ -115,7 +121,14 @@ public abstract class HostFixture : IAsyncLifetime
         }
 
         await store.WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
-        return (outcome, [.. (await store.AllAsync(cancellationToken)).Where(row => !before.Contains(row.Id)).Select(row => row.Delivery)]);
+        return (
+            outcome,
+            [
+                .. (await store.AllAsync(cancellationToken))
+                    .Where(row => !before.Contains(row.Id))
+                    .Select(row => row.Delivery),
+            ]
+        );
     }
 
     /// <summary>
@@ -123,19 +136,21 @@ public abstract class HostFixture : IAsyncLifetime
     /// as after a test handed one out again.
     /// </summary>
     public Task WaitUntilDeliveredAsync(CancellationToken cancellationToken = default) =>
-        (Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.")).WaitUntilSettledAsync(
-            DeliveryTimeout,
-            cancellationToken
-        );
+        (
+            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.")
+        ).WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
 
     /// <summary>
     /// Every delivery the message store has set aside as a dead letter, read through Wolverine's dead-letter storage as
     /// an application inspects it. Each test starts with none, so these are what its Operations caused.
     /// </summary>
-    public async Task<IReadOnlyList<DeadLetter>> DeadLettersAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<DeadLetter>> DeadLettersAsync(
+        CancellationToken cancellationToken = default
+    )
     {
         // A page size of 0 reads every one.
-        var found = await DeadLetterStorage().QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 }, cancellationToken);
+        var found = await DeadLetterStorage()
+            .QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 }, cancellationToken);
         return
         [
             .. found.Envelopes.Select(deadLetter => new DeadLetter(
@@ -153,7 +168,10 @@ public abstract class HostFixture : IAsyncLifetime
     /// that subscription's handler runs, then waits until it is handled or set aside again. Fails when it is not a dead
     /// letter, so a replay never passes on nothing.
     /// </summary>
-    public async Task ReplayAsync(DeadLetter deadLetter, CancellationToken cancellationToken = default)
+    public async Task ReplayAsync(
+        DeadLetter deadLetter,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(deadLetter);
         var storage = DeadLetterStorage();
@@ -177,18 +195,26 @@ public abstract class HostFixture : IAsyncLifetime
     /// one; an envelope is stored in the Operation's own commit and handed out before the Operation returns, so nothing
     /// needs waiting for afterwards.
     /// </summary>
-    public async Task<T> AssertNothingSentAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default)
+    public async Task<T> AssertNothingSentAsync<T>(
+        Func<Task<T>> operation,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var store = Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
+        var store =
+            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
-        using var handedOut = new SentEnvelopes(Host.Services.GetRequiredService<IWolverineRuntime>());
+        using var handedOut = new SentEnvelopes(
+            Host.Services.GetRequiredService<IWolverineRuntime>()
+        );
 
         var outcome = await operation();
 
         string[] sent =
         [
-            .. (await store.AllAsync(cancellationToken)).Where(row => !before.Contains(row.Id)).Select(row => row.Delivery.Subscription),
+            .. (await store.AllAsync(cancellationToken))
+                .Where(row => !before.Contains(row.Id))
+                .Select(row => row.Delivery.Subscription),
             .. handedOut.Envelopes.Concat(await store.OutgoingAsync(cancellationToken)).Distinct(),
         ];
         if (sent.Length > 0)
@@ -203,7 +229,10 @@ public abstract class HostFixture : IAsyncLifetime
     /// Applies every Module's migrations from a scope of <paramref name="host"/>, then starts it: what
     /// <see cref="InitializeAsync"/> does with the fixture's Host, for a test that starts another Host of the application.
     /// </summary>
-    public static async Task StartHostAsync(IHost host, CancellationToken cancellationToken = default)
+    public static async Task StartHostAsync(
+        IHost host,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(host);
         // Every DbContext registered with AddDbContext is also registered as one non-generic DbContextOptions.
@@ -211,7 +240,8 @@ public abstract class HostFixture : IAsyncLifetime
         {
             foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
             {
-                var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType);
+                var dbContext = (DbContext)
+                    scope.ServiceProvider.GetRequiredService(options.ContextType);
                 await dbContext.Database.MigrateAsync(cancellationToken);
             }
         }
@@ -264,7 +294,10 @@ public abstract class HostFixture : IAsyncLifetime
     }
 
     // A delivery still running when the baseline is read could store one more before the Operation ends.
-    private static async Task<HashSet<Guid>> SettledIdsAsync(StoredDeliveries store, CancellationToken cancellationToken)
+    private static async Task<HashSet<Guid>> SettledIdsAsync(
+        StoredDeliveries store,
+        CancellationToken cancellationToken
+    )
     {
         await store.WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
         return await store.IdsAsync(cancellationToken);
@@ -283,7 +316,10 @@ public abstract class HostFixture : IAsyncLifetime
         {
             _listener.InstrumentPublished = (instrument, listener) =>
             {
-                if (instrument.Meter == runtime.Meter && instrument.Name == MetricsConstants.MessagesSent)
+                if (
+                    instrument.Meter == runtime.Meter
+                    && instrument.Name == MetricsConstants.MessagesSent
+                )
                 {
                     listener.EnableMeasurementEvents(instrument);
                 }
@@ -291,7 +327,8 @@ public abstract class HostFixture : IAsyncLifetime
             _listener.SetMeasurementEventCallback<int>(
                 (_, _, tags, _) =>
                 {
-                    string? type = null, destination = null;
+                    string? type = null,
+                        destination = null;
                     foreach (var tag in tags)
                     {
                         (type, destination) = tag.Key switch
@@ -302,7 +339,10 @@ public abstract class HostFixture : IAsyncLifetime
                         };
                     }
 
-                    if (destination is not null && !destination.StartsWith("local:", StringComparison.Ordinal))
+                    if (
+                        destination is not null
+                        && !destination.StartsWith("local:", StringComparison.Ordinal)
+                    )
                     {
                         _envelopes.Enqueue($"{type} to {destination}");
                     }
@@ -317,16 +357,24 @@ public abstract class HostFixture : IAsyncLifetime
     }
 
     private IDeadLetters DeadLetterStorage() =>
-        (Host.Services.GetService<IWolverineRuntime>() ?? throw new InvalidOperationException("The Host stores no deliveries."))
+        (
+            Host.Services.GetService<IWolverineRuntime>()
+            ?? throw new InvalidOperationException("The Host stores no deliveries.")
+        )
             .Storage
             .DeadLetters;
 
     private StoredDeliveries? Deliveries() =>
-        _deliveries ??= Host.Services.GetService<IWolverineRuntime>()?.Storage is IMessageDatabase store
+        _deliveries ??= Host.Services.GetService<IWolverineRuntime>()?.Storage
+            is IMessageDatabase store
             ? new StoredDeliveries(
                 ConnectionString,
                 store.SchemaName,
-                [.. ((IFeatureSchema)store).Objects.Select(table => (table.Identifier.Schema, table.Identifier.Name))]
+                [
+                    .. ((IFeatureSchema)store).Objects.Select(table =>
+                        (table.Identifier.Schema, table.Identifier.Name)
+                    ),
+                ]
             )
             : null;
 }

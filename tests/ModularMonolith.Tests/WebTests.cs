@@ -30,20 +30,37 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         var productCreated = await client.PostAsJsonAsync(
             "/catalog/products",
-            new { productId = product, categoryId = category, name = "Desk lamp" },
+            new
+            {
+                productId = product,
+                categoryId = category,
+                name = "Desk lamp",
+            },
             IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
-        var found = await client.GetAsync(productCreated.Headers.Location, TestContext.Current.CancellationToken);
-        var listed = await client.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+        var found = await client.GetAsync(
+            productCreated.Headers.Location,
+            TestContext.Current.CancellationToken
+        );
+        var listed = await client.GetAsync(
+            "/catalog/products",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, categoryCreated.StatusCode);
         Assert.Equal($"\"{category}\"", await BodyAsync(categoryCreated));
         Assert.Equal(HttpStatusCode.Created, productCreated.StatusCode);
-        Assert.Equal($"/catalog/v2/products/{product}", productCreated.Headers.Location?.OriginalString);
+        Assert.Equal(
+            $"/catalog/v2/products/{product}",
+            productCreated.Headers.Location?.OriginalString
+        );
         Assert.Equal($$"""{"id":"{{product}}"}""", await BodyAsync(productCreated));
         Assert.Equal(HttpStatusCode.OK, found.StatusCode);
-        Assert.Equal($$"""{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}""", await BodyAsync(found));
+        Assert.Equal(
+            $$"""{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}""",
+            await BodyAsync(found)
+        );
         // The list is a Page; its ids are typed IDs, written as their bare values.
         Assert.Equal(
             $$"""{"items":[{"id":"{{product}}","categoryId":"{{category}}","name":"Desk lamp"}],"number":1,"size":20,"total":1,"totalPages":1,"hasNext":false,"hasPrevious":false}""",
@@ -58,13 +75,21 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
-            new { productId = Guid.Empty, categoryId = Guid.CreateVersion7(), name = "" },
+            new
+            {
+                productId = Guid.Empty,
+                categoryId = Guid.CreateVersion7(),
+                name = "",
+            },
             IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
         var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
-        Assert.Equal("https://tools.ietf.org/html/rfc9110#section-15.5.1", problem.GetProperty("type").GetString());
+        Assert.Equal(
+            "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+            problem.GetProperty("type").GetString()
+        );
         Assert.Equal("Bad Request", problem.GetProperty("title").GetString());
         Assert.Equal(400, problem.GetProperty("status").GetInt32());
         // Messages follow the current UI culture; codes and targets do not.
@@ -73,7 +98,9 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             problem
                 .GetProperty("errors")
                 .EnumerateArray()
-                .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
+                .Select(error =>
+                    (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())
+                )
         );
         Assert.All(
             problem.GetProperty("errors").EnumerateArray(),
@@ -102,7 +129,9 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             problem
                 .GetProperty("errors")
                 .EnumerateArray()
-                .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
+                .Select(error =>
+                    (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())
+                )
         );
     }
 
@@ -111,7 +140,9 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Theory]
     [InlineData("name")]
     [InlineData("Name")]
-    public async Task A_body_that_names_a_member_twice_answers_400_as_a_problem_response_and_nothing_is_saved(string again)
+    public async Task A_body_that_names_a_member_twice_answers_400_as_a_problem_response_and_nothing_is_saved(
+        string again
+    )
     {
         using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
@@ -121,12 +152,21 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             "application/json"
         );
 
-        var response = await client.PostAsync("/catalog/categories", body, TestContext.Current.CancellationToken);
+        var response = await client.PostAsync(
+            "/catalog/categories",
+            body,
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.False(problem.TryGetProperty("errors", out _));
         Assert.False(problem.TryGetProperty("detail", out _));
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from catalog.categories where id = '{category}'"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from catalog.categories where id = '{category}'"
+            )
+        );
     }
 
     [Fact]
@@ -134,7 +174,10 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
-        var response = await client.GetAsync($"/catalog/products/{Guid.CreateVersion7()}", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            $"/catalog/products/{Guid.CreateVersion7()}",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.NotFound);
         Assert.Equal(
@@ -149,7 +192,11 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var client = Fixture.Client("ada");
 
-        var response = await client.PostAsync("/stub/notes/rejected", null, TestContext.Current.CancellationToken);
+        var response = await client.PostAsync(
+            "/stub/notes/rejected",
+            null,
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.Conflict);
         Assert.Equal(
@@ -172,14 +219,24 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         var lamp = Guid.CreateVersion7();
         await client.PostAsJsonAsync(
             "/catalog/products",
-            new { productId = lamp, categoryId = category, name = "Desk lamp" },
+            new
+            {
+                productId = lamp,
+                categoryId = category,
+                name = "Desk lamp",
+            },
             IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
 
         var response = await client.PostAsJsonAsync(
             "/catalog/products",
-            new { productId = Guid.CreateVersion7(), categoryId = category, name = "Desk lamp" },
+            new
+            {
+                productId = Guid.CreateVersion7(),
+                categoryId = category,
+                name = "Desk lamp",
+            },
             IdempotentRequests.NewKey(),
             TestContext.Current.CancellationToken
         );
@@ -189,8 +246,16 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             """[{"code":"Product.NameInUse","message":"Another product already has this name."}]""",
             problem.GetProperty("errors").GetRawText()
         );
-        Assert.Equal([[lamp]], await Fixture.RowsAsync("select id from catalog.products"));
-        Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+        Assert.Equal(
+            [
+                [lamp],
+            ],
+            await Fixture.RowsAsync("select id from catalog.products")
+        );
+        Assert.Equal(
+            1,
+            await Fixture.ScalarAsync<int>("select product_count from catalog.categories")
+        );
     }
 
     [Fact]
@@ -198,12 +263,18 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var client = Fixture.Client("ada");
 
-        var response = await client.GetAsync("/stub/mixed-errors", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            "/stub/mixed-errors",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.NotFound);
         Assert.Equal(
             MixedErrorsEndpoint.Errors.Select(error => error.Code),
-            problem.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("code").GetString())
+            problem
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error => error.GetProperty("code").GetString())
         );
     }
 
@@ -213,12 +284,20 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         using var client = Fixture.Client("ada");
         int LoggedByWeb() =>
             Fixture.Logs.Entries.Count(entry =>
-                entry is { Category: "PouryaKit.Web.UnexpectedExceptionHandler", Level: LogLevel.Error }
+                entry
+                    is {
+                        Category: "PouryaKit.Web.UnexpectedExceptionHandler",
+                        Level: LogLevel.Error
+                    }
                 && entry.Exception?.Message == "The note handler threw."
             );
         var loggedBefore = LoggedByWeb();
 
-        var response = await client.PostAsync("/stub/notes/throwing", null, TestContext.Current.CancellationToken);
+        var response = await client.PostAsync(
+            "/stub/notes/throwing",
+            null,
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.InternalServerError);
         Assert.Equal(500, problem.GetProperty("status").GetInt32());
@@ -233,12 +312,17 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     [Theory]
     [InlineData("Development")]
     [InlineData("Production")]
-    public async Task An_exception_in_authentication_answers_500_as_a_problem_response_without_its_message(string environment)
+    public async Task An_exception_in_authentication_answers_500_as_a_problem_response_without_its_message(
+        string environment
+    )
     {
         await using var host = await StartHostAsync(environment);
         using var client = AppFixture.ClientOf(host, TestAuthentication.Throwing);
 
-        var response = await client.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            "/catalog/products",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.InternalServerError);
         Assert.DoesNotContain(TestAuthentication.ThrownMessage, problem.GetRawText());
@@ -261,7 +345,9 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         using var client = AppFixture.ClientOf(host, "ada");
         using var request = new HttpRequestMessage(new HttpMethod(method), path)
         {
-            Content = json is null ? null : new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
+            Content = json is null
+                ? null
+                : new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
         };
         // Creating a product requires one, so it is the body that cannot be read; reading a product ignores it.
         request.Headers.Add(IdempotentRequests.Header, IdempotentRequests.NewKey());
@@ -317,11 +403,26 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
         using var client = Fixture.Client("ada");
         client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
 
-        var failed = await client.GetAsync("/stub/mixed-errors", TestContext.Current.CancellationToken);
-        var threw = await client.PostAsync("/stub/notes/throwing", null, TestContext.Current.CancellationToken);
+        var failed = await client.GetAsync(
+            "/stub/mixed-errors",
+            TestContext.Current.CancellationToken
+        );
+        var threw = await client.PostAsync(
+            "/stub/notes/throwing",
+            null,
+            TestContext.Current.CancellationToken
+        );
 
-        Assert.Equal(404, (await ProblemAsync(failed, HttpStatusCode.NotFound)).GetProperty("status").GetInt32());
-        Assert.Equal(500, (await ProblemAsync(threw, HttpStatusCode.InternalServerError)).GetProperty("status").GetInt32());
+        Assert.Equal(
+            404,
+            (await ProblemAsync(failed, HttpStatusCode.NotFound)).GetProperty("status").GetInt32()
+        );
+        Assert.Equal(
+            500,
+            (await ProblemAsync(threw, HttpStatusCode.InternalServerError))
+                .GetProperty("status")
+                .GetInt32()
+        );
     }
 
     [Fact]
@@ -349,7 +450,12 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var refused = await anonymous.PostAsJsonAsync(
             "/catalog/products",
-            new { productId = Guid.CreateVersion7(), categoryId = Guid.CreateVersion7(), name = "Lamp" },
+            new
+            {
+                productId = Guid.CreateVersion7(),
+                categoryId = Guid.CreateVersion7(),
+                name = "Lamp",
+            },
             TestContext.Current.CancellationToken
         );
         var anonymousContext = await ContextAsync(anonymous, "/stub/public/context");
@@ -385,9 +491,14 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(
             HttpStatusCode.OK,
-            (await allowed.GetAsync("/stub/context", TestContext.Current.CancellationToken)).StatusCode
+            (
+                await allowed.GetAsync("/stub/context", TestContext.Current.CancellationToken)
+            ).StatusCode
         );
-        var response = await denied.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var response = await denied.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.Forbidden);
         Assert.Equal(403, problem.GetProperty("status").GetInt32());
@@ -422,7 +533,10 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var client = Fixture.Client(TestAuthentication.WithoutActorClaim);
 
-        var response = await client.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.InternalServerError);
         Assert.DoesNotContain("claim", problem.GetRawText());
@@ -430,7 +544,8 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
             Fixture.Logs.Entries,
             entry =>
                 entry.Category == "PouryaKit.Web.UnexpectedExceptionHandler"
-                && entry.Exception?.Message.Contains($"no {ClaimTypes.NameIdentifier} claim") == true
+                && entry.Exception?.Message.Contains($"no {ClaimTypes.NameIdentifier} claim")
+                    == true
         );
     }
 
@@ -444,7 +559,10 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(HttpStatusCode.OK, await StatusOf("/catalog/products"));
         Assert.Equal(HttpStatusCode.OK, await StatusOf("/stub/context"));
-        await ProblemAsync(await client.GetAsync("/products", TestContext.Current.CancellationToken), HttpStatusCode.NotFound);
+        await ProblemAsync(
+            await client.GetAsync("/products", TestContext.Current.CancellationToken),
+            HttpStatusCode.NotFound
+        );
         Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/context"));
         Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/stub/products"));
         Assert.Equal(HttpStatusCode.NotFound, await StatusOf("/catalog/context"));
@@ -457,12 +575,20 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<SeenContext>(TestContext.Current.CancellationToken))!;
+        return (
+            await response.Content.ReadFromJsonAsync<SeenContext>(
+                TestContext.Current.CancellationToken
+            )
+        )!;
     }
 
     private async Task<WebApplication> StartHostAsync(string environment, RecordedLogs? logs = null)
     {
-        var host = AppFixture.ComposeHost(environment, Fixture.ConnectionString, logs ?? new RecordedLogs());
+        var host = AppFixture.ComposeHost(
+            environment,
+            Fixture.ConnectionString,
+            logs ?? new RecordedLogs()
+        );
         await host.StartAsync(TestContext.Current.CancellationToken);
         return host;
     }

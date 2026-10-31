@@ -16,10 +16,24 @@ public sealed class ProbesModule : IModuleDefinition
     /// <inheritdoc />
     public void Configure(ModuleBuilder module)
     {
-        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>("probes.shelf-snapshot.v1");
-        module.AddPouryaKitSaga<ContextProbeSaga>("probes.context", "probes.context", saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId));
-        module.AddPouryaKitSaga<SnapshotProbeSaga>("probes.snapshot", "probes.snapshot", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
-        module.AddPouryaKitSaga<CascadeProbeSaga>("probes.cascade", "probes.cascade", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
+        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>(
+            "probes.shelf-snapshot.v1"
+        );
+        module.AddPouryaKitSaga<ContextProbeSaga>(
+            "probes.context",
+            "probes.context",
+            saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+        );
+        module.AddPouryaKitSaga<SnapshotProbeSaga>(
+            "probes.snapshot",
+            "probes.snapshot",
+            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        );
+        module.AddPouryaKitSaga<CascadeProbeSaga>(
+            "probes.cascade",
+            "probes.cascade",
+            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        );
     }
 }
 
@@ -27,7 +41,10 @@ public sealed class ProbesModule : IModuleDefinition
 public sealed class ContextProbeSaga : PouryaKitSaga
 {
     /// <summary>Starts the saga, reading the Operation.</summary>
-    public static ContextProbeSaga Start(SagaInput<ContextProbeSaga, OrderPlacedV1> placed, Operation operation)
+    public static ContextProbeSaga Start(
+        SagaInput<ContextProbeSaga, OrderPlacedV1> placed,
+        Operation operation
+    )
     {
         ArgumentNullException.ThrowIfNull(placed);
         ArgumentNullException.ThrowIfNull(operation);

@@ -12,16 +12,23 @@ namespace PouryaKit.AI;
 // client, so the next listing connects again; one the server answers with an error keeps it. Disposal ends every client,
 // a connection still under way included: the SDK kills a stdio server's process once its shutdown timeout has passed,
 // 5 seconds by default, without closing the server's input first, and ends an HTTP server's session with a DELETE.
-internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options, IHttpClientFactory http, ILoggerFactory loggers)
-    : IMcpServers,
-        IAsyncDisposable
+internal sealed class McpServerConnections(
+    IOptions<PouryaKitAIOptions> options,
+    IHttpClientFactory http,
+    ILoggerFactory loggers
+) : IMcpServers, IAsyncDisposable
 {
     private readonly Lock _lock = new();
-    private readonly Dictionary<string, Task<McpClient>> _clients = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Task<McpClient>> _clients = new(
+        StringComparer.OrdinalIgnoreCase
+    );
     private readonly CancellationTokenSource _disposing = new();
     private bool _disposed;
 
-    public async Task<IReadOnlyList<McpClientTool>> ListToolsAsync(string server, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<McpClientTool>> ListToolsAsync(
+        string server,
+        CancellationToken cancellationToken = default
+    )
     {
         var connecting = Connect(server);
         var client = await connecting.WaitAsync(cancellationToken);
@@ -29,7 +36,10 @@ internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options,
         {
             return [.. await client.ListToolsAsync(cancellationToken: cancellationToken)];
         }
-        catch (Exception exception) when (exception is not McpProtocolException && !cancellationToken.IsCancellationRequested)
+        catch (Exception exception)
+            when (exception is not McpProtocolException
+                && !cancellationToken.IsCancellationRequested
+            )
         {
             await DropAsync(server, connecting, client);
             throw;
@@ -60,7 +70,11 @@ internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options,
         lock (_lock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (_clients.TryGetValue(server, out var connecting) && !connecting.IsFaulted && !connecting.IsCanceled)
+            if (
+                _clients.TryGetValue(server, out var connecting)
+                && !connecting.IsFaulted
+                && !connecting.IsCanceled
+            )
             {
                 return connecting;
             }
@@ -72,7 +86,11 @@ internal sealed class McpServerConnections(IOptions<PouryaKitAIOptions> options,
                 );
             }
 
-            return _clients[server] = McpClient.CreateAsync(Transport(server, configured), loggerFactory: loggers, cancellationToken: _disposing.Token);
+            return _clients[server] = McpClient.CreateAsync(
+                Transport(server, configured),
+                loggerFactory: loggers,
+                cancellationToken: _disposing.Token
+            );
         }
     }
 

@@ -10,7 +10,8 @@ namespace PouryaKit.Persistence.EFCore;
 // it rolled back. ON CONFLICT DO NOTHING leaves this transaction usable either way, where a unique violation would abort
 // it before the committed success could be read. It locks nothing it finds, so the cleanup may remove an expired key
 // between the insert and the read; the key is then reserved again, so the request runs as a new one.
-internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IIdempotencyStore
+internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider timeProvider)
+    : IIdempotencyStore
 {
     private const string UndefinedTable = "42P01";
 
@@ -18,14 +19,22 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
 
     private const int ReserveAttempts = 3;
 
-    public async Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
+    public async Task<RecordedSuccess?> ReserveAsync(
+        IdempotencyKey key,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(key);
         for (var attempt = 1; attempt <= ReserveAttempts; attempt++)
         {
             var reserved = await ExecuteAsync(
                 IdempotencyStatements.Reserve,
-                (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), timeProvider.GetUtcNow()], cancellationToken)
+                (database, sql) =>
+                    database.ExecuteSqlRawAsync(
+                        sql,
+                        [.. Values(key), timeProvider.GetUtcNow()],
+                        cancellationToken
+                    )
             );
             if (reserved == 1)
             {
@@ -34,7 +43,8 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
 
             var recorded = await ExecuteAsync(
                 IdempotencyStatements.Read,
-                (database, sql) => database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
+                (database, sql) =>
+                    database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
             );
             if (recorded is [var response])
             {
@@ -47,13 +57,18 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
         );
     }
 
-    public async Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
+    public async Task RecordAsync(
+        IdempotencyKey key,
+        string response,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(response);
         var recorded = await ExecuteAsync(
             IdempotencyStatements.Record,
-            (database, sql) => database.ExecuteSqlRawAsync(sql, [.. Values(key), response], cancellationToken)
+            (database, sql) =>
+                database.ExecuteSqlRawAsync(sql, [.. Values(key), response], cancellationToken)
         );
         if (recorded != 1)
         {
@@ -64,9 +79,18 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
     }
 
     private static object[] Values(IdempotencyKey key) =>
-        [key.Tenant ?? IdempotencyTable.NoTenant, key.Actor.Kind.ToString(), key.Actor.Id, key.Command, key.RequestId];
+        [
+            key.Tenant ?? IdempotencyTable.NoTenant,
+            key.Actor.Kind.ToString(),
+            key.Actor.Id,
+            key.Command,
+            key.RequestId,
+        ];
 
-    private async Task<T> ExecuteAsync<T>(Func<string, string> sql, Func<DatabaseFacade, string, Task<T>> run)
+    private async Task<T> ExecuteAsync<T>(
+        Func<string, string> sql,
+        Func<DatabaseFacade, string, Task<T>> run
+    )
     {
         var dbContext =
             EfUnitOfWorkDbContext.Of(unitOfWork)

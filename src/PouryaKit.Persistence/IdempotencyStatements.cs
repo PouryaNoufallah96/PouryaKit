@@ -11,7 +11,8 @@ public static class IdempotencyStatements
     /// <summary>The key table's name, in the Module's schema.</summary>
     public const string Table = "pouryakit_idempotency_keys";
 
-    private const string Key = "tenant = {0} and actor_kind = {1} and actor_id = {2} and command = {3} and request_id = {4}";
+    private const string Key =
+        "tenant = {0} and actor_kind = {1} and actor_id = {2} and command = {3} and request_id = {4}";
 
     /// <summary>
     /// Reserves the key, with <c>{5}</c> the time it is reserved at: one row when reserved, none when another transaction
@@ -21,7 +22,8 @@ public static class IdempotencyStatements
         $"insert into {table} (tenant, actor_kind, actor_id, command, request_id, reserved_at) values ({{0}}, {{1}}, {{2}}, {{3}}, {{4}}, {{5}}) on conflict do nothing";
 
     /// <summary>The key's recorded success as the column <c>Value</c>, null for a command without one; no row when it is gone.</summary>
-    public static string Read(string table) => $"select response as \"Value\" from {table} where {Key}";
+    public static string Read(string table) =>
+        $"select response as \"Value\" from {table} where {Key}";
 
     /// <summary>Records the key's success, <c>{5}</c>: one row when the key is reserved.</summary>
     public static string Record(string table) => $"update {table} set response = {{5}} where {Key}";

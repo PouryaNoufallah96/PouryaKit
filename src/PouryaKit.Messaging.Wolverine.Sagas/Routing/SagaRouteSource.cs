@@ -19,28 +19,51 @@ internal sealed class SagaRouteSource(SagaDeclarations sagas) : IMessageRouteSou
 
     public IEnumerable<IMessageRoute> FindRoutes(Type messageType, IWolverineRuntime runtime)
     {
-        var inputs = sagas.All.SelectMany(saga => saga.Inputs.Where(input => input.EventType == messageType)).ToArray();
+        var inputs = sagas
+            .All.SelectMany(saga => saga.Inputs.Where(input => input.EventType == messageType))
+            .ToArray();
         return inputs.Length == 0
             ? []
             :
             [
                 .. runtime
                     .Options.Transports.AllEndpoints()
-                    .Where(endpoint => endpoint.Subscriptions.Any(subscription => subscription.Matches(messageType)))
+                    .Where(endpoint =>
+                        endpoint.Subscriptions.Any(subscription =>
+                            subscription.Matches(messageType)
+                        )
+                    )
                     .Select(endpoint => MessageRoute.For(messageType, endpoint, runtime)),
-                .. inputs.SelectMany(input => runtime.RoutingFor(input.InputType).Routes.Select(inner => new SagaRoute(inner, input))),
+                .. inputs.SelectMany(input =>
+                    runtime
+                        .RoutingFor(input.InputType)
+                        .Routes.Select(inner => new SagaRoute(inner, input))
+                ),
             ];
     }
 
     private sealed class SagaRoute(IMessageRoute inner, SagaInputDeclaration input) : IMessageRoute
     {
-        public Envelope CreateForSending(object message, DeliveryOptions? options, ISendingAgent localDurableQueue, WolverineRuntime runtime, string? topicName) =>
-            inner.CreateForSending(input.Wrap(message, options?.Headers ?? NoHeaders), options, localDurableQueue, runtime, topicName);
+        public Envelope CreateForSending(
+            object message,
+            DeliveryOptions? options,
+            ISendingAgent localDurableQueue,
+            WolverineRuntime runtime,
+            string? topicName
+        ) =>
+            inner.CreateForSending(
+                input.Wrap(message, options?.Headers ?? NoHeaders),
+                options,
+                localDurableQueue,
+                runtime,
+                topicName
+            );
 
         public MessageSubscriptionDescriptor Describe()
         {
             var described = inner.Describe();
-            described.Description = $"{input.EventType.Name} delivered to a Saga as {input.InputType.Name}";
+            described.Description =
+                $"{input.EventType.Name} delivered to a Saga as {input.InputType.Name}";
             return described;
         }
     }

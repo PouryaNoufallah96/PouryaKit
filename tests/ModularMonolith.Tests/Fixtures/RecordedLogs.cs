@@ -6,7 +6,12 @@ namespace ModularMonolith.Tests.Fixtures;
 /// <summary>Every log entry the Host writes, kept for tests that assert something was logged.</summary>
 public sealed class RecordedLogs : ILoggerProvider
 {
-    public ConcurrentQueue<(string Category, LogLevel Level, Exception? Exception, string Message)> Entries { get; } = [];
+    public ConcurrentQueue<(
+        string Category,
+        LogLevel Level,
+        Exception? Exception,
+        string Message
+    )> Entries { get; } = [];
 
     public ILogger CreateLogger(string categoryName) => new Recorder(categoryName, Entries);
 

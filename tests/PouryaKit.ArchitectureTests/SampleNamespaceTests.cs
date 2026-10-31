@@ -7,7 +7,12 @@ namespace PouryaKit.ArchitectureTests;
 // source generator completes, so this rule reads the namespace each source file declares.
 public sealed class SampleNamespaceTests
 {
-    private static readonly string Source = Path.Combine(Repository.Root, "samples", "ModularMonolith", "src");
+    private static readonly string Source = Path.Combine(
+        Repository.Root,
+        "samples",
+        "ModularMonolith",
+        "src"
+    );
 
     // ADR 0010's one exception in the sample, by its path from Source. Aspire's convention: the service defaults extend
     // the host builder in Microsoft.Extensions.Hosting.
@@ -26,8 +31,15 @@ public sealed class SampleNamespaceTests
         // misses must be among the judged.
         Assert.Equal(11, projects.Length);
         var judged = projects.SelectMany(Judged).ToList();
-        Assert.Contains(judged, file => file.Path == "ModularMonolith.Host/LoggedNewProductAnnouncer.cs");
-        Assert.Empty(judged.SelectMany(file => Drift(file.Path, file.Expected, File.ReadAllText(file.FullPath))));
+        Assert.Contains(
+            judged,
+            file => file.Path == "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
+        );
+        Assert.Empty(
+            judged.SelectMany(file =>
+                Drift(file.Path, file.Expected, File.ReadAllText(file.FullPath))
+            )
+        );
     }
 
     [Fact]
@@ -43,9 +55,17 @@ public sealed class SampleNamespaceTests
                 $"{Product} declares the namespace Catalog; its project and folders make it Catalog.Products.Entities.",
             ],
             [
-                .. Drift(Product, expected, "using Catalog;\n\nnamespace Catalog.Products;\n\npublic sealed partial class Product;\n"),
+                .. Drift(
+                    Product,
+                    expected,
+                    "using Catalog;\n\nnamespace Catalog.Products;\n\npublic sealed partial class Product;\n"
+                ),
                 .. Drift(Product, expected, "namespace Catalog.Products.Entities.Stray;\n"),
-                .. Drift(Product, expected, "namespace Catalog\n{\n    internal sealed class Product;\n}\n"),
+                .. Drift(
+                    Product,
+                    expected,
+                    "namespace Catalog\n{\n    internal sealed class Product;\n}\n"
+                ),
                 .. Drift(Product, expected, "namespace Catalog.Products.Entities;\n"),
             ]
         );
@@ -53,24 +73,35 @@ public sealed class SampleNamespaceTests
 
     // The files a project is judged by, each with the namespace its folders make it: bin and obj hold build output;
     // Migrations hold dotnet-ef's output.
-    private static IEnumerable<(string Path, string Expected, string FullPath)> Judged(string project)
+    private static IEnumerable<(string Path, string Expected, string FullPath)> Judged(
+        string project
+    )
     {
         var folder = Path.GetDirectoryName(project)!;
-        return
-            from file in Directory.GetFiles(folder, "*.cs", SearchOption.AllDirectories)
+        return from file in Directory.GetFiles(folder, "*.cs", SearchOption.AllDirectories)
             let inProject = Path.GetRelativePath(folder, file).Replace('\\', '/')
             where !inProject.Split('/').Any(segment => segment is "bin" or "obj" or "Migrations")
             let path = Path.GetRelativePath(Source, file).Replace('\\', '/')
-            select (path, Exceptions.GetValueOrDefault(path) ?? Expected(Path.GetFileNameWithoutExtension(project), inProject), file);
+            select (
+                path,
+                Exceptions.GetValueOrDefault(path)
+                    ?? Expected(Path.GetFileNameWithoutExtension(project), inProject),
+                file
+            );
     }
 
     // No project of the sample sets a RootNamespace, so a project's root namespace is its name (ADR 0010).
-    private static string Expected(string project, string inProject) => string.Join('.', [project, .. inProject.Split('/')[..^1]]);
+    private static string Expected(string project, string inProject) =>
+        string.Join('.', [project, .. inProject.Split('/')[..^1]]);
 
     // Each namespace the file declares, file-scoped or as a block. A file of top-level statements, a Host's Program.cs,
     // declares none.
     private static IEnumerable<string> Drift(string path, string expected, string text) =>
-        from Match declaration in Regex.Matches(text, @"^\s*namespace\s+([\w.]+)", RegexOptions.Multiline)
+        from Match declaration in Regex.Matches(
+            text,
+            @"^\s*namespace\s+([\w.]+)",
+            RegexOptions.Multiline
+        )
         let declared = declaration.Groups[1].Value
         where declared != expected
         select $"{path} declares the namespace {declared}; its project and folders make it {expected}.";

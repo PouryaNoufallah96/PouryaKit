@@ -8,16 +8,23 @@ namespace PouryaKit.Messaging.Wolverine;
 // Runs the mappers in the committing Operation's scope, only those its own Module declared, each as a step that only
 // reads: a declaration for a base type or an interface never reaches another Module's aggregates. A mapper and its aggregate may be internal: they are
 // only ever named through reflection, never in generated code.
-internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation operation, IServiceProvider scope) : ISnapshotMappers
+internal sealed class SnapshotMappers(
+    Subscriptions subscriptions,
+    Operation operation,
+    IServiceProvider scope
+) : ISnapshotMappers
 {
     private static readonly ConcurrentDictionary<SnapshotPublication, Mapping> Mappings = new();
 
     private IEnumerable<SnapshotPublication> Declared => DeclaredBy(operation.Module);
 
-    public IReadOnlyList<Type> DeclaredAggregates(Type? module) => [.. DeclaredBy(module).Select(snapshot => snapshot.Aggregate)];
+    public IReadOnlyList<Type> DeclaredAggregates(Type? module) =>
+        [.. DeclaredBy(module).Select(snapshot => snapshot.Aggregate)];
 
     private IEnumerable<SnapshotPublication> DeclaredBy(Type? module) =>
-        subscriptions.Snapshots.Where(snapshot => subscriptions.Publications[snapshot.Snapshot].Module == module);
+        subscriptions.Snapshots.Where(snapshot =>
+            subscriptions.Publications[snapshot.Snapshot].Module == module
+        );
 
     public bool Declares(Type aggregateType)
     {
@@ -26,8 +33,11 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
         if (
             subscriptions
                 .Snapshots.Where(snapshot => snapshot.Aggregate.IsAssignableFrom(aggregateType))
-                .FirstOrDefault(snapshot => (subscriptions.Publications[snapshot.Snapshot].Module is null) != (operation.Module is null))
-            is { } misdeclared
+                .FirstOrDefault(snapshot =>
+                    (subscriptions.Publications[snapshot.Snapshot].Module is null)
+                    != (operation.Module is null)
+                ) is
+            { } misdeclared
         )
         {
             throw new InvalidOperationException(
@@ -47,7 +57,10 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
         {
             List<Type> roots =
             [
-                .. mappedAggregates.Where(mapped => snapshot.Aggregate.IsAssignableFrom(mapped.Key)).Select(mapped => mapped.Value).Distinct(),
+                .. mappedAggregates
+                    .Where(mapped => snapshot.Aggregate.IsAssignableFrom(mapped.Key))
+                    .Select(mapped => mapped.Value)
+                    .Distinct(),
             ];
             if (roots.Count > 1)
             {
@@ -70,12 +83,25 @@ internal sealed class SnapshotMappers(Subscriptions subscriptions, Operation ope
                     var mapping = Mappings.GetOrAdd(
                         snapshot,
                         declared =>
-                            (Mapping)Activator.CreateInstance(typeof(Mapping<,>).MakeGenericType(declared.Aggregate, declared.Snapshot))!
+                            (Mapping)
+                                Activator.CreateInstance(
+                                    typeof(Mapping<,>).MakeGenericType(
+                                        declared.Aggregate,
+                                        declared.Snapshot
+                                    )
+                                )!
                     );
                     // SnapshotStep compares the prepared batch once; this scope guards each mapper's write entry
                     // points from its construction on, without copying the whole tracker again for each aggregate.
-                    using var reading = operation.OnlyReading("a Snapshot mapper", compareTrackedState: false);
-                    return mapping.Map(scope.GetRequiredService(snapshot.Mapper), aggregate, removed);
+                    using var reading = operation.OnlyReading(
+                        "a Snapshot mapper",
+                        compareTrackedState: false
+                    );
+                    return mapping.Map(
+                        scope.GetRequiredService(snapshot.Mapper),
+                        aggregate,
+                        removed
+                    );
                 }),
         ];
     }

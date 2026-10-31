@@ -25,7 +25,12 @@ internal sealed class Category : AggregateRoot<CategoryId>, ITenantScoped
             return CategoryErrors.NameRequired;
         }
 
-        return new Category { Id = id, Tenant = tenant, Name = name.Trim() };
+        return new Category
+        {
+            Id = id,
+            Tenant = tenant,
+            Name = name.Trim(),
+        };
     }
 
     public void CountProduct() => ProductCount++;

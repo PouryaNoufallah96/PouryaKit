@@ -23,7 +23,11 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
         services.AddRateLimiter(_ => { });
         services
             .AddOptions<RateLimiterOptions>()
-            .Configure<IOptions<PouryaKitRateLimitOptions>, IOptions<PouryaKitWebOptions>, IOptions<PouryaKitTrustedPeerOptions>>(
+            .Configure<
+                IOptions<PouryaKitRateLimitOptions>,
+                IOptions<PouryaKitWebOptions>,
+                IOptions<PouryaKitTrustedPeerOptions>
+            >(
                 (limiter, configured, web, trusted) =>
                 {
                     var limits = configured.Value;
@@ -34,24 +38,28 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
 
                     var options = web.Value;
                     var peers = trusted.Value.Peers;
-                    limiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-                        RateLimitPartition.GetFixedWindowLimiter(
-                            Partition(httpContext, options, peers),
-                            _ => new FixedWindowRateLimiterOptions
-                            {
-                                PermitLimit = limits.PermitLimit,
-                                Window = limits.Window,
-                                QueueLimit = limits.QueueLimit,
-                                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            }
-                        )
+                    limiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
+                        httpContext =>
+                            RateLimitPartition.GetFixedWindowLimiter(
+                                Partition(httpContext, options, peers),
+                                _ => new FixedWindowRateLimiterOptions
+                                {
+                                    PermitLimit = limits.PermitLimit,
+                                    Window = limits.Window,
+                                    QueueLimit = limits.QueueLimit,
+                                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                                }
+                            )
                     );
                     limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
                 }
             );
         services.AddOptions<PouryaKitRateLimitOptions>().ValidateOnStart();
         services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IValidateOptions<PouryaKitRateLimitOptions>, ActorRateLimiting>()
+            ServiceDescriptor.Singleton<
+                IValidateOptions<PouryaKitRateLimitOptions>,
+                ActorRateLimiting
+            >()
         );
     }
 
@@ -65,7 +73,9 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
         List<string> failures = [];
         if (options.PermitLimit < 1)
         {
-            failures.Add($"The rate limit's PermitLimit is {options.PermitLimit}; it must be at least 1.");
+            failures.Add(
+                $"The rate limit's PermitLimit is {options.PermitLimit}; it must be at least 1."
+            );
         }
 
         if (options.Window <= TimeSpan.Zero)
@@ -75,10 +85,14 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
 
         if (options.QueueLimit < 0)
         {
-            failures.Add($"The rate limit's QueueLimit is {options.QueueLimit}; it must not be negative.");
+            failures.Add(
+                $"The rate limit's QueueLimit is {options.QueueLimit}; it must not be negative."
+            );
         }
 
-        return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+        return failures.Count == 0
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(failures);
     }
 
     // ASP.NET Core's AuthenticationMiddleware sets IAuthenticationFeature on every request it sees, anonymous ones too, so
@@ -87,7 +101,11 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
     // Actor each endpoint names. Routing has no such mark, since it sets nothing on a request no endpoint matches, so a
     // limiter before UseRouting is not detected; it puts the anonymous callers of a public endpoint in the unresolved
     // partition.
-    private static string Partition(HttpContext httpContext, PouryaKitWebOptions options, ISet<string> peers)
+    private static string Partition(
+        HttpContext httpContext,
+        PouryaKitWebOptions options,
+        ISet<string> peers
+    )
     {
         if (
             httpContext.Features.Get<IAuthenticationFeature>() is null

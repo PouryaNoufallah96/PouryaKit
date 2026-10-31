@@ -19,6 +19,7 @@ public sealed class Operation
     private bool _commandStarted;
     private HashSet<string>? _tagsToEvict;
     private int _runningChecks;
+
     // The open steps that only read, in the order opened.
     private readonly List<ReadingStep> _readingSteps = [];
 
@@ -48,7 +49,8 @@ public sealed class Operation
     /// is any other guarded write. A persistence guard also checks for changes to tracked objects at the end of the
     /// read, whether it succeeded, failed or threw, and marks a change rollback-only.
     /// </summary>
-    public bool MayChangeState => _runningQueries == 0 && _runningChecks == 0 && _readingSteps.Count == 0;
+    public bool MayChangeState =>
+        _runningQueries == 0 && _runningChecks == 0 && _readingSteps.Count == 0;
 
     /// <summary>
     /// Opens a step that only reads, named <paramref name="step"/>, until the returned scope is disposed. A Kit package
@@ -68,7 +70,11 @@ public sealed class Operation
     public IDisposable OnlyReading(string step, bool compareTrackedState)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(step);
-        var reading = new ReadingStep(this, step, compareTrackedState ? _readingState()?.OnlyReading(step) : null);
+        var reading = new ReadingStep(
+            this,
+            step,
+            compareTrackedState ? _readingState()?.OnlyReading(step) : null
+        );
         _readingSteps.Add(reading);
         return reading;
     }
@@ -173,10 +179,14 @@ public sealed class Operation
     /// query counts itself, since it is entered before its steps run.
     /// </summary>
     internal bool IsOutermostQuery =>
-        _runningQueries == 1 && _runningCommands == 0 && _runningChecks == 0 && _readingSteps.Count == 0;
+        _runningQueries == 1
+        && _runningCommands == 0
+        && _runningChecks == 0
+        && _readingSteps.Count == 0;
 
     /// <summary>The cache tags the Operation's commands declared, outermost and nested, evicted only once it commits.</summary>
-    internal IReadOnlyCollection<string> TagsToEvict => (IReadOnlyCollection<string>?)_tagsToEvict ?? [];
+    internal IReadOnlyCollection<string> TagsToEvict =>
+        (IReadOnlyCollection<string>?)_tagsToEvict ?? [];
 
     internal void EvictAfterCommit(IEnumerable<string> tags)
     {
@@ -188,19 +198,28 @@ public sealed class Operation
 
     internal IDisposable EnterChecks()
     {
-        var reading = new ReadingBoundary(this, _readingState()?.OnlyReading("An authorizer or a validator"), () => _runningChecks--);
+        var reading = new ReadingBoundary(
+            this,
+            _readingState()?.OnlyReading("An authorizer or a validator"),
+            () => _runningChecks--
+        );
         _runningChecks++;
         return reading;
     }
 
     internal IDisposable EnterQuery()
     {
-        var reading = new ReadingBoundary(this, _readingState()?.OnlyReading("A query"), () => _runningQueries--);
+        var reading = new ReadingBoundary(
+            this,
+            _readingState()?.OnlyReading("A query"),
+            () => _runningQueries--
+        );
         _runningQueries++;
         return reading;
     }
 
-    private sealed class ReadingBoundary(Operation operation, IDisposable? guard, Action close) : IDisposable
+    private sealed class ReadingBoundary(Operation operation, IDisposable? guard, Action close)
+        : IDisposable
     {
         private bool _closed;
 
@@ -229,12 +248,20 @@ public sealed class Operation
     }
 
     // Closes its own step, once; any other step stays as it is.
-    private sealed class ReadingStep(Operation operation, string name, IDisposable? guard) : IDisposable
+    private sealed class ReadingStep(Operation operation, string name, IDisposable? guard)
+        : IDisposable
     {
         private ReadingBoundary? _boundary;
 
         public string Name { get; } = name;
 
-        public void Dispose() => (_boundary ??= new ReadingBoundary(operation, guard, () => operation._readingSteps.Remove(this))).Dispose();
+        public void Dispose() =>
+            (
+                _boundary ??= new ReadingBoundary(
+                    operation,
+                    guard,
+                    () => operation._readingSteps.Remove(this)
+                )
+            ).Dispose();
     }
 }

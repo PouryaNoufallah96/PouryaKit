@@ -1,6 +1,6 @@
-using Asp.Versioning;
 using System.Net;
 using System.Security.Claims;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -51,7 +51,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var ada = AppFixture.ClientOf(host, "ada");
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => ada.GetAsync("/limited", TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ada.GetAsync("/limited", TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             "The rate limit partitions each request by its Actor, but the request reached the rate limiter before authentication ran, so every caller would share one partition. Call app.UseAuthentication() before app.UseRateLimiter(), or leave UseAuthentication to WebApplication, which adds it ahead of the application's own middleware.",
@@ -76,7 +78,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         });
         await using var host = builder.Build();
         host.UseRateLimiter();
-        host.MapGet("/storefront", () => "served").AllowAnonymousAs(Actor.System("tests.storefront"));
+        host.MapGet("/storefront", () => "served")
+            .AllowAnonymousAs(Actor.System("tests.storefront"));
         host.MapGet("/kiosk", () => "served").AllowAnonymousAs(Actor.System("tests.kiosk"));
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = AppFixture.ClientOf(host);
@@ -95,14 +98,21 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Fact]
     public void A_client_that_adds_a_resilience_pipeline_over_the_service_defaults_one_fails_whenever_it_is_created()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.AddServiceDefaults();
         builder.Services.AddHttpClient("downstream").AddPouryaKitResilience();
         using var host = builder.Build();
         var clients = host.Services.GetRequiredService<IHttpClientFactory>();
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => clients.CreateClient("downstream"));
-        var again = Assert.Throws<InvalidOperationException>(() => clients.CreateClient("downstream"));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            clients.CreateClient("downstream")
+        );
+        var again = Assert.Throws<InvalidOperationException>(() =>
+            clients.CreateClient("downstream")
+        );
 
         Assert.Equal(
             "The HTTP client 'downstream' has 2 resilience handlers, so each would retry the other's attempts, as when the defaults of every client add one and the client adds its own. Call RemoveAllResilienceHandlers() on the client before AddPouryaKitResilience(), or remove the client's own.",
@@ -121,7 +131,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
             builder => builder.Services.AddSingleton<KeyedReadRoute>()
         );
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             "HTTP: GET /stub/keyed-read requires an Idempotency-Key on GET, a method that only reads, and a query ignores the key. Remove RequireIdempotencyKey(), or map the command on POST, PUT, PATCH or DELETE.",
@@ -133,7 +145,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task An_endpoint_that_requires_an_idempotency_key_but_names_no_method_fails_the_host_at_start(bool emptyMethodList)
+    public async Task An_endpoint_that_requires_an_idempotency_key_but_names_no_method_fails_the_host_at_start(
+        bool emptyMethodList
+    )
     {
         await using var host = AppFixture.ComposeHost(
             "Production",
@@ -142,7 +156,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
             builder => builder.Services.AddSingleton(new KeyedAnyMethodRoute(emptyMethodList))
         );
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             "/stub/keyed-any requires an Idempotency-Key but is mapped for no HTTP method, so it answers every method, GET included, and a query ignores the key. Map the command on POST, PUT, PATCH or DELETE, or remove RequireIdempotencyKey().",
@@ -154,10 +170,16 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Fact]
     public void A_connection_string_the_configuration_lacks_or_leaves_blank_fails_the_host_when_built_naming_its_key()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:reports", " ")]);
         // The sample Host's appsettings.json, copied beside the tests, sets ConnectionStrings:app.
-        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "ledger", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(
+            connectionName: "ledger",
+            schema: "stub"
+        );
         builder.Services.AddPouryaKitDapper(connectionName: "reports");
         builder.AddPouryaKitCompositionChecks();
 
@@ -176,9 +198,15 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Fact]
     public void Dbcontexts_missing_one_connection_string_in_two_cases_fail_the_host_when_built_in_one_line_naming_both()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "x", schema: "stub");
-        builder.Services.UsePouryaKitPostgres<ReadCollectionDbContext>(connectionName: "X", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<ReadCollectionDbContext>(
+            connectionName: "X",
+            schema: "stub"
+        );
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -194,10 +222,16 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Fact]
     public void A_connection_string_named_after_an_unnamed_record_of_the_dbcontext_fails_the_host_when_built_naming_its_key()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddDbContext<StubDbContext>();
         builder.Services.AddPouryaKitEfCore<StubDbContext>();
-        builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "missing", schema: "stub");
+        builder.Services.UsePouryaKitPostgres<StubDbContext>(
+            connectionName: "missing",
+            schema: "stub"
+        );
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -212,13 +246,18 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Fact]
     public void A_dbcontext_given_its_connection_name_again_in_another_case_is_recorded_once_and_builds()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         // The sample Host's appsettings.json, copied beside the tests, sets ConnectionStrings:app.
         builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.Services.AddPouryaKitEfCore<StubDbContext>("APP");
         builder.AddPouryaKitCompositionChecks();
 
-        var recorded = builder.Services.Select(descriptor => descriptor.ImplementationInstance).OfType<DbContextConnection>();
+        var recorded = builder
+            .Services.Select(descriptor => descriptor.ImplementationInstance)
+            .OfType<DbContextConnection>();
 
         Assert.Equal([new DbContextConnection("app", typeof(StubDbContext))], recorded);
         using var host = builder.Build();
@@ -248,7 +287,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
                 "Development",
                 Fixture.ConnectionString,
                 new RecordedLogs(),
-                builder => builder.AddPouryaKitModules(modules => modules.Add<HandlerForgettingModule>())
+                builder =>
+                    builder.AddPouryaKitModules(modules => modules.Add<HandlerForgettingModule>())
             )
         );
 
@@ -266,10 +306,13 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
             "Development",
             Fixture.ConnectionString,
             new RecordedLogs(),
-            builder => builder.AddPouryaKitModules(modules => modules.Add<EndpointForgettingModule>())
+            builder =>
+                builder.AddPouryaKitModules(modules => modules.Add<EndpointForgettingModule>())
         );
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             $"The endpoints {typeof(UnversionedEndpoints).Namespace}.ReadActorEndpoint of EndpointForgettingModule are declared by no AddPouryaKitEndpoints, so they never answer. Call AddPouryaKitEndpoints(routePrefix) in its Composition Root.",
@@ -280,8 +323,16 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     // Declared twice, a route group's endpoints would be mapped twice, and each request to one of them would fail as
     // ambiguous. The router matches a literal ignoring case, so /PLAIN is the same route group as /plain.
     [Theory]
-    [InlineData("/plain", typeof(StubModule), "The endpoints of the route group /plain are already declared.")]
-    [InlineData("/PLAIN", typeof(StubModule), "The endpoints of the route group /PLAIN are already declared.")]
+    [InlineData(
+        "/plain",
+        typeof(StubModule),
+        "The endpoints of the route group /plain are already declared."
+    )]
+    [InlineData(
+        "/PLAIN",
+        typeof(StubModule),
+        "The endpoints of the route group /PLAIN are already declared."
+    )]
     [InlineData(
         "/other",
         typeof(UnversionedEndpoints),
@@ -293,9 +344,14 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         string failure
     )
     {
-        var services = new ServiceCollection().AddPouryaKitEndpoints("/plain", typeof(UnversionedEndpoints).Assembly);
+        var services = new ServiceCollection().AddPouryaKitEndpoints(
+            "/plain",
+            typeof(UnversionedEndpoints).Assembly
+        );
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitEndpoints(routePrefix, inAssemblyOf.Assembly));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            services.AddPouryaKitEndpoints(routePrefix, inAssemblyOf.Assembly)
+        );
 
         Assert.Equal(failure, thrown.Message);
     }
@@ -303,11 +359,22 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Theory]
     [InlineData("/plain", "The API versions of the route group /plain are already declared.")]
     [InlineData("/PLAIN", "The API versions of the route group /PLAIN are already declared.")]
-    public void A_route_group_whose_api_versions_are_already_declared_is_refused_when_declared_again_whatever_the_case(string routePrefix, string failure)
+    public void A_route_group_whose_api_versions_are_already_declared_is_refused_when_declared_again_whatever_the_case(
+        string routePrefix,
+        string failure
+    )
     {
-        var services = new ServiceCollection().AddPouryaKitApiVersions("/plain", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+        var services = new ServiceCollection().AddPouryaKitApiVersions(
+            "/plain",
+            versions => versions.HasApiVersion(new ApiVersion(1, 0))
+        );
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitApiVersions(routePrefix, versions => versions.HasApiVersion(new ApiVersion(1, 0))));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            services.AddPouryaKitApiVersions(
+                routePrefix,
+                versions => versions.HasApiVersion(new ApiVersion(1, 0))
+            )
+        );
 
         Assert.Equal(failure, thrown.Message);
     }
@@ -320,7 +387,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         builder.AddPouryaKitCompositionChecks();
         await using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             $"The endpoints {typeof(UnversionedEndpoints).Namespace}.ReadActorEndpoint of the application are declared but never mapped, so they never answer. Call app.MapPouryaKitModuleEndpoints() once the Host is built.",
@@ -331,9 +400,21 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     // Observed at start, by ValidateOnStart: this Host maps no Module endpoints. One that does, as the sample's, fails
     // earlier, in MapPouryaKitModuleEndpoints, which reads both claims while the Host is composed.
     [Theory]
-    [InlineData(null, PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
-    [InlineData("", PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
-    [InlineData(" ", PouryaKitClaimTypes.Tenant, "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor.")]
+    [InlineData(
+        null,
+        PouryaKitClaimTypes.Tenant,
+        "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor."
+    )]
+    [InlineData(
+        "",
+        PouryaKitClaimTypes.Tenant,
+        "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor."
+    )]
+    [InlineData(
+        " ",
+        PouryaKitClaimTypes.Tenant,
+        "PouryaKitWebOptions.ActorClaim names no claim to identify the Actor."
+    )]
     [InlineData(
         ClaimTypes.NameIdentifier,
         "",
@@ -358,7 +439,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         });
         await using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(typeof(PouryaKitWebOptions), thrown.OptionsType);
         Assert.Equal([failure], thrown.Failures);
@@ -372,17 +455,24 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     public async Task A_blank_trusted_peer_stops_the_host_at_start_naming_the_option(string peer)
     {
         var builder = WebOnly();
-        builder.Configuration.AddInMemoryCollection(
-            [new("PouryaKit:TrustedPeers:Peers:0", AppFixture.TrustedPeer), new("PouryaKit:TrustedPeers:Peers:1", peer)]
+        builder.Configuration.AddInMemoryCollection([
+            new("PouryaKit:TrustedPeers:Peers:0", AppFixture.TrustedPeer),
+            new("PouryaKit:TrustedPeers:Peers:1", peer),
+        ]);
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(
+            builder.Configuration.GetSection("PouryaKit:TrustedPeers")
         );
-        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
         await using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(typeof(PouryaKitTrustedPeerOptions), thrown.OptionsType);
         Assert.Equal(
-            ["PouryaKitTrustedPeerOptions.Peers lists a blank peer; name each peer by the Actor claim value of its authenticated identity."],
+            [
+                "PouryaKitTrustedPeerOptions.Peers lists a blank peer; name each peer by the Actor claim value of its authenticated identity.",
+            ],
             thrown.Failures
         );
     }
@@ -392,7 +482,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     {
         var builder = WebOnly();
         builder.Services.Configure<PouryaKitWebOptions>(web => web.TenantClaim = null);
-        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(
+            builder.Configuration.GetSection("PouryaKit:TrustedPeers")
+        );
         await using var host = builder.Build();
 
         await host.StartAsync(TestContext.Current.CancellationToken);
@@ -406,14 +498,28 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         null,
         "PouryaKitMessagingOptions.RetryDelays is null; set it to the delays a failed delivery waits before each further attempt."
     )]
-    [InlineData(new int[0], "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once.")]
-    [InlineData(new[] { -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
-    [InlineData(new[] { 1, -1 }, "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer.")]
-    public async Task A_null_empty_or_negative_retry_schedule_stops_the_host_at_start_naming_the_option(int[]? delaysInSeconds, string failure)
+    [InlineData(
+        new int[0],
+        "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once."
+    )]
+    [InlineData(
+        new[] { -1 },
+        "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer."
+    )]
+    [InlineData(
+        new[] { 1, -1 },
+        "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer."
+    )]
+    public async Task A_null_empty_or_negative_retry_schedule_stops_the_host_at_start_naming_the_option(
+        int[]? delaysInSeconds,
+        string failure
+    )
     {
         using var host = MessagingOnly(delaysInSeconds);
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(typeof(PouryaKitMessagingOptions), thrown.OptionsType);
         Assert.Equal([failure], thrown.Failures);
@@ -435,7 +541,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public async Task An_inbox_stale_time_of_zero_or_less_stops_the_host_at_start_naming_the_option(int staleTimeInSeconds)
+    public async Task An_inbox_stale_time_of_zero_or_less_stops_the_host_at_start_naming_the_option(
+        int staleTimeInSeconds
+    )
     {
         await using var host = AppFixture.ComposeHost(
             "Production",
@@ -447,10 +555,17 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
                 )
         );
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(typeof(PouryaKitMessageStoreOptions), thrown.OptionsType);
-        Assert.Equal(["PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero."], thrown.Failures);
+        Assert.Equal(
+            [
+                "PouryaKitMessageStoreOptions.InboxStaleTime is zero or negative; set it longer than zero.",
+            ],
+            thrown.Failures
+        );
     }
 
     // Ticket #97. Bound from configuration, as the Hosts bind their sunsets, beside the sample's valid 1.0 one. Observed at
@@ -465,7 +580,10 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     )]
     [InlineData(
         new[] { "2:Date=2027-06-30T00:00:00+00:00", "2.0:Link=https://example.com/api-v2-sunset" },
-        new[] { "PouryaKitOpenApiOptions.Sunsets has the keys '2' and '2.0', which name one API version; keep one sunset per version." }
+        new[]
+        {
+            "PouryaKitOpenApiOptions.Sunsets has the keys '2' and '2.0', which name one API version; keep one sunset per version.",
+        }
     )]
     [InlineData(
         new[] { "3.0:Link=/api-v3-sunset" },
@@ -496,7 +614,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     {
         await using var host = SunsetsFromConfiguration(settings);
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(typeof(PouryaKitOpenApiOptions), thrown.OptionsType);
         Assert.Equal(failures, thrown.Failures);
@@ -512,7 +632,9 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         builder.Services.AddPouryaKitOpenApi();
         if (bindSampleConfiguration)
         {
-            builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+            builder.Services.Configure<PouryaKitOpenApiOptions>(
+                builder.Configuration.GetSection("PouryaKit:OpenApi")
+            );
         }
 
         await using var host = builder.Build();
@@ -520,7 +642,10 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         await host.StartAsync(TestContext.Current.CancellationToken);
 
         string[] keys = bindSampleConfiguration ? ["1.0"] : [];
-        Assert.Equal(keys, host.Services.GetRequiredService<IOptions<PouryaKitOpenApiOptions>>().Value.Sunsets.Keys);
+        Assert.Equal(
+            keys,
+            host.Services.GetRequiredService<IOptions<PouryaKitOpenApiOptions>>().Value.Sunsets.Keys
+        );
         await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
@@ -532,15 +657,25 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         var builder = WebOnly();
         builder.Services.AddPouryaKitOpenApi(openApi =>
         {
-            openApi.Sunsets["1.0-Beta"] = new ApiVersionSunset { Link = new Uri("https://example.com/upper-beta-sunset") };
-            openApi.Sunsets["1.0-beta"] = new ApiVersionSunset { Link = new Uri("https://example.com/lower-beta-sunset") };
+            openApi.Sunsets["1.0-Beta"] = new ApiVersionSunset
+            {
+                Link = new Uri("https://example.com/upper-beta-sunset"),
+            };
+            openApi.Sunsets["1.0-beta"] = new ApiVersionSunset
+            {
+                Link = new Uri("https://example.com/lower-beta-sunset"),
+            };
         });
         await using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
-            ["PouryaKitOpenApiOptions.Sunsets has the keys '1.0-Beta' and '1.0-beta', which name one API version; keep one sunset per version."],
+            [
+                "PouryaKitOpenApiOptions.Sunsets has the keys '1.0-Beta' and '1.0-beta', which name one API version; keep one sunset per version.",
+            ],
             thrown.Failures
         );
     }
@@ -552,19 +687,29 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
     {
         const string Refusal =
             "Dapper reads use the connection string reports, which sets Multiplexing=true, so a read could run in a session another lease set to another tenant. Remove Multiplexing from ConnectionStrings:reports.";
-        KeyValuePair<string, string?>[] reports = [new("ConnectionStrings:reports", "Host=localhost;Database=reports;Multiplexing=true")];
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        KeyValuePair<string, string?>[] reports =
+        [
+            new("ConnectionStrings:reports", "Host=localhost;Database=reports;Multiplexing=true"),
+        ];
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Configuration.AddInMemoryCollection(reports);
         builder.Services.AddPouryaKitDapper(connectionName: "reports");
         builder.AddPouryaKitCompositionChecks();
         using var withoutChecks = new ServiceCollection()
-            .AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(reports).Build())
+            .AddSingleton<IConfiguration>(
+                new ConfigurationBuilder().AddInMemoryCollection(reports).Build()
+            )
             .AddPouryaKitDapper(connectionName: "reports")
             .BuildServiceProvider();
         using var scope = withoutChecks.CreateScope();
 
         var built = Assert.Throws<InvalidOperationException>(() => builder.Build());
-        var leased = Assert.Throws<InvalidOperationException>(() => scope.ServiceProvider.GetRequiredService<IReadConnectionFactory>());
+        var leased = Assert.Throws<InvalidOperationException>(() =>
+            scope.ServiceProvider.GetRequiredService<IReadConnectionFactory>()
+        );
 
         Assert.Equal(Refusal, built.Message);
         Assert.Equal(Refusal, leased.Message);
@@ -578,20 +723,30 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         builder.Configuration.AddInMemoryCollection(
             settings
                 .Select(setting => setting.Split('=', 2))
-                .Select(pair => new KeyValuePair<string, string?>($"PouryaKit:OpenApi:Sunsets:{pair[0]}", pair[1]))
+                .Select(pair => new KeyValuePair<string, string?>(
+                    $"PouryaKit:OpenApi:Sunsets:{pair[0]}",
+                    pair[1]
+                ))
         );
         builder.Services.AddPouryaKitOpenApi();
-        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        builder.Services.Configure<PouryaKitOpenApiOptions>(
+            builder.Configuration.GetSection("PouryaKit:OpenApi")
+        );
         return builder.Build();
     }
 
     // A Host with Wolverine and no message store, retrying after the delays given, or with no schedule for null.
     private static IHost MessagingOnly(int[]? delaysInSeconds)
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+        ]);
         builder.UsePouryaKitWolverine();
         builder.Services.Configure<PouryaKitMessagingOptions>(messaging =>
-            messaging.RetryDelays = delaysInSeconds is null ? null! : [.. delaysInSeconds.Select(seconds => TimeSpan.FromSeconds(seconds))]
+            messaging.RetryDelays = delaysInSeconds is null
+                ? null!
+                : [.. delaysInSeconds.Select(seconds => TimeSpan.FromSeconds(seconds))]
         );
         return builder.Build();
     }
@@ -603,7 +758,10 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(
+                TestAuthentication.SchemeName,
+                null
+            );
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitWeb();
         return builder;
@@ -613,11 +771,13 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
 // Registers the Features of an assembly with an endpoint, but declares no endpoint.
 public sealed class EndpointForgettingModule : IModuleDefinition
 {
-    public void Configure(ModuleBuilder module) => module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly);
+    public void Configure(ModuleBuilder module) =>
+        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly);
 }
 
 // Registers the validators of an assembly with a Notification Handler, but declares no Notification Handler.
 public sealed class HandlerForgettingModule : IModuleDefinition
 {
-    public void Configure(ModuleBuilder module) => module.AddPouryaKitValidation(typeof(UnownedNotificationHandler).Assembly);
+    public void Configure(ModuleBuilder module) =>
+        module.AddPouryaKitValidation(typeof(UnownedNotificationHandler).Assembly);
 }

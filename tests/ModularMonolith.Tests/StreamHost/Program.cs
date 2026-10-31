@@ -20,13 +20,20 @@ using var host = builder.Build();
 await host.StartAsync();
 await host
     .Services.GetRequiredService<IGatewayProcessor<AccountsModule>>()
-    .SendAsync(new OpenAccountCommand(Guid.Parse(account), Guid.CreateVersion7()), new OperationContext(Actor.System("crash")));
+    .SendAsync(
+        new OpenAccountCommand(Guid.Parse(account), Guid.CreateVersion7()),
+        new OperationContext(Actor.System("crash"))
+    );
 return 1;
 
 // A store listener runs after Marten's commit, before every listener of the session, Wolverine's send included.
 internal sealed class StopAfterCommit : DocumentSessionListenerBase
 {
-    public override async Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token)
+    public override async Task AfterCommitAsync(
+        IDocumentSession session,
+        IChangeSet commit,
+        CancellationToken token
+    )
     {
         Console.WriteLine("COMMITTED");
         await Console.Out.FlushAsync(token);

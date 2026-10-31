@@ -24,13 +24,26 @@ public static class ValidationServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
-            services.TryAdd(ServiceDescriptor.Scoped(typeof(IValidationStep<>), typeof(FluentValidationStep<>)));
+            services.TryAdd(
+                ServiceDescriptor.Scoped(typeof(IValidationStep<>), typeof(FluentValidationStep<>))
+            );
 
-            foreach (var assembly in IModuleServices.FeatureAssembliesOf(services, featureAssemblies).Distinct())
+            foreach (
+                var assembly in IModuleServices
+                    .FeatureAssembliesOf(services, featureAssemblies)
+                    .Distinct()
+            )
             {
-                foreach (var validator in AssemblyScanner.FindValidatorsInAssembly(assembly, includeInternalTypes: true))
+                foreach (
+                    var validator in AssemblyScanner.FindValidatorsInAssembly(
+                        assembly,
+                        includeInternalTypes: true
+                    )
+                )
                 {
-                    services.TryAddEnumerable(ServiceDescriptor.Scoped(validator.InterfaceType, validator.ValidatorType));
+                    services.TryAddEnumerable(
+                        ServiceDescriptor.Scoped(validator.InterfaceType, validator.ValidatorType)
+                    );
                 }
             }
 

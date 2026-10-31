@@ -36,8 +36,13 @@ public static class GatewayToolExtensions
         {
             ArgumentNullException.ThrowIfNull(gateway);
             ArgumentNullException.ThrowIfNull(query);
-            return Create<TArguments>(name, description, run, async (arguments, context, cancellationToken) =>
-                Answer(await gateway.QueryAsync(query(arguments), context, cancellationToken)));
+            return Create<TArguments>(
+                name,
+                description,
+                run,
+                async (arguments, context, cancellationToken) =>
+                    Answer(await gateway.QueryAsync(query(arguments), context, cancellationToken))
+            );
         }
 
         /// <summary>
@@ -45,13 +50,23 @@ public static class GatewayToolExtensions
         /// arguments through this Gateway, as the query overload of <c>Tool</c> runs a query: each call is an Operation of
         /// its own, committed by its own Unit of Work, which no other call of the run replays.
         /// </summary>
-        public AIFunction Tool<TArguments>(string name, string description, OperationContext run, Func<TArguments, Command> command)
+        public AIFunction Tool<TArguments>(
+            string name,
+            string description,
+            OperationContext run,
+            Func<TArguments, Command> command
+        )
             where TArguments : notnull
         {
             ArgumentNullException.ThrowIfNull(gateway);
             ArgumentNullException.ThrowIfNull(command);
-            return Create<TArguments>(name, description, run, async (arguments, context, cancellationToken) =>
-                Answer(await gateway.SendAsync(command(arguments), context, cancellationToken)));
+            return Create<TArguments>(
+                name,
+                description,
+                run,
+                async (arguments, context, cancellationToken) =>
+                    Answer(await gateway.SendAsync(command(arguments), context, cancellationToken))
+            );
         }
 
         /// <summary>
@@ -70,8 +85,13 @@ public static class GatewayToolExtensions
         {
             ArgumentNullException.ThrowIfNull(gateway);
             ArgumentNullException.ThrowIfNull(command);
-            return Create<TArguments>(name, description, run, async (arguments, context, cancellationToken) =>
-                Answer(await gateway.SendAsync(command(arguments), context, cancellationToken)));
+            return Create<TArguments>(
+                name,
+                description,
+                run,
+                async (arguments, context, cancellationToken) =>
+                    Answer(await gateway.SendAsync(command(arguments), context, cancellationToken))
+            );
         }
     }
 
@@ -92,23 +112,38 @@ public static class GatewayToolExtensions
             description,
             AIJsonUtilities.CreateJsonSchema(typeof(TArguments), serializerOptions: Json),
             Json,
-            (arguments, cancellationToken) => send(Read<TArguments>(arguments), run.Continue(), cancellationToken)
+            (arguments, cancellationToken) =>
+                send(Read<TArguments>(arguments), run.Continue(), cancellationToken)
         );
     }
 
     private static TArguments Read<TArguments>(AIFunctionArguments arguments) =>
-        JsonSerializer.SerializeToElement<IDictionary<string, object?>>(arguments, Json).Deserialize<TArguments>(Json)
+        JsonSerializer
+            .SerializeToElement<IDictionary<string, object?>>(arguments, Json)
+            .Deserialize<TArguments>(Json)
         ?? throw new JsonException($"The model's arguments are not a {typeof(TArguments).Name}.");
 
     private static JsonElement? Answer<TResponse>(Result<TResponse> result)
         where TResponse : notnull =>
-        result.IsSuccess ? JsonSerializer.SerializeToElement(result.Value, Json) : Failed(result.Errors);
+        result.IsSuccess
+            ? JsonSerializer.SerializeToElement(result.Value, Json)
+            : Failed(result.Errors);
 
     // A command with no value answers nothing, which function invocation tells the model as a completed call.
-    private static JsonElement? Answer(Result result) => result.IsSuccess ? null : Failed(result.Errors);
+    private static JsonElement? Answer(Result result) =>
+        result.IsSuccess ? null : Failed(result.Errors);
 
     private static JsonElement Failed(ImmutableArray<Error> errors) =>
-        JsonSerializer.SerializeToElement(new FailedCall([.. errors.Select(error => new FailedCallError(error.Code, error.Message, error.Target))]), Json);
+        JsonSerializer.SerializeToElement(
+            new FailedCall([
+                .. errors.Select(error => new FailedCallError(
+                    error.Code,
+                    error.Message,
+                    error.Target
+                )),
+            ]),
+            Json
+        );
 
     private static JsonSerializerOptions KitJson()
     {

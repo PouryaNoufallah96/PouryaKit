@@ -49,7 +49,10 @@ internal sealed class IntegrationEventPublisher(
             );
         }
 
-        if (!subscriptions.Publications.TryGetValue(type, out var publication) || publication.Module != operation.Module)
+        if (
+            !subscriptions.Publications.TryGetValue(type, out var publication)
+            || publication.Module != operation.Module
+        )
         {
             throw new InvalidOperationException(
                 $"{operation.Module?.Name ?? "The application"} does not declare that it publishes {type.FullName}. Declare it, with its wire name, in the Composition Root with Publish<{type.Name}>(wireName)."

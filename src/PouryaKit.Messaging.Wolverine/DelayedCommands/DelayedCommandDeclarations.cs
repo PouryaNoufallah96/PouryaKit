@@ -9,7 +9,12 @@ namespace PouryaKit.Messaging.Wolverine;
 /// its durable queue and half of its Receipts' key; <see cref="Module"/> is the Module that schedules it and that its
 /// deliveries run in, null in an application without Modules.
 /// </summary>
-internal sealed record DelayedCommand(string Name, Type Command, Type? Module, Recurrence? Recurring = null);
+internal sealed record DelayedCommand(
+    string Name,
+    Type Command,
+    Type? Module,
+    Recurrence? Recurring = null
+);
 
 /// <summary>
 /// Recurring work: each occurrence runs as an Operation of the system Actor named <see cref="SystemActor"/>, with the
@@ -22,7 +27,9 @@ internal sealed record Recurrence(string SystemActor, Func<DateTimeOffset, Comma
     /// <paramref name="every"/> counted from the Unix epoch, so every Host computes the same ones.
     /// </summary>
     public static DateTimeOffset After(DateTimeOffset after, TimeSpan every) =>
-        DateTimeOffset.UnixEpoch.AddTicks(((after.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / every.Ticks + 1) * every.Ticks);
+        DateTimeOffset.UnixEpoch.AddTicks(
+            ((after.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / every.Ticks + 1) * every.Ticks
+        );
 }
 
 /// <summary>
@@ -37,7 +44,12 @@ internal sealed class DelayedCommandDeclarations
 
     public static DelayedCommandDeclarations In(IServiceCollection services)
     {
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(DelayedCommandDeclarations)) is { } existing)
+        if (
+            services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(DelayedCommandDeclarations)
+            ) is
+            { } existing
+        )
         {
             return (DelayedCommandDeclarations)existing.ImplementationInstance!;
         }
@@ -51,7 +63,9 @@ internal sealed class DelayedCommandDeclarations
 
     /// <summary>The declaration named <paramref name="name"/>, ignoring case; null when none has it.</summary>
     public DelayedCommand? Named(string name) =>
-        _byCommand.Values.FirstOrDefault(declared => string.Equals(declared.Name, name, StringComparison.OrdinalIgnoreCase));
+        _byCommand.Values.FirstOrDefault(declared =>
+            string.Equals(declared.Name, name, StringComparison.OrdinalIgnoreCase)
+        );
 
     /// <summary>
     /// Adds the declaration, or throws naming each problem: the command type is abstract or generic, the name is missing,
@@ -61,17 +75,34 @@ internal sealed class DelayedCommandDeclarations
     public void Add(string name, Type command, Type? module, Recurrence? recurring = null)
     {
         List<string> problems = [];
-        if (command.IsAbstract || command.ContainsGenericParameters || !command.IsAssignableTo(typeof(Command)))
+        if (
+            command.IsAbstract
+            || command.ContainsGenericParameters
+            || !command.IsAssignableTo(typeof(Command))
+        )
         {
-            problems.Add($"{command.FullName} is not a concrete command without a response; only such a command can run later.");
+            problems.Add(
+                $"{command.FullName} is not a concrete command without a response; only such a command can run later."
+            );
         }
 
-        if (Subscriptions.Check(name, $"{command.FullName}'s delayed command name", isQueue: true, problems))
+        if (
+            Subscriptions.Check(
+                name,
+                $"{command.FullName}'s delayed command name",
+                isQueue: true,
+                problems
+            )
+        )
         {
             var declared = new DelayedCommand(name.ToLowerInvariant(), command, module, recurring);
             if (_byCommand.TryGetValue(command, out var existing))
             {
-                if (existing != declared && existing.Name == declared.Name && existing.Module == declared.Module)
+                if (
+                    existing != declared
+                    && existing.Name == declared.Name
+                    && existing.Module == declared.Module
+                )
                 {
                     problems.Add(
                         $"{command.FullName} is already declared as the {(existing.Recurring is null ? "delayed" : "recurring")} command {existing.Name} of {existing.Module?.Name ?? "the application"}; a command is declared once, as a delayed or a recurring command, and a recurring one with one system Actor and one occurrence factory."
@@ -84,9 +115,13 @@ internal sealed class DelayedCommandDeclarations
                     );
                 }
             }
-            else if (_byCommand.Values.FirstOrDefault(other => other.Name == declared.Name) is { } named)
+            else if (
+                _byCommand.Values.FirstOrDefault(other => other.Name == declared.Name) is { } named
+            )
             {
-                problems.Add($"{command.FullName} and {named.Command.FullName} have the delayed command name {declared.Name}, ignoring case; give one another name.");
+                problems.Add(
+                    $"{command.FullName} and {named.Command.FullName} have the delayed command name {declared.Name}, ignoring case; give one another name."
+                );
             }
 
             if (problems.Count == 0)

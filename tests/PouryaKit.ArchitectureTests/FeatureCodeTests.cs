@@ -18,8 +18,14 @@ public sealed class FeatureCodeTests
     {
         Assert.Empty(Sample.Modules.SelectMany(ModuleRules.SavesOrCommits));
         var kitSaves = ModuleRules.SavesOrCommits(Kit("PouryaKit.Persistence.EFCore")).ToList();
-        Assert.Contains("PouryaKit.Persistence.EFCore.EfUnitOfWork calls DbContext.SaveChangesAsync.", kitSaves);
-        Assert.Contains("PouryaKit.Persistence.EFCore.EfUnitOfWork calls IUnitOfWorkOutbox.WriteAsync.", kitSaves);
+        Assert.Contains(
+            "PouryaKit.Persistence.EFCore.EfUnitOfWork calls DbContext.SaveChangesAsync.",
+            kitSaves
+        );
+        Assert.Contains(
+            "PouryaKit.Persistence.EFCore.EfUnitOfWork calls IUnitOfWorkOutbox.WriteAsync.",
+            kitSaves
+        );
     }
 
     [Fact]
@@ -71,12 +77,18 @@ public sealed class FeatureCodeTests
     [InlineData("select 1; /* then */ end transaction", true)]
     [InlineData("do $$ begin perform 1; end $$", false)]
     [InlineData("do $$ begin perform 1; end; $$", false)]
-    [InlineData("create function touch() returns void language plpgsql as $body$ begin perform 1; end; $body$", false)]
+    [InlineData(
+        "create function touch() returns void language plpgsql as $body$ begin perform 1; end; $body$",
+        false
+    )]
     [InlineData("select 'a;commit;b'", false)]
     [InlineData("select 1 -- ; commit", false)]
     [InlineData("Abort; retry?", false)]
     [InlineData("select ended_at from marks where committed", false)]
-    public void Transaction_control_is_found_at_any_statement_boundary_outside_comments_and_strings(string sql, bool isTransactionControl)
+    public void Transaction_control_is_found_at_any_statement_boundary_outside_comments_and_strings(
+        string sql,
+        bool isTransactionControl
+    )
     {
         Assert.Equal(isTransactionControl, ModuleRules.HoldsTransactionControl(sql));
     }
@@ -85,7 +97,10 @@ public sealed class FeatureCodeTests
     public void No_module_contract_or_messaging_contract_names_a_transport_type()
     {
         Assert.Empty(
-            Sample.Modules.Concat(Sample.Contracts).Append(Kit("PouryaKit.Messaging")).SelectMany(ModuleRules.TransportTypesUsedBy)
+            Sample
+                .Modules.Concat(Sample.Contracts)
+                .Append(Kit("PouryaKit.Messaging"))
+                .SelectMany(ModuleRules.TransportTypesUsedBy)
         );
         Assert.NotEmpty(ModuleRules.TransportTypesUsedBy(Kit("PouryaKit.Messaging.Wolverine")));
     }
@@ -93,7 +108,10 @@ public sealed class FeatureCodeTests
     [Fact]
     public void A_module_that_names_a_transport_type_is_rejected()
     {
-        Assert.Contains("Offending uses Wolverine.IMessageBus from Wolverine.", ModuleRules.TransportTypesUsedBy(OffendingModuleAssembly));
+        Assert.Contains(
+            "Offending uses Wolverine.IMessageBus from Wolverine.",
+            ModuleRules.TransportTypesUsedBy(OffendingModuleAssembly)
+        );
         Assert.Empty(ModuleRules.TransportTypesUsedBy(typeof(OffendingCreatedV1).Assembly));
     }
 
@@ -106,23 +124,38 @@ public sealed class FeatureCodeTests
         var offending = typeof(Offending.Stream.SavesItself).Assembly;
 
         Assert.All(
-            [typeof(ModularMonolith.Tests.Streams.AccountsModule).Assembly, typeof(Ledger.LedgerModule).Assembly],
+            [
+                typeof(ModularMonolith.Tests.Streams.AccountsModule).Assembly,
+                typeof(Ledger.LedgerModule).Assembly,
+            ],
             streams =>
             {
                 Assert.Equal(
                     ModuleRules.GeneratedEvolverTypes.Order(StringComparer.Ordinal),
-                    ModuleRules.TypesReferencedBy(streams).Where(type => type.Assembly.StartsWith("JasperFx", StringComparison.Ordinal)).Select(type => type.Name).Order(StringComparer.Ordinal)
+                    ModuleRules
+                        .TypesReferencedBy(streams)
+                        .Where(type =>
+                            type.Assembly.StartsWith("JasperFx", StringComparison.Ordinal)
+                        )
+                        .Select(type => type.Name)
+                        .Order(StringComparer.Ordinal)
                 );
                 Assert.Empty(ModuleRules.TransportTypesUsedBy(streams));
                 Assert.Empty(ModuleRules.SavesOrCommits(streams));
             }
         );
         Assert.Equal(
-            ["Offending.Stream uses Marten.IDocumentOperations from Marten.", "Offending.Stream uses Marten.IDocumentSession from Marten."],
+            [
+                "Offending.Stream uses Marten.IDocumentOperations from Marten.",
+                "Offending.Stream uses Marten.IDocumentSession from Marten.",
+            ],
             ModuleRules.TransportTypesUsedBy(offending).Order(StringComparer.Ordinal)
         );
         Assert.Equal(
-            ["Offending.Stream.RunsMartenSteps calls IStreamOutbox.WriteAsync.", "Offending.Stream.RunsMartenSteps calls MartenUnitOfWorkTransaction.ExecuteAsync."],
+            [
+                "Offending.Stream.RunsMartenSteps calls IStreamOutbox.WriteAsync.",
+                "Offending.Stream.RunsMartenSteps calls MartenUnitOfWorkTransaction.ExecuteAsync.",
+            ],
             ModuleRules.SavesOrCommits(offending).Order(StringComparer.Ordinal)
         );
     }
@@ -138,8 +171,13 @@ public sealed class FeatureCodeTests
         Assert.Empty(ModuleRules.TransportTypesUsedBy(sagas));
         Assert.Empty(ModuleRules.SavesOrCommits(sagas));
         Assert.Equal(
-            ["Offending.Saga uses Wolverine.Saga from Wolverine.", "Offending.Saga uses Wolverine.TimeoutMessage from Wolverine."],
-            ModuleRules.TransportTypesUsedBy(typeof(Offending.Saga.OwnSaga).Assembly).Order(StringComparer.Ordinal)
+            [
+                "Offending.Saga uses Wolverine.Saga from Wolverine.",
+                "Offending.Saga uses Wolverine.TimeoutMessage from Wolverine.",
+            ],
+            ModuleRules
+                .TransportTypesUsedBy(typeof(Offending.Saga.OwnSaga).Assembly)
+                .Order(StringComparer.Ordinal)
         );
     }
 
@@ -149,34 +187,64 @@ public sealed class FeatureCodeTests
         var models = Sample.Models.Values.SelectMany(models => models).ToList();
 
         Assert.Equal(4, models.Count);
-        Assert.Empty(models.SelectMany(model => ModuleRules.EnvelopeStorageIn("a Module's DbContext", model)));
+        Assert.Empty(
+            models.SelectMany(model => ModuleRules.EnvelopeStorageIn("a Module's DbContext", model))
+        );
     }
 
     [Fact]
     public void A_dbcontext_that_maps_the_message_stores_envelopes_is_rejected()
     {
-        var options = new DbContextOptionsBuilder().UseNpgsql("Host=localhost;Database=architecture-tests").Options;
-        var contextType = OffendingModuleAssembly.GetType("Offending.OffendingDbContext", throwOnError: true)!;
+        var options = new DbContextOptionsBuilder()
+            .UseNpgsql("Host=localhost;Database=architecture-tests")
+            .Options;
+        var contextType = OffendingModuleAssembly.GetType(
+            "Offending.OffendingDbContext",
+            throwOnError: true
+        )!;
         using var context = (DbContext)Activator.CreateInstance(contextType, [options])!;
 
-        var violations = ModuleRules.EnvelopeStorageIn("OffendingDbContext", context.GetService<IDesignTimeModel>().Model).ToList();
+        var violations = ModuleRules
+            .EnvelopeStorageIn("OffendingDbContext", context.GetService<IDesignTimeModel>().Model)
+            .ToList();
 
-        Assert.Contains(violations, violation => violation.Contains("wolverine.wolverine_incoming_envelopes", StringComparison.Ordinal));
-        Assert.Contains(violations, violation => violation.Contains("wolverine.wolverine_outgoing_envelopes", StringComparison.Ordinal));
+        Assert.Contains(
+            violations,
+            violation =>
+                violation.Contains(
+                    "wolverine.wolverine_incoming_envelopes",
+                    StringComparison.Ordinal
+                )
+        );
+        Assert.Contains(
+            violations,
+            violation =>
+                violation.Contains(
+                    "wolverine.wolverine_outgoing_envelopes",
+                    StringComparison.Ordinal
+                )
+        );
     }
 
     [Fact]
     public void Only_the_kits_domain_event_drain_clears_domain_events()
     {
         Assert.Empty(Sample.Modules.SelectMany(ModuleRules.ClearsDomainEvents));
-        Assert.Equal(["PouryaKit.Cqrs.DomainEventDrain"], Sample.KitPackages.SelectMany(ModuleRules.ClearsDomainEvents));
+        Assert.Equal(
+            ["PouryaKit.Cqrs.DomainEventDrain"],
+            Sample.KitPackages.SelectMany(ModuleRules.ClearsDomainEvents)
+        );
     }
 
     [Fact]
     public void A_module_that_clears_domain_events_is_rejected()
     {
-        Assert.Equal(["Offending.ClearingDomainEventHandler"], ModuleRules.ClearsDomainEvents(OffendingModuleAssembly));
+        Assert.Equal(
+            ["Offending.ClearingDomainEventHandler"],
+            ModuleRules.ClearsDomainEvents(OffendingModuleAssembly)
+        );
     }
 
-    private static Assembly Kit(string name) => Assert.Single(Sample.KitPackages, package => package.GetName().Name == name);
+    private static Assembly Kit(string name) =>
+        Assert.Single(Sample.KitPackages, package => package.GetName().Name == name);
 }

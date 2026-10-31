@@ -15,8 +15,19 @@ internal sealed class GetReportJobEndpoint : IEndpoint
         routes
             .MapGet(
                 "/{jobId}",
-                async (Guid jobId, OperationContext context, IGatewayProcessor<ReportModule> reports, CancellationToken cancellationToken) =>
-                    (await reports.QueryAsync(new GetReportJobQuery(jobId), context, cancellationToken)).ToHttpResult()
+                async (
+                    Guid jobId,
+                    OperationContext context,
+                    IGatewayProcessor<ReportModule> reports,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await reports.QueryAsync(
+                            new GetReportJobQuery(jobId),
+                            context,
+                            cancellationToken
+                        )
+                    ).ToHttpResult()
             )
             .WithName(Name);
 }

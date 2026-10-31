@@ -60,19 +60,31 @@ public static class ModularMonolithHost
         builder.Services.AddPouryaKitWeb();
         // The peer Hosts, by their authenticated Actor claim, that may continue an Operation of theirs here
         // (PouryaKit:TrustedPeers:Peers). None are configured: every caller starts a new chain of work.
-        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(
+            builder.Configuration.GetSection("PouryaKit:TrustedPeers")
+        );
         // Named CORS policies, response compression and the rate limit per Actor (PouryaKit:Web). None is configured:
         // the Host answers no cross-origin request, compresses nothing and limits no one.
-        builder.Services.Configure<PouryaKitCorsOptions>(builder.Configuration.GetSection("PouryaKit:Web:Cors"));
-        builder.Services.Configure<PouryaKitCompressionOptions>(builder.Configuration.GetSection("PouryaKit:Web:Compression"));
-        builder.Services.Configure<PouryaKitRateLimitOptions>(builder.Configuration.GetSection("PouryaKit:Web:RateLimit"));
+        builder.Services.Configure<PouryaKitCorsOptions>(
+            builder.Configuration.GetSection("PouryaKit:Web:Cors")
+        );
+        builder.Services.Configure<PouryaKitCompressionOptions>(
+            builder.Configuration.GetSection("PouryaKit:Web:Compression")
+        );
+        builder.Services.Configure<PouryaKitRateLimitOptions>(
+            builder.Configuration.GetSection("PouryaKit:Web:RateLimit")
+        );
         // The API versions the Modules declare, one OpenAPI document each, and the configured sunset of each version a
         // Module retires (PouryaKit:OpenApi:Sunsets).
         builder.Services.AddPouryaKitOpenApi();
-        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
+        builder.Services.Configure<PouryaKitOpenApiOptions>(
+            builder.Configuration.GetSection("PouryaKit:OpenApi")
+        );
         // How long an idempotent request's key is kept, and how its expired keys are removed (PouryaKit:Idempotency).
         // Nothing is configured: 24 hours, cleaned up every hour in batches of 1000.
-        builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
+        builder.Services.Configure<PouryaKitIdempotencyOptions>(
+            builder.Configuration.GetSection("PouryaKit:Idempotency")
+        );
         // Outgoing calls retry transient failures of safe methods only and carry the Operation Context they are sent
         // with, never the caller's bearer token. A peer that authenticates this Host gets the Host's own credentials.
         var downstream = builder.Services.AddHttpClient(DownstreamClient);
@@ -109,9 +121,13 @@ public static class ModularMonolithHost
         // Email a Notification Handler sends through IEmailSender goes out through MailKit to the SMTP server at
         // PouryaKit:Email; appsettings.json names a local Papercut, which keeps every mail and which a developer runs.
         builder.Services.AddPouryaKitMailKit();
-        builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        builder.Services.Configure<PouryaKitMailKitOptions>(
+            builder.Configuration.GetSection("PouryaKit:Email")
+        );
         // Files go to the S3 bucket of PouryaKit:Storage:S3; appsettings.json names a local RustFS, which a developer runs too.
-        builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
+        builder.Services.Configure<PouryaKitS3StorageOptions>(
+            builder.Configuration.GetSection("PouryaKit:Storage:S3")
+        );
         builder.Services.AddPouryaKitS3Storage();
         // The report Module answers POST /reports with a job, generated in the background and stored there: the Host
         // decides who may request which report and lays each kind out (SalesReports), and the Module reads how long a job
@@ -121,7 +137,9 @@ public static class ModularMonolithHost
         // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local
         // Ollama, and GetProduct as the one tool a run may be given.
         builder.Services.AddPouryaKitAI();
-        builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+        builder.Services.Configure<PouryaKitAIOptions>(
+            builder.Configuration.GetSection("PouryaKit:AI")
+        );
         // The application's guardrail checks every call to the model, before and after it: no card number goes either way.
         builder.Services.AddSingleton<IChatGuardrail, CardNumberGuardrail>();
         // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the

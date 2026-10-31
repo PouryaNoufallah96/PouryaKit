@@ -67,8 +67,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 42,
-          "end_line": 48,
+          "line": 43,
+          "end_line": 54,
           "label": "BeginTransactionAsync on the DbContext"
         }
       ]
@@ -84,20 +84,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
-          "line": 259,
-          "end_line": 285,
+          "line": 301,
+          "end_line": 333,
           "label": "reserve, handle, record in the transaction"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
-          "line": 21,
-          "end_line": 64,
+          "line": 22,
+          "end_line": 79,
           "label": "the key on the Unit of Work's transaction"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 49,
-          "end_line": 49,
+          "line": 55,
+          "end_line": 55,
           "label": "the command runs"
         }
       ]
@@ -113,8 +113,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 50,
-          "end_line": 50,
+          "line": 56,
+          "end_line": 56,
           "label": "Result and Operation checked"
         }
       ]
@@ -130,20 +130,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 52,
-          "end_line": 55,
+          "line": 58,
+          "end_line": 62,
           "label": "every tracked aggregate"
         },
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs",
           "line": 40,
-          "end_line": 84,
+          "end_line": 85,
           "label": "rounds, depth guard, stops on failure"
         },
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs",
-          "line": 95,
-          "end_line": 117,
+          "line": 100,
+          "end_line": 122,
           "label": "one handler at a time, by name"
         }
       ]
@@ -159,8 +159,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 57,
-          "end_line": 58,
+          "line": 64,
+          "end_line": 65,
           "label": "rollback-only after the drain"
         }
       ]
@@ -176,20 +176,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 60,
-          "end_line": 60,
+          "line": 67,
+          "end_line": 67,
           "label": "returns the changed aggregates"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs",
           "line": 18,
-          "end_line": 112,
+          "end_line": 160,
           "label": "marks, cascades, tenant, Version + 1, stamps"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 61,
-          "end_line": 64,
+          "line": 68,
+          "end_line": 71,
           "label": "another tenant's change becomes the Result"
         }
       ]
@@ -205,20 +205,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 65,
-          "end_line": 68,
+          "line": 72,
+          "end_line": 75,
           "label": "only when an Outbox is registered"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
           "line": 49,
-          "end_line": 153,
+          "end_line": 179,
           "label": "envelopes and #published records"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotStep.cs",
           "line": 33,
-          "end_line": 72,
+          "end_line": 84,
           "label": "Snapshots built from the prepared state"
         }
       ]
@@ -234,8 +234,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 70,
-          "end_line": 72,
+          "line": 77,
+          "end_line": 79,
           "label": "rollback-only after the Outbox write"
         }
       ]
@@ -251,14 +251,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 74,
-          "end_line": 77,
+          "line": 81,
+          "end_line": 84,
           "label": "a refusal becomes the Result"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 99,
-          "end_line": 116,
+          "line": 106,
+          "end_line": 125,
           "label": "concurrency or mapped unique constraint"
         }
       ],
@@ -275,8 +275,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 80,
-          "end_line": 80,
+          "line": 87,
+          "end_line": 87,
           "label": "CommitAsync"
         }
       ],
@@ -293,14 +293,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 81,
-          "end_line": 86,
+          "line": 88,
+          "end_line": 93,
           "label": "after the commit, then the Result"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 51,
-          "end_line": 68,
+          "line": 50,
+          "end_line": 67,
           "label": "a failed send is logged, not thrown"
         }
       ],
@@ -317,8 +317,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 92,
-          "end_line": 95,
+          "line": 99,
+          "end_line": 102,
           "label": "the failure or RollbackErrors"
         }
       ]

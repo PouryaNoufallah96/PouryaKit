@@ -9,7 +9,11 @@ namespace PouryaKit.Messaging.Wolverine.Marten;
 // commits with the handler's Stream effect or not at all. Marten documents would be written only at the save (ADR 0011).
 internal sealed class MartenReceipts(IUnitOfWork unitOfWork) : IReceipts
 {
-    public async Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken) =>
+    public async Task<bool> RecordAsync(
+        string subscription,
+        Guid messageId,
+        CancellationToken cancellationToken
+    ) =>
         await MartenUnitOfWorkTransaction.ExecuteAsync(
             unitOfWork,
             ReceiptStatements.Record,
@@ -18,7 +22,12 @@ internal sealed class MartenReceipts(IUnitOfWork unitOfWork) : IReceipts
             cancellationToken
         ) == 1;
 
-    public async Task<bool> RecordVersionAsync(string subscription, string aggregateId, long version, CancellationToken cancellationToken) =>
+    public async Task<bool> RecordVersionAsync(
+        string subscription,
+        string aggregateId,
+        long version,
+        CancellationToken cancellationToken
+    ) =>
         await MartenUnitOfWorkTransaction.ExecuteAsync(
             unitOfWork,
             ReceiptStatements.RecordVersion,

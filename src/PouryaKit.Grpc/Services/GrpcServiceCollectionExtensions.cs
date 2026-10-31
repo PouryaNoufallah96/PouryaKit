@@ -33,10 +33,19 @@ public static class GrpcServiceCollectionExtensions
             // reads as Unimplemented.
             services.AddGrpc(grpc => grpc.IgnoreUnknownServices = true);
             services.TryAddSingleton<MappedGrpcServices>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedGrpcServicesCheck>());
-            if (!services.Any(descriptor => descriptor.ImplementationInstance is GrpcService { Type: var type } && type == typeof(TService)))
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IStartupCheck, UnmappedGrpcServicesCheck>()
+            );
+            if (
+                !services.Any(descriptor =>
+                    descriptor.ImplementationInstance is GrpcService { Type: var type }
+                    && type == typeof(TService)
+                )
+            )
             {
-                services.AddSingleton(new GrpcService(typeof(TService), routes => routes.MapGrpcService<TService>()));
+                services.AddSingleton(
+                    new GrpcService(typeof(TService), routes => routes.MapGrpcService<TService>())
+                );
             }
 
             return services;

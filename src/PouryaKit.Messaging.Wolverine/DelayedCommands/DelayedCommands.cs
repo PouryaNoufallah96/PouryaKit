@@ -6,8 +6,11 @@ namespace PouryaKit.Messaging.Wolverine;
 // Scheduling is allowed only where the Operation may change state and inside its Unit of Work, whose commit is what
 // writes a delayed command to the Outbox: scheduled anywhere else, it would be kept in the scope and dropped with it.
 // And only for a command its own Module declared, so it runs in that Module, on a durable queue of its own.
-internal sealed class DelayedCommands(DelayedCommandDeclarations declarations, Operation operation, IServiceProvider scope)
-    : IDelayedCommands
+internal sealed class DelayedCommands(
+    DelayedCommandDeclarations declarations,
+    Operation operation,
+    IServiceProvider scope
+) : IDelayedCommands
 {
     public void Schedule(Command command, DateTimeOffset at)
     {

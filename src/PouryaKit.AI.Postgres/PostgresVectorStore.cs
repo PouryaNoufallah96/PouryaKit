@@ -25,13 +25,21 @@ internal sealed class PostgresVectorStore(
 {
     private string Tenant => operation.Context?.Tenant ?? OperationContext.NoTenant;
 
-    public async Task StoreAsync(string collection, string key, string content, CancellationToken cancellationToken)
+    public async Task StoreAsync(
+        string collection,
+        string key,
+        string content,
+        CancellationToken cancellationToken
+    )
     {
         var table = VectorCollection.Table(collection);
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(content);
         var (connection, transaction) = unitOfWorkConnection.Join();
-        var embedding = await generator.GenerateVectorAsync(content, cancellationToken: cancellationToken);
+        var embedding = await generator.GenerateVectorAsync(
+            content,
+            cancellationToken: cancellationToken
+        );
         await ExecuteAsync(
             connection,
             transaction,
@@ -42,7 +50,11 @@ internal sealed class PostgresVectorStore(
         );
     }
 
-    public async Task RemoveAsync(string collection, string key, CancellationToken cancellationToken)
+    public async Task RemoveAsync(
+        string collection,
+        string key,
+        CancellationToken cancellationToken
+    )
     {
         var table = VectorCollection.Table(collection);
         ArgumentNullException.ThrowIfNull(key);
@@ -57,7 +69,12 @@ internal sealed class PostgresVectorStore(
         );
     }
 
-    public async Task<IReadOnlyList<VectorMatch>> SearchAsync(string collection, string query, int top, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<VectorMatch>> SearchAsync(
+        string collection,
+        string query,
+        int top,
+        CancellationToken cancellationToken
+    )
     {
         var table = VectorCollection.Table(collection);
         ArgumentNullException.ThrowIfNull(query);
@@ -68,7 +85,10 @@ internal sealed class PostgresVectorStore(
                 $"Searching a vector collection needs the EF Core Unit of Work of a Module stored with UsePouryaKitPostgres, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
             )
         ).Database;
-        var embedding = await generator.GenerateVectorAsync(query, cancellationToken: cancellationToken);
+        var embedding = await generator.GenerateVectorAsync(
+            query,
+            cancellationToken: cancellationToken
+        );
         await database.OpenConnectionAsync(cancellationToken);
         try
         {
@@ -84,7 +104,9 @@ internal sealed class PostgresVectorStore(
                     await using var reader = await command.ExecuteReaderAsync(cancellationToken);
                     while (await reader.ReadAsync(cancellationToken))
                     {
-                        matches.Add(new(reader.GetString(0), reader.GetString(1), reader.GetDouble(2)));
+                        matches.Add(
+                            new(reader.GetString(0), reader.GetString(1), reader.GetDouble(2))
+                        );
                     }
 
                     return matches;
@@ -120,7 +142,8 @@ internal sealed class PostgresVectorStore(
         {
             return await execute(command);
         }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
+        catch (PostgresException exception)
+            when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
         {
             throw new InvalidOperationException(
                 $"There is no {VectorCollectionTable.Schema}.{collection} table to keep the vector collection {collection} in. Add a migration to the Module that calls CreateVectorCollection with its name and the embedding model's dimensions.",

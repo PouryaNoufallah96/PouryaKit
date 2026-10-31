@@ -60,10 +60,15 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
             var toSecond = await GetProductAsync(first, product, ada);
             var toFirst = await GetProductAsync(second, product, grace);
-            var unsent = await Assert.ThrowsAsync<InvalidOperationException>(() => GetProductAsync(first, product, null));
+            var unsent = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                GetProductAsync(first, product, null)
+            );
             // The service's Module also maps prefixed HTTP endpoints, which answer beside it.
             using var person = AppFixture.ClientOf(second, "grace", "acme");
-            var http = await person.GetAsync($"/catalog/products/{product}", TestContext.Current.CancellationToken);
+            var http = await person.GetAsync(
+                $"/catalog/products/{product}",
+                TestContext.Current.CancellationToken
+            );
             var seenBySecond = second.Services.GetRequiredService<CatalogQuestionContexts>().Seen;
             var seenByFirst = first.Services.GetRequiredService<CatalogQuestionContexts>().Seen;
             await second.StopAsync(TestContext.Current.CancellationToken);
@@ -81,7 +86,10 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
                 sent =>
                 {
                     Assert.InRange(Timeout(sent), Deadline - TimeSpan.FromSeconds(5), Deadline);
-                    Assert.Equal($"{TestAuthentication.SchemeName} {AppFixture.TrustedPeer}", sent.Headers.Authorization?.ToString());
+                    Assert.Equal(
+                        $"{TestAuthentication.SchemeName} {AppFixture.TrustedPeer}",
+                        sent.Headers.Authorization?.ToString()
+                    );
                 }
             );
             Assert.Equal(2, fromFirst.Count + fromSecond.Count);
@@ -100,20 +108,29 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         using var peer = ModularMonolithProcess.Start(Fixture.ConnectionString);
         var address = await peer.ListeningAsync(TestContext.Current.CancellationToken);
-        var credentials = new AuthenticationHeaderValue("Bearer", TestIssuer.Token(new() { ["sub"] = AppFixture.TrustedPeer }));
+        var credentials = new AuthenticationHeaderValue(
+            "Bearer",
+            TestIssuer.Token(new() { ["sub"] = AppFixture.TrustedPeer })
+        );
         List<HttpRequestMessage> sent = [];
         await using var host = AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
             Fixture.Logs,
-            builder => AddClient(builder.Services, address).AddHttpMessageHandler(() => new AsTrustedPeer(sent, credentials))
+            builder =>
+                AddClient(builder.Services, address)
+                    .AddHttpMessageHandler(() => new AsTrustedPeer(sent, credentials))
         );
         await host.StartAsync(TestContext.Current.CancellationToken);
         var ada = new OperationContext(Actor.Person("ada"), "acme");
 
         var reply = await GetProductAsync(host, product, ada);
         await host.StopAsync(TestContext.Current.CancellationToken);
-        var answered = await OperationsLoggedAsync(peer, nameof(GetProductQuery), ada.CorrelationId);
+        var answered = await OperationsLoggedAsync(
+            peer,
+            nameof(GetProductQuery),
+            ada.CorrelationId
+        );
 
         Assert.Equal((product.ToString(), Name(product)), (reply.Id, reply.Name));
         Assert.All(answered, operation => Assert.Equal("CatalogModule", operation.Module));
@@ -129,10 +146,17 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         var product = await CreateProductAsync();
         using var grace = Channel();
 
-        var ignored = await FailureAsync(grace, product.ToString(), Caller("grace", ContextHeaders()));
+        var ignored = await FailureAsync(
+            grace,
+            product.ToString(),
+            Caller("grace", ContextHeaders())
+        );
 
         Assert.Equal(StatusCode.PermissionDenied, ignored.StatusCode);
-        Assert.Equal([TenantErrors.Required.Code], Errors(ignored).Select(error => error.GetProperty("code").GetString()));
+        Assert.Equal(
+            [TenantErrors.Required.Code],
+            Errors(ignored).Select(error => error.GetProperty("code").GetString())
+        );
     }
 
     // The services' group requires an authenticated caller itself, also in a Host whose fallback policy admits anyone.
@@ -143,12 +167,19 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             "Development",
             Fixture.ConnectionString,
             Fixture.Logs,
-            builder => builder.Services.PostConfigure<AuthorizationOptions>(authorization => authorization.FallbackPolicy = null)
+            builder =>
+                builder.Services.PostConfigure<AuthorizationOptions>(authorization =>
+                    authorization.FallbackPolicy = null
+                )
         );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = Channel(host);
 
-        var unauthenticated = await FailureAsync(anonymous, Guid.CreateVersion7().ToString(), ContextHeaders());
+        var unauthenticated = await FailureAsync(
+            anonymous,
+            Guid.CreateVersion7().ToString(),
+            ContextHeaders()
+        );
         await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(StatusCode.Unauthenticated, unauthenticated.StatusCode);
@@ -156,10 +187,26 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
     // The Kit's refusal of a trusted peer's unreadable headers is the status, not an HTTP 400 the client cannot read.
     [Theory]
-    [InlineData(OperationContextHeaders.CausationId, "not-a-guid", $"The request's {OperationContextHeaders.CausationId} header is not a Guid.")]
-    [InlineData(OperationContextHeaders.ActorKind, "Robot", $"The request's {OperationContextHeaders.ActorKind} header is Person or System.")]
-    [InlineData(OperationContextHeaders.Tenant, "acmé", $"The request continues an Operation but has no single {OperationContextHeaders.Tenant} header that is {Rule}.")]
-    public async Task A_trusted_peers_unreadable_context_headers_answer_invalid_argument_with_the_rule(string header, string value, string message)
+    [InlineData(
+        OperationContextHeaders.CausationId,
+        "not-a-guid",
+        $"The request's {OperationContextHeaders.CausationId} header is not a Guid."
+    )]
+    [InlineData(
+        OperationContextHeaders.ActorKind,
+        "Robot",
+        $"The request's {OperationContextHeaders.ActorKind} header is Person or System."
+    )]
+    [InlineData(
+        OperationContextHeaders.Tenant,
+        "acmé",
+        $"The request continues an Operation but has no single {OperationContextHeaders.Tenant} header that is {Rule}."
+    )]
+    public async Task A_trusted_peers_unreadable_context_headers_answer_invalid_argument_with_the_rule(
+        string header,
+        string value,
+        string message
+    )
     {
         using var peer = Channel();
         var headers = Caller(AppFixture.TrustedPeer, ContextHeaders());
@@ -168,7 +215,10 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var refused = await FailureAsync(peer, Guid.CreateVersion7().ToString(), headers);
 
-        Assert.Equal((StatusCode.InvalidArgument, message), (refused.StatusCode, refused.Status.Detail));
+        Assert.Equal(
+            (StatusCode.InvalidArgument, message),
+            (refused.StatusCode, refused.Status.Detail)
+        );
     }
 
     #region failed-result-as-grpc-status
@@ -176,15 +226,28 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_failed_result_answers_its_errors_kind_with_every_error_in_the_trailer()
     {
         using var channel = Channel();
-        var person = Caller("grace", new Metadata { { TestAuthentication.TenantHeader, AppFixture.TestTenant } });
+        var person = Caller(
+            "grace",
+            new Metadata { { TestAuthentication.TenantHeader, AppFixture.TestTenant } }
+        );
 
         var missing = await FailureAsync(channel, Guid.CreateVersion7().ToString(), person);
         var empty = await FailureAsync(channel, Guid.Empty.ToString(), person);
 
-        Assert.Equal((StatusCode.NotFound, ProductErrors.NotFound.Message), (missing.StatusCode, missing.Status.Detail));
+        Assert.Equal(
+            (StatusCode.NotFound, ProductErrors.NotFound.Message),
+            (missing.StatusCode, missing.Status.Detail)
+        );
         Assert.Equal(
             [(ProductErrors.NotFound.Code, ProductErrors.NotFound.Message, (string?)null)],
-            Errors(missing).Select(error => (error.GetProperty("code").GetString(), error.GetProperty("message").GetString(), Target(error)))
+            Errors(missing)
+                .Select(error =>
+                    (
+                        error.GetProperty("code").GetString(),
+                        error.GetProperty("message").GetString(),
+                        Target(error)
+                    )
+                )
         );
         Assert.Equal(StatusCode.InvalidArgument, empty.StatusCode);
         Assert.Equal("ProductId", Target(Assert.Single(Errors(empty))));
@@ -213,26 +276,54 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             Error.Unexpected("Kind.Unexpected", "unexpected"),
         ];
 
-        foreach (ImmutableArray<Error> errors in kinds.Select(one => ImmutableArray.Create(one)).Concat(from a in kinds from b in kinds where a != b select ImmutableArray.Create(a, b)))
+        foreach (
+            ImmutableArray<Error> errors in kinds
+                .Select(one => ImmutableArray.Create(one))
+                .Concat(
+                    from a in kinds
+                    from b in kinds
+                    where a != b
+                    select ImmutableArray.Create(a, b)
+                )
+        )
         {
             Result failed = errors;
             var http = Assert.IsType<ProblemHttpResult>(failed.ToHttpResult());
             var rpc = Assert.Throws<RpcException>(() => failed.ToGrpcResponse(new ProductReply()));
 
             Assert.Equal(statuses[http.StatusCode], rpc.StatusCode);
-            Assert.Equal(errors.Select(error => error.Code), Errors(rpc).Select(error => error.GetProperty("code").GetString()));
+            Assert.Equal(
+                errors.Select(error => error.Code),
+                Errors(rpc).Select(error => error.GetProperty("code").GetString())
+            );
         }
     }
 
     [Theory]
     [InlineData("--urls=http://localhost:5100", "http://127.0.0.1:5100", "http://localhost:5100")]
     [InlineData("--http_ports=5101", "http://localhost:5101/", "http://*:5101")]
-    [InlineData("--Kestrel:Endpoints:Grpc:Url=https://catalog.local:5102", "https://CATALOG.local:5102", "https://catalog.local:5102")]
+    [InlineData(
+        "--Kestrel:Endpoints:Grpc:Url=https://catalog.local:5102",
+        "https://CATALOG.local:5102",
+        "https://catalog.local:5102"
+    )]
     // Review F6: Kestrel binds a listener's host name that is not localhost to every address.
-    [InlineData("--Kestrel:Endpoints:Grpc:Url=http://catalog.local:5102", "http://127.0.0.1:5102", "http://catalog.local:5102")]
+    [InlineData(
+        "--Kestrel:Endpoints:Grpc:Url=http://catalog.local:5102",
+        "http://127.0.0.1:5102",
+        "http://catalog.local:5102"
+    )]
     // Review F5: preferHostingUrls keeps the urls over the Kestrel endpoints.
-    [InlineData("--urls=http://localhost:9000 --Kestrel:Endpoints:Grpc:Url=http://localhost:9100 --preferHostingUrls=true", "http://localhost:9000", "http://localhost:9000")]
-    public async Task A_client_addressed_at_one_of_its_own_hosts_listening_urls_fails_the_start(string listening, string address, string own)
+    [InlineData(
+        "--urls=http://localhost:9000 --Kestrel:Endpoints:Grpc:Url=http://localhost:9100 --preferHostingUrls=true",
+        "http://localhost:9000",
+        "http://localhost:9000"
+    )]
+    public async Task A_client_addressed_at_one_of_its_own_hosts_listening_urls_fails_the_start(
+        string listening,
+        string address,
+        string own
+    )
     {
         await using var host = AppFixture.ComposeHost(
             "Development",
@@ -242,9 +333,15 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             listening.Split(' ')
         );
 
-        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
-        Assert.Contains($"The gRPC client {Client} is addressed at {new Uri(address)}, one of this Host's own listening URLs ({own}).", refused.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            $"The gRPC client {Client} is addressed at {new Uri(address)}, one of this Host's own listening URLs ({own}).",
+            refused.Message,
+            StringComparison.Ordinal
+        );
     }
 
     // Ticket #159: Kestrel keeps a listener set in code to itself until it binds, so the check compares what it bound.
@@ -259,15 +356,23 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             new RecordedLogs(),
             builder =>
             {
-                builder.WebHost.UseKestrel().ConfigureKestrel(kestrel => kestrel.ListenLocalhost(port));
+                builder
+                    .WebHost.UseKestrel()
+                    .ConfigureKestrel(kestrel => kestrel.ListenLocalhost(port));
                 AddClient(builder.Services, new Uri($"http://localhost:{port}"));
             }
         );
 
         // Caught, as a caller that goes on would: the Host it leaves behind has stopped, and nothing listens on the port.
-        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
         using var probe = new TcpClient();
-        var connecting = await Record.ExceptionAsync(() => probe.ConnectAsync(IPAddress.Loopback, port, TestContext.Current.CancellationToken).AsTask());
+        var connecting = await Record.ExceptionAsync(() =>
+            probe
+                .ConnectAsync(IPAddress.Loopback, port, TestContext.Current.CancellationToken)
+                .AsTask()
+        );
 
         Assert.Equal(
             $"The gRPC client {Client} is addressed at http://localhost:{port}/, one of this Host's own listening URLs (http://localhost:{port}). A call between Modules of one Host goes through the Gateway, never a loopback; address the client at another Host. The server had already bound it, so the Host listened, and stopped, before its start failed.",
@@ -289,7 +394,9 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             new RecordedLogs(),
             builder =>
             {
-                builder.WebHost.UseKestrel().ConfigureKestrel(kestrel => kestrel.ListenLocalhost(port));
+                builder
+                    .WebHost.UseKestrel()
+                    .ConfigureKestrel(kestrel => kestrel.ListenLocalhost(port));
                 AddClient(builder.Services, new Uri("http://localhost:5000"));
             }
         );
@@ -303,7 +410,10 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("http://localhost:5000", true)]
     [InlineData("http://127.0.0.1:5000", true)]
     [InlineData("http://localhost:5001", false)]
-    public void Kestrels_default_among_the_bound_addresses_refuses_a_client_there_and_no_other(string address, bool refused)
+    public void Kestrels_default_among_the_bound_addresses_refuses_a_client_there_and_no_other(
+        string address,
+        bool refused
+    )
     {
         var services = new ServiceCollection();
         AddClient(services, new Uri(address));
@@ -368,8 +478,14 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     // so a client at the overridden one, as a sidecar on the pod's localhost, calls another process.
     [Theory]
     [InlineData("--http_ports=8080 --urls=http://localhost:9000", "http://localhost:8080")]
-    [InlineData("--urls=http://localhost:9000 --Kestrel:Endpoints:Grpc:Url=http://localhost:9100", "http://localhost:9000")]
-    public async Task A_client_addressed_at_a_listening_url_its_host_overrides_starts(string listening, string address)
+    [InlineData(
+        "--urls=http://localhost:9000 --Kestrel:Endpoints:Grpc:Url=http://localhost:9100",
+        "http://localhost:9000"
+    )]
+    public async Task A_client_addressed_at_a_listening_url_its_host_overrides_starts(
+        string listening,
+        string address
+    )
     {
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         await using var host = AppFixture.ComposeHost(
@@ -396,7 +512,9 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         builder.AddPouryaKitCompositionChecks();
         await using var host = builder.Build();
 
-        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             $"The gRPC services {typeof(ProductGrpcService).FullName} are declared but never mapped, so every call to them answers Unimplemented. Call app.MapPouryaKitGrpcServices() once the Host is built.",
@@ -412,7 +530,9 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         var product = await CreateProductAsync();
         var services = new ServiceCollection();
         AddClient(services, new Uri("http://peer.local"))
-            .ConfigurePrimaryHttpMessageHandler(() => new Http2(Fixture.Host.GetTestServer().CreateHandler()))
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new Http2(Fixture.Host.GetTestServer().CreateHandler())
+            )
             .AddHttpMessageHandler(() => new AsTrustedPeer([]));
         await using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<ProductService.ProductServiceClient>();
@@ -422,11 +542,17 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         ).WithOperationContext(new OperationContext(Actor.Person("ada")));
 
         var refused = await Assert.ThrowsAsync<RpcException>(async () =>
-            await client.GetProductAsync(new GetProductRequest { ProductId = product.ToString() }, options)
+            await client.GetProductAsync(
+                new GetProductRequest { ProductId = product.ToString() },
+                options
+            )
         );
 
         Assert.Equal(StatusCode.PermissionDenied, refused.StatusCode);
-        Assert.Equal([TenantErrors.Required.Code], Errors(refused).Select(error => error.GetProperty("code").GetString()));
+        Assert.Equal(
+            [TenantErrors.Required.Code],
+            Errors(refused).Select(error => error.GetProperty("code").GetString())
+        );
     }
 
     // PR #143: a second interceptor would look for the context on the first one's copy of the metadata and find none.
@@ -437,22 +563,27 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         var services = new ServiceCollection();
         List<HttpRequestMessage> sent = [];
         AddClient(services, new Uri("http://peer.local"))
-            .ConfigurePrimaryHttpMessageHandler(() => new Http2(Fixture.Host.GetTestServer().CreateHandler()))
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new Http2(Fixture.Host.GetTestServer().CreateHandler())
+            )
             .AddHttpMessageHandler(() => new AsTrustedPeer(sent));
         var registrations = services.Count;
         services.AddPouryaKitGrpcClient<ProductService.ProductServiceClient>(Client);
         var registrationsAfter = services.Count;
         await using var provider = services.BuildServiceProvider();
-        var options = new CallOptions(cancellationToken: TestContext.Current.CancellationToken).WithOperationContext(
-            new OperationContext(Actor.Person("ada"), "acme")
-        );
+        var options = new CallOptions(
+            cancellationToken: TestContext.Current.CancellationToken
+        ).WithOperationContext(new OperationContext(Actor.Person("ada"), "acme"));
 
         var reply = await provider
             .GetRequiredService<ProductService.ProductServiceClient>()
             .GetProductAsync(new GetProductRequest { ProductId = product.ToString() }, options);
 
         Assert.Equal(Name(product), reply.Name);
-        Assert.Equal(["acme"], Assert.Single(sent).Headers.GetValues(OperationContextHeaders.Tenant));
+        Assert.Equal(
+            ["acme"],
+            Assert.Single(sent).Headers.GetValues(OperationContextHeaders.Tenant)
+        );
         Assert.Equal(registrations, registrationsAfter);
     }
 
@@ -462,7 +593,11 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var product = await CreateProductAsync();
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
-        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs
+        );
         host.MapPouryaKitGrpcServices();
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var channel = Channel(host);
@@ -487,13 +622,21 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             builder =>
             {
                 AddClient(builder.Services, new Uri("http://catalog.local"));
-                builder.Services.Configure<PouryaKitGrpcClientOptions>(Client, options => options.Deadline = TimeSpan.Zero);
+                builder.Services.Configure<PouryaKitGrpcClientOptions>(
+                    Client,
+                    options => options.Deadline = TimeSpan.Zero
+                );
             }
         );
 
-        var refused = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var refused = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
-        Assert.Equal([$"PouryaKitGrpcClientOptions.Deadline of the gRPC client {Client} is not positive."], refused.Failures);
+        Assert.Equal(
+            [$"PouryaKitGrpcClientOptions.Deadline of the gRPC client {Client} is not positive."],
+            refused.Failures
+        );
     }
 
     // Ticket #159: a deadline the clock cannot reach is none.
@@ -504,13 +647,18 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         var services = new ServiceCollection();
         List<HttpRequestMessage> sent = [];
         AddClient(services, new Uri("http://peer.local"))
-            .ConfigurePrimaryHttpMessageHandler(() => new Http2(Fixture.Host.GetTestServer().CreateHandler()))
+            .ConfigurePrimaryHttpMessageHandler(() =>
+                new Http2(Fixture.Host.GetTestServer().CreateHandler())
+            )
             .AddHttpMessageHandler(() => new AsTrustedPeer(sent));
-        services.Configure<PouryaKitGrpcClientOptions>(Client, options => options.Deadline = TimeSpan.MaxValue);
-        await using var provider = services.BuildServiceProvider();
-        var options = new CallOptions(cancellationToken: TestContext.Current.CancellationToken).WithOperationContext(
-            new OperationContext(Actor.Person("ada"), "acme")
+        services.Configure<PouryaKitGrpcClientOptions>(
+            Client,
+            options => options.Deadline = TimeSpan.MaxValue
         );
+        await using var provider = services.BuildServiceProvider();
+        var options = new CallOptions(
+            cancellationToken: TestContext.Current.CancellationToken
+        ).WithOperationContext(new OperationContext(Actor.Person("ada"), "acme"));
 
         var reply = await provider
             .GetRequiredService<ProductService.ProductServiceClient>()
@@ -529,7 +677,9 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             Fixture.Logs,
             builder =>
                 AddClient(builder.Services, new Uri("http://peer.local"))
-                    .ConfigurePrimaryHttpMessageHandler(() => new Http2(peer().GetTestServer().CreateHandler()))
+                    .ConfigurePrimaryHttpMessageHandler(() =>
+                        new Http2(peer().GetTestServer().CreateHandler())
+                    )
                     .AddHttpMessageHandler(() => new AsTrustedPeer(sent))
         );
 
@@ -546,10 +696,15 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         return services.AddPouryaKitGrpcClient<ProductService.ProductServiceClient>(Client);
     }
 
-    private static async Task<ProductReply> GetProductAsync(IHost host, Guid product, OperationContext? context)
+    private static async Task<ProductReply> GetProductAsync(
+        IHost host,
+        Guid product,
+        OperationContext? context
+    )
     {
         await using var scope = host.Services.CreateAsyncScope();
-        var client = scope.ServiceProvider.GetRequiredService<ProductService.ProductServiceClient>();
+        var client =
+            scope.ServiceProvider.GetRequiredService<ProductService.ProductServiceClient>();
         var options = new CallOptions(cancellationToken: TestContext.Current.CancellationToken);
         return await client.GetProductAsync(
             new GetProductRequest { ProductId = product.ToString() },
@@ -559,22 +714,37 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
     // The id and Module of each Operation named operation that the process logged in correlation, from the scope the
     // dispatcher writes on its JSON log entries, once one is there: the console writes an entry after the Operation ends.
-    private static async Task<List<(Guid OperationId, string? Module)>> OperationsLoggedAsync(HostProcess process, string operation, Guid correlation)
+    private static async Task<List<(Guid OperationId, string? Module)>> OperationsLoggedAsync(
+        HostProcess process,
+        string operation,
+        Guid correlation
+    )
     {
         var dispatcher = typeof(IDispatcher).Namespace + ".Dispatcher";
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         timeout.CancelAfter(TimeSpan.FromSeconds(30));
         while (true)
         {
             List<(Guid, string?)> logged = [];
-            foreach (var line in process.Output.Split(Environment.NewLine).Where(line => line.StartsWith('{')))
+            foreach (
+                var line in process
+                    .Output.Split(Environment.NewLine)
+                    .Where(line => line.StartsWith('{'))
+            )
             {
                 var entry = JsonSerializer.Deserialize<JsonElement>(line);
-                if (Text(entry, "Category") == dispatcher && entry.TryGetProperty("Scopes", out var scopes))
+                if (
+                    Text(entry, "Category") == dispatcher
+                    && entry.TryGetProperty("Scopes", out var scopes)
+                )
                 {
                     logged.AddRange(
                         from scope in scopes.EnumerateArray()
-                        where Text(scope, "Operation") == operation && Text(scope, "CorrelationId") == correlation.ToString()
+                        where
+                            Text(scope, "Operation") == operation
+                            && Text(scope, "CorrelationId") == correlation.ToString()
                         select (Guid.Parse(Text(scope, "OperationId")!), Text(scope, "Module"))
                     );
                 }
@@ -585,13 +755,20 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
                 return logged;
             }
 
-            Assert.False(timeout.IsCancellationRequested, $"The process logged no {operation} in the correlation {correlation}:{Environment.NewLine}{process.Output}");
+            Assert.False(
+                timeout.IsCancellationRequested,
+                $"The process logged no {operation} in the correlation {correlation}:{Environment.NewLine}{process.Output}"
+            );
             await Task.Delay(100, TestContext.Current.CancellationToken);
         }
     }
 
     private static string? Text(JsonElement element, string name) =>
-        element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        element.ValueKind == JsonValueKind.Object
+        && element.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
 
     private static void AssertContinued(OperationContext caller, OperationContext continued)
     {
@@ -606,10 +783,17 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     private GrpcChannel Channel(IHost? host = null) =>
         GrpcChannel.ForAddress(
             "http://localhost",
-            new GrpcChannelOptions { HttpHandler = new Http2((host ?? Fixture.Host).GetTestServer().CreateHandler()) }
+            new GrpcChannelOptions
+            {
+                HttpHandler = new Http2((host ?? Fixture.Host).GetTestServer().CreateHandler()),
+            }
         );
 
-    private static async Task<RpcException> FailureAsync(GrpcChannel channel, string productId, Metadata headers) =>
+    private static async Task<RpcException> FailureAsync(
+        GrpcChannel channel,
+        string productId,
+        Metadata headers
+    ) =>
         await Assert.ThrowsAsync<RpcException>(async () =>
             await new ProductService.ProductServiceClient(channel).GetProductAsync(
                 new GetProductRequest { ProductId = productId },
@@ -636,11 +820,16 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static List<JsonElement> Errors(RpcException failure)
     {
-        using var errors = JsonDocument.Parse(Assert.Single(failure.Trailers, entry => entry.Key == ResultGrpcExtensions.ErrorsTrailer).ValueBytes);
+        using var errors = JsonDocument.Parse(
+            Assert
+                .Single(failure.Trailers, entry => entry.Key == ResultGrpcExtensions.ErrorsTrailer)
+                .ValueBytes
+        );
         return [.. errors.RootElement.EnumerateArray().Select(error => error.Clone())];
     }
 
-    private static string? Target(JsonElement error) => error.TryGetProperty("target", out var target) ? target.GetString() : null;
+    private static string? Target(JsonElement error) =>
+        error.TryGetProperty("target", out var target) ? target.GetString() : null;
 
     // What is left of the call's deadline when it is sent, from grpc-timeout, whose unit is its last character.
     private static TimeSpan Timeout(HttpRequestMessage sent)
@@ -677,15 +866,34 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         var context = new OperationContext(GatewayTestExtensions.TestActor, "acme");
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), context, TestContext.Current.CancellationToken)).IsSuccess);
-        Assert.True((await catalog.SendAsync(new CreateProductCommand(product, category, Name(product)), context, TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True(
+            (
+                await catalog.SendAsync(
+                    new CreateCategoryCommand(category, "Lamps"),
+                    context,
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
+        Assert.True(
+            (
+                await catalog.SendAsync(
+                    new CreateProductCommand(product, category, Name(product)),
+                    context,
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
         return product;
     }
 
     // An in-memory server answers HTTP/1.1, which a gRPC client refuses; the response keeps the request's version.
     private sealed class Http2(HttpMessageHandler server) : DelegatingHandler(server)
     {
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             var response = await base.SendAsync(request, cancellationToken);
             response.Version = request.Version;
@@ -694,11 +902,18 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     // Authenticates as the trusted peer: in the test scheme, or with the credentials a peer Host of another scheme reads.
-    private sealed class AsTrustedPeer(List<HttpRequestMessage> sent, AuthenticationHeaderValue? credentials = null) : DelegatingHandler
+    private sealed class AsTrustedPeer(
+        List<HttpRequestMessage> sent,
+        AuthenticationHeaderValue? credentials = null
+    ) : DelegatingHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
-            request.Headers.Authorization = credentials ?? new(TestAuthentication.SchemeName, AppFixture.TrustedPeer);
+            request.Headers.Authorization =
+                credentials ?? new(TestAuthentication.SchemeName, AppFixture.TrustedPeer);
             sent.Add(request);
             return base.SendAsync(request, cancellationToken);
         }

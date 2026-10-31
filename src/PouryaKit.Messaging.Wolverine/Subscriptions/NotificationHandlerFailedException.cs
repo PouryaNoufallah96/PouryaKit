@@ -8,7 +8,10 @@ namespace PouryaKit.Messaging.Wolverine;
 /// made it rollback-only, so the delivery is retried as if the handler had thrown: a failed Result is never acknowledged.
 /// Nothing the attempt changed was committed. Its message names each Error, so a dead letter tells why.
 /// </summary>
-public sealed class NotificationHandlerFailedException(string subscription, ImmutableArray<Error> errors)
+public sealed class NotificationHandlerFailedException(
+    string subscription,
+    ImmutableArray<Error> errors
+)
     : Exception(
         $"The Notification Handler of the subscription {subscription} failed with {string.Join(", ", errors.Select(error => $"{error.Code} ({error.Message})"))}; the delivery is retried, then set aside as a dead letter."
     )

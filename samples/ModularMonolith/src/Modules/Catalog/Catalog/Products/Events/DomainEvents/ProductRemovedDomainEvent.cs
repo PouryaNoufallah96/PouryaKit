@@ -4,4 +4,5 @@ using PouryaKit.Domain;
 
 namespace Catalog.Products.Events.DomainEvents;
 
-internal sealed record ProductRemovedDomainEvent(ProductId ProductId, CategoryId CategoryId) : DomainEvent;
+internal sealed record ProductRemovedDomainEvent(ProductId ProductId, CategoryId CategoryId)
+    : DomainEvent;

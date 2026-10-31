@@ -19,7 +19,8 @@ public sealed class PouryaKitMcpServerOptions
     /// The variables of the server's environment beside the few a process needs to start, such as <c>PATH</c> and
     /// <c>HOME</c>: the server inherits none of the Host's others, so no secret of the Host reaches it unnamed.
     /// </summary>
-    public IDictionary<string, string> Environment { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+    public IDictionary<string, string> Environment { get; } =
+        new Dictionary<string, string>(StringComparer.Ordinal);
 
     /// <summary>The server's MCP endpoint, an absolute HTTP or HTTPS address, for a server over HTTP; null for one over stdio.</summary>
     public Uri? Endpoint { get; set; }

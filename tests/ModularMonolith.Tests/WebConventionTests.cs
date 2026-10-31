@@ -23,14 +23,23 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
     {
         var correlation = Guid.CreateVersion7();
         var causation = Guid.CreateVersion7();
-        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
-        new ReadOperationContextEndpoint().Map(host.MapGroup("/outside").RequireAuthorization().BeginOperationPerRequest());
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs
+        );
+        new ReadOperationContextEndpoint().Map(
+            host.MapGroup("/outside").RequireAuthorization().BeginOperationPerRequest()
+        );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var peer = AppFixture.ClientOf(host, AppFixture.TrustedPeer);
         peer.DefaultRequestHeaders.Add(OperationContextHeaders.ActorId, "ada");
         peer.DefaultRequestHeaders.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
         peer.DefaultRequestHeaders.Add(OperationContextHeaders.Tenant, "acme");
-        peer.DefaultRequestHeaders.Add(OperationContextHeaders.CorrelationId, correlation.ToString());
+        peer.DefaultRequestHeaders.Add(
+            OperationContextHeaders.CorrelationId,
+            correlation.ToString()
+        );
         peer.DefaultRequestHeaders.Add(OperationContextHeaders.CausationId, causation.ToString());
         using var person = AppFixture.ClientOf(host, "grace", "acme");
         using var anonymous = AppFixture.ClientOf(host);
@@ -49,13 +58,20 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.Equal("acme", own.Tenant);
         Assert.Equal(own.OperationId, own.CorrelationId);
         Assert.Null(own.CausationId);
-        Assert.Equal(new SeenActor(ReadOperationContextEndpoint.Visitor.Id, ActorKind.System), visitor.Actor);
+        Assert.Equal(
+            new SeenActor(ReadOperationContextEndpoint.Visitor.Id, ActorKind.System),
+            visitor.Actor
+        );
     }
 
     [Fact]
     public async Task A_nested_group_that_also_begins_the_operation_serves_its_endpoints_with_one_operation()
     {
-        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs
+        );
         var root = host.MapGroup("/root").RequireAuthorization().BeginOperationPerRequest();
         new ReadOperationContextEndpoint().Map(root.MapGroup("/nested").BeginOperationPerRequest());
         await host.StartAsync(TestContext.Current.CancellationToken);
@@ -77,10 +93,16 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var person = AppFixture.ClientOf(host, "grace");
 
-        var response = await person.GetAsync("/root/plain/actor", TestContext.Current.CancellationToken);
+        var response = await person.GetAsync(
+            "/root/plain/actor",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("grace", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            "grace",
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
     }
 
     // Two identical endpoints would make every request to their route ambiguous, as MapPouryaKitGrpcServices avoids too.
@@ -96,7 +118,10 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         var response = await person.GetAsync("/plain/actor", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("grace", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            "grace",
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
         Assert.Single(
             host.Services.GetRequiredService<EndpointDataSource>().Endpoints,
             endpoint => endpoint is RouteEndpoint { RoutePattern.RawText: "/plain/actor" }
@@ -109,9 +134,15 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         var context = new OperationContext(Actor.Person("ada"), "acme");
         var sent = new SentHeaders();
         var services = new ServiceCollection();
-        services.AddHttpClient("peer").AddPouryaKitOperationContext().ConfigurePrimaryHttpMessageHandler(() => sent);
+        services
+            .AddHttpClient("peer")
+            .AddPouryaKitOperationContext()
+            .ConfigurePrimaryHttpMessageHandler(() => sent);
         await using var provider = services.BuildServiceProvider();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "http://peer.test/").WithOperationContext(context);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "http://peer.test/"
+        ).WithOperationContext(context);
 
         using var response = await provider
             .GetRequiredService<IHttpClientFactory>()
@@ -131,7 +162,9 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         );
         Assert.Equal(pairs, sent.Headers);
         // A value the receiving Host would refuse is refused before any pair is returned.
-        Assert.Throws<InvalidOperationException>(() => OperationContextHttpHeaders.Pairs(new OperationContext(Actor.Person("ada"), "acmé")));
+        Assert.Throws<InvalidOperationException>(() =>
+            OperationContextHttpHeaders.Pairs(new OperationContext(Actor.Person("ada"), "acmé"))
+        );
     }
 
     // A Host of the endpoints of the Unversioned assembly under /plain, with the test scheme and the Kit's checks.
@@ -141,7 +174,10 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(
+                TestAuthentication.SchemeName,
+                null
+            );
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitCqrs();
         builder.Services.AddPouryaKitWeb();
@@ -158,7 +194,11 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
     {
         var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<SeenContext>(TestContext.Current.CancellationToken))!;
+        return (
+            await response.Content.ReadFromJsonAsync<SeenContext>(
+                TestContext.Current.CancellationToken
+            )
+        )!;
     }
 
     // The peer's end of the call: the Kit's headers as the request arrived, in the order they were written.
@@ -166,12 +206,20 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
     {
         public List<KeyValuePair<string, string>> Headers { get; } = [];
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
         {
             Headers.AddRange(
                 request
-                    .Headers.Where(header => header.Key.StartsWith("pouryakit-", StringComparison.Ordinal))
-                    .Select(header => new KeyValuePair<string, string>(header.Key, Assert.Single(header.Value)))
+                    .Headers.Where(header =>
+                        header.Key.StartsWith("pouryakit-", StringComparison.Ordinal)
+                    )
+                    .Select(header => new KeyValuePair<string, string>(
+                        header.Key,
+                        Assert.Single(header.Value)
+                    ))
             );
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
         }

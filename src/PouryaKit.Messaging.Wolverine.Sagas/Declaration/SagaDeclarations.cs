@@ -55,8 +55,14 @@ internal sealed class SagaInputDeclaration(
             integrationEvent,
             SagaStorage.SagaId(tenant, key(integrationEvent)),
             tenant,
-            Guid.Parse(Required(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),
-            Guid.Parse(Required(IntegrationEventHeaders.DomainEventId), CultureInfo.InvariantCulture)
+            Guid.Parse(
+                Required(OperationContextHeaders.CorrelationId),
+                CultureInfo.InvariantCulture
+            ),
+            Guid.Parse(
+                Required(IntegrationEventHeaders.DomainEventId),
+                CultureInfo.InvariantCulture
+            )
         );
     }
 }
@@ -71,7 +77,12 @@ internal sealed class SagaDeclarations
 
     public static SagaDeclarations In(IServiceCollection services)
     {
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(SagaDeclarations)) is { } existing)
+        if (
+            services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(SagaDeclarations)
+            ) is
+            { } existing
+        )
         {
             return (SagaDeclarations)existing.ImplementationInstance!;
         }
@@ -84,7 +95,9 @@ internal sealed class SagaDeclarations
     public SagaDeclaration Of(Type sagaType) =>
         _bySaga.TryGetValue(sagaType, out var declaration)
             ? declaration
-            : throw new InvalidOperationException($"The Saga {sagaType.FullName} has no AddPouryaKitSaga declaration in this Host.");
+            : throw new InvalidOperationException(
+                $"The Saga {sagaType.FullName} has no AddPouryaKitSaga declaration in this Host."
+            );
 
     public bool Declares(Type sagaType) => _bySaga.ContainsKey(sagaType);
 
@@ -93,12 +106,21 @@ internal sealed class SagaDeclarations
     public void Add(SagaDeclaration declaration)
     {
         List<string> problems = [];
-        Subscriptions.Check(declaration.Name, $"The Saga {declaration.SagaType.FullName}'s name", isQueue: true, problems);
+        Subscriptions.Check(
+            declaration.Name,
+            $"The Saga {declaration.SagaType.FullName}'s name",
+            isQueue: true,
+            problems
+        );
         if (_bySaga.ContainsKey(declaration.SagaType))
         {
-            problems.Add($"The Saga {declaration.SagaType.FullName} is declared twice; declare it once.");
+            problems.Add(
+                $"The Saga {declaration.SagaType.FullName} is declared twice; declare it once."
+            );
         }
-        else if (_bySaga.Values.FirstOrDefault(other => other.Name == declaration.Name) is { } named)
+        else if (
+            _bySaga.Values.FirstOrDefault(other => other.Name == declaration.Name) is { } named
+        )
         {
             problems.Add(
                 $"The Sagas {declaration.SagaType.FullName} and {named.SagaType.FullName} have the name {declaration.Name}, ignoring case; each needs a queue of its own."
@@ -107,14 +129,18 @@ internal sealed class SagaDeclarations
 
         if (declaration.Inputs.Count == 0)
         {
-            problems.Add($"The Saga {declaration.SagaType.FullName} takes no Integration Event, so nothing starts it. Declare each with Input<TEvent>(key).");
+            problems.Add(
+                $"The Saga {declaration.SagaType.FullName} takes no Integration Event, so nothing starts it. Declare each with Input<TEvent>(key)."
+            );
         }
 
         problems.AddRange(
             declaration
                 .Inputs.GroupBy(input => input.EventType)
                 .Where(inputs => inputs.Count() > 1)
-                .Select(inputs => $"The Saga {declaration.SagaType.FullName} takes {inputs.Key.FullName} twice; declare each input once.")
+                .Select(inputs =>
+                    $"The Saga {declaration.SagaType.FullName} takes {inputs.Key.FullName} twice; declare each input once."
+                )
         );
         if (problems.Count > 0)
         {

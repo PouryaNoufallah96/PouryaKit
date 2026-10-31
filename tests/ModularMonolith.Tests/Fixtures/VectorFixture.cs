@@ -23,10 +23,12 @@ public sealed class VectorFixture : IAsyncLifetime
     private IHost? _host;
 
     /// <summary>The model the Host embeds text with.</summary>
-    public ChatStub Stub => _stub ?? throw new InvalidOperationException("The stub starts in InitializeAsync.");
+    public ChatStub Stub =>
+        _stub ?? throw new InvalidOperationException("The stub starts in InitializeAsync.");
 
     /// <summary>The started Host.</summary>
-    public IHost Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
+    public IHost Host =>
+        _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
 
     /// <summary>The database the Host stores in.</summary>
     public string ConnectionString => _postgres.GetConnectionString();
@@ -36,22 +38,27 @@ public sealed class VectorFixture : IAsyncLifetime
     /// through <paramref name="stub"/>, built and not started; <paramref name="configure"/> may add to its composition
     /// and <paramref name="arguments"/> to its configuration.
     /// </summary>
-    public static IHost Compose(string connectionString, ChatStub stub, Action<IServiceCollection>? configure = null, params string[] arguments)
+    public static IHost Compose(
+        string connectionString,
+        ChatStub stub,
+        Action<IServiceCollection>? configure = null,
+        params string[] arguments
+    )
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            [
-                "--environment",
-                Environments.Development,
-                $"--ConnectionStrings:app={connectionString}",
-                "--PouryaKit:AI:Provider=Ollama",
-                $"--PouryaKit:AI:Endpoint={stub.Endpoint}",
-                "--PouryaKit:AI:EmbeddingModel=stub-embeddings",
-                .. arguments,
-            ]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            Environments.Development,
+            $"--ConnectionStrings:app={connectionString}",
+            "--PouryaKit:AI:Provider=Ollama",
+            $"--PouryaKit:AI:Endpoint={stub.Endpoint}",
+            "--PouryaKit:AI:EmbeddingModel=stub-embeddings",
+            .. arguments,
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<VectorsModule>());
         builder.Services.AddPouryaKitEmbeddings();
-        builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+        builder.Services.Configure<PouryaKitAIOptions>(
+            builder.Configuration.GetSection("PouryaKit:AI")
+        );
         configure?.Invoke(builder.Services);
         return builder.Build();
     }

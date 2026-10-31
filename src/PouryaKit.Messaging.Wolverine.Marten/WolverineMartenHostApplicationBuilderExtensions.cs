@@ -36,7 +36,10 @@ public static class WolverineMartenHostApplicationBuilderExtensions
         /// Throws when the configuration has no such connection string or leaves it blank, and when the Host already has
         /// its Marten store.
         /// </summary>
-        public IHostApplicationBuilder UsePouryaKitMarten(string connectionName, string schema = "wolverine")
+        public IHostApplicationBuilder UsePouryaKitMarten(
+            string connectionName,
+            string schema = "wolverine"
+        )
         {
             ArgumentNullException.ThrowIfNull(builder);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
@@ -49,12 +52,24 @@ public static class WolverineMartenHostApplicationBuilderExtensions
                 builder.UsePouryaKitMessageStore(connectionName, persistMessages: (_, _) => { });
             }
 
-            builder.AddPouryaKitMarten(connectionName).IntegrateWithWolverine(integration => integration.MessageStorageSchemaName = schema);
+            builder
+                .AddPouryaKitMarten(connectionName)
+                .IntegrateWithWolverine(integration =>
+                    integration.MessageStorageSchemaName = schema
+                );
             builder.Services.TryAddScoped<MartenStreamOutbox>();
-            builder.Services.TryAddScoped<IStreamOutbox>(scope => scope.GetRequiredService<MartenStreamOutbox>());
-            builder.Services.TryAddScoped<IOutbox>(scope => scope.GetRequiredService<MartenStreamOutbox>());
+            builder.Services.TryAddScoped<IStreamOutbox>(scope =>
+                scope.GetRequiredService<MartenStreamOutbox>()
+            );
+            builder.Services.TryAddScoped<IOutbox>(scope =>
+                scope.GetRequiredService<MartenStreamOutbox>()
+            );
             HashSet<Type?> streamModules = [];
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new StreamSnapshotCheck(streamModules)));
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck>(
+                    new StreamSnapshotCheck(streamModules)
+                )
+            );
             StreamModules
                 .In(builder.Services)
                 .ForEach(
@@ -63,11 +78,17 @@ public static class WolverineMartenHostApplicationBuilderExtensions
                         streamModules.Add(module);
                         if (module is null)
                         {
-                            builder.Services.TryAddScoped<IReceipts>(scope => new MartenReceipts(scope.GetRequiredService<IUnitOfWork>()));
+                            builder.Services.TryAddScoped<IReceipts>(scope => new MartenReceipts(
+                                scope.GetRequiredService<IUnitOfWork>()
+                            ));
                         }
                         else
                         {
-                            builder.Services.AddKeyedScoped<IReceipts>(module, (scope, _) => new MartenReceipts(scope.GetRequiredService<IUnitOfWork>()));
+                            builder.Services.AddKeyedScoped<IReceipts>(
+                                module,
+                                (scope, _) =>
+                                    new MartenReceipts(scope.GetRequiredService<IUnitOfWork>())
+                            );
                         }
 
                         builder.Services.ConfigureMarten(options =>
@@ -83,8 +104,15 @@ public static class WolverineMartenHostApplicationBuilderExtensions
             builder.Services.AddSingleton(
                 new OutboxConnection(
                     "The Marten store of UsePouryaKitMarten",
-                    services => ((PostgresqlDatabase)services.GetRequiredService<IDocumentStore>().Storage.Database).DataSource.ConnectionString,
-                    services => services.GetRequiredService<MartenIntegration>().MessageStorageSchemaName
+                    services =>
+                        (
+                            (PostgresqlDatabase)
+                                services.GetRequiredService<IDocumentStore>().Storage.Database
+                        )
+                            .DataSource
+                            .ConnectionString,
+                    services =>
+                        services.GetRequiredService<MartenIntegration>().MessageStorageSchemaName
                 )
             );
             return builder;

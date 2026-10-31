@@ -25,7 +25,10 @@ public static partial class MessageNames
             return declared.Name;
         }
 
-        var assembly = string.Join('.', (messageType.Assembly.GetName().Name ?? "").Split('.').Select(Kebab));
+        var assembly = string.Join(
+            '.',
+            (messageType.Assembly.GetName().Name ?? "").Split('.').Select(Kebab)
+        );
         return $"{assembly}.{Kebab(WithoutSuffix(messageType.Name, "DomainEvent"))}";
     }
 
@@ -44,7 +47,10 @@ public static partial class MessageNames
             return declared.Name;
         }
 
-        var handler = WithoutSuffix(WithoutSuffix(handlerType.Name, "NotificationHandler"), "Handler");
+        var handler = WithoutSuffix(
+            WithoutSuffix(handlerType.Name, "NotificationHandler"),
+            "Handler"
+        );
         return $"{WireNameOf(messageType)}.{Kebab(handler)}";
     }
 
@@ -67,7 +73,9 @@ public static partial class MessageNames
     private static partial Regex ValidName();
 
     private static string WithoutSuffix(string name, string suffix) =>
-        name.Length > suffix.Length && name.EndsWith(suffix, StringComparison.Ordinal) ? name[..^suffix.Length] : name;
+        name.Length > suffix.Length && name.EndsWith(suffix, StringComparison.Ordinal)
+            ? name[..^suffix.Length]
+            : name;
 
     // ProductCreated -> product-created, HTTPRequestSent -> http-request-sent, Snake_Case -> snake-case.
     private static string Kebab(string name)
@@ -89,7 +97,11 @@ public static partial class MessageNames
                 && (
                     char.IsLower(name[i - 1])
                     || char.IsDigit(name[i - 1])
-                    || (char.IsUpper(name[i - 1]) && i + 1 < name.Length && char.IsLower(name[i + 1]))
+                    || (
+                        char.IsUpper(name[i - 1])
+                        && i + 1 < name.Length
+                        && char.IsLower(name[i + 1])
+                    )
                 )
             )
             {

@@ -32,7 +32,9 @@ namespace ModularMonolith.Tests;
 // The Stream write model (ticket #131, ADR 0011): the Marten Unit of Work of the Stream Module Accounts, through its
 // Gateway and the Kit's delivery step, against PostgreSQL. Each test composes its Hosts over a database of its own: one of
 // Accounts alone, or the Proving Sample's with Accounts beside its EF Core Modules on one message store.
-public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFixture>, IAsyncLifetime
+public sealed class StreamTests(StreamFixture streams)
+    : IClassFixture<StreamFixture>,
+        IAsyncLifetime
 {
     private readonly List<IHost> _hosts = [];
     private string _database = "";
@@ -56,7 +58,9 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Fact]
     public void A_marten_store_integrated_in_another_schema_than_the_message_stores_fails_the_host_when_it_is_built()
     {
-        var refused = Assert.Throws<InvalidOperationException>(() => streams.Joined(_database, martenSchema: "marten_wolverine"));
+        var refused = Assert.Throws<InvalidOperationException>(() =>
+            streams.Joined(_database, martenSchema: "marten_wolverine")
+        );
 
         Assert.Contains(
             "The Marten store of UsePouryaKitMarten keeps the message store's tables in the schema marten_wolverine, but UsePouryaKitWolverine keeps them in wolverine",
@@ -70,15 +74,25 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_marten_store_on_another_database_than_the_message_stores_fails_the_host_when_it_is_built(bool movedByALaterConfiguration)
+    public async Task A_marten_store_on_another_database_than_the_message_stores_fails_the_host_when_it_is_built(
+        bool movedByALaterConfiguration
+    )
     {
         var other = await streams.CreateDatabaseAsync();
         var database = new NpgsqlConnectionStringBuilder(other);
 
         var refused = Assert.Throws<InvalidOperationException>(() =>
             movedByALaterConfiguration
-                ? streams.Mixed(_database, configure: builder => builder.Services.ConfigureMarten(options => options.Connection(other)))
-                : streams.Joined(_database, martenConnection: "events", arguments: $"--ConnectionStrings:events={other}")
+                ? streams.Mixed(
+                    _database,
+                    configure: builder =>
+                        builder.Services.ConfigureMarten(options => options.Connection(other))
+                )
+                : streams.Joined(
+                    _database,
+                    martenConnection: "events",
+                    arguments: $"--ConnectionStrings:events={other}"
+                )
         );
 
         Assert.Contains(
@@ -93,7 +107,11 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Fact]
     public void A_host_that_registers_its_marten_store_before_the_ef_message_store_fails_naming_the_order()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+            $"--ConnectionStrings:app={_database}",
+        ]);
         builder.UsePouryaKitMarten(connectionName: "app");
 
         var refused = Assert.Throws<InvalidOperationException>(() =>
@@ -101,7 +119,11 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
             builder.UsePouryaKitWolverine(connectionName: "app");
         });
 
-        Assert.Contains("call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten", refused.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore before UsePouryaKitMarten",
+            refused.Message,
+            StringComparison.Ordinal
+        );
     }
 
     // A Stream's Unit of Work builds no Snapshot, so a declaration for one, or by a Stream Module of any type, would never
@@ -114,8 +136,15 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
                 _database,
                 services =>
                     services
-                        .PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>("tests.account-snapshot.v1", typeof(AccountsModule))
-                        .PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>("tests.aggregate-snapshot.v1", typeof(AccountsModule))
+                        .PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>(
+                            "tests.account-snapshot.v1",
+                            typeof(AccountsModule)
+                        )
+                        .PublishSnapshot<
+                            IAggregateRoot,
+                            AggregateSnapshotV1,
+                            AggregateSnapshotMapper
+                        >("tests.aggregate-snapshot.v1", typeof(AccountsModule))
             )
         );
 
@@ -134,7 +163,11 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Fact]
     public void A_stream_module_beside_the_ef_core_outbox_and_the_persistence_only_marten_store_fails_the_host_when_it_is_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+            $"--ConnectionStrings:app={_database}",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<AccountsModule>());
         builder.Services.ReceiveSnapshot<ProductSnapshotV1>("catalog.product-snapshot.v1");
         builder.UsePouryaKitWolverine(connectionName: "app");
@@ -153,7 +186,11 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Fact]
     public void An_ef_core_module_in_a_host_whose_only_message_store_is_the_marten_registrations_fails_the_host_when_it_is_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+            $"--ConnectionStrings:app={_database}",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<BillingModule>());
         builder.Services.Receive<ProductCreatedV1>("catalog.product-created.v1");
         builder.Services.Receive<LedgerAccountOpenedV1>("ledger.account-opened.v1");
@@ -171,13 +208,19 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Fact]
     public void A_stream_module_in_a_host_with_no_messaging_builds_on_the_persistence_only_marten_store()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development", $"--ConnectionStrings:app={_database}"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+            $"--ConnectionStrings:app={_database}",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<UnpublishingStreamModule>());
         builder.AddPouryaKitMarten(connectionName: "app");
 
         using var host = builder.Build();
 
-        Assert.False(host.Services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(IOutbox)));
+        Assert.False(
+            host.Services.GetRequiredService<IServiceProviderIsService>().IsService(typeof(IOutbox))
+        );
     }
 
     // The messaging package keys a Stream Module's Receipts when the Module is composed, whichever registration comes first.
@@ -187,9 +230,12 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var account = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database, martenFirst: true));
 
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
 
-        await WaitUntilAsync("(select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome') = 1");
+        await WaitUntilAsync(
+            "(select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome') = 1"
+        );
         Assert.Equal(1L, await CountAsync(Events(account, "welcomed")));
     }
 
@@ -206,9 +252,12 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
                 from events.mt_events e, wolverine.wolverine_incoming_envelopes w where e.stream_id = '{account}'
                 """
             );
-        var host = await StartAsync(streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe)));
+        var host = await StartAsync(
+            streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe))
+        );
 
-        var opened = await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        var opened = await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
 
         Assert.True(opened.IsSuccess);
         var row = Assert.Single(atCommit!);
@@ -223,12 +272,17 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_stream_that_moved_after_it_was_read_is_the_kits_conflict_and_appends_and_sends_nothing(bool whileTheFirstSaves)
+    public async Task A_stream_that_moved_after_it_was_read_is_the_kits_conflict_and_appends_and_sends_nothing(
+        bool whileTheFirstSaves
+    )
     {
         var account = Guid.CreateVersion7();
         var probe = new StreamCommitProbe();
-        var host = await StartAsync(streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe)));
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        var host = await StartAsync(
+            streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe))
+        );
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
 
         // The first deposit holds after its handler read the stream, or at its save, past FetchForWriting; the second
@@ -236,27 +290,38 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var (reached, release) = Hold(probe, account, whileTheFirstSaves);
         var first = Accounts(host).SendAsync(new DepositCommand(account, 10), Context(), Token);
         await reached.Task.WaitAsync(Token);
-        var second = await Accounts(host).SendAsync(new DepositCommand(account, 20), Context(), Token);
+        var second = await Accounts(host)
+            .SendAsync(new DepositCommand(account, 20), Context(), Token);
         release.SetResult();
         var refused = await first;
 
         Assert.True(second.IsSuccess);
         Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(refused.Errors));
         Assert.Equal(1L, await CountAsync(Events(account, "deposited")));
-        Assert.Equal(1L, await CountAsync("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.note-deposit/'"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.note-deposit/'"
+            )
+        );
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_stream_started_twice_is_the_kits_conflict_and_appends_and_sends_nothing_the_second_time(bool whileTheFirstSaves)
+    public async Task A_stream_started_twice_is_the_kits_conflict_and_appends_and_sends_nothing_the_second_time(
+        bool whileTheFirstSaves
+    )
     {
         var account = Guid.CreateVersion7();
         var probe = new StreamCommitProbe();
-        var host = await StartAsync(streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe)));
+        var host = await StartAsync(
+            streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe))
+        );
         var command = new OpenAccountCommand(account, Guid.CreateVersion7());
 
-        Result first, second;
+        Result first,
+            second;
         if (whileTheFirstSaves)
         {
             // The first holds at its save, past FetchForWriting, while the second starts the same stream and commits.
@@ -276,7 +341,12 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         Assert.True(first.IsSuccess);
         Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(second.Errors));
         Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
-        Assert.Equal(1L, await CountAsync("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.welcome/'"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.welcome/'"
+            )
+        );
     }
 
     // A child process commits through the Marten Unit of Work, prints COMMITTED from a store listener that runs after
@@ -286,14 +356,19 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     public async Task A_notification_committed_before_the_process_is_killed_is_delivered_after_a_host_starts()
     {
         var account = Guid.CreateVersion7();
-        using (var child = Process.Start(
-                   new ProcessStartInfo("dotnet", [typeof(StreamHosts).Assembly.Location, "crash", _database, account.ToString()])
-                   {
-                       RedirectStandardOutput = true,
-                       RedirectStandardError = true,
-                       UseShellExecute = false,
-                   }
-               )!)
+        using (
+            var child = Process.Start(
+                new ProcessStartInfo(
+                    "dotnet",
+                    [typeof(StreamHosts).Assembly.Location, "crash", _database, account.ToString()]
+                )
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                }
+            )!
+        )
         {
             try
             {
@@ -322,13 +397,23 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         }
 
         Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
-        Assert.Equal(1L, await CountAsync("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.welcome/' and status = 'Incoming' and owner_id <> 0"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.welcome/' and status = 'Incoming' and owner_id <> 0"
+            )
+        );
         Assert.Equal(0L, await CountAsync(Events(account, "welcomed")));
 
         await StartAsync(streams.MartenOnly(_database));
 
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
-        Assert.Equal(1L, await CountAsync("select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome'"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome'"
+            )
+        );
     }
 
     [Fact]
@@ -351,10 +436,15 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
                 );
             }
         };
-        var host = await StartAsync(streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe)));
+        var host = await StartAsync(
+            streams.MartenOnly(_database, services => StreamCommitProbe.Install(services, probe))
+        );
 
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
-        await WaitUntilAsync("(select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.account-opened') = 1");
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await WaitUntilAsync(
+            "(select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.account-opened') = 1"
+        );
 
         Assert.Equal(4, atCommit!.Count);
         Assert.All(atCommit, row => Assert.Equal(atCommit[0][0], Assert.IsType<DateTime>(row[0])));
@@ -369,17 +459,29 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var held = AccountProbe.Hold(account, TimeSpan.FromSeconds(2));
         var host = await StartAsync(streams.MartenOnly(_database));
 
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
         await held.WaitAsync(TimeSpan.FromSeconds(30), Token);
         // While the first delivery runs, the test releases its row as the store's stale sweep releases one whose holder
         // stopped restarting its clock, and the store hands it out again.
-        await RowsAsync("update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://accounts.welcome/' and status = 'Incoming' returning 1");
-        await WaitUntilAsync("(select count(*) from pg_stat_activity where wait_event_type = 'Lock' and query like 'insert into \"accounts\".pouryakit_receipts%') > 0");
-        await WaitUntilAsync("(select count(*) from wolverine.wolverine_incoming_envelopes where status <> 'Handled') = 0");
+        await RowsAsync(
+            "update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://accounts.welcome/' and status = 'Incoming' returning 1"
+        );
+        await WaitUntilAsync(
+            "(select count(*) from pg_stat_activity where wait_event_type = 'Lock' and query like 'insert into \"accounts\".pouryakit_receipts%') > 0"
+        );
+        await WaitUntilAsync(
+            "(select count(*) from wolverine.wolverine_incoming_envelopes where status <> 'Handled') = 0"
+        );
 
         Assert.Equal(1, AccountProbe.RunsOf(account));
         Assert.Equal(1L, await CountAsync(Events(account, "welcomed")));
-        Assert.Equal(1L, await CountAsync("select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome'"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.welcome'"
+            )
+        );
     }
 
     [Fact]
@@ -389,14 +491,25 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         AccountProbe.Fail(account);
         var host = await StartAsync(streams.MartenOnly(_database));
 
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
-        await WaitUntilAsync("(select count(*) from wolverine.wolverine_dead_letters where received_at = 'local://accounts.welcome/') = 1");
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await WaitUntilAsync(
+            "(select count(*) from wolverine.wolverine_dead_letters where received_at = 'local://accounts.welcome/') = 1"
+        );
 
         // Every attempt ran the handler: no failed attempt's Receipt survived to skip the next one.
-        Assert.Equal(TestDeliveryServiceCollectionExtensions.RetryDelays.Count + 1, AccountProbe.RunsOf(account));
+        Assert.Equal(
+            TestDeliveryServiceCollectionExtensions.RetryDelays.Count + 1,
+            AccountProbe.RunsOf(account)
+        );
         Assert.Equal(0L, await CountAsync(Events(account, "welcomed")));
         Assert.Equal(0L, await CountAsync("select count(*) from accounts.pouryakit_receipts"));
-        Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.account-opened/'"));
+        Assert.Equal(
+            0L,
+            await CountAsync(
+                "select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.account-opened/'"
+            )
+        );
     }
 
     [Fact]
@@ -404,16 +517,33 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     {
         var account = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database));
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
 
         await Accounts(host).SendAsync(new DepositCommand(account, 10), Context(), Token);
-        await WaitUntilAsync("(select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.note-deposit/' and status = 'Handled') = 1");
-        var deposited = (Guid)(await RowsAsync($"select (data ->> 'id')::uuid from events.mt_events where stream_id = '{account}' and type = 'deposited'"))[0][0];
+        await WaitUntilAsync(
+            "(select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.note-deposit/' and status = 'Handled') = 1"
+        );
+        var deposited = (Guid)
+            (
+                await RowsAsync(
+                    $"select (data ->> 'id')::uuid from events.mt_events where stream_id = '{account}' and type = 'deposited'"
+                )
+            )[0][0];
 
-        Assert.Equal(1L, await CountAsync("select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.note-deposit'"));
-        await RowsAsync("update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0 where received_at = 'local://accounts.note-deposit/' returning 1");
-        await WaitUntilAsync("(select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.note-deposit/' and status = 'Handled') = 1");
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.note-deposit'"
+            )
+        );
+        await RowsAsync(
+            "update wolverine.wolverine_incoming_envelopes set status = 'Incoming', owner_id = 0 where received_at = 'local://accounts.note-deposit/' returning 1"
+        );
+        await WaitUntilAsync(
+            "(select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://accounts.note-deposit/' and status = 'Handled') = 1"
+        );
         Assert.Equal(1, AccountProbe.RunsOf(deposited));
     }
 
@@ -423,12 +553,19 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var key = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database));
 
-        var first = await Accounts(host).SendAsync(new PingCommand(key), Context(requestId: "ping-1"), Token);
-        var replayed = await Accounts(host).SendAsync(new PingCommand(key), Context(requestId: "ping-1"), Token);
+        var first = await Accounts(host)
+            .SendAsync(new PingCommand(key), Context(requestId: "ping-1"), Token);
+        var replayed = await Accounts(host)
+            .SendAsync(new PingCommand(key), Context(requestId: "ping-1"), Token);
 
         Assert.Equal(first.Value, replayed.Value);
         Assert.Equal(1, AccountProbe.RunsOf(key));
-        Assert.Equal(1L, await CountAsync("select count(*) from accounts.pouryakit_idempotency_keys where request_id = 'ping-1' and response is not null"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from accounts.pouryakit_idempotency_keys where request_id = 'ping-1' and response is not null"
+            )
+        );
     }
 
     [Fact]
@@ -445,19 +582,31 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         await WaitUntilAsync(
             $"(select count(*) from accounts.pouryakit_snapshot_versions where subscription = 'accounts.catalog-products' and aggregate_id = '{product}' and version = 1) = 1"
         );
-        Assert.Equal(1L, await CountAsync("select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.catalog-products'"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from accounts.pouryakit_receipts where subscription = 'accounts.catalog-products'"
+            )
+        );
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_key_reserved_longer_than_the_retention_ago_is_removed_and_a_newer_one_kept(bool mixed)
+    public async Task A_key_reserved_longer_than_the_retention_ago_is_removed_and_a_newer_one_kept(
+        bool mixed
+    )
     {
         await StartWithKeysAsync(mixed, TimeSpan.FromHours(1));
 
         await WaitUntilAsync("(select count(*) from accounts.pouryakit_idempotency_keys) = 1");
 
-        Assert.Equal(["new"], (await RowsAsync("select request_id from accounts.pouryakit_idempotency_keys")).Select(row => (string)row[0]));
+        Assert.Equal(
+            ["new"],
+            (await RowsAsync("select request_id from accounts.pouryakit_idempotency_keys")).Select(
+                row => (string)row[0]
+            )
+        );
     }
 
     [Theory]
@@ -470,7 +619,10 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         // A bounded wait for something that must not happen: ten cleanup intervals.
         await Task.Delay(TimeSpan.FromSeconds(1), Token);
 
-        Assert.Equal(2L, await CountAsync("select count(*) from accounts.pouryakit_idempotency_keys"));
+        Assert.Equal(
+            2L,
+            await CountAsync("select count(*) from accounts.pouryakit_idempotency_keys")
+        );
     }
 
     [Fact]
@@ -488,11 +640,17 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
             )
         );
 
-        var opened = await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        var opened = await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
 
         Assert.True(opened.IsSuccess);
         Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
-        Assert.Contains(streams.Logs.Entries, entry => entry.Level == LogLevel.Warning && entry.Exception?.Message == "The send after the commit failed.");
+        Assert.Contains(
+            streams.Logs.Entries,
+            entry =>
+                entry.Level == LogLevel.Warning
+                && entry.Exception?.Message == "The send after the commit failed."
+        );
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
     }
 
@@ -508,16 +666,24 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
                 services =>
                 {
                     StaleAfter(TimeSpan.FromSeconds(1))(services);
-                    services.ConfigureMarten(options => options.Listeners.Add(new FailingStoreListener(account)));
+                    services.ConfigureMarten(options =>
+                        options.Listeners.Add(new FailingStoreListener(account))
+                    );
                 }
             )
         );
 
-        var opened = await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        var opened = await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
 
         Assert.True(opened.IsSuccess);
         Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
-        Assert.Contains(streams.Logs.Entries, entry => entry.Level == LogLevel.Warning && entry.Exception?.Message == "A store listener failed after the commit.");
+        Assert.Contains(
+            streams.Logs.Entries,
+            entry =>
+                entry.Level == LogLevel.Warning
+                && entry.Exception?.Message == "A store listener failed after the commit."
+        );
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
     }
 
@@ -531,11 +697,28 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         await Accounts(host).SendAsync(new OpenAccountCommand(account, customer), Context(), Token);
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
 
-        var stored = (string)(await RowsAsync($"select (data -> 'customer')::text from events.mt_events where stream_id = '{account}' and type = 'account_opened'"))[0][0];
-        Assert.Equal(JsonSerializer.Serialize(new CustomerId(customer), new JsonSerializerOptions().UsePouryaKitJson()), stored);
-        Assert.Equal(1L, await CountAsync($"select count(*) from events.mt_streams where id = '{account}'"));
+        var stored = (string)
+            (
+                await RowsAsync(
+                    $"select (data -> 'customer')::text from events.mt_events where stream_id = '{account}' and type = 'account_opened'"
+                )
+            )[0][0];
+        Assert.Equal(
+            JsonSerializer.Serialize(
+                new CustomerId(customer),
+                new JsonSerializerOptions().UsePouryaKitJson()
+            ),
+            stored
+        );
+        Assert.Equal(
+            1L,
+            await CountAsync($"select count(*) from events.mt_streams where id = '{account}'")
+        );
         var read = await Accounts(host).QueryAsync(new GetAccountQuery(account), Context(), Token);
-        Assert.Equal((account, customer, true, 2L), (read.Value.Id, read.Value.Customer, read.Value.IsWelcomed, read.Value.Version));
+        Assert.Equal(
+            (account, customer, true, 2L),
+            (read.Value.Id, read.Value.Customer, read.Value.IsWelcomed, read.Value.Version)
+        );
     }
 
     [Fact]
@@ -544,14 +727,47 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var account = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database));
 
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context("acme"), Token);
+        await Accounts(host)
+            .SendAsync(
+                new OpenAccountCommand(account, Guid.CreateVersion7()),
+                Context("acme"),
+                Token
+            );
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
-        var deposit = await Accounts(host).SendAsync(new DepositCommand(account, 10), Context("globex"), Token);
+        var deposit = await Accounts(host)
+            .SendAsync(new DepositCommand(account, 10), Context("globex"), Token);
 
-        Assert.Equal(["acme", "acme"], (await RowsAsync($"select tenant_id from events.mt_events where stream_id = '{account}'")).Select(row => (string)row[0]));
-        Assert.True((await Accounts(host).QueryAsync(new GetAccountQuery(account), Context("acme"), Token)).IsSuccess);
-        Assert.Equal(AccountErrors.NotFound, Assert.Single((await Accounts(host).QueryAsync(new GetAccountQuery(account), Context("globex"), Token)).Errors));
-        Assert.Equal(AccountErrors.NotFound, Assert.Single((await Accounts(host).QueryAsync(new GetAccountQuery(account), Context(), Token)).Errors));
+        Assert.Equal(
+            ["acme", "acme"],
+            (
+                await RowsAsync(
+                    $"select tenant_id from events.mt_events where stream_id = '{account}'"
+                )
+            ).Select(row => (string)row[0])
+        );
+        Assert.True(
+            (
+                await Accounts(host)
+                    .QueryAsync(new GetAccountQuery(account), Context("acme"), Token)
+            ).IsSuccess
+        );
+        Assert.Equal(
+            AccountErrors.NotFound,
+            Assert.Single(
+                (
+                    await Accounts(host)
+                        .QueryAsync(new GetAccountQuery(account), Context("globex"), Token)
+                ).Errors
+            )
+        );
+        Assert.Equal(
+            AccountErrors.NotFound,
+            Assert.Single(
+                (
+                    await Accounts(host).QueryAsync(new GetAccountQuery(account), Context(), Token)
+                ).Errors
+            )
+        );
         Assert.Equal(AccountErrors.NotFound, Assert.Single(deposit.Errors));
     }
 
@@ -562,17 +778,41 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     {
         var account = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database));
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context("acme"), Token);
+        await Accounts(host)
+            .SendAsync(
+                new OpenAccountCommand(account, Guid.CreateVersion7()),
+                Context("acme"),
+                Token
+            );
 
-        var globex = await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context("globex"), Token);
-        var none = await Accounts(host).SendAsync(new OpenAccountCommand(Guid.CreateVersion7(), Guid.CreateVersion7()), Context(), Token);
+        var globex = await Accounts(host)
+            .SendAsync(
+                new OpenAccountCommand(account, Guid.CreateVersion7()),
+                Context("globex"),
+                Token
+            );
+        var none = await Accounts(host)
+            .SendAsync(
+                new OpenAccountCommand(Guid.CreateVersion7(), Guid.CreateVersion7()),
+                Context(),
+                Token
+            );
 
         Assert.True(globex.IsSuccess && none.IsSuccess);
         Assert.Equal(
             ["acme", "globex"],
-            (await RowsAsync($"select tenant_id from events.mt_events where stream_id = '{account}' and type = 'account_opened' order by tenant_id")).Select(row => (string)row[0])
+            (
+                await RowsAsync(
+                    $"select tenant_id from events.mt_events where stream_id = '{account}' and type = 'account_opened' order by tenant_id"
+                )
+            ).Select(row => (string)row[0])
         );
-        Assert.Equal(1L, await CountAsync("select count(*) from events.mt_events where tenant_id = '*DEFAULT*' and type = 'account_opened'"));
+        Assert.Equal(
+            1L,
+            await CountAsync(
+                "select count(*) from events.mt_events where tenant_id = '*DEFAULT*' and type = 'account_opened'"
+            )
+        );
     }
 
     [Fact]
@@ -581,14 +821,28 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var host = await StartAsync(streams.MartenOnly(_database));
 
         var command = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            Accounts(host).SendAsync(new OpenAccountCommand(Guid.CreateVersion7(), Guid.CreateVersion7()), Context("*DEFAULT*"), Token)
+            Accounts(host)
+                .SendAsync(
+                    new OpenAccountCommand(Guid.CreateVersion7(), Guid.CreateVersion7()),
+                    Context("*DEFAULT*"),
+                    Token
+                )
         );
         var query = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            Accounts(host).QueryAsync(new GetAccountQuery(Guid.CreateVersion7()), Context("*DEFAULT*"), Token)
+            Accounts(host)
+                .QueryAsync(new GetAccountQuery(Guid.CreateVersion7()), Context("*DEFAULT*"), Token)
         );
 
-        Assert.StartsWith("The Operation's tenant is *DEFAULT*", command.Message, StringComparison.Ordinal);
-        Assert.StartsWith("The Operation's tenant is *DEFAULT*", query.Message, StringComparison.Ordinal);
+        Assert.StartsWith(
+            "The Operation's tenant is *DEFAULT*",
+            command.Message,
+            StringComparison.Ordinal
+        );
+        Assert.StartsWith(
+            "The Operation's tenant is *DEFAULT*",
+            query.Message,
+            StringComparison.Ordinal
+        );
     }
 
     [Fact]
@@ -596,10 +850,12 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     {
         var account = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database));
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
 
-        var result = await Accounts(host).SendAsync(new DepositThroughQueryCommand(account), Context(), Token);
+        var result = await Accounts(host)
+            .SendAsync(new DepositThroughQueryCommand(account), Context(), Token);
 
         Assert.Equal(OperationErrors.ReadingChangedState, Assert.Single(result.Errors));
         Assert.Equal(0L, await CountAsync(Events(account, "deposited")));
@@ -613,14 +869,20 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         var account = Guid.CreateVersion7();
         var other = Guid.CreateVersion7();
         var host = await StartAsync(streams.MartenOnly(_database));
-        await Accounts(host).SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
-        await Accounts(host).SendAsync(new OpenAccountCommand(other, Guid.CreateVersion7()), Context(), Token);
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
+        await Accounts(host)
+            .SendAsync(new OpenAccountCommand(other, Guid.CreateVersion7()), Context(), Token);
         await WaitUntilAsync("(select count(*) from events.mt_events where type = 'welcomed') = 2");
 
-        var result = await Accounts(host).SendAsync(new DepositThenRedirectCommand(account, other), Context(), Token);
+        var result = await Accounts(host)
+            .SendAsync(new DepositThenRedirectCommand(account, other), Context(), Token);
 
         Assert.Equal(OperationErrors.ReadingChangedState, Assert.Single(result.Errors));
-        Assert.Equal(0L, await CountAsync("select count(*) from events.mt_events where type = 'deposited'"));
+        Assert.Equal(
+            0L,
+            await CountAsync("select count(*) from events.mt_events where type = 'deposited'")
+        );
     }
 
     public async ValueTask DisposeAsync()
@@ -658,18 +920,33 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
                 options.Retention = retention;
                 options.CleanupInterval = TimeSpan.FromMilliseconds(100);
             });
-        var host = await StartAsync(mixed ? streams.Mixed(_database, configure: builder => Retain(builder.Services)) : streams.MartenOnly(_database, Retain));
+        var host = await StartAsync(
+            mixed
+                ? streams.Mixed(_database, configure: builder => Retain(builder.Services))
+                : streams.MartenOnly(_database, Retain)
+        );
         foreach (var request in (string[])["old", "new"])
         {
-            await Accounts(host).SendAsync(new OpenAccountCommand(Guid.CreateVersion7(), Guid.CreateVersion7()), Context(requestId: request), Token);
+            await Accounts(host)
+                .SendAsync(
+                    new OpenAccountCommand(Guid.CreateVersion7(), Guid.CreateVersion7()),
+                    Context(requestId: request),
+                    Token
+                );
         }
 
-        await RowsAsync("update accounts.pouryakit_idempotency_keys set reserved_at = now() - interval '10 years' where request_id = 'old' returning 1");
+        await RowsAsync(
+            "update accounts.pouryakit_idempotency_keys set reserved_at = now() - interval '10 years' where request_id = 'old' returning 1"
+        );
     }
 
     // The first command on the account holds after its handler read the stream, or at its save's first batch; released, it
     // goes on.
-    private static (TaskCompletionSource Reached, TaskCompletionSource Release) Hold(StreamCommitProbe probe, Guid account, bool whileTheFirstSaves)
+    private static (TaskCompletionSource Reached, TaskCompletionSource Release) Hold(
+        StreamCommitProbe probe,
+        Guid account,
+        bool whileTheFirstSaves
+    )
     {
         var reached = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -696,7 +973,8 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
     }
 
     private static Action<IServiceCollection> StaleAfter(TimeSpan time) =>
-        services => services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = time);
+        services =>
+            services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = time);
 
     private async Task<IHost> StartAsync(IHost host)
     {
@@ -712,18 +990,21 @@ public sealed class StreamTests(StreamFixture streams) : IClassFixture<StreamFix
         return host;
     }
 
-    private static IGatewayProcessor<AccountsModule> Accounts(IHost host) => host.Services.GetRequiredService<IGatewayProcessor<AccountsModule>>();
+    private static IGatewayProcessor<AccountsModule> Accounts(IHost host) =>
+        host.Services.GetRequiredService<IGatewayProcessor<AccountsModule>>();
 
     private static OperationContext Context(string? tenant = null, string? requestId = null) =>
         new(Actor.System("stream-tests"), tenant) { RequestId = requestId };
 
-    private static string Events(Guid stream, string type) => $"select count(*) from events.mt_events where stream_id = '{stream}' and type = '{type}'";
+    private static string Events(Guid stream, string type) =>
+        $"select count(*) from events.mt_events where stream_id = '{stream}' and type = '{type}'";
 
     private Task<List<object[]>> RowsAsync(string sql) => Sql.RowsAsync(_database, sql);
 
     private async Task<long> CountAsync(string sql) => (long)(await RowsAsync(sql))[0][0];
 
-    private Task WaitUntilAsync(string condition) => Sql.WaitUntilAsync(_database, condition, seconds: 30);
+    private Task WaitUntilAsync(string condition) =>
+        Sql.WaitUntilAsync(_database, condition, seconds: 30);
 }
 
 // A Stream Module that publishes and receives nothing.

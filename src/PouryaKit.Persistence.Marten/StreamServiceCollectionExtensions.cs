@@ -50,7 +50,10 @@ public static class StreamServiceCollectionExtensions
             );
             if (module is not null)
             {
-                services.TryAddKeyedScoped<IIdempotencyStore>(module, (provider, _) => NewKeys(provider));
+                services.TryAddKeyedScoped<IIdempotencyStore>(
+                    module,
+                    (provider, _) => NewKeys(provider)
+                );
             }
             else
             {
@@ -58,13 +61,20 @@ public static class StreamServiceCollectionExtensions
             }
 
             IModuleServices.RouteByModule<IIdempotencyStore>(services);
-            services.ConfigureMarten(options => options.Storage.ExtendedSchemaObjects.Add(IdempotencyKeyTable.In(schema)));
+            services.ConfigureMarten(options =>
+                options.Storage.ExtendedSchemaObjects.Add(IdempotencyKeyTable.In(schema))
+            );
             StreamModules.In(services).Add(module, schema);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, StreamOutboxCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, StreamOutboxCheck>()
+            );
             return services;
         }
     }
 
     private static MartenIdempotencyStore NewKeys(IServiceProvider provider) =>
-        new(provider.GetRequiredService<IUnitOfWork>(), provider.GetRequiredService<TimeProvider>());
+        new(
+            provider.GetRequiredService<IUnitOfWork>(),
+            provider.GetRequiredService<TimeProvider>()
+        );
 }

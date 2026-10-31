@@ -9,9 +9,13 @@ namespace Billing.Quotes.Features.ExpireQuote;
 
 #region expire-quote-handler
 // Runs when the expiry OpenQuote scheduled is due, as a continuation of the Operation that opened the quote.
-internal sealed class ExpireQuoteCommandHandler(IRepository<Quote, QuoteId> quotes) : CommandHandler<ExpireQuoteCommand>
+internal sealed class ExpireQuoteCommandHandler(IRepository<Quote, QuoteId> quotes)
+    : CommandHandler<ExpireQuoteCommand>
 {
-    public override async Task<Result> Handle(ExpireQuoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ExpireQuoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var quote = await quotes.FindAsync(new QuoteId(command.QuoteId), cancellationToken);
         return quote is null ? QuoteErrors.NotFound : quote.Expire();

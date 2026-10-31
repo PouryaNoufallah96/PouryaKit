@@ -22,9 +22,14 @@ public sealed class OneProviderCheck<TService>(string registration, string noun)
         List<string> registered =
         [
             .. composition
-                .Registrations.Where(descriptor => !descriptor.IsKeyedService && descriptor.ServiceType == typeof(TService))
+                .Registrations.Where(descriptor =>
+                    !descriptor.IsKeyedService && descriptor.ServiceType == typeof(TService)
+                )
                 .Select(descriptor =>
-                    (descriptor.ImplementationType ?? descriptor.ImplementationInstance?.GetType())?.FullName
+                    (
+                        descriptor.ImplementationType
+                        ?? descriptor.ImplementationInstance?.GetType()
+                    )?.FullName
                     ?? $"the factory {descriptor.ImplementationFactory!.Method.DeclaringType?.FullName}.{descriptor.ImplementationFactory.Method.Name}"
                 ),
         ];
@@ -32,7 +37,10 @@ public sealed class OneProviderCheck<TService>(string registration, string noun)
         return registered.Count switch
         {
             1 => [],
-            0 => [$"The Host registers no {contract} provider, and composes exactly one: {registration} registered one, then it was removed."],
+            0 =>
+            [
+                $"The Host registers no {contract} provider, and composes exactly one: {registration} registered one, then it was removed.",
+            ],
             _ =>
             [
                 $"The Host registers {registered.Count} {contract} providers, {string.Join(", ", registered)}, and composes exactly one: remove all but one of its {noun} registrations.",
@@ -40,6 +48,8 @@ public sealed class OneProviderCheck<TService>(string registration, string noun)
         };
 
         static string NameOf(Type type) =>
-            type.IsGenericType ? $"{type.Name.Split('`')[0]}<{string.Join(", ", type.GetGenericArguments().Select(NameOf))}>" : type.Name;
+            type.IsGenericType
+                ? $"{type.Name.Split('`')[0]}<{string.Join(", ", type.GetGenericArguments().Select(NameOf))}>"
+                : type.Name;
     }
 }

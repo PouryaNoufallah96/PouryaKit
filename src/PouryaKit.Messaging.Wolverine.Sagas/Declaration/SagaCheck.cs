@@ -43,7 +43,12 @@ internal sealed class SagaCheck : ICompositionCheck
                 );
             }
 
-            if (!type.IsVisible || type.IsAbstract || type.ContainsGenericParameters || type.GetConstructor(Type.EmptyTypes) is null)
+            if (
+                !type.IsVisible
+                || type.IsAbstract
+                || type.ContainsGenericParameters
+                || type.GetConstructor(Type.EmptyTypes) is null
+            )
             {
                 problems.Add(
                     $"The Saga {saga.Name}, {type.FullName}, is not a public concrete class with a public parameterless constructor: Wolverine generates the code of its steps, which names and creates it. Make it public."
@@ -90,7 +95,10 @@ internal sealed class SagaCheck : ICompositionCheck
                 }
             }
 
-            if (subscriptions.All.Any(subscription => subscription.Name == saga.Name) || delayedCommands.Any(delayed => delayed.Name == saga.Name))
+            if (
+                subscriptions.All.Any(subscription => subscription.Name == saga.Name)
+                || delayedCommands.Any(delayed => delayed.Name == saga.Name)
+            )
             {
                 problems.Add(
                     $"The Saga {type.FullName} and a subscription or a delayed command have the name {saga.Name}, ignoring case; each needs a queue of its own."
@@ -125,23 +133,40 @@ internal sealed class SagaCheck : ICompositionCheck
         // Each input's stored envelopes carry a name of the saga's own, never Wolverine's, which names a generic type by
         // its arguments' simple names: two sagas or events of one simple name would share it.
         var inputNames = sagas
-            .SelectMany(saga => saga.Inputs.Where(input => wireNames.ContainsKey(input.EventType)).Select(input => (input.InputType, Name: $"{saga.Name}.{wireNames[input.EventType]}")))
+            .SelectMany(saga =>
+                saga.Inputs.Where(input => wireNames.ContainsKey(input.EventType))
+                    .Select(input =>
+                        (input.InputType, Name: $"{saga.Name}.{wireNames[input.EventType]}")
+                    )
+            )
             .ToList();
         problems.AddRange(
             inputNames
                 .GroupBy(input => input.Name, StringComparer.OrdinalIgnoreCase)
-                .Where(named => named.Count() > 1 || wireNames.Values.Contains(named.Key, StringComparer.OrdinalIgnoreCase))
+                .Where(named =>
+                    named.Count() > 1
+                    || wireNames.Values.Contains(named.Key, StringComparer.OrdinalIgnoreCase)
+                )
                 .Select(named =>
                     $"The Saga inputs {string.Join(" and ", named.Select(input => input.InputType.FullName))} would be named {named.Key}, ignoring case, which {(named.Count() > 1 ? "they share" : "an Integration Event or Snapshot has")}: their stored envelopes could not be told apart. Give a saga another name."
                 )
         );
         if (problems.Count == 0)
         {
-            problems.AddRange(WireNaming.DeclareSagaInputs(inputNames.ToDictionary(input => input.InputType, input => input.Name)));
+            problems.AddRange(
+                WireNaming.DeclareSagaInputs(
+                    inputNames.ToDictionary(input => input.InputType, input => input.Name)
+                )
+            );
         }
 
         // Resolving the options includes each saga in Wolverine's discovery, which throws for one it cannot generate.
-        if (sagas.Count > 0 && problems.Count == 0 && WireNaming.AllDeclared(wireNames) && services.GetService<WolverineOptions>() is { } wolverine)
+        if (
+            sagas.Count > 0
+            && problems.Count == 0
+            && WireNaming.AllDeclared(wireNames)
+            && services.GetService<WolverineOptions>() is { } wolverine
+        )
         {
             var names = string.Join(", ", sagas.Select(saga => saga.Name));
             if (wolverine.ServiceLocationPolicy is not ServiceLocationPolicy.NotAllowed)
@@ -152,7 +177,9 @@ internal sealed class SagaCheck : ICompositionCheck
             }
 
             // A selective storage, such as EF Core's, keeps only the types it maps; the first that keeps every type keeps the sagas.
-            var storage = wolverine.CodeGeneration.OrderedPersistenceProviders().FirstOrDefault(provider => provider.IsCatchAll);
+            var storage = wolverine
+                .CodeGeneration.OrderedPersistenceProviders()
+                .FirstOrDefault(provider => provider.IsCatchAll);
             if (storage is not LightweightSagaPersistenceFrameProvider)
             {
                 problems.Add(

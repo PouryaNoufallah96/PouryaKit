@@ -96,9 +96,13 @@ internal sealed class PinConfiguration : IEntityTypeConfiguration<Pin>
 
 internal sealed record CreateTrayCommand(Guid TrayId) : Command;
 
-internal sealed class CreateTrayCommandHandler(IRepository<Tray, TrayId> trays) : CommandHandler<CreateTrayCommand>
+internal sealed class CreateTrayCommandHandler(IRepository<Tray, TrayId> trays)
+    : CommandHandler<CreateTrayCommand>
 {
-    public override async Task<Result> Handle(CreateTrayCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        CreateTrayCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await trays.AddAsync(Tray.Create(new TrayId(command.TrayId)), cancellationToken);
         return Result.Success();
@@ -116,18 +120,32 @@ internal enum TrayEdit
 // whose changes were all prepared beforehand never does; accepting the saved changes afterwards is not recorded.
 internal sealed record EditTrayCommand(Guid TrayId, TrayEdit Edit) : Command<ReactionLog>;
 
-internal sealed class EditTrayCommandHandler(IRepository<Tray, TrayId> trays, StubDbContext dbContext, ReactionLog log)
-    : CommandHandler<EditTrayCommand, ReactionLog>
+internal sealed class EditTrayCommandHandler(
+    IRepository<Tray, TrayId> trays,
+    StubDbContext dbContext,
+    ReactionLog log
+) : CommandHandler<EditTrayCommand, ReactionLog>
 {
-    public override async Task<Result<ReactionLog>> Handle(EditTrayCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<ReactionLog>> Handle(
+        EditTrayCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var saving = false;
         dbContext.SavingChanges += (_, _) => saving = true;
         dbContext.ChangeTracker.StateChanged += (_, changed) =>
         {
-            if (saving && changed.NewState is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            if (
+                saving
+                && changed.NewState
+                    is EntityState.Added
+                        or EntityState.Modified
+                        or EntityState.Deleted
+            )
             {
-                log.Add($"{changed.Entry.Metadata.ClrType.Name} {changed.OldState} -> {changed.NewState}");
+                log.Add(
+                    $"{changed.Entry.Metadata.ClrType.Name} {changed.OldState} -> {changed.NewState}"
+                );
             }
         };
 

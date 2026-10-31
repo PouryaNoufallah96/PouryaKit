@@ -35,7 +35,11 @@ internal sealed class ListProductsQueryHandler(IReadConnectionFactory connection
     )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        return await connection.QueryPageAsync<ProductListItemDto>(Sql, query.Page, cancellationToken: cancellationToken);
+        return await connection.QueryPageAsync<ProductListItemDto>(
+            Sql,
+            query.Page,
+            cancellationToken: cancellationToken
+        );
     }
 }
 #endregion

@@ -7,7 +7,8 @@ namespace PouryaKit.Persistence.EFCore;
 
 // Hands out the connection and transaction of the scope's Unit of Work, the Module's own in a modular Host, so a plain
 // SQL write commits or rolls back with what the Unit of Work saves.
-internal sealed class EfUnitOfWorkConnection(IUnitOfWork unitOfWork, Operation operation) : IUnitOfWorkConnection
+internal sealed class EfUnitOfWorkConnection(IUnitOfWork unitOfWork, Operation operation)
+    : IUnitOfWorkConnection
 {
     public (DbConnection Connection, DbTransaction Transaction) Join()
     {

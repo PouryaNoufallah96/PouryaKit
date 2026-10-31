@@ -44,7 +44,11 @@ internal static class Il
     public static IEnumerable<Literal> LiteralsIn(Assembly assembly) =>
         from method in MethodsOf(assembly)
         from token in Tokens(method, OperandType.InlineString)
-        select new Literal(OwnerOf(method.DeclaringType!), method, method.Module.ResolveString(token));
+        select new Literal(
+            OwnerOf(method.DeclaringType!),
+            method,
+            method.Module.ResolveString(token)
+        );
 
     /// <summary>The type declared in source that holds <paramref name="type"/>, which may be one the compiler made.</summary>
     public static Type OwnerOf(Type type)
@@ -60,19 +64,29 @@ internal static class Il
     private static IEnumerable<MethodBase> MethodsOf(Assembly assembly)
     {
         const BindingFlags all =
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+            BindingFlags.Public
+            | BindingFlags.NonPublic
+            | BindingFlags.Instance
+            | BindingFlags.Static
+            | BindingFlags.DeclaredOnly;
         return assembly
             .GetTypes()
-            .SelectMany(type => type.GetMethods(all).Cast<MethodBase>().Concat(type.GetConstructors(all)))
+            .SelectMany(type =>
+                type.GetMethods(all).Cast<MethodBase>().Concat(type.GetConstructors(all))
+            )
             .Where(method => method.GetMethodBody() is not null);
     }
 
     private static MethodBase Resolve(MethodBase method, int token)
     {
-        var typeArguments = method.DeclaringType!.IsGenericType ? method.DeclaringType.GetGenericArguments() : null;
+        var typeArguments = method.DeclaringType!.IsGenericType
+            ? method.DeclaringType.GetGenericArguments()
+            : null;
         var methodArguments = method.IsGenericMethod ? method.GetGenericArguments() : null;
         return method.Module.ResolveMethod(token, typeArguments, methodArguments)
-            ?? throw new InvalidOperationException($"A call in {method.DeclaringType.FullName}.{method.Name} resolved to nothing.");
+            ?? throw new InvalidOperationException(
+                $"A call in {method.DeclaringType.FullName}.{method.Name} resolved to nothing."
+            );
     }
 
     private static IEnumerable<int> Tokens(MethodBase method, OperandType operandType)
@@ -86,7 +100,9 @@ internal static class Il
             var size = opCode.OperandType switch
             {
                 OperandType.InlineNone => 0,
-                OperandType.ShortInlineBrTarget or OperandType.ShortInlineI or OperandType.ShortInlineVar => 1,
+                OperandType.ShortInlineBrTarget
+                or OperandType.ShortInlineI
+                or OperandType.ShortInlineVar => 1,
                 OperandType.InlineVar => 2,
                 OperandType.InlineI8 or OperandType.InlineR => 8,
                 OperandType.InlineSwitch => 4 + (4 * BitConverter.ToInt32(il, at)),

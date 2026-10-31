@@ -11,10 +11,16 @@ namespace Billing.Quotes.Features.OpenQuote;
 #region open-quote-handler
 // Opens a quote and schedules its expiry: the Unit of Work writes the expiry with the quote, in one commit, and the
 // message store keeps it until it is due.
-internal sealed class OpenQuoteCommandHandler(IRepository<Quote, QuoteId> quotes, IDelayedCommands later, TimeProvider time)
-    : CommandHandler<OpenQuoteCommand>
+internal sealed class OpenQuoteCommandHandler(
+    IRepository<Quote, QuoteId> quotes,
+    IDelayedCommands later,
+    TimeProvider time
+) : CommandHandler<OpenQuoteCommand>
 {
-    public override async Task<Result> Handle(OpenQuoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OpenQuoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var quote = Quote.Open(new QuoteId(command.QuoteId), time.GetUtcNow() + command.ValidFor);
         await quotes.AddAsync(quote, cancellationToken);

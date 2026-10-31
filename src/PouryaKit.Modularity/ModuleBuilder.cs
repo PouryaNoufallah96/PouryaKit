@@ -67,7 +67,8 @@ public sealed class ModuleBuilder : IModuleServices
     public bool Contains(ServiceDescriptor item) => _services.Contains(item);
 
     /// <inheritdoc />
-    public void CopyTo(ServiceDescriptor[] array, int arrayIndex) => _services.CopyTo(array, arrayIndex);
+    public void CopyTo(ServiceDescriptor[] array, int arrayIndex) =>
+        _services.CopyTo(array, arrayIndex);
 
     /// <inheritdoc />
     public IEnumerator<ServiceDescriptor> GetEnumerator() => _services.GetEnumerator();

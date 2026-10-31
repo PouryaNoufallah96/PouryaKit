@@ -28,7 +28,8 @@ namespace ModularMonolith.Tests;
 // probes, and its bearer scheme. Both run in this process, so one listener sees the proxy's spans and the Host's. The
 // service route fronts Inventory.Host the same way, on the broker fixture, whose Hosts run beside no other test.
 [Collection<BrokerCollection>]
-public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : HostTest<AppFixture>(app)
+public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker)
+    : HostTest<AppFixture>(app)
 {
     private const string Service = "modular-monolith";
 
@@ -42,21 +43,45 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
         var live = AddressOf(host);
         var dead = UnboundAddress();
         // A probe each second, so the dead endpoint's two failures come soon.
-        await using var proxy = await StartProxyAsync(Service, CatchAll, [live, dead], $"--ReverseProxy:Clusters:{Service}:HealthCheck:Active:Interval=00:00:01");
+        await using var proxy = await StartProxyAsync(
+            Service,
+            CatchAll,
+            [live, dead],
+            $"--ReverseProxy:Clusters:{Service}:HealthCheck:Active:Interval=00:00:01"
+        );
 
         var cluster = await ProbedAsync(proxy);
         using var client = proxy.GetTestClient();
         List<HttpStatusCode> answers = [];
         for (var i = 0; i < 4; i++)
         {
-            answers.Add((await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)).StatusCode);
+            answers.Add(
+                (
+                    await client.GetAsync(
+                        "/stub/public/context",
+                        TestContext.Current.CancellationToken
+                    )
+                ).StatusCode
+            );
         }
 
         Assert.Equal(
             [(live, DestinationHealth.Healthy), (dead, DestinationHealth.Unhealthy)],
-            cluster.Destinations.Values.Select(destination => (Address: new Uri(destination.Model.Config.Address), Health: destination.Health.Active)).OrderBy(probed => probed.Health)
+            cluster
+                .Destinations.Values.Select(destination =>
+                    (
+                        Address: new Uri(destination.Model.Config.Address),
+                        Health: destination.Health.Active
+                    )
+                )
+                .OrderBy(probed => probed.Health)
         );
-        Assert.Equal([live], cluster.DestinationsState.AvailableDestinations.Select(destination => new Uri(destination.Model.Config.Address)));
+        Assert.Equal(
+            [live],
+            cluster.DestinationsState.AvailableDestinations.Select(destination => new Uri(
+                destination.Model.Config.Address
+            ))
+        );
         Assert.All(answers, answer => Assert.Equal(HttpStatusCode.OK, answer));
     }
 
@@ -68,20 +93,38 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
     {
         var alive = true;
         await using var host = await StartHostAsync(builder =>
-            builder.Services.AddHealthChecks().AddCheck("switch", () => alive ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy(), ["live"])
+            builder
+                .Services.AddHealthChecks()
+                .AddCheck(
+                    "switch",
+                    () => alive ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy(),
+                    ["live"]
+                )
         );
-        await using var proxy = await StartProxyAsync(Service, CatchAll, [AddressOf(host)], $"--ReverseProxy:Clusters:{Service}:HealthCheck:Active:Interval=00:00:01");
+        await using var proxy = await StartProxyAsync(
+            Service,
+            CatchAll,
+            [AddressOf(host)],
+            $"--ReverseProxy:Clusters:{Service}:HealthCheck:Active:Interval=00:00:01"
+        );
         using var client = proxy.GetTestClient();
         await ProbedAsync(proxy, DestinationHealth.Healthy);
 
         alive = false;
         await ProbedAsync(proxy, DestinationHealth.Unhealthy);
-        var whileOut = (await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)).StatusCode;
+        var whileOut = (
+            await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)
+        ).StatusCode;
         alive = true;
         await ProbedAsync(proxy, DestinationHealth.Healthy);
-        var afterRecovery = (await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)).StatusCode;
+        var afterRecovery = (
+            await client.GetAsync("/stub/public/context", TestContext.Current.CancellationToken)
+        ).StatusCode;
 
-        Assert.Equal((HttpStatusCode.ServiceUnavailable, HttpStatusCode.OK), (whileOut, afterRecovery));
+        Assert.Equal(
+            (HttpStatusCode.ServiceUnavailable, HttpStatusCode.OK),
+            (whileOut, afterRecovery)
+        );
     }
 
     // The client's W3C context arrives at the proxy; YARP's default propagator sends the Host the proxy's own span in that
@@ -92,7 +135,10 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
     {
         await using var host = await StartHostAsync();
         await using var proxy = await StartProxyAsync(Service, CatchAll, [AddressOf(host)]);
-        using var telemetry = new RecordedTelemetry(durations: false, sources: ["Microsoft.AspNetCore", "System.Net.Http"]);
+        using var telemetry = new RecordedTelemetry(
+            durations: false,
+            sources: ["Microsoft.AspNetCore", "System.Net.Http"]
+        );
         var trace = ActivityTraceId.CreateRandom();
         var caller = ActivitySpanId.CreateRandom();
         using var client = proxy.GetTestClient();
@@ -103,16 +149,27 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
         var spans = await SpansAsync(telemetry, trace, caller);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var operation = Assert.Single(spans, span => span.Source.Name == OperationTelemetry.SourceName);
+        var operation = Assert.Single(
+            spans,
+            span => span.Source.Name == OperationTelemetry.SourceName
+        );
         List<Activity> ancestors = [];
-        for (var parent = operation.ParentSpanId; spans.SingleOrDefault(span => span.SpanId == parent) is { } span; parent = span.ParentSpanId)
+        for (
+            var parent = operation.ParentSpanId;
+            spans.SingleOrDefault(span => span.SpanId == parent) is { } span;
+            parent = span.ParentSpanId
+        )
         {
             ancestors.Add(span);
         }
 
         // The Host's request, the proxy's forwarding call, the proxy's request, whose parent is the client's span.
         Assert.Equal(
-            [("Microsoft.AspNetCore", ActivityKind.Server), ("System.Net.Http", ActivityKind.Client), ("Microsoft.AspNetCore", ActivityKind.Server)],
+            [
+                ("Microsoft.AspNetCore", ActivityKind.Server),
+                ("System.Net.Http", ActivityKind.Client),
+                ("Microsoft.AspNetCore", ActivityKind.Server),
+            ],
             ancestors.Select(span => (span.Source.Name, span.Kind))
         );
         Assert.Equal(caller, ancestors[^1].ParentSpanId);
@@ -133,16 +190,32 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
             TestIssuer.Token(new() { ["sub"] = AppFixture.TrustedPeer })
         );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.ActorId, "ada");
-        client.DefaultRequestHeaders.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
+        client.DefaultRequestHeaders.Add(
+            OperationContextHeaders.ActorKind,
+            nameof(ActorKind.Person)
+        );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.Tenant, "acme");
-        client.DefaultRequestHeaders.Add(OperationContextHeaders.CorrelationId, correlation.ToString());
+        client.DefaultRequestHeaders.Add(
+            OperationContextHeaders.CorrelationId,
+            correlation.ToString()
+        );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.CausationId, causation.ToString());
 
-        var response = await client.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var seen = (await response.Content.ReadFromJsonAsync<SeenContext>(TestContext.Current.CancellationToken))!;
-        Assert.Equal((new SeenActor("ada", ActorKind.Person), "acme", correlation, causation), (seen.Actor, seen.Tenant, seen.CorrelationId, seen.CausationId));
+        var seen = (
+            await response.Content.ReadFromJsonAsync<SeenContext>(
+                TestContext.Current.CancellationToken
+            )
+        )!;
+        Assert.Equal(
+            (new SeenActor("ada", ActorKind.Person), "acme", correlation, causation),
+            (seen.Actor, seen.Tenant, seen.CorrelationId, seen.CausationId)
+        );
     }
 
     // Story 19 of spec #161: the sample AppHost's service route, Inventory's paths to the service named inventory, which
@@ -160,38 +233,63 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
         });
         await using var catalog = await environment.StartCatalogHostAsync();
         var product = Guid.CreateVersion7();
-        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp", new OperationContext(GatewayTestExtensions.TestActor, "north"));
+        await BrokerEnvironment.CreateProductAsync(
+            catalog,
+            product,
+            "Lamp",
+            new OperationContext(GatewayTestExtensions.TestActor, "north")
+        );
         await BrokerEnvironment.WaitUntilAsync(
             environment.Inventory,
             $"exists (select from inventory.stock_items where product_id = '{product}')",
             "Inventory.Host never stocked the product."
         );
         await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
-        await using var proxy = await StartProxyAsync("inventory", "/inventory/{**catch-all}", [AddressOf((WebApplication)inventory)]);
+        await using var proxy = await StartProxyAsync(
+            "inventory",
+            "/inventory/{**catch-all}",
+            [AddressOf((WebApplication)inventory)]
+        );
         using var client = proxy.GetTestClient();
-        var token = TestIssuer.Token(new() { ["sub"] = "ada", [InventoryHost.TenantClaim] = "north" });
+        var token = TestIssuer.Token(
+            new() { ["sub"] = "ada", [InventoryHost.TenantClaim] = "north" }
+        );
         var correlation = Guid.CreateVersion7().ToString();
         var causation = Guid.CreateVersion7().ToString();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            JwtBearerDefaults.AuthenticationScheme,
+            token
+        );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.ActorId, "ada");
-        client.DefaultRequestHeaders.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
+        client.DefaultRequestHeaders.Add(
+            OperationContextHeaders.ActorKind,
+            nameof(ActorKind.Person)
+        );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.Tenant, "north");
         client.DefaultRequestHeaders.Add(OperationContextHeaders.CorrelationId, correlation);
         client.DefaultRequestHeaders.Add(OperationContextHeaders.CausationId, causation);
 
-        using var response = await client.GetAsync($"/inventory/v2/stock-items/{product}", TestContext.Current.CancellationToken);
+        using var response = await client.GetAsync(
+            $"/inventory/v2/stock-items/{product}",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(
             $$"""{"productId":"{{product}}","quantityOnHand":0}""",
             await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
         );
-        Assert.Equal([$"Bearer {token}", "ada", "Person", "north", correlation, causation], Assert.Single(arrived.Requests));
+        Assert.Equal(
+            [$"Bearer {token}", "ada", "Person", "north", correlation, causation],
+            Assert.Single(arrived.Requests)
+        );
     }
 
     // The sample Host with its own bearer scheme, as JwtBearerTests composes it, and the service defaults' health checks
     // and endpoints, served by Kestrel on a port of the system's choosing in place of AppFixture's in-memory server.
-    private async Task<WebApplication> StartHostAsync(Action<WebApplicationBuilder>? configure = null)
+    private async Task<WebApplication> StartHostAsync(
+        Action<WebApplicationBuilder>? configure = null
+    )
     {
         var host = AppFixture.ComposeHost(
             "Development",
@@ -212,19 +310,24 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
 
     // One route of path to the cluster of service, its destination named by the service alone, and the service's
     // endpoints in the Services section, where AddServiceDiscovery of the service defaults reads them.
-    private static async Task<WebApplication> StartProxyAsync(string service, string path, Uri[] endpoints, params string[] arguments)
+    private static async Task<WebApplication> StartProxyAsync(
+        string service,
+        string path,
+        Uri[] endpoints,
+        params string[] arguments
+    )
     {
-        var builder = ReverseProxyHost.CreateBuilder(
-            [
-                "--environment",
-                "Development",
-                $"--ReverseProxy:Routes:{service}:ClusterId={service}",
-                $"--ReverseProxy:Routes:{service}:Match:Path={path}",
-                $"--ReverseProxy:Clusters:{service}:Destinations:host:Address=http://{service}",
-                .. endpoints.Select((endpoint, index) => $"--Services:{service}:http:{index}={endpoint}"),
-                .. arguments,
-            ]
-        );
+        var builder = ReverseProxyHost.CreateBuilder([
+            "--environment",
+            "Development",
+            $"--ReverseProxy:Routes:{service}:ClusterId={service}",
+            $"--ReverseProxy:Routes:{service}:Match:Path={path}",
+            $"--ReverseProxy:Clusters:{service}:Destinations:host:Address=http://{service}",
+            .. endpoints.Select(
+                (endpoint, index) => $"--Services:{service}:http:{index}={endpoint}"
+            ),
+            .. arguments,
+        ]);
         builder.Logging.ClearProviders();
         builder.WebHost.UseTestServer();
         var proxy = ReverseProxyHost.Build(builder);
@@ -256,9 +359,16 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
                 app.Use(
                     (context, pipeline) =>
                     {
-                        if (context.Request.Path.StartsWithSegments("/inventory", StringComparison.Ordinal))
+                        if (
+                            context.Request.Path.StartsWithSegments(
+                                "/inventory",
+                                StringComparison.Ordinal
+                            )
+                        )
                         {
-                            Requests.Enqueue([.. Names.Select(name => context.Request.Headers[name].ToString())]);
+                            Requests.Enqueue([
+                                .. Names.Select(name => context.Request.Headers[name].ToString()),
+                            ]);
                         }
 
                         return pipeline(context);
@@ -277,14 +387,23 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
     }
 
     // The proxy's cluster once its probes have judged every destination, each as healthy as given when one is.
-    private static async Task<ClusterState> ProbedAsync(WebApplication proxy, DestinationHealth? health = null)
+    private static async Task<ClusterState> ProbedAsync(
+        WebApplication proxy,
+        DestinationHealth? health = null
+    )
     {
         var lookup = proxy.Services.GetRequiredService<IProxyStateLookup>();
         var deadline = DateTime.UtcNow.AddSeconds(30);
         while (true)
         {
             Assert.True(lookup.TryGetCluster(Service, out var cluster));
-            if (cluster.Destinations.Values.All(destination => health is { } judged ? destination.Health.Active == judged : destination.Health.Active != DestinationHealth.Unknown))
+            if (
+                cluster.Destinations.Values.All(destination =>
+                    health is { } judged
+                        ? destination.Health.Active == judged
+                        : destination.Health.Active != DestinationHealth.Unknown
+                )
+            )
             {
                 return cluster;
             }
@@ -298,7 +417,11 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker) : Ho
     }
 
     // The trace's spans once the proxy's own request, the one whose parent is the client's span, has stopped: it stops last.
-    private static async Task<IReadOnlyList<Activity>> SpansAsync(RecordedTelemetry telemetry, ActivityTraceId trace, ActivitySpanId caller)
+    private static async Task<IReadOnlyList<Activity>> SpansAsync(
+        RecordedTelemetry telemetry,
+        ActivityTraceId trace,
+        ActivitySpanId caller
+    )
     {
         var deadline = DateTime.UtcNow.AddSeconds(10);
         while (telemetry.Of(trace) is var spans && !spans.Any(span => span.ParentSpanId == caller))

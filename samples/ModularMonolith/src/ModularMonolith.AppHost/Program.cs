@@ -58,9 +58,10 @@ shopHost.WithEnvironment(context =>
 {
     foreach (var endpoint in (string[])["http", "grpc"])
     {
-        context.EnvironmentVariables[$"Kestrel__Endpoints__{endpoint}__Url"] = ReferenceExpression.Create(
-            $"http://localhost:{shopHost.GetEndpoint(endpoint).Property(EndpointProperty.TargetPort)}"
-        );
+        context.EnvironmentVariables[$"Kestrel__Endpoints__{endpoint}__Url"] =
+            ReferenceExpression.Create(
+                $"http://localhost:{shopHost.GetEndpoint(endpoint).Property(EndpointProperty.TargetPort)}"
+            );
     }
 
     context.EnvironmentVariables["Kestrel__Endpoints__grpc__Protocols"] = "Http2";
@@ -75,7 +76,10 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
     var ollama = builder.AddPouryaKitOllama("ollama", Model);
     shopHost
         .WithEnvironment("PouryaKit__AI__Provider", "Ollama")
-        .WithEnvironment("PouryaKit__AI__Endpoint", ReferenceExpression.Create($"{ollama.GetEndpoint("http")}/v1"))
+        .WithEnvironment(
+            "PouryaKit__AI__Endpoint",
+            ReferenceExpression.Create($"{ollama.GetEndpoint("http")}/v1")
+        )
         .WithEnvironment("PouryaKit__AI__Model", Model)
         .WaitFor(ollama);
 }
@@ -92,7 +96,10 @@ builder
     .WithReference(shopHost)
     .WithEnvironment("ReverseProxy__Routes__inventory__ClusterId", "inventory")
     .WithEnvironment("ReverseProxy__Routes__inventory__Match__Path", "/inventory/{**catch-all}")
-    .WithEnvironment("ReverseProxy__Clusters__inventory__Destinations__host__Address", "http://inventory")
+    .WithEnvironment(
+        "ReverseProxy__Clusters__inventory__Destinations__host__Address",
+        "http://inventory"
+    )
     .WithEnvironment("ReverseProxy__Clusters__inventory__HealthCheck__Active__Enabled", "true")
     .WaitFor(inventoryHost)
     .WaitFor(shopHost);

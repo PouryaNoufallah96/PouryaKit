@@ -21,7 +21,12 @@ public sealed class S3StoreFixture : IAsyncLifetime
         .WithEnvironment("RUSTFS_ACCESS_KEY", AccessKey)
         .WithEnvironment("RUSTFS_SECRET_KEY", SecretKey)
         .WithPortBinding(S3Port, true)
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(S3Port).ForPath("/health/ready")))
+        .WithWaitStrategy(
+            Wait.ForUnixContainer()
+                .UntilHttpRequestIsSucceeded(request =>
+                    request.ForPort(S3Port).ForPath("/health/ready")
+                )
+        )
         .Build();
 
     private IHost? _host;
@@ -32,10 +37,17 @@ public sealed class S3StoreFixture : IAsyncLifetime
     {
         await _store.StartAsync();
         var serviceUrl = $"http://{_store.Hostname}:{_store.GetMappedPublicPort(S3Port)}";
-        using (var client = new AmazonS3Client(
-                   new BasicAWSCredentials(AccessKey, SecretKey),
-                   new AmazonS3Config { ServiceURL = serviceUrl, ForcePathStyle = true, AuthenticationRegion = "us-east-1" }
-               ))
+        using (
+            var client = new AmazonS3Client(
+                new BasicAWSCredentials(AccessKey, SecretKey),
+                new AmazonS3Config
+                {
+                    ServiceURL = serviceUrl,
+                    ForcePathStyle = true,
+                    AuthenticationRegion = "us-east-1",
+                }
+            )
+        )
         {
             await client.PutBucketAsync(Bucket);
         }
@@ -58,7 +70,9 @@ public sealed class S3StoreFixture : IAsyncLifetime
     {
         var builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddInMemoryCollection(settings);
-        builder.Services.Configure<PouryaKitS3StorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:S3"));
+        builder.Services.Configure<PouryaKitS3StorageOptions>(
+            builder.Configuration.GetSection("PouryaKit:Storage:S3")
+        );
         builder.Services.AddPouryaKitS3Storage();
         return builder.Build();
     }

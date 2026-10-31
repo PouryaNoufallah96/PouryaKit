@@ -16,14 +16,25 @@ internal sealed class SagaStepTable(IServiceProvider services) : IHostedLifecycl
 {
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
-        if (services.GetRequiredService<IWolverineRuntime>().Options.AutoBuildMessageStorageOnStartup == AutoCreate.None)
+        if (
+            services
+                .GetRequiredService<IWolverineRuntime>()
+                .Options.AutoBuildMessageStorageOnStartup == AutoCreate.None
+        )
         {
             return;
         }
 
-        foreach (var database in services.GetServices<IMessageStore>().OfType<IMessageDatabase>().DistinctBy(database => database.Uri))
+        foreach (
+            var database in services
+                .GetServices<IMessageStore>()
+                .OfType<IMessageDatabase>()
+                .DistinctBy(database => database.Uri)
+        )
         {
-            await using var connection = await database.DataSource.OpenConnectionAsync(cancellationToken);
+            await using var connection = await database.DataSource.OpenConnectionAsync(
+                cancellationToken
+            );
             await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
             await using var create = connection.CreateCommand();
             create.Transaction = transaction;

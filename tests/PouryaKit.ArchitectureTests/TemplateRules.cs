@@ -24,12 +24,30 @@ internal static class TemplateRules
     public const string Shared = "shared";
 
     /// <summary>The folder of the package's template content, as the package's <c>content/</c> holds it.</summary>
-    public static readonly string Content = Path.Combine(Repository.Root, "src", "PouryaKit.Templates", "content");
+    public static readonly string Content = Path.Combine(
+        Repository.Root,
+        "src",
+        "PouryaKit.Templates",
+        "content"
+    );
 
-    public static readonly string SampleRoot = Path.Combine(Repository.Root, "samples", "ModularMonolith", "src");
+    public static readonly string SampleRoot = Path.Combine(
+        Repository.Root,
+        "samples",
+        "ModularMonolith",
+        "src"
+    );
 
     // The engine's default exclusions of a source that names none.
-    private static readonly string[] DefaultExclusions = ["**/[Bb]in/**", "**/[Oo]bj/**", ".template.config/**/*", "**/*.filelist", "**/*.user", "**/*.lock.json"];
+    private static readonly string[] DefaultExclusions =
+    [
+        "**/[Bb]in/**",
+        "**/[Oo]bj/**",
+        ".template.config/**/*",
+        "**/*.filelist",
+        "**/*.user",
+        "**/*.lock.json",
+    ];
 
     /// <summary>Every file under <paramref name="root"/>, build output left out.</summary>
     public static IReadOnlyList<TextFile> Files(string root) =>
@@ -47,40 +65,66 @@ internal static class TemplateRules
     /// Module's C# files, the Host's permission source, announcer and guardrail, and the service defaults.
     /// </summary>
     public static IReadOnlyList<TextFile> PackedSample { get; } =
-        [
-            .. Files(SampleRoot)
-                .Where(file =>
-                    (file.Path.StartsWith("Modules/", StringComparison.Ordinal) && file.Path.EndsWith(".cs", StringComparison.Ordinal))
-                    || file.Path
-                        is "ModularMonolith.Host/CallerPermissions.cs"
-                            or "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
-                            or "ModularMonolith.Host/CardNumberGuardrail.cs"
-                            or "ModularMonolith.ServiceDefaults/Extensions.cs"
-                ),
-        ];
+    [
+        .. Files(SampleRoot)
+            .Where(file =>
+                (
+                    file.Path.StartsWith("Modules/", StringComparison.Ordinal)
+                    && file.Path.EndsWith(".cs", StringComparison.Ordinal)
+                )
+                || file.Path
+                    is "ModularMonolith.Host/CallerPermissions.cs"
+                        or "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
+                        or "ModularMonolith.Host/CardNumberGuardrail.cs"
+                        or "ModularMonolith.ServiceDefaults/Extensions.cs"
+            ),
+    ];
 
     /// <summary>What <paramref name="template"/> generates, by target path, before the engine renames anything.</summary>
     public static IReadOnlyList<TextFile> Generated(string template) =>
-        [.. Sources(template).SelectMany(source => source.Selected.Select(file => file with { Path = source.Target + file.Path }))];
+        [
+            .. Sources(template)
+                .SelectMany(source =>
+                    source.Selected.Select(file => file with { Path = source.Target + file.Path })
+                ),
+        ];
 
     /// <summary>The sample files <paramref name="template"/>'s sources select but exclude, by target path.</summary>
     public static IReadOnlyList<string> ExcludedFromSample(string template) =>
-        [.. Sources(template).Where(source => source.FromSample).SelectMany(source => source.Excluded.Select(file => source.Target + file.Path))];
+        [
+            .. Sources(template)
+                .Where(source => source.FromSample)
+                .SelectMany(source => source.Excluded.Select(file => source.Target + file.Path)),
+        ];
 
     /// <summary>The files of <paramref name="template"/>'s own folder, its configuration left out.</summary>
     public static IReadOnlyList<TextFile> Own(string template) =>
-        [.. Files(Path.Combine(Content, template)).Where(file => !file.Path.StartsWith(".template.config/", StringComparison.Ordinal))];
+        [
+            .. Files(Path.Combine(Content, template))
+                .Where(file =>
+                    !file.Path.StartsWith(".template.config/", StringComparison.Ordinal)
+                ),
+        ];
 
-    private sealed record Source(string Target, bool FromSample, IReadOnlyList<TextFile> Selected, IReadOnlyList<TextFile> Excluded);
+    private sealed record Source(
+        string Target,
+        bool FromSample,
+        IReadOnlyList<TextFile> Selected,
+        IReadOnlyList<TextFile> Excluded
+    );
 
     private static IEnumerable<Source> Sources(string template)
     {
-        using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json")));
+        using var configuration = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json"))
+        );
         foreach (var source in configuration.RootElement.GetProperty("sources").EnumerateArray())
         {
             var folder = source.GetProperty("source").GetString()!;
             var fromSample = folder == "../sample/";
-            var files = fromSample ? PackedSample : Files(Path.GetFullPath(Path.Combine(Content, template, folder)));
+            var files = fromSample
+                ? PackedSample
+                : Files(Path.GetFullPath(Path.Combine(Content, template, folder)));
             var include = Patterns(source, "include", ["**/*"]);
             var exclude = Patterns(source, "exclude", DefaultExclusions);
             var included = files.Where(file => Matches(include, file.Path)).ToList();
@@ -94,7 +138,9 @@ internal static class TemplateRules
     }
 
     private static string[] Patterns(JsonElement source, string name, string[] fallback) =>
-        source.TryGetProperty(name, out var patterns) ? [.. patterns.EnumerateArray().Select(pattern => pattern.GetString()!)] : fallback;
+        source.TryGetProperty(name, out var patterns)
+            ? [.. patterns.EnumerateArray().Select(pattern => pattern.GetString()!)]
+            : fallback;
 
     private static bool Matches(string[] patterns, string path)
     {
@@ -107,7 +153,10 @@ internal static class TemplateRules
     /// The template content holds no copy of a Proving Sample file: business code is packed from the sample, so it
     /// is never maintained twice.
     /// </summary>
-    public static IEnumerable<string> CopiesOfTheSample(IEnumerable<TextFile> content, IReadOnlyList<TextFile> sample) =>
+    public static IEnumerable<string> CopiesOfTheSample(
+        IEnumerable<TextFile> content,
+        IReadOnlyList<TextFile> sample
+    ) =>
         from file in content
         from original in sample
         where Normalized(file.Text) == Normalized(original.Text)
@@ -120,16 +169,22 @@ internal static class TemplateRules
     /// registrations, in a project file or in code. Its test project reaches Modularity only through PouryaKit.Testing,
     /// which <c>validate.py</c> allows in that project's closure alone (ticket #87).
     /// </summary>
-    public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) => Naming(generated, ModularityNames, "Modularity");
+    public static IEnumerable<string> ModularityIn(IEnumerable<TextFile> generated) =>
+        Naming(generated, ModularityNames, "Modularity");
 
     /// <summary>
     /// The monolith runs without AI either: no file it generates names PouryaKit.AI, one of its public types or
     /// registrations, or the Agent Framework it brings, so the sample's agent and the Host's guardrail stay out of it
     /// (ticket #173).
     /// </summary>
-    public static IEnumerable<string> AIIn(IEnumerable<TextFile> generated) => Naming(generated, AINames, "AI");
+    public static IEnumerable<string> AIIn(IEnumerable<TextFile> generated) =>
+        Naming(generated, AINames, "AI");
 
-    private static IEnumerable<string> Naming(IEnumerable<TextFile> generated, string[] names, string capability) =>
+    private static IEnumerable<string> Naming(
+        IEnumerable<TextFile> generated,
+        string[] names,
+        string capability
+    ) =>
         from file in generated
         from name in names
         where Regex.IsMatch(file.Text, $@"(?<!\w){Regex.Escape(name)}(?!\w)")
@@ -137,7 +192,11 @@ internal static class TemplateRules
 
     private static readonly string[] ModularityNames = NamesOf(typeof(IModuleDefinition).Assembly);
 
-    private static readonly string[] AINames = [.. NamesOf(typeof(IChatGuardrail).Assembly), "Microsoft.Agents.AI"];
+    private static readonly string[] AINames =
+    [
+        .. NamesOf(typeof(IChatGuardrail).Assembly),
+        "Microsoft.Agents.AI",
+    ];
 
     // The package's name, and each public type's and each public static method's, such as a registration.
     private static string[] NamesOf(Assembly package) =>
@@ -147,7 +206,9 @@ internal static class TemplateRules
                 .GetExportedTypes()
                 .Where(type => !type.Name.StartsWith('<'))
                 .SelectMany(type =>
-                    type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                    type.GetMethods(
+                            BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly
+                        )
                         .Where(method => !method.IsSpecialName)
                         .Select(method => method.Name)
                         .Prepend(type.Name.Split('`')[0])
@@ -170,8 +231,16 @@ internal static class TemplateRules
         excluded
             .Except(replacements)
             .Except(unreplaced)
-            .Select(path => $"The monolith excludes the sample's {path} but has no file of its own there.")
-            .Concat(replacements.Except(excluded).Select(path => $"The monolith's {path} replaces no file it excludes from the sample."));
+            .Select(path =>
+                $"The monolith excludes the sample's {path} but has no file of its own there."
+            )
+            .Concat(
+                replacements
+                    .Except(excluded)
+                    .Select(path =>
+                        $"The monolith's {path} replaces no file it excludes from the sample."
+                    )
+            );
 
     /// <summary>
     /// Each of the monolith's own files that replaces a sample file makes the sample file's calls, in its order and with
@@ -184,13 +253,22 @@ internal static class TemplateRules
     /// answers other Modules; and the monolith names its assembly, <c>catalog</c>, where a Module's registration infers
     /// it. A type argument is read by its last name, as a file's usings decide how much of it is written.
     /// </summary>
-    public static IEnumerable<string> MirrorDifferences(IEnumerable<TextFile> replacements, IReadOnlyList<TextFile> sample)
+    public static IEnumerable<string> MirrorDifferences(
+        IEnumerable<TextFile> replacements,
+        IReadOnlyList<TextFile> sample
+    )
     {
         foreach (var replacement in replacements)
         {
             var original = sample.Single(file => "src/" + file.Path == replacement.Path);
-            List<string> calls = Calls(replacement.Text), expected = Calls(original.Text);
-            var at = Enumerable.Range(0, Math.Max(calls.Count, expected.Count)).FirstOrDefault(i => calls.ElementAtOrDefault(i) != expected.ElementAtOrDefault(i), -1);
+            List<string> calls = Calls(replacement.Text),
+                expected = Calls(original.Text);
+            var at = Enumerable
+                .Range(0, Math.Max(calls.Count, expected.Count))
+                .FirstOrDefault(
+                    i => calls.ElementAtOrDefault(i) != expected.ElementAtOrDefault(i),
+                    -1
+                );
             if (at >= 0)
             {
                 yield return $"{replacement.Path} calls {calls.ElementAtOrDefault(at) ?? "nothing more"} where the sample's {original.Path} calls {expected.ElementAtOrDefault(at) ?? "nothing more"}.";
@@ -202,8 +280,14 @@ internal static class TemplateRules
     {
         text = Regex.Replace(text, "//.*", "");
         text = Regex.Replace(text, @",\s*context(?=\s*[,)])", "");
-        text = Regex.Replace(Regex.Replace(text, @"\(\s*catalog\s*\)", "()"), @",\s*catalog(?=\s*\))", "");
-        var constants = Regex.Matches(text, @"\bconst\s+\w+\s+(\w+\s*=\s*[^;]*)").Select(match => (match.Index, Call: "const " + Spaced(match.Groups[1].Value)));
+        text = Regex.Replace(
+            Regex.Replace(text, @"\(\s*catalog\s*\)", "()"),
+            @",\s*catalog(?=\s*\))",
+            ""
+        );
+        var constants = Regex
+            .Matches(text, @"\bconst\s+\w+\s+(\w+\s*=\s*[^;]*)")
+            .Select(match => (match.Index, Call: "const " + Spaced(match.Groups[1].Value)));
         var calls = Regex
             .Matches(text, @"(?:\.|\b(?<new>new)\s+)(?<name>\w+)\s*(?<types><[^()]*?>)?\s*\(")
             .Select(match =>
@@ -211,11 +295,20 @@ internal static class TemplateRules
                     match.Index,
                     Call: (match.Groups["new"].Success ? "new " : "")
                         + match.Groups["name"].Value
-                        + Spaced(Regex.Replace(match.Groups["types"].Value, @"(?:\w+\.)+(\w+)", "$1"))
+                        + Spaced(
+                            Regex.Replace(match.Groups["types"].Value, @"(?:\w+\.)+(\w+)", "$1")
+                        )
                         + Arguments(text, match.Index + match.Length - 1)
                 )
             );
-        return [.. constants.Concat(calls).OrderBy(call => call.Index).Select(call => call.Call).Where(call => call != "AddScoped<ICatalogProducts, CatalogProducts>()")];
+        return
+        [
+            .. constants
+                .Concat(calls)
+                .OrderBy(call => call.Index)
+                .Select(call => call.Call)
+                .Where(call => call != "AddScoped<ICatalogProducts, CatalogProducts>()"),
+        ];
     }
 
     // The arguments of the call whose parenthesis opens at open, each nested parenthesis read as (…).
@@ -236,16 +329,19 @@ internal static class TemplateRules
                 return Spaced(arguments.Append(')').ToString());
             }
 
-            arguments.Append(depth switch
-            {
-                1 => text[i] == ')' ? ")" : text[i].ToString(),
-                2 when text[i] == '(' => "(…",
-                _ => "",
-            });
+            arguments.Append(
+                depth switch
+                {
+                    1 => text[i] == ')' ? ")" : text[i].ToString(),
+                    2 when text[i] == '(' => "(…",
+                    _ => "",
+                }
+            );
         }
     }
 
-    private static string Spaced(string text) => Regex.Replace(Regex.Replace(text, @"\s+", " "), @"(?<=\()\s|\s(?=\))", "");
+    private static string Spaced(string text) =>
+        Regex.Replace(Regex.Replace(text, @"\s+", " "), @"(?<=\()\s|\s(?=\))", "");
 
     /// <summary>
     /// A template Host builds its request pipeline as the Proving Sample's Host does: the same <c>app.Use…</c> and
@@ -256,7 +352,9 @@ internal static class TemplateRules
     public static IEnumerable<string> PipelineDifferences(TextFile host, TextFile sample)
     {
         var expected = Pipeline(sample.Text);
-        var actual = Pipeline(host.Text).Where(call => call != "MapDefaultEndpoints" || expected.Contains(call)).ToList();
+        var actual = Pipeline(host.Text)
+            .Where(call => call != "MapDefaultEndpoints" || expected.Contains(call))
+            .ToList();
         if (!actual.SequenceEqual(expected))
         {
             yield return $"{host.Path} builds its pipeline with {string.Join(", ", actual)}; the sample's {sample.Path} with {string.Join(", ", expected)}.";
@@ -264,20 +362,37 @@ internal static class TemplateRules
     }
 
     private static List<string> Pipeline(string text) =>
-        [.. Regex.Matches(Regex.Replace(text, "//.*", ""), @"\bapp\.((?:Use|Map)\w*)\s*\(").Select(match => match.Groups[1].Value)];
+        [
+            .. Regex
+                .Matches(Regex.Replace(text, "//.*", ""), @"\bapp\.((?:Use|Map)\w*)\s*\(")
+                .Select(match => match.Groups[1].Value),
+        ];
 
     /// <summary>
     /// A template's project references what the sample's project at the same place references, Kit project references
     /// read as the package of the same name, but for what <paramref name="dropped"/> names.
     /// </summary>
-    public static IEnumerable<string> ReferenceDifferences(string path, string template, string sample, params string[] dropped)
+    public static IEnumerable<string> ReferenceDifferences(
+        string path,
+        string template,
+        string sample,
+        params string[] dropped
+    )
     {
         var expected = References(sample).Except(dropped).ToHashSet();
         var actual = References(template);
         return actual
             .Except(expected)
-            .Select(reference => $"{path} references {reference}, which the sample's project does not.")
-            .Concat(expected.Except(actual).Select(reference => $"{path} does not reference {reference}, which the sample's project does."))
+            .Select(reference =>
+                $"{path} references {reference}, which the sample's project does not."
+            )
+            .Concat(
+                expected
+                    .Except(actual)
+                    .Select(reference =>
+                        $"{path} does not reference {reference}, which the sample's project does."
+                    )
+            )
             .Order(StringComparer.Ordinal);
     }
 
@@ -287,12 +402,17 @@ internal static class TemplateRules
                 .Parse(project)
                 .Descendants()
                 .Select(element =>
-                    (element.Name.LocalName, Include: element.Attribute("Include")?.Value.Replace('\\', '/')) switch
+                    (
+                        element.Name.LocalName,
+                        Include: element.Attribute("Include")?.Value.Replace('\\', '/')
+                    ) switch
                     {
                         ("PackageReference" or "FrameworkReference", { } include) => include,
-                        ("ProjectReference", { } include) when include.Contains("/src/PouryaKit.", StringComparison.Ordinal) =>
+                        ("ProjectReference", { } include)
+                            when include.Contains("/src/PouryaKit.", StringComparison.Ordinal) =>
                             Path.GetFileNameWithoutExtension(include),
-                        ("ProjectReference", { } include) => "project " + Path.GetFileNameWithoutExtension(include),
+                        ("ProjectReference", { } include) => "project "
+                            + Path.GetFileNameWithoutExtension(include),
                         _ => null,
                     }
                 )
@@ -304,7 +424,12 @@ internal static class TemplateRules
     /// with, and a Kit package the one version the package is packed with, <c>$(PouryaKitVersion)</c>, whose value is
     /// the placeholder <paramref name="token"/> that packing replaces.
     /// </summary>
-    public static IEnumerable<string> VersionDifferences(string path, string template, string kit, string token)
+    public static IEnumerable<string> VersionDifferences(
+        string path,
+        string template,
+        string kit,
+        string token
+    )
     {
         var kitVersions = PackageVersions(kit);
         var document = XDocument.Parse(template);
@@ -336,15 +461,22 @@ internal static class TemplateRules
     /// </summary>
     public static (string Token, string Derivation) DerivedSymbol(string template, string symbol)
     {
-        using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json")));
+        using var configuration = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json"))
+        );
         var derived = configuration.RootElement.GetProperty("symbols").GetProperty(symbol);
-        return (derived.GetProperty("replaces").GetString()!, derived.GetRawText() + configuration.RootElement.GetProperty("forms").GetRawText());
+        return (
+            derived.GetProperty("replaces").GetString()!,
+            derived.GetRawText() + configuration.RootElement.GetProperty("forms").GetRawText()
+        );
     }
 
     /// <summary>The name <paramref name="template"/>'s files carry, which the engine replaces with the project's name.</summary>
     public static string SourceName(string template)
     {
-        using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json")));
+        using var configuration = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(Content, template, ".template.config", "template.json"))
+        );
         return configuration.RootElement.GetProperty("sourceName").GetString()!;
     }
 
@@ -356,10 +488,22 @@ internal static class TemplateRules
     /// Each path in the solution or a project reference names a project the template generates, the token read as the
     /// <paramref name="sourceName"/> the files carry.
     /// </summary>
-    public static IEnumerable<string> ProjectPathDefects(IReadOnlyList<TextFile> generated, string sourceName, string token)
+    public static IEnumerable<string> ProjectPathDefects(
+        IReadOnlyList<TextFile> generated,
+        string sourceName,
+        string token
+    )
     {
-        var projects = generated.Select(file => file.Path).Where(path => path.EndsWith(".csproj", StringComparison.Ordinal)).ToHashSet();
-        foreach (var file in generated.Where(file => Path.GetExtension(file.Path) is ".slnx" or ".csproj" || file.Path.EndsWith("/launchSettings.json", StringComparison.Ordinal)))
+        var projects = generated
+            .Select(file => file.Path)
+            .Where(path => path.EndsWith(".csproj", StringComparison.Ordinal))
+            .ToHashSet();
+        foreach (
+            var file in generated.Where(file =>
+                Path.GetExtension(file.Path) is ".slnx" or ".csproj"
+                || file.Path.EndsWith("/launchSettings.json", StringComparison.Ordinal)
+            )
+        )
         {
             if (file.Text.Contains(sourceName, StringComparison.Ordinal))
             {
@@ -374,14 +518,25 @@ internal static class TemplateRules
             var paths = XDocument
                 .Parse(file.Text)
                 .Descendants()
-                .Select(element => element.Name.LocalName switch
-                {
-                    "Project" => element.Attribute("Path")?.Value,
-                    "ProjectReference" => element.Attribute("Include")?.Value,
-                    _ => null,
-                })
+                .Select(element =>
+                    element.Name.LocalName switch
+                    {
+                        "Project" => element.Attribute("Path")?.Value,
+                        "ProjectReference" => element.Attribute("Include")?.Value,
+                        _ => null,
+                    }
+                )
                 .OfType<string>();
-            foreach (var path in paths.Where(path => !projects.Contains(Resolved(Path.GetDirectoryName(file.Path)!, path.Replace(token, sourceName, StringComparison.Ordinal)))))
+            foreach (
+                var path in paths.Where(path =>
+                    !projects.Contains(
+                        Resolved(
+                            Path.GetDirectoryName(file.Path)!,
+                            path.Replace(token, sourceName, StringComparison.Ordinal)
+                        )
+                    )
+                )
+            )
             {
                 yield return $"{file.Path} names {path}, which is no project the template generates.";
             }
@@ -394,17 +549,33 @@ internal static class TemplateRules
     /// monolith or the reverse proxy in the service, lands in the generated folder unbuilt (ticket #171). A path in the
     /// solution names its project through <paramref name="token"/>, read as the <paramref name="sourceName"/> the files carry.
     /// </summary>
-    public static IEnumerable<string> FilesOutsideTheSolution(IReadOnlyList<TextFile> generated, string sourceName, string token)
+    public static IEnumerable<string> FilesOutsideTheSolution(
+        IReadOnlyList<TextFile> generated,
+        string sourceName,
+        string token
+    )
     {
-        var solution = generated.Single(file => file.Path.EndsWith(".slnx", StringComparison.Ordinal));
+        var solution = generated.Single(file =>
+            file.Path.EndsWith(".slnx", StringComparison.Ordinal)
+        );
         var folders = XDocument
             .Parse(solution.Text)
             .Descendants("Project")
-            .Select(project => Path.GetDirectoryName(project.Attribute("Path")!.Value.Replace(token, sourceName, StringComparison.Ordinal))!.Replace('\\', '/') + "/")
+            .Select(project =>
+                Path.GetDirectoryName(
+                            project
+                                .Attribute("Path")!
+                                .Value.Replace(token, sourceName, StringComparison.Ordinal)
+                        )!
+                    .Replace('\\', '/') + "/"
+            )
             .ToList();
         return generated
             .Select(file => file.Path)
-            .Where(path => path.Contains('/', StringComparison.Ordinal) && !folders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal)))
+            .Where(path =>
+                path.Contains('/', StringComparison.Ordinal)
+                && !folders.Any(folder => path.StartsWith(folder, StringComparison.Ordinal))
+            )
             .Select(path => $"{path} is in no project of the solution the template generates.");
     }
 
@@ -412,7 +583,11 @@ internal static class TemplateRules
     private static string Resolved(string folder, string relative)
     {
         List<string> parts = [];
-        foreach (var part in $"{folder}/{relative}".Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries))
+        foreach (
+            var part in $"{folder}/{relative}"
+                .Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+        )
         {
             if (part == "..")
             {
@@ -432,7 +607,10 @@ internal static class TemplateRules
     /// content, never another literal: the <c>sourceName</c> becomes the project's name as the engine writes it in code,
     /// such as <c>acme_shop</c>, which is no valid queue name, and a Host given one fails as it is composed.
     /// </summary>
-    public static IEnumerable<string> UnderivedServiceNames(IEnumerable<TextFile> generated, string token) =>
+    public static IEnumerable<string> UnderivedServiceNames(
+        IEnumerable<TextFile> generated,
+        string token
+    ) =>
         from file in generated
         where file.Path.EndsWith(".cs", StringComparison.Ordinal)
         from match in Regex.Matches(file.Text, "serviceName: \"([^\"]*)\"")
@@ -448,7 +626,9 @@ internal static class TemplateRules
     public static IEnumerable<string> RateLimitersBeforeRouting(IEnumerable<TextFile> generated) =>
         from file in generated
         let limiter = file.Text.IndexOf("app.UseRateLimiter()", StringComparison.Ordinal)
-        where limiter >= 0 && file.Text.IndexOf("app.UseRouting()", limiter, StringComparison.Ordinal) >= 0
+        where
+            limiter >= 0
+            && file.Text.IndexOf("app.UseRouting()", limiter, StringComparison.Ordinal) >= 0
         select $"{file.Path} calls UseRouting() after UseRateLimiter(); route first, or the rate limit ignores the exemption of /alive and the Actor an anonymous endpoint names.";
 
     /// <summary>
@@ -462,14 +642,29 @@ internal static class TemplateRules
     /// an alias, through <c>typeof</c>, inside another generic type such as <c>IEnumerable</c>, or through another type
     /// the file takes that itself takes one.
     /// </summary>
-    public static IEnumerable<string> RepositoriesTaken(IEnumerable<TextFile> own, IEnumerable<TextFile> sample)
+    public static IEnumerable<string> RepositoriesTaken(
+        IEnumerable<TextFile> own,
+        IEnumerable<TextFile> sample
+    )
     {
-        var derived = sample.SelectMany(file => Regex.Matches(file.Text, @"(?<!\w)interface\s+(\w+)\s*:[^{]*?(?<!\w)IRepository<")).Select(match => match.Groups[1].Value);
-        var repository = string.Join('|', ["IRepository<[^<>]*>", .. derived.Distinct().Select(Regex.Escape)]);
-        var taken = new Regex($@"(?<!\w)(?<taken>{repository})\??\s+@?[A-Za-z_]|Service<\s*(?<taken>{repository})\s*>");
+        var derived = sample
+            .SelectMany(file =>
+                Regex.Matches(file.Text, @"(?<!\w)interface\s+(\w+)\s*:[^{]*?(?<!\w)IRepository<")
+            )
+            .Select(match => match.Groups[1].Value);
+        var repository = string.Join(
+            '|',
+            ["IRepository<[^<>]*>", .. derived.Distinct().Select(Regex.Escape)]
+        );
+        var taken = new Regex(
+            $@"(?<!\w)(?<taken>{repository})\??\s+@?[A-Za-z_]|Service<\s*(?<taken>{repository})\s*>"
+        );
         return from file in own
             where file.Path.EndsWith(".cs", StringComparison.Ordinal)
-            from name in taken.Matches(Regex.Replace(file.Text, "//.*", "")).Select(match => match.Groups["taken"].Value).Distinct()
+            from name in taken
+                .Matches(Regex.Replace(file.Text, "//.*", ""))
+                .Select(match => match.Groups["taken"].Value)
+                .Distinct()
             select $"{file.Path} takes {name}; send a command through IDispatcher instead: a handler takes the repository, and a change made outside a command is dropped or saved by a command that never made it.";
     }
 
@@ -477,5 +672,8 @@ internal static class TemplateRules
         XDocument
             .Parse(props)
             .Descendants("PackageVersion")
-            .ToDictionary(element => element.Attribute("Include")!.Value, element => element.Attribute("Version")!.Value);
+            .ToDictionary(
+                element => element.Attribute("Include")!.Value,
+                element => element.Attribute("Version")!.Value
+            );
 }

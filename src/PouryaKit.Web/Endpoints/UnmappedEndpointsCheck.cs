@@ -11,26 +11,42 @@ internal sealed class UnmappedEndpointsCheck : IStartupCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        var declared = services.GetServices<ModuleEndpoints>().SelectMany(module => module.Endpoints).Select(endpoint => endpoint.GetType()).ToHashSet();
+        var declared = services
+            .GetServices<ModuleEndpoints>()
+            .SelectMany(module => module.Endpoints)
+            .Select(endpoint => endpoint.GetType())
+            .ToHashSet();
         var mapped = services.GetRequiredService<MappedEndpoints>();
         foreach (var module in composition.Modules.Append<Type?>(null))
         {
-            var endpoints = ImplementingTypes.Of(typeof(IEndpoint), composition.FeatureAssembliesOf(module));
-            if (endpoints.Where(endpoint => !declared.Contains(endpoint)).ToList() is [_, ..] undeclared)
+            var endpoints = ImplementingTypes.Of(
+                typeof(IEndpoint),
+                composition.FeatureAssembliesOf(module)
+            );
+            if (
+                endpoints.Where(endpoint => !declared.Contains(endpoint)).ToList()
+                is [_, ..] undeclared
+            )
             {
                 yield return module is null
                     ? $"The application's endpoints {Names(undeclared)} are declared by no AddPouryaKitEndpoints, so they never answer. Call AddPouryaKitEndpoints(routePrefix, assembly) on the Host's services, naming their assembly."
                     : $"The endpoints {Names(undeclared)} of {module.Name} are declared by no AddPouryaKitEndpoints, so they never answer. Call AddPouryaKitEndpoints(routePrefix) in its Composition Root.";
             }
 
-            if (endpoints.Where(endpoint => declared.Contains(endpoint) && !mapped.Contains(endpoint)).ToList() is [_, ..] unmapped)
+            if (
+                endpoints
+                    .Where(endpoint => declared.Contains(endpoint) && !mapped.Contains(endpoint))
+                    .ToList()
+                is [_, ..] unmapped
+            )
             {
                 yield return $"The endpoints {Names(unmapped)} of {module?.Name ?? "the application"} are declared but never mapped, so they never answer. Call app.MapPouryaKitModuleEndpoints() once the Host is built.";
             }
         }
     }
 
-    private static string Names(IEnumerable<Type> endpoints) => string.Join(", ", endpoints.Select(endpoint => endpoint.FullName));
+    private static string Names(IEnumerable<Type> endpoints) =>
+        string.Join(", ", endpoints.Select(endpoint => endpoint.FullName));
 }
 
 // The endpoints MapPouryaKitModuleEndpoints mapped in this Host, by type. It maps them while the Host is composed, before

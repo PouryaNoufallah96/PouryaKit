@@ -26,7 +26,11 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
 
         var read = await Fixture
             .Gateway<StubModule>()
-            .QueryAsync(new ReadOperationContextQuery(), context, TestContext.Current.CancellationToken);
+            .QueryAsync(
+                new ReadOperationContextQuery(),
+                context,
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(context, read.Value);
     }
@@ -37,13 +41,20 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .QueryAsync(new ReadOperationContextQuery(), null!, TestContext.Current.CancellationToken)
+                .QueryAsync(
+                    new ReadOperationContextQuery(),
+                    null!,
+                    TestContext.Current.CancellationToken
+                )
         );
 
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            dispatcher.QueryAsync(new ReadOperationContextQuery(), TestContext.Current.CancellationToken)
+            dispatcher.QueryAsync(
+                new ReadOperationContextQuery(),
+                TestContext.Current.CancellationToken
+            )
         );
         Assert.Contains("No Operation Context", thrown.Message);
     }
@@ -57,10 +68,18 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
         // Catalog is tenant-scoped, so the question is asked in the lamp's tenant.
         var noted = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new NoteProductCommand(lamp), new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new NoteProductCommand(lamp),
+                new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+                TestContext.Current.CancellationToken
+            );
         var unknown = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new NoteProductCommand(Guid.CreateVersion7()), new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new NoteProductCommand(Guid.CreateVersion7()),
+                new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.True(noted.IsSuccess);
         Assert.Equal(NoteProductCommandHandler.UnknownProduct, Assert.Single(unknown.Errors));
@@ -99,7 +118,10 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
 
         var thrown = Assert.Throws<TargetInvocationException>(() => Continued(envelope));
 
-        Assert.Contains("undefined ActorKind", Assert.IsType<InvalidOperationException>(thrown.InnerException).Message);
+        Assert.Contains(
+            "undefined ActorKind",
+            Assert.IsType<InvalidOperationException>(thrown.InnerException).Message
+        );
     }
 
     // Only the exact names the Outbox writes, as Web reads its own header: never a number, a combination of names or a
@@ -126,16 +148,23 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_person_and_a_system_actor_continue_as_themselves()
     {
-        OperationContext person = new(Actor.Person("ada")), system = new(Actor.System("review"));
+        OperationContext person = new(Actor.Person("ada")),
+            system = new(Actor.System("review"));
 
-        Assert.Equal([person.Actor, system.Actor], [Continued(EnvelopeOf(person)).Actor, Continued(EnvelopeOf(system)).Actor]);
+        Assert.Equal(
+            [person.Actor, system.Actor],
+            [Continued(EnvelopeOf(person)).Actor, Continued(EnvelopeOf(system)).Actor]
+        );
     }
 
     private async Task<Guid> CreateLampAsync()
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var lamps = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(lamps, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
         var lamp = await catalog.SendAsync(
             new CreateProductCommand(Guid.CreateVersion7(), lamps, "Lamp"),
             TestContext.Current.CancellationToken
@@ -156,11 +185,17 @@ public sealed class OperationContextTests(AppFixture app) : HostTest<AppFixture>
 
     // Exercise the transport's context reader without exposing this internal seam to Feature code.
     private static OperationContext Continued(Envelope envelope) =>
-        Assert.IsType<(OperationContext Context, System.Diagnostics.ActivityContext TraceParent)>(
-            typeof(OperationContextHeaderExtensions)
-                .GetMethod("ContinuedOperationContext", BindingFlags.Static | BindingFlags.NonPublic)!
-                .Invoke(null, [envelope])
-        ).Context;
+        Assert
+            .IsType<(OperationContext Context, System.Diagnostics.ActivityContext TraceParent)>(
+                typeof(OperationContextHeaderExtensions)
+                    .GetMethod(
+                        "ContinuedOperationContext",
+                        BindingFlags.Static | BindingFlags.NonPublic
+                    )!
+                    .Invoke(null, [envelope])
+            )
+            .Context;
 
-    private CatalogQuestionContexts Questions => Fixture.Host.Services.GetRequiredService<CatalogQuestionContexts>();
+    private CatalogQuestionContexts Questions =>
+        Fixture.Host.Services.GetRequiredService<CatalogQuestionContexts>();
 }

@@ -13,13 +13,32 @@ builder.AddPouryaKitModules(modules => modules.Add<ReportModule>());
 builder.Configuration["PouryaKit:Reports:Retention"] = "30.00:00:00";
 builder.Services.AddSingleton<IReportRequestAuthorizer, Inventory>();
 builder.Services.AddSingleton<IReportLayouts, Inventory>();
-Console.WriteLine(builder.Services.Any(descriptor => descriptor.ServiceType == typeof(IReportRenderer)) ? 1 : 0);
+Console.WriteLine(
+    builder.Services.Any(descriptor => descriptor.ServiceType == typeof(IReportRenderer)) ? 1 : 0
+);
 
 sealed class Inventory : IReportRequestAuthorizer, IReportLayouts
 {
-    public Task<bool> MayRequestAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken) =>
-        Task.FromResult(request.Kind == "stock" && context.Tenant is not null);
+    public Task<bool> MayRequestAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(request.Kind == "stock" && context.Tenant is not null);
 
-    public Task<Result<ReportLayout>> LayOutAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<ReportLayout>>(new ReportLayout("Stock", new ReportTable([new("Item"), new("On hand", ReportAlignment.Right)], [["Tea", "12"]])));
+    public Task<Result<ReportLayout>> LayOutAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    ) =>
+        Task.FromResult<Result<ReportLayout>>(
+            new ReportLayout(
+                "Stock",
+                new ReportTable(
+                    [new("Item"), new("On hand", ReportAlignment.Right)],
+                    [
+                        ["Tea", "12"],
+                    ]
+                )
+            )
+        );
 }

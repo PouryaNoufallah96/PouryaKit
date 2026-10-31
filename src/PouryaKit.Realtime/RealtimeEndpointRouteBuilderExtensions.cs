@@ -25,7 +25,10 @@ public static class RealtimeEndpointRouteBuilderExtensions
         /// <paramref name="admits"/> runs, and one naming a Channel <paramref name="admits"/> refuses for the Actor 403,
         /// both as problem responses, before anything is streamed. A client a full buffer of 256 events behind is disconnected.
         /// </summary>
-        public RouteHandlerBuilder MapPouryaKitRealtime(string pattern, Func<Actor, string, bool> admits)
+        public RouteHandlerBuilder MapPouryaKitRealtime(
+            string pattern,
+            Func<Actor, string, bool> admits
+        )
         {
             ArgumentNullException.ThrowIfNull(routes);
             ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
@@ -33,20 +36,37 @@ public static class RealtimeEndpointRouteBuilderExtensions
 
             return routes.MapGet(
                 pattern,
-                (OperationContext context, HttpRequest request, RealtimeClients clients, IHostApplicationLifetime lifetime) =>
+                (
+                    OperationContext context,
+                    HttpRequest request,
+                    RealtimeClients clients,
+                    IHostApplicationLifetime lifetime
+                ) =>
                 {
-                    string[] channels = [.. request.Query["channel"].Distinct(StringComparer.Ordinal).OfType<string>()];
+                    string[] channels =
+                    [
+                        .. request
+                            .Query["channel"]
+                            .Distinct(StringComparer.Ordinal)
+                            .OfType<string>(),
+                    ];
                     Result refused = channels switch
                     {
                         [] => RealtimeErrors.ChannelRequired,
-                        _ when channels.Any(string.IsNullOrWhiteSpace) => RealtimeErrors.ChannelRequired,
-                        _ when !channels.All(channel => admits(context.Actor, channel)) => RealtimeErrors.ChannelNotAdmitted,
+                        _ when channels.Any(string.IsNullOrWhiteSpace) =>
+                            RealtimeErrors.ChannelRequired,
+                        _ when !channels.All(channel => admits(context.Actor, channel)) =>
+                            RealtimeErrors.ChannelNotAdmitted,
                         _ => Result.Success(),
                     };
                     return refused.IsFailure
                         ? refused.ToHttpResult()
                         : TypedResults.ServerSentEvents(
-                            clients.ConnectAsync(context.Tenant ?? OperationContext.NoTenant, channels, lifetime.ApplicationStopping)
+                            clients.ConnectAsync(
+                                context.Tenant ?? OperationContext.NoTenant,
+                                channels,
+                                lifetime.ApplicationStopping
+                            )
                         );
                 }
             );

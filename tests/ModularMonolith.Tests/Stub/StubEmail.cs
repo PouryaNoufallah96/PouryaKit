@@ -11,10 +11,21 @@ namespace ModularMonolith.Tests.Stub;
 #region mail-note-handler
 internal sealed record NoteMailedDomainEvent(string To, string Text) : DomainEvent;
 
-internal sealed class MailNoteNotificationHandler(IEmailSender email) : INotificationHandler<NoteMailedDomainEvent>
+internal sealed class MailNoteNotificationHandler(IEmailSender email)
+    : INotificationHandler<NoteMailedDomainEvent>
 {
-    public Task<Result> Handle(NoteMailedDomainEvent domainEvent, CancellationToken cancellationToken) =>
-        email.SendAsync(new EmailMessage(domainEvent.To, domainEvent.Text, $"The note {domainEvent.Text} is written."), cancellationToken);
+    public Task<Result> Handle(
+        NoteMailedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    ) =>
+        email.SendAsync(
+            new EmailMessage(
+                domainEvent.To,
+                domainEvent.Text,
+                $"The note {domainEvent.Text} is written."
+            ),
+            cancellationToken
+        );
 }
 #endregion
 
@@ -31,10 +42,17 @@ internal sealed class MailNoteThenFailOnceNotificationHandler(IEmailSender email
     // Process-wide, so the Host that delivers counts whatever Host the test composed.
     private static readonly ConcurrentDictionary<string, int> Attempts = [];
 
-    public async Task<Result> Handle(NoteMailedThenFailingDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteMailedThenFailingDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         var sent = await email.SendAsync(
-            new EmailMessage(domainEvent.To, domainEvent.Text, $"The note {domainEvent.Text} is written."),
+            new EmailMessage(
+                domainEvent.To,
+                domainEvent.Text,
+                $"The note {domainEvent.Text} is written."
+            ),
             cancellationToken
         );
         if (sent.IsFailure)
@@ -42,6 +60,8 @@ internal sealed class MailNoteThenFailOnceNotificationHandler(IEmailSender email
             return sent;
         }
 
-        return Attempts.AddOrUpdate(domainEvent.Text, 1, (_, attempts) => attempts + 1) == 1 ? FailedAfterSending : Result.Success();
+        return Attempts.AddOrUpdate(domainEvent.Text, 1, (_, attempts) => attempts + 1) == 1
+            ? FailedAfterSending
+            : Result.Success();
     }
 }

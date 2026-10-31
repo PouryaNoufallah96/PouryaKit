@@ -19,7 +19,11 @@ internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
         var token = options.TokenValidationParameters;
         var discovered = options.ConfigurationManager is not null;
         List<string> failures = [];
-        if (!token.ValidateAudience || !token.RequireAudience || !Named(token.ValidAudience, token.ValidAudiences))
+        if (
+            !token.ValidateAudience
+            || !token.RequireAudience
+            || !Named(token.ValidAudience, token.ValidAudiences)
+        )
         {
             failures.Add(
                 "The bearer scheme must require the audience and validate it against a configured audience: set ValidAudience or ValidAudiences in Authentication:Schemes:Bearer."
@@ -48,7 +52,9 @@ internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
 
         if (!token.ValidateLifetime || !token.RequireExpirationTime)
         {
-            failures.Add("The bearer scheme must validate the token's lifetime and require its expiration time.");
+            failures.Add(
+                "The bearer scheme must validate the token's lifetime and require its expiration time."
+            );
         }
 
         if (options.MapInboundClaims)
@@ -75,20 +81,31 @@ internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
             );
         }
 
-        return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+        return failures.Count == 0
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(failures);
     }
 
     // Each of these, when set, runs instead of IdentityModel's own check (IssuerValidatorAsync is internal there).
-    private static (string Name, Delegate? Validator)[] ReplacedChecks(TokenValidationParameters token) =>
+    private static (string Name, Delegate? Validator)[] ReplacedChecks(
+        TokenValidationParameters token
+    ) =>
         [
             (nameof(token.AudienceValidator), token.AudienceValidator),
             (nameof(token.IssuerValidator), token.IssuerValidator),
-            (nameof(token.IssuerValidatorUsingConfiguration), token.IssuerValidatorUsingConfiguration),
+            (
+                nameof(token.IssuerValidatorUsingConfiguration),
+                token.IssuerValidatorUsingConfiguration
+            ),
             (nameof(token.LifetimeValidator), token.LifetimeValidator),
             (nameof(token.SignatureValidator), token.SignatureValidator),
-            (nameof(token.SignatureValidatorUsingConfiguration), token.SignatureValidatorUsingConfiguration),
+            (
+                nameof(token.SignatureValidatorUsingConfiguration),
+                token.SignatureValidatorUsingConfiguration
+            ),
         ];
 
     private static bool Named(string? one, IEnumerable<string>? many) =>
-        !string.IsNullOrWhiteSpace(one) || many?.Any(value => !string.IsNullOrWhiteSpace(value)) == true;
+        !string.IsNullOrWhiteSpace(one)
+        || many?.Any(value => !string.IsNullOrWhiteSpace(value)) == true;
 }

@@ -30,7 +30,12 @@ public static class PageRuleExtensions
 
                     foreach (var error in declaration.Validate(page).Errors)
                     {
-                        context.AddFailure(new ValidationFailure(error.Target, error.Message) { ErrorCode = error.Code });
+                        context.AddFailure(
+                            new ValidationFailure(error.Target, error.Message)
+                            {
+                                ErrorCode = error.Code,
+                            }
+                        );
                     }
                 }
             );

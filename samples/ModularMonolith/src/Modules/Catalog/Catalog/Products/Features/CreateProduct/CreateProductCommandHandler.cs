@@ -7,10 +7,15 @@ using PouryaKit.Persistence;
 
 namespace Catalog.Products.Features.CreateProduct;
 
-internal sealed class CreateProductCommandHandler(IRepository<Product, ProductId> products, OperationContext context)
-    : CommandHandler<CreateProductCommand, Guid>
+internal sealed class CreateProductCommandHandler(
+    IRepository<Product, ProductId> products,
+    OperationContext context
+) : CommandHandler<CreateProductCommand, Guid>
 {
-    public override async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<Guid>> Handle(
+        CreateProductCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var product = Product.Create(
             new ProductId(command.ProductId),

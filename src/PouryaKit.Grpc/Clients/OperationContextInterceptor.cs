@@ -22,35 +22,50 @@ internal sealed class OperationContextInterceptor(TimeSpan deadline) : Intercept
         BlockingUnaryCallContinuation<TRequest, TResponse> continuation
     ) => continuation(request, WithContext(context));
 
-    public override AsyncServerStreamingCall<TResponse> AsyncServerStreamingCall<TRequest, TResponse>(
+    public override AsyncServerStreamingCall<TResponse> AsyncServerStreamingCall<
+        TRequest,
+        TResponse
+    >(
         TRequest request,
         ClientInterceptorContext<TRequest, TResponse> context,
         AsyncServerStreamingCallContinuation<TRequest, TResponse> continuation
     ) => continuation(request, WithContext(context));
 
-    public override AsyncClientStreamingCall<TRequest, TResponse> AsyncClientStreamingCall<TRequest, TResponse>(
+    public override AsyncClientStreamingCall<TRequest, TResponse> AsyncClientStreamingCall<
+        TRequest,
+        TResponse
+    >(
         ClientInterceptorContext<TRequest, TResponse> context,
         AsyncClientStreamingCallContinuation<TRequest, TResponse> continuation
     ) => continuation(WithContext(context));
 
-    public override AsyncDuplexStreamingCall<TRequest, TResponse> AsyncDuplexStreamingCall<TRequest, TResponse>(
+    public override AsyncDuplexStreamingCall<TRequest, TResponse> AsyncDuplexStreamingCall<
+        TRequest,
+        TResponse
+    >(
         ClientInterceptorContext<TRequest, TResponse> context,
         AsyncDuplexStreamingCallContinuation<TRequest, TResponse> continuation
     ) => continuation(WithContext(context));
 
-    private ClientInterceptorContext<TRequest, TResponse> WithContext<TRequest, TResponse>(ClientInterceptorContext<TRequest, TResponse> call)
+    private ClientInterceptorContext<TRequest, TResponse> WithContext<TRequest, TResponse>(
+        ClientInterceptorContext<TRequest, TResponse> call
+    )
         where TRequest : class
         where TResponse : class
     {
         var operation =
-            call.Options.Headers is { } given && OperationContextCallOptions.Contexts.TryGetValue(given, out var found)
+            call.Options.Headers is { } given
+            && OperationContextCallOptions.Contexts.TryGetValue(given, out var found)
                 ? found
                 : throw new InvalidOperationException(
                     $"The gRPC call {call.Method.FullName} has no Operation Context, and its client sends one with every call. Give it the calling Operation's context with WithOperationContext(context) on its CallOptions."
                 );
         // Every Kit header goes first, as Web's outgoing handler does, so an earlier tenant never survives beside a context
         // without one.
-        Metadata headers = [.. given.Where(entry => !OperationContextHttpHeaders.Names.Contains(entry.Key))];
+        Metadata headers =
+        [
+            .. given.Where(entry => !OperationContextHttpHeaders.Names.Contains(entry.Key)),
+        ];
         foreach (var (name, value) in OperationContextHttpHeaders.Pairs(operation))
         {
             headers.Add(name, value);
@@ -60,7 +75,9 @@ internal sealed class OperationContextInterceptor(TimeSpan deadline) : Intercept
         if (options.Deadline is null)
         {
             var now = DateTime.UtcNow;
-            options = options.WithDeadline(deadline < DateTime.MaxValue - now ? now + deadline : DateTime.MaxValue);
+            options = options.WithDeadline(
+                deadline < DateTime.MaxValue - now ? now + deadline : DateTime.MaxValue
+            );
         }
 
         return new(call.Method, call.Host, options);

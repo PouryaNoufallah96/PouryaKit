@@ -6,7 +6,8 @@ namespace PouryaKit.Persistence.Dapper;
 
 // One per scope, so each lease binds the tenant of the scope's Operation as it stands when the lease opens. The Host's one
 // pool is the data source the registration keys by this type, and disposing the Host disposes it.
-internal sealed class ReadConnectionFactory(NpgsqlDataSource dataSource, Operation? operation) : IReadConnectionFactory
+internal sealed class ReadConnectionFactory(NpgsqlDataSource dataSource, Operation? operation)
+    : IReadConnectionFactory
 {
     public async ValueTask<DbConnection> OpenAsync(CancellationToken cancellationToken = default)
     {

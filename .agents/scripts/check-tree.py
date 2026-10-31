@@ -16,7 +16,7 @@ import sys
 TOP_LEVEL = {
     ".agents", ".claude", ".codex", ".config", ".githooks", ".github",
     "docs", "samples", "scripts", "spikes", "src", "tests", "website",
-    ".editorconfig", ".gitattributes", ".gitignore", "AGENTS.md", "CLAUDE.md", "Directory.Build.props",
+    ".csharpierignore", ".editorconfig", ".gitattributes", ".gitignore", "AGENTS.md", "CLAUDE.md", "Directory.Build.props",
     "Directory.Build.targets", "Directory.Packages.props", "GLOSSARY.md", "LICENSE", "PouryaKit.slnx", "README.md",
     "global.json", "nuget.config", "skills-lock.json",
 }

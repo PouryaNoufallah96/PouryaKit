@@ -65,12 +65,16 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
     ) => Query(specification).ToListAsync(cancellationToken);
 
     /// <inheritdoc />
-    public Task<bool> AnyAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default) =>
-        Query(specification, evaluateCriteriaOnly: true).AnyAsync(cancellationToken);
+    public Task<bool> AnyAsync(
+        ISpecification<TAggregate> specification,
+        CancellationToken cancellationToken = default
+    ) => Query(specification, evaluateCriteriaOnly: true).AnyAsync(cancellationToken);
 
     /// <inheritdoc />
-    public Task<int> CountAsync(ISpecification<TAggregate> specification, CancellationToken cancellationToken = default) =>
-        Query(specification, evaluateCriteriaOnly: true).CountAsync(cancellationToken);
+    public Task<int> CountAsync(
+        ISpecification<TAggregate> specification,
+        CancellationToken cancellationToken = default
+    ) => Query(specification, evaluateCriteriaOnly: true).CountAsync(cancellationToken);
 
     /// <summary>
     /// What the projection <paramref name="specification"/> selects, loaded into a list. The whole specification
@@ -82,7 +86,9 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
     )
     {
         ArgumentNullException.ThrowIfNull(specification);
-        return SpecificationEvaluator.Default.GetQuery(_aggregates, specification).ToListAsync(cancellationToken);
+        return SpecificationEvaluator
+            .Default.GetQuery(_aggregates, specification)
+            .ToListAsync(cancellationToken);
     }
 
     /// <summary>
@@ -116,7 +122,11 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         }
 
         var selection = expressions.Filtered(
-            SpecificationEvaluator.Default.GetQuery(_aggregates, (ISpecification<TAggregate>)specification, evaluateCriteriaOnly: true),
+            SpecificationEvaluator.Default.GetQuery(
+                _aggregates,
+                (ISpecification<TAggregate>)specification,
+                evaluateCriteriaOnly: true
+            ),
             request
         );
         var total = await selection.LongCountAsync(cancellationToken);
@@ -150,9 +160,16 @@ public class EfRepository<TAggregate, TId>(IUnitOfWork unitOfWork) : IRepository
         }
     }
 
-    private IQueryable<TAggregate> Query(ISpecification<TAggregate> specification, bool evaluateCriteriaOnly = false)
+    private IQueryable<TAggregate> Query(
+        ISpecification<TAggregate> specification,
+        bool evaluateCriteriaOnly = false
+    )
     {
         ArgumentNullException.ThrowIfNull(specification);
-        return SpecificationEvaluator.Default.GetQuery(_aggregates, specification, evaluateCriteriaOnly);
+        return SpecificationEvaluator.Default.GetQuery(
+            _aggregates,
+            specification,
+            evaluateCriteriaOnly
+        );
     }
 }

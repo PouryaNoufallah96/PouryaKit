@@ -18,7 +18,8 @@ public static class ReceiptStatements
     /// Records the Receipt of the subscription <c>{0}</c> for the message <c>{1}</c>. The primary key makes a second
     /// Receipt for the same message wait for the first transaction, then insert nothing.
     /// </summary>
-    public static string Record(string table) => $"insert into {table} (subscription, message_id) values ({{0}}, {{1}}) on conflict do nothing";
+    public static string Record(string table) =>
+        $"insert into {table} (subscription, message_id) values ({{0}}, {{1}}) on conflict do nothing";
 
     /// <summary>
     /// Records that the subscription <c>{0}</c> applied the version <c>{2}</c> of the aggregate <c>{1}</c>, when it is

@@ -53,16 +53,27 @@ public sealed class ReportModule : IModuleDefinition
         module.AddPouryaKitDelayedCommand<ClaimReportJobCommand>("reports.claim");
         module.AddPouryaKitDelayedCommand<RenderReportCommand>("reports.render");
         module
-            .AddPouryaKitRecurringCommand("reports.retention", RetentionActor, occurrence => new ApplyRetentionCommand(occurrence))
-            .Configure<IOptions<ReportOptions>>((retention, reports) => retention.Every = reports.Value.CleanupInterval);
+            .AddPouryaKitRecurringCommand(
+                "reports.retention",
+                RetentionActor,
+                occurrence => new ApplyRetentionCommand(occurrence)
+            )
+            .Configure<IOptions<ReportOptions>>(
+                (retention, reports) => retention.Every = reports.Value.CleanupInterval
+            );
         module
             .AddOptions<ReportOptions>()
             .BindConfiguration(ReportOptions.Section)
             .Validate(
-                reports => reports.Retention > TimeSpan.Zero && reports.Retention <= ReportOptions.MaxDuration
-                    && reports.CleanupInterval > TimeSpan.Zero && reports.CleanupInterval <= ReportOptions.MaxDuration
-                    && reports.ClaimTimeout > TimeSpan.Zero && reports.ClaimTimeout <= ReportOptions.MaxDuration
-                    && reports.LinkLifetime > TimeSpan.Zero && reports.LinkLifetime <= ReportOptions.MaxLinkLifetime,
+                reports =>
+                    reports.Retention > TimeSpan.Zero
+                    && reports.Retention <= ReportOptions.MaxDuration
+                    && reports.CleanupInterval > TimeSpan.Zero
+                    && reports.CleanupInterval <= ReportOptions.MaxDuration
+                    && reports.ClaimTimeout > TimeSpan.Zero
+                    && reports.ClaimTimeout <= ReportOptions.MaxDuration
+                    && reports.LinkLifetime > TimeSpan.Zero
+                    && reports.LinkLifetime <= ReportOptions.MaxLinkLifetime,
                 $"{ReportOptions.Section}: Retention, CleanupInterval and ClaimTimeout must each be positive and at most {ReportOptions.MaxDuration}, and LinkLifetime positive and at most {ReportOptions.MaxLinkLifetime}, the longest link S3 and Azure Blob sign."
             )
             .ValidateOnStart();

@@ -21,7 +21,14 @@ internal sealed class GetProductEndpoint : IEndpoint
                     OperationContext context,
                     IGatewayProcessor<CatalogModule> catalog,
                     CancellationToken cancellationToken
-                ) => (await catalog.QueryAsync(new GetProductQuery(productId), context, cancellationToken)).ToHttpResult()
+                ) =>
+                    (
+                        await catalog.QueryAsync(
+                            new GetProductQuery(productId),
+                            context,
+                            cancellationToken
+                        )
+                    ).ToHttpResult()
             )
             .WithName(Name);
 }

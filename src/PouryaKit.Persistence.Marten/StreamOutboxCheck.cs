@@ -16,8 +16,11 @@ internal sealed class StreamOutboxCheck : ICompositionCheck
             return [];
         }
 
-        var modules = services.GetRequiredService<StreamModules>().Modules.Select(module => module?.Name ?? "the application");
-        return [
+        var modules = services
+            .GetRequiredService<StreamModules>()
+            .Modules.Select(module => module?.Name ?? "the application");
+        return
+        [
             $"The Operations of {string.Join(", ", modules)} would commit their Streams' events and never write what they publish: the Host has an Outbox, but none in the Marten Unit of Work. Call UsePouryaKitMarten(connectionName) of PouryaKit.Messaging.Wolverine.Marten on the Host instead of AddPouryaKitMarten.",
         ];
     }

@@ -11,7 +11,17 @@ public sealed class PipelineContractTests
     public void No_module_or_host_implements_a_pipeline_contract_and_the_kit_implements_each()
     {
         Assert.Equal(
-            ["Billing", "Catalog", "Catalog.Contracts", "Inventory", "Inventory.Host", "Ledger", "Ledger.Contracts", "ModularMonolith.Host", "ModularMonolith.ServiceDefaults"],
+            [
+                "Billing",
+                "Catalog",
+                "Catalog.Contracts",
+                "Inventory",
+                "Inventory.Host",
+                "Ledger",
+                "Ledger.Contracts",
+                "ModularMonolith.Host",
+                "ModularMonolith.ServiceDefaults",
+            ],
             Sample.Application.Select(assembly => assembly.GetName().Name)
         );
         Assert.Empty(Sample.Application.SelectMany(ModuleRules.ImplementsPipelineContracts));
@@ -40,7 +50,9 @@ public sealed class PipelineContractTests
                 "PouryaKit.Persistence.Postgres.PostgresUniqueConstraintReader implements IUniqueConstraintReader, a pipeline contract only the Kit implements (PouryaKit.Persistence.Postgres.dll).",
                 "PouryaKit.Validation.FluentValidationStep`1 implements IValidationStep, a pipeline contract only the Kit implements (PouryaKit.Validation.dll).",
             ],
-            Sample.KitPackages.SelectMany(ModuleRules.ImplementsPipelineContracts).Order(StringComparer.Ordinal)
+            Sample
+                .KitPackages.SelectMany(ModuleRules.ImplementsPipelineContracts)
+                .Order(StringComparer.Ordinal)
         );
     }
 

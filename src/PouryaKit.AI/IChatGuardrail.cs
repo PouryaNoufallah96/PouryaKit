@@ -13,7 +13,10 @@ public interface IChatGuardrail
     /// is given, such as an agent's and its context providers': null lets the call go, and a refusal is the answer the run
     /// gets instead, as a response the model's content filter ended, without the model being called.
     /// </summary>
-    Task<string?> CheckRequestAsync(IReadOnlyList<ChatMessage> messages, CancellationToken cancellationToken);
+    Task<string?> CheckRequestAsync(
+        IReadOnlyList<ChatMessage> messages,
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// Checks the model's response before any tool call it asks for runs: null lets it through, and a refusal replaces it,

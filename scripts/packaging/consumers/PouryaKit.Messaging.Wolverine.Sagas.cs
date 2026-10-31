@@ -4,7 +4,11 @@ using PouryaKit.Messaging.Wolverine.Sagas;
 // What a Module's Composition Root calls on the packed package: a Saga with its input and its timeout. Compiled, never
 // run: a real Host also composes its message store and the Module that publishes the event.
 var services = new ServiceCollection();
-services.AddPouryaKitSaga<WelcomeSaga>("consumer.welcome", "consumer.welcome", saga => saga.Input<Registered>(registered => registered.Id).Timeout<WelcomeTimeout>());
+services.AddPouryaKitSaga<WelcomeSaga>(
+    "consumer.welcome",
+    "consumer.welcome",
+    saga => saga.Input<Registered>(registered => registered.Id).Timeout<WelcomeTimeout>()
+);
 Console.WriteLine(services.Count);
 
 /// <summary>An Integration Event the saga takes.</summary>

@@ -41,14 +41,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommands.cs",
-          "line": 12,
-          "end_line": 51,
+          "line": 15,
+          "end_line": 54,
           "label": "Schedule adds it to the scope's Outbox"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/ScheduledDelayedCommands.cs",
           "line": 6,
-          "end_line": 19,
+          "end_line": 20,
           "label": "held until the Unit of Work writes it"
         }
       ]
@@ -64,20 +64,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
-          "line": 88,
-          "end_line": 132,
+          "line": 100,
+          "end_line": 148,
           "label": "written with ScheduledTime in the commit"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandExtension.cs",
-          "line": 10,
-          "end_line": 18,
+          "line": 11,
+          "end_line": 19,
           "label": "one local queue per declaration"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 112,
-          "end_line": 112,
+          "line": 133,
+          "end_line": 133,
           "label": "every local queue durable"
         }
       ]
@@ -93,14 +93,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
-          "line": 22,
-          "end_line": 38,
+          "line": 23,
+          "end_line": 43,
           "label": "queue names the declaration; kind checked"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
-          "line": 77,
-          "end_line": 100,
+          "line": 91,
+          "end_line": 117,
           "label": "continuation or system Actor; new scope"
         }
       ]
@@ -116,8 +116,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
-          "line": 126,
-          "end_line": 148,
+          "line": 155,
+          "end_line": 188,
           "label": "Receipt, next occurrence, nested send"
         }
       ]
@@ -133,14 +133,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 72,
-          "end_line": 87,
+          "line": 79,
+          "end_line": 94,
           "label": "save, commit, then flush"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
-          "line": 88,
-          "end_line": 102,
+          "line": 100,
+          "end_line": 116,
           "label": "the next occurrence carries its time"
         }
       ]
@@ -155,20 +155,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
-          "line": 96,
-          "end_line": 99,
+          "line": 113,
+          "end_line": 116,
           "label": "Errors become an exception"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
           "line": 27,
-          "end_line": 28,
+          "end_line": 31,
           "label": "stored retries, then the error queue"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs",
           "line": 13,
-          "end_line": 13,
+          "end_line": 14,
           "label": "1 s, 10 s, 1 min by default"
         }
       ]
@@ -183,20 +183,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
-          "line": 23,
-          "end_line": 71,
+          "line": 25,
+          "end_line": 94,
           "label": "at Host start, unless one waits"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
-          "line": 44,
-          "end_line": 67,
+          "line": 49,
+          "end_line": 76,
           "label": "by the attempt that sets one aside"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
-          "line": 106,
-          "end_line": 116,
+          "line": 134,
+          "end_line": 152,
           "label": "the first occurrence after now"
         }
       ]
@@ -211,8 +211,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommands.cs",
-          "line": 16,
-          "end_line": 43,
+          "line": 19,
+          "end_line": 46,
           "label": "reading code, no Unit of Work, undeclared"
         }
       ]
@@ -228,13 +228,13 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
           "line": 28,
-          "end_line": 28,
+          "end_line": 31,
           "label": "MoveToErrorQueue after the last delay"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 111,
-          "end_line": 111,
+          "line": 132,
+          "end_line": 132,
           "label": "an unknown type is dead-lettered"
         },
         {
@@ -255,8 +255,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandDelivery.cs",
-          "line": 129,
-          "end_line": 136,
+          "line": 161,
+          "end_line": 173,
           "label": "a committed Receipt returns success"
         }
       ]

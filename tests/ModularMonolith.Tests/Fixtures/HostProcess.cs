@@ -13,7 +13,8 @@ internal sealed class HostProcess : IDisposable
     private readonly Process _process;
     private readonly ConcurrentQueue<string> _output = [];
 
-    private HostProcess(string project, Process process) => (_project, _process) = (project, process);
+    private HostProcess(string project, Process process) =>
+        (_project, _process) = (project, process);
 
     public string Output => string.Join(Environment.NewLine, _output);
 
@@ -23,18 +24,34 @@ internal sealed class HostProcess : IDisposable
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (!File.Exists(Path.Combine(root.FullName, "PouryaKit.slnx")))
         {
-            root = root.Parent ?? throw new InvalidOperationException("The tests do not run inside the repository.");
+            root =
+                root.Parent
+                ?? throw new InvalidOperationException(
+                    "The tests do not run inside the repository."
+                );
         }
 
         // The configuration the tests were built in: Release under package validation.
-        var configuration = typeof(HostProcess).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyConfigurationAttribute), false)
+        var configuration = typeof(HostProcess)
+            .Assembly.GetCustomAttributes(
+                typeof(System.Reflection.AssemblyConfigurationAttribute),
+                false
+            )
             .OfType<System.Reflection.AssemblyConfigurationAttribute>()
             .Single()
             .Configuration;
         var directory = Path.Combine(root.FullName, "samples/ModularMonolith/src", project);
         var start = new ProcessStartInfo("dotnet")
         {
-            ArgumentList = { "run", "--no-build", "--configuration", configuration, "--project", directory },
+            ArgumentList =
+            {
+                "run",
+                "--no-build",
+                "--configuration",
+                configuration,
+                "--project",
+                directory,
+            },
             WorkingDirectory = directory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -51,8 +68,12 @@ internal sealed class HostProcess : IDisposable
             start.Environment[name] = value;
         }
 
-        var process = new HostProcess(project, Process.Start(start) ?? throw new InvalidOperationException("dotnet did not start."));
-        process._process.OutputDataReceived += (_, line) => process._output.Enqueue(line.Data ?? "");
+        var process = new HostProcess(
+            project,
+            Process.Start(start) ?? throw new InvalidOperationException("dotnet did not start.")
+        );
+        process._process.OutputDataReceived += (_, line) =>
+            process._output.Enqueue(line.Data ?? "");
         process._process.ErrorDataReceived += (_, line) => process._output.Enqueue(line.Data ?? "");
         process._process.BeginOutputReadLine();
         process._process.BeginErrorReadLine();
@@ -68,12 +89,24 @@ internal sealed class HostProcess : IDisposable
         timeout.CancelAfter(TimeSpan.FromSeconds(120));
         while (true)
         {
-            if (_output.FirstOrDefault(line => line.Contains(listening, StringComparison.Ordinal)) is { } line)
+            if (
+                _output.FirstOrDefault(line =>
+                    line.Contains(listening, StringComparison.Ordinal)
+                ) is
+                { } line
+            )
             {
-                return new Uri(line[(line.IndexOf(listening, StringComparison.Ordinal) + listening.Length)..].Split('"')[0].Trim());
+                return new Uri(
+                    line[(line.IndexOf(listening, StringComparison.Ordinal) + listening.Length)..]
+                        .Split('"')[0]
+                        .Trim()
+                );
             }
 
-            Assert.False(timeout.IsCancellationRequested || _process.HasExited, $"{_project} never listened:{Environment.NewLine}{Output}");
+            Assert.False(
+                timeout.IsCancellationRequested || _process.HasExited,
+                $"{_project} never listened:{Environment.NewLine}{Output}"
+            );
             await Task.Delay(100, cancellationToken);
         }
     }

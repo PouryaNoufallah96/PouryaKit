@@ -8,7 +8,8 @@ namespace PouryaKit.Cqrs.Tests;
 public sealed class IdempotencyTests
 {
     // The command as its key names it: its full name, then its assembly's simple name.
-    private const string SealThing = "PouryaKit.Cqrs.Tests.Module.SealThingCommand, PouryaKit.Cqrs.Tests.Module";
+    private const string SealThing =
+        "PouryaKit.Cqrs.Tests.Module.SealThingCommand, PouryaKit.Cqrs.Tests.Module";
 
     [Fact]
     public async Task Only_an_outermost_command_with_a_request_id_reserves_its_key_inside_the_unit_of_work_before_its_handler()
@@ -40,8 +41,14 @@ public sealed class IdempotencyTests
             ],
             Trace(withRequestId)
         );
-        Assert.DoesNotContain(Trace(withoutRequestId), step => step.StartsWith("reserve", StringComparison.Ordinal));
-        Assert.DoesNotContain(Trace(withoutRequestId), step => step.StartsWith("record", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            Trace(withoutRequestId),
+            step => step.StartsWith("reserve", StringComparison.Ordinal)
+        );
+        Assert.DoesNotContain(
+            Trace(withoutRequestId),
+            step => step.StartsWith("record", StringComparison.Ordinal)
+        );
     }
 
     [Fact]
@@ -50,7 +57,9 @@ public sealed class IdempotencyTests
         await using var host = TestHost.Build();
         using var scope = Begun(host, "r1");
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.SealThing(Dispatcher(scope)));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.SealThing(Dispatcher(scope))
+        );
 
         Assert.Contains("no IIdempotencyStore is registered", thrown.Message);
         Assert.DoesNotContain("uow:begin", Trace(scope));
@@ -63,19 +72,25 @@ public sealed class IdempotencyTests
         await using var host = TestHost.Build(withIdempotencyStore: true);
         using var scope = Begun(host, "r1");
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(Dispatcher(scope)));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.Ping(Dispatcher(scope))
+        );
 
         Assert.Contains("does not opt in with [Idempotent]", thrown.Message);
         Assert.DoesNotContain("handle PingCommand", Trace(scope));
-        Assert.DoesNotContain(Trace(scope), step => step.StartsWith("reserve", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            Trace(scope),
+            step => step.StartsWith("reserve", StringComparison.Ordinal)
+        );
     }
 
     // The key stores an Operation without a tenant as the empty string, so no tenant may be blank.
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    public void A_blank_tenant_is_refused_so_no_tenant_shares_the_key_of_an_operation_without_one(string tenant) =>
-        Assert.Throws<ArgumentException>(() => new OperationContext(Actor.Person("ada"), tenant));
+    public void A_blank_tenant_is_refused_so_no_tenant_shares_the_key_of_an_operation_without_one(
+        string tenant
+    ) => Assert.Throws<ArgumentException>(() => new OperationContext(Actor.Person("ada"), tenant));
 
     [Fact]
     public void Work_an_operation_causes_carries_no_request_id()
@@ -88,11 +103,14 @@ public sealed class IdempotencyTests
     private static IServiceScope Begun(ServiceProvider host, string? requestId)
     {
         var scope = host.CreateScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(Actor.Person("ada")) { RequestId = requestId });
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(Actor.Person("ada")) { RequestId = requestId }
+        );
         return scope;
     }
 
-    private static IDispatcher Dispatcher(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IDispatcher>();
+    private static IDispatcher Dispatcher(IServiceScope scope) =>
+        scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
     private static IReadOnlyList<string> Trace(IServiceScope scope) =>
         scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps;

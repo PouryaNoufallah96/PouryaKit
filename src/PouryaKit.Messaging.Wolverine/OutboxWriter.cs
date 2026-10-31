@@ -58,16 +58,26 @@ public sealed class OutboxWriter
         ArgumentNullException.ThrowIfNull(snapshots);
 
         // A message has a route for each of its subscriptions, and none without one.
-        List<(object Message, Guid? DomainEventId, Dictionary<string, string> Headers, DateTimeOffset? At)> published =
+        List<(
+            object Message,
+            Guid? DomainEventId,
+            Dictionary<string, string> Headers,
+            DateTimeOffset? At
+        )> published =
         [
-            .. domainEvents.Select(message => (message, (Guid?)null, new Dictionary<string, string>(), (DateTimeOffset?)null)),
+            .. domainEvents.Select(message =>
+                (message, (Guid?)null, new Dictionary<string, string>(), (DateTimeOffset?)null)
+            ),
             .. _integrationEvents
                 .Take()
                 .Select(e =>
                     (
                         e.IntegrationEvent,
                         (Guid?)e.DomainEventId,
-                        new Dictionary<string, string> { [IntegrationEventHeaders.DomainEventId] = e.DomainEventId.ToString() },
+                        new Dictionary<string, string>
+                        {
+                            [IntegrationEventHeaders.DomainEventId] = e.DomainEventId.ToString(),
+                        },
                         (DateTimeOffset?)null
                     )
                 ),
@@ -80,7 +90,9 @@ public sealed class OutboxWriter
                     new Dictionary<string, string>
                     {
                         [SnapshotHeaders.AggregateId] = built.AggregateId,
-                        [SnapshotHeaders.Version] = built.Version.ToString(CultureInfo.InvariantCulture),
+                        [SnapshotHeaders.Version] = built.Version.ToString(
+                            CultureInfo.InvariantCulture
+                        ),
                     },
                     (DateTimeOffset?)null
                 )
@@ -94,14 +106,18 @@ public sealed class OutboxWriter
                         scheduled.IsOccurrence
                             ? new Dictionary<string, string>
                             {
-                                [DelayedCommandHeaders.Occurrence] = scheduled.At.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture),
+                                [DelayedCommandHeaders.Occurrence] = scheduled
+                                    .At.ToUniversalTime()
+                                    .ToString("O", CultureInfo.InvariantCulture),
                             }
                             : [],
                         (DateTimeOffset?)scheduled.At
                     )
                 ),
         ];
-        published.RemoveAll(message => _runtime.RoutingFor(message.Message.GetType()).Routes.Length == 0);
+        published.RemoveAll(message =>
+            _runtime.RoutingFor(message.Message.GetType()).Routes.Length == 0
+        );
         if (published.Count == 0)
         {
             return null;
@@ -139,12 +155,22 @@ public sealed class OutboxWriter
     // identity, and every receiver's Receipt would drop the second. The publishing Module records each publication, in
     // its own Receipt store and in this transaction, under a key no subscription name can take (a name has no '#'), so
     // the second delivery to commit fails instead.
-    private async Task RecordPublicationAsync(object integrationEvent, Guid domainEventId, CancellationToken cancellationToken)
+    private async Task RecordPublicationAsync(
+        object integrationEvent,
+        Guid domainEventId,
+        CancellationToken cancellationToken
+    )
     {
         var wireName = integrationEvent.GetType().ToMessageTypeName();
         // Resolved here, not injected: the Receipts depend on the Unit of Work, which depends on its Outbox.
         var receipts = _scope.GetRequiredService<IReceipts>();
-        if (!await receipts.RecordAsync($"{wireName.ToLowerInvariant()}#published", domainEventId, cancellationToken))
+        if (
+            !await receipts.RecordAsync(
+                $"{wireName.ToLowerInvariant()}#published",
+                domainEventId,
+                cancellationToken
+            )
+        )
         {
             throw new InvalidOperationException(
                 $"Another Notification Handler of the Domain Event {domainEventId} already published {wireName}. One Domain Event yields at most one Integration Event of each type: both would carry its identity, and every receiver would apply only the first."
@@ -166,7 +192,13 @@ public sealed class OutboxWriter
         string? traceParent
     )
     {
-        var options = OperationContextHeaderExtensions.WithContextHeaders(new DeliveryOptions(), context.Actor, context.Tenant, context.CorrelationId, context.CausationId);
+        var options = OperationContextHeaderExtensions.WithContextHeaders(
+            new DeliveryOptions(),
+            context.Actor,
+            context.Tenant,
+            context.CorrelationId,
+            context.CausationId
+        );
         options.Headers[IntegrationEventHeaders.DomainEventId] = identity.ToString();
         if (traceState is { Length: > 0 })
         {

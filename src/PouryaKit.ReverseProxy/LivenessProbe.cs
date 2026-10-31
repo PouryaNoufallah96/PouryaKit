@@ -11,7 +11,10 @@ internal sealed class LivenessProbe : IProxyConfigFilter
 {
     private const string Path = "/alive";
 
-    public ValueTask<ClusterConfig> ConfigureClusterAsync(ClusterConfig cluster, CancellationToken cancel)
+    public ValueTask<ClusterConfig> ConfigureClusterAsync(
+        ClusterConfig cluster,
+        CancellationToken cancel
+    )
     {
         var healthCheck = cluster.HealthCheck ?? new HealthCheckConfig();
         var active = healthCheck.Active ?? new ActiveHealthCheckConfig();
@@ -20,13 +23,22 @@ internal sealed class LivenessProbe : IProxyConfigFilter
             {
                 HealthCheck = healthCheck with
                 {
-                    Active = active with { Enabled = active.Enabled ?? true, Path = active.Path ?? Path },
-                    AvailableDestinationsPolicy = healthCheck.AvailableDestinationsPolicy ?? HealthCheckConstants.AvailableDestinations.HealthyAndUnknown,
+                    Active = active with
+                    {
+                        Enabled = active.Enabled ?? true,
+                        Path = active.Path ?? Path,
+                    },
+                    AvailableDestinationsPolicy =
+                        healthCheck.AvailableDestinationsPolicy
+                        ?? HealthCheckConstants.AvailableDestinations.HealthyAndUnknown,
                 },
             }
         );
     }
 
-    public ValueTask<RouteConfig> ConfigureRouteAsync(RouteConfig route, ClusterConfig? cluster, CancellationToken cancel) =>
-        ValueTask.FromResult(route);
+    public ValueTask<RouteConfig> ConfigureRouteAsync(
+        RouteConfig route,
+        ClusterConfig? cluster,
+        CancellationToken cancel
+    ) => ValueTask.FromResult(route);
 }

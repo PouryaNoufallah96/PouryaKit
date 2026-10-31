@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Catalog.Products.Data.Configurations;
 
-internal sealed class ProductConversationConfiguration : IEntityTypeConfiguration<ProductConversation>
+internal sealed class ProductConversationConfiguration
+    : IEntityTypeConfiguration<ProductConversation>
 {
     /// <summary>The unique index on the conversation's key, its Actor and tenant; CatalogModule maps its violation.</summary>
     public const string KeyIndex = "ix_product_conversations_key";

@@ -16,7 +16,10 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var lamps = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(lamps, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
 
         var created = await catalog.SendAsync(
             new CreateProductCommand(Guid.CreateVersion7(), lamps, "Desk lamp"),
@@ -29,8 +32,16 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.True(created.IsSuccess);
         Assert.Equal(CategoryErrors.NotFound, Assert.Single(refused.Errors));
-        Assert.Equal([[lamps, 1]], await Fixture.RowsAsync("select id, product_count from catalog.categories"));
-        Assert.Equal(["Desk lamp"], (await Fixture.RowsAsync("select name from catalog.products")).Select(row => row[0]));
+        Assert.Equal(
+            [
+                [lamps, 1],
+            ],
+            await Fixture.RowsAsync("select id, product_count from catalog.categories")
+        );
+        Assert.Equal(
+            ["Desk lamp"],
+            (await Fixture.RowsAsync("select name from catalog.products")).Select(row => row[0])
+        );
     }
     #endregion
 
@@ -59,11 +70,20 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var result = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new WriteReactingNoteCommand(Reaction.Chain), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new WriteReactingNoteCommand(Reaction.Chain),
+                TestContext.Current.CancellationToken
+            );
 
         // The command's note, then one note per round: the last round is the deepest the drain allows.
-        string[] expected = ["Chain", .. Enumerable.Range(1, DomainEventDrain.MaxDepth).Select(link => $"link {link}")];
-        var texts = (await Fixture.RowsAsync("select text from stub.notes")).Select(row => (string)row[0]);
+        string[] expected =
+        [
+            "Chain",
+            .. Enumerable.Range(1, DomainEventDrain.MaxDepth).Select(link => $"link {link}"),
+        ];
+        var texts = (await Fixture.RowsAsync("select text from stub.notes")).Select(row =>
+            (string)row[0]
+        );
         Assert.True(result.IsSuccess);
         Assert.Equal(expected.Order(StringComparer.Ordinal), texts.Order(StringComparer.Ordinal));
     }
@@ -73,10 +93,16 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var result = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new WriteReactingNoteCommand(Reaction.None), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new WriteReactingNoteCommand(Reaction.None),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(["None"], (await Fixture.RowsAsync("select text from stub.notes")).Select(row => row[0]));
+        Assert.Equal(
+            ["None"],
+            (await Fixture.RowsAsync("select text from stub.notes")).Select(row => row[0])
+        );
     }
 
     [Fact(Timeout = 60_000)]
@@ -85,7 +111,10 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .SendAsync(new WriteReactingNoteCommand(Reaction.Cycle), TestContext.Current.CancellationToken)
+                .SendAsync(
+                    new WriteReactingNoteCommand(Reaction.Cycle),
+                    TestContext.Current.CancellationToken
+                )
         );
 
         Assert.Contains($"after {DomainEventDrain.MaxDepth} rounds", error.Message);
@@ -97,7 +126,10 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var result = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new WriteReactingNoteCommand(Reaction.Refuse), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new WriteReactingNoteCommand(Reaction.Refuse),
+                TestContext.Current.CancellationToken
+            );
 
         // The third handler throws if it runs, and the first one's row is already in the database.
         Assert.Equal(RefusalSecondReaction.Refused, Assert.Single(result.Errors));
@@ -112,7 +144,10 @@ public sealed class DomainEventTests(AppFixture app) : HostTest<AppFixture>(app)
             () =>
                 Fixture
                     .Gateway<StubModule>()
-                    .SendAsync(new WriteReactingNoteCommand(Reaction.IgnoreNestedFailure), TestContext.Current.CancellationToken),
+                    .SendAsync(
+                        new WriteReactingNoteCommand(Reaction.IgnoreNestedFailure),
+                        TestContext.Current.CancellationToken
+                    ),
             TestContext.Current.CancellationToken
         );
 

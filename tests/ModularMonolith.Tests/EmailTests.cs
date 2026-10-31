@@ -20,7 +20,8 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
 {
     private const string Recipient = "ada@example.com";
 
-    private IGatewayProcessor<StubModule> Stub => mail.Host.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
+    private IGatewayProcessor<StubModule> Stub =>
+        mail.Host.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
 
     [Fact]
     public async Task A_notification_handler_sends_a_mail_that_arrives_once_its_operation_commits()
@@ -36,7 +37,12 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
         var arrived = Assert.Single(await mail.WaitForMailsAsync(text, 1));
         Assert.Equal(
             (Recipient, "shop@example.com", "Modular Monolith", $"The note {text} is written."),
-            (Assert.Single(arrived.To).Address, Assert.Single(arrived.From).Address, arrived.From[0].Name, arrived.TextBody?.TrimEnd())
+            (
+                Assert.Single(arrived.To).Address,
+                Assert.Single(arrived.From).Address,
+                arrived.From[0].Name,
+                arrived.TextBody?.TrimEnd()
+            )
         );
     }
 
@@ -47,11 +53,18 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
         var committed = Unique();
 
         var refused = await Stub.SendAsync(
-            new WriteNoteRaisingCommand(rolledBack, [new NoteMailedDomainEvent(Recipient, rolledBack)], Fail: true),
+            new WriteNoteRaisingCommand(
+                rolledBack,
+                [new NoteMailedDomainEvent(Recipient, rolledBack)],
+                Fail: true
+            ),
             TestContext.Current.CancellationToken
         );
         await Stub.SendAsync(
-            new WriteNoteRaisingCommand(committed, [new NoteMailedDomainEvent(Recipient, committed)]),
+            new WriteNoteRaisingCommand(
+                committed,
+                [new NoteMailedDomainEvent(Recipient, committed)]
+            ),
             TestContext.Current.CancellationToken
         );
 
@@ -66,9 +79,15 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     {
         var text = Unique();
         var mailed = new NoteMailedThenFailingDomainEvent(Recipient, text);
-        var subscription = MessageNames.SubscriptionNameOf(typeof(MailNoteThenFailOnceNotificationHandler), typeof(NoteMailedThenFailingDomainEvent));
+        var subscription = MessageNames.SubscriptionNameOf(
+            typeof(MailNoteThenFailOnceNotificationHandler),
+            typeof(NoteMailedThenFailingDomainEvent)
+        );
 
-        await Stub.SendAsync(new WriteNoteRaisingCommand(text, [mailed]), TestContext.Current.CancellationToken);
+        await Stub.SendAsync(
+            new WriteNoteRaisingCommand(text, [mailed]),
+            TestContext.Current.CancellationToken
+        );
 
         // The retry succeeded: its Receipt is committed, so the delivery is over and no further attempt sends again.
         await mail.WaitUntilAsync(
@@ -83,8 +102,12 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     {
         var text = Unique();
 
-        var sent = await mail.Host.Services.GetRequiredService<IEmailSender>()
-            .SendAsync(new EmailMessage("ada", text, "Never sent."), TestContext.Current.CancellationToken);
+        var sent = await mail
+            .Host.Services.GetRequiredService<IEmailSender>()
+            .SendAsync(
+                new EmailMessage("ada", text, "Never sent."),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(EmailErrors.InvalidAddress, Assert.Single(sent.Errors));
         Assert.Empty(await mail.MailsAsync(text));
@@ -94,9 +117,17 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     public async Task A_host_whose_email_security_is_not_a_secure_socket_option_fails_to_start_naming_the_option()
     {
         // The binder reads a number into the enum; MailKit would connect in plain SMTP for an undefined value.
-        await using var host = AppFixture.ComposeHost("Development", app.ConnectionString, new RecordedLogs(), null, "--PouryaKit:Email:Security=99");
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            app.ConnectionString,
+            new RecordedLogs(),
+            null,
+            "--PouryaKit:Email:Security=99"
+        );
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             "PouryaKitMailKitOptions.Security is not a SecureSocketOptions value; set None, Auto, SslOnConnect, StartTls or StartTlsWhenAvailable.",
@@ -107,9 +138,17 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     [Fact]
     public async Task A_host_whose_email_options_name_no_smtp_server_fails_to_start_naming_the_option()
     {
-        await using var host = AppFixture.ComposeHost("Development", app.ConnectionString, new RecordedLogs(), null, "--PouryaKit:Email:Host=");
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            app.ConnectionString,
+            new RecordedLogs(),
+            null,
+            "--PouryaKit:Email:Host="
+        );
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             "PouryaKitMailKitOptions.Host names no SMTP server; set the host name of the server the Host sends its email through.",
@@ -121,9 +160,12 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     [InlineData("a type, before")]
     [InlineData("a type, after")]
     [InlineData("a factory, after")]
-    public void A_host_that_registers_another_email_sender_fails_when_it_is_built_naming_both(string other)
+    public void A_host_that_registers_another_email_sender_fails_when_it_is_built_naming_both(
+        string other
+    )
     {
-        const string MailKit = "the factory PouryaKit.Email.MailKit.MailKitServiceCollectionExtensions.Create";
+        const string MailKit =
+            "the factory PouryaKit.Email.MailKit.MailKitServiceCollectionExtensions.Create";
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
         builder.AddPouryaKitCompositionChecks();
         if (other == "a type, before")
@@ -197,6 +239,7 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
     // Another sender a Host could register, never called.
     private sealed class LocalEmailSender : IEmailSender
     {
-        public Task<Result> SendAsync(EmailMessage message, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Result> SendAsync(EmailMessage message, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 }

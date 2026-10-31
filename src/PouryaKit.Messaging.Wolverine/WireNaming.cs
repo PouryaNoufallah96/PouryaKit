@@ -19,8 +19,15 @@ internal sealed class WireNaming : IMessageTypeNaming
     /// and returns a problem for each one this process already knows under another name, or that Wolverine named before it
     /// was declared: Wolverine keeps the first name it gives a type, and its envelopes would carry that one.
     /// </summary>
-    public static List<string> Declare(IReadOnlyDictionary<Type, string> wireNames, IReadOnlySet<Type> received) =>
-        Declare(wireNames, (type, wireName) => $"{type.FullName} is {(received.Contains(type) ? "received" : "published")} as {wireName}");
+    public static List<string> Declare(
+        IReadOnlyDictionary<Type, string> wireNames,
+        IReadOnlySet<Type> received
+    ) =>
+        Declare(
+            wireNames,
+            (type, wireName) =>
+                $"{type.FullName} is {(received.Contains(type) ? "received" : "published")} as {wireName}"
+        );
 
     /// <summary>
     /// Records the name of each Saga's input type in <paramref name="names"/> (<c>PouryaKit.Messaging.Wolverine.Sagas</c>),
@@ -29,14 +36,19 @@ internal sealed class WireNaming : IMessageTypeNaming
     public static List<string> DeclareSagaInputs(IReadOnlyDictionary<Type, string> names) =>
         Declare(names, (type, name) => $"The Saga input {type.FullName} is named {name}");
 
-    private static List<string> Declare(IReadOnlyDictionary<Type, string> wireNames, Func<Type, string, string> describe)
+    private static List<string> Declare(
+        IReadOnlyDictionary<Type, string> wireNames,
+        Func<Type, string, string> describe
+    )
     {
         lock (Declaring)
         {
             List<string> problems =
             [
                 .. wireNames
-                    .Where(named => Declared.TryGetValue(named.Key, out var name) && name != named.Value)
+                    .Where(named =>
+                        Declared.TryGetValue(named.Key, out var name) && name != named.Value
+                    )
                     .Select(named =>
                         $"{describe(named.Key, named.Value)}, but this process already sends it as {Declared[named.Key]}; a type keeps one wire name in a process."
                     ),
@@ -54,7 +66,9 @@ internal sealed class WireNaming : IMessageTypeNaming
             return
             [
                 .. wireNames
-                    .Select(named => (named.Key, Declared: named.Value, Sent: named.Key.ToMessageTypeName()))
+                    .Select(named =>
+                        (named.Key, Declared: named.Value, Sent: named.Key.ToMessageTypeName())
+                    )
                     .Where(named => named.Sent != named.Declared)
                     .Select(named =>
                         $"{describe(named.Key, named.Declared)}, but Wolverine named it {named.Sent} before it was declared and would send it under that name. Declare it before anything in the process sends or names it."
@@ -68,15 +82,17 @@ internal sealed class WireNaming : IMessageTypeNaming
     /// can fix no other: a check that resolves Wolverine's options, which names every routed type, reads it first.
     /// </summary>
     public static bool AllDeclared(IReadOnlyDictionary<Type, string> wireNames) =>
-        wireNames.All(named => Declared.TryGetValue(named.Key, out var name) && name == named.Value);
+        wireNames.All(named =>
+            Declared.TryGetValue(named.Key, out var name) && name == named.Value
+        );
 
     public bool TryDetermineName(Type messageType, out string messageTypeName)
     {
-        messageTypeName = Declared.TryGetValue(messageType, out var declared)
-            ? declared
+        messageTypeName =
+            Declared.TryGetValue(messageType, out var declared) ? declared
             : messageType.IsAssignableTo(typeof(DomainEvent)) && !messageType.IsAbstract
                 ? MessageNames.WireNameOf(messageType)
-                : "";
+            : "";
         return MessageNames.IsValid(messageTypeName);
     }
 }

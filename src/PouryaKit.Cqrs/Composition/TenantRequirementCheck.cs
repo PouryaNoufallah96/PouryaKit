@@ -13,7 +13,9 @@ internal sealed class TenantRequirementCheck : ICompositionCheck
     {
         // A keyed descriptor's ImplementationType is null, and the dispatcher resolves authorizers unkeyed.
         var registered = composition
-            .Registrations.Where(descriptor => !descriptor.IsKeyedService && descriptor.ImplementationType is not null)
+            .Registrations.Where(descriptor =>
+                !descriptor.IsKeyedService && descriptor.ImplementationType is not null
+            )
             .Select(descriptor => (descriptor.ServiceType, descriptor.ImplementationType!))
             .ToHashSet();
         Type?[] scopes = [null, .. composition.Modules];
@@ -30,7 +32,10 @@ internal sealed class TenantRequirementCheck : ICompositionCheck
                     .DistinctBy(feature => feature.Operation)
                     .Where(feature =>
                         !registered.Contains(
-                            (typeof(IAuthorizer<>).MakeGenericType(feature.Operation), typeof(TenantRequirement<>).MakeGenericType(feature.Operation))
+                            (
+                                typeof(IAuthorizer<>).MakeGenericType(feature.Operation),
+                                typeof(TenantRequirement<>).MakeGenericType(feature.Operation)
+                            )
                         )
                     )
                     .Select(feature =>

@@ -39,6 +39,20 @@ jobs:
       - run: python3 .agents/scripts/check-docs.py
       - run: python3 -m unittest discover -s .agents/scripts -p 'test_*.py'
 
+  # CSharpier is pinned in .config/dotnet-tools.json. Migrations and the docs site are ignored.
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v6
+
+      - run: dotnet tool restore
+      - run: dotnet csharpier check .
+
   build-and-test:
     permissions:
       contents: read

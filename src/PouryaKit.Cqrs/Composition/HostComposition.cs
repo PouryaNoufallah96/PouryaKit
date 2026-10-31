@@ -21,7 +21,9 @@ public sealed class HostComposition
     {
         Registrations = [.. registrations];
         var features = Registrations
-            .Select(descriptor => descriptor.IsKeyedService ? null : descriptor.ImplementationInstance)
+            .Select(descriptor =>
+                descriptor.IsKeyedService ? null : descriptor.ImplementationInstance
+            )
             .OfType<ComposedFeatures>()
             .FirstOrDefault();
         if (features is null)

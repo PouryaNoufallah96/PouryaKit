@@ -15,7 +15,11 @@ public sealed class ModuleBoundaryTests
     // other public type in a Module fails.
     private static readonly Dictionary<string, IReadOnlySet<Type>> HostPorts = new()
     {
-        ["Catalog"] = new HashSet<Type> { typeof(INewProductAnnouncer), typeof(NewProductAnnouncement) },
+        ["Catalog"] = new HashSet<Type>
+        {
+            typeof(INewProductAnnouncer),
+            typeof(NewProductAnnouncement),
+        },
         ["PouryaKit.Reporting.Module"] = new HashSet<Type>
         {
             typeof(IReportRequestAuthorizer),
@@ -27,34 +31,64 @@ public sealed class ModuleBoundaryTests
     [Fact]
     public void The_host_composes_the_four_sample_modules_and_the_report_module_and_catalog_and_ledger_have_contracts()
     {
-        Assert.Equal(["Billing", "Catalog", "Inventory", "Ledger", "PouryaKit.Reporting.Module"], Sample.Modules.Select(module => module.GetName().Name));
-        Assert.Equal(["Catalog.Contracts", "Ledger.Contracts"], Sample.Contracts.Select(contracts => contracts.GetName().Name));
+        Assert.Equal(
+            ["Billing", "Catalog", "Inventory", "Ledger", "PouryaKit.Reporting.Module"],
+            Sample.Modules.Select(module => module.GetName().Name)
+        );
+        Assert.Equal(
+            ["Catalog.Contracts", "Ledger.Contracts"],
+            Sample.Contracts.Select(contracts => contracts.GetName().Name)
+        );
     }
 
-    private static readonly HashSet<string> ModuleNames = [.. Sample.Modules.Select(module => module.GetName().Name!), "Offending"];
+    private static readonly HashSet<string> ModuleNames =
+    [
+        .. Sample.Modules.Select(module => module.GetName().Name!),
+        "Offending",
+    ];
 
     [Fact]
     public void No_module_references_another_modules_implementation()
     {
         Assert.Empty(
-            Sample.Modules.SelectMany(module => ModuleRules.ReferencesToOtherModules(module, Sample.RestoredOf(module), ModuleNames))
+            Sample.Modules.SelectMany(module =>
+                ModuleRules.ReferencesToOtherModules(module, Sample.RestoredOf(module), ModuleNames)
+            )
         );
         // The restored closure is read: Inventory reaches Catalog's Contracts and the Kit through it.
         Assert.Superset(
             new HashSet<string> { "Catalog.Contracts", "PouryaKit.Cqrs" },
-            new HashSet<string>(Sample.RestoredOf(Assert.Single(Sample.Modules, module => module.GetName().Name == "Inventory")).Projects)
+            new HashSet<string>(
+                Sample
+                    .RestoredOf(
+                        Assert.Single(
+                            Sample.Modules,
+                            module => module.GetName().Name == "Inventory"
+                        )
+                    )
+                    .Projects
+            )
         );
     }
 
     [Fact]
     public void A_module_whose_project_references_another_modules_implementation_is_rejected_though_no_code_uses_it()
     {
-        Assert.DoesNotContain(OffendingModuleAssembly.GetReferencedAssemblies(), reference => reference.Name == "Catalog");
+        Assert.DoesNotContain(
+            OffendingModuleAssembly.GetReferencedAssemblies(),
+            reference => reference.Name == "Catalog"
+        );
 
-        var violations = ModuleRules.ReferencesToOtherModules(OffendingModuleAssembly, Restored("Offending"), ModuleNames);
+        var violations = ModuleRules.ReferencesToOtherModules(
+            OffendingModuleAssembly,
+            Restored("Offending"),
+            ModuleNames
+        );
 
         Assert.Equal(
-            ["Offending references Catalog, the implementation of another Module; reach it through Catalog.Contracts."],
+            [
+                "Offending references Catalog, the implementation of another Module; reach it through Catalog.Contracts.",
+            ],
             violations
         );
     }
@@ -63,7 +97,13 @@ public sealed class ModuleBoundaryTests
     public void Contracts_reference_nothing_from_the_kit_and_no_module()
     {
         Assert.Empty(
-            Sample.Contracts.SelectMany(contracts => ModuleRules.ReferencesOfContracts(contracts, Sample.RestoredOf(contracts), ModuleNames))
+            Sample.Contracts.SelectMany(contracts =>
+                ModuleRules.ReferencesOfContracts(
+                    contracts,
+                    Sample.RestoredOf(contracts),
+                    ModuleNames
+                )
+            )
         );
     }
 
@@ -71,22 +111,45 @@ public sealed class ModuleBoundaryTests
     public void Contracts_whose_project_references_the_kit_are_rejected_though_no_code_uses_it()
     {
         var contracts = typeof(OffendingCreatedV1).Assembly;
-        Assert.DoesNotContain(contracts.GetReferencedAssemblies(), reference => reference.Name == "PouryaKit.Domain");
+        Assert.DoesNotContain(
+            contracts.GetReferencedAssemblies(),
+            reference => reference.Name == "PouryaKit.Domain"
+        );
 
-        var violations = ModuleRules.ReferencesOfContracts(contracts, Restored("Offending.Contracts"), ModuleNames);
+        var violations = ModuleRules.ReferencesOfContracts(
+            contracts,
+            Restored("Offending.Contracts"),
+            ModuleNames
+        );
 
-        Assert.Equal(["Offending.Contracts references PouryaKit.Domain; Contracts reference nothing from the Kit and no Module."], violations);
+        Assert.Equal(
+            [
+                "Offending.Contracts references PouryaKit.Domain; Contracts reference nothing from the Kit and no Module.",
+            ],
+            violations
+        );
     }
 
     private static RestoredPackage Restored(string fixture) =>
-        RestoredPackage.Of(Path.Combine(Repository.Root, "tests", "PouryaKit.ArchitectureTests", fixture, $"{fixture}.csproj"));
+        RestoredPackage.Of(
+            Path.Combine(
+                Repository.Root,
+                "tests",
+                "PouryaKit.ArchitectureTests",
+                fixture,
+                $"{fixture}.csproj"
+            )
+        );
 
     [Fact]
     public void A_modules_only_public_types_are_its_composition_root_and_what_its_host_implements_for_it()
     {
         Assert.Empty(
             Sample.Modules.SelectMany(module =>
-                ModuleRules.PublicTypesOf(module, HostPorts.GetValueOrDefault(module.GetName().Name!) ?? new HashSet<Type>())
+                ModuleRules.PublicTypesOf(
+                    module,
+                    HostPorts.GetValueOrDefault(module.GetName().Name!) ?? new HashSet<Type>()
+                )
             )
         );
     }
@@ -111,11 +174,19 @@ public sealed class ModuleBoundaryTests
             ],
             ModuleRules.PublicTypesOf(sagas, new HashSet<Type>()).Order(StringComparer.Ordinal)
         );
-        Assert.Contains(sagas.GetExportedTypes(), type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentSaga));
-        Assert.Contains(sagas.GetExportedTypes(), type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentTimeout));
+        Assert.Contains(
+            sagas.GetExportedTypes(),
+            type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentSaga)
+        );
+        Assert.Contains(
+            sagas.GetExportedTypes(),
+            type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentTimeout)
+        );
         Assert.Equal(
             [typeof(Offending.Saga.OwnSaga).FullName, typeof(Offending.Saga.OwnTimeout).FullName],
-            ModuleRules.PublicTypesOf(typeof(Offending.Saga.OwnSaga).Assembly, new HashSet<Type>()).Order(StringComparer.Ordinal)
+            ModuleRules
+                .PublicTypesOf(typeof(Offending.Saga.OwnSaga).Assembly, new HashSet<Type>())
+                .Order(StringComparer.Ordinal)
         );
     }
 

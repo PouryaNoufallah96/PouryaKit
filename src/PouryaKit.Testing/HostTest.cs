@@ -11,7 +11,8 @@ public abstract class HostTest<TFixture>(TFixture fixture) : IAsyncLifetime
     protected TFixture Fixture { get; } = fixture;
 
     /// <inheritdoc />
-    public virtual async ValueTask InitializeAsync() => await Fixture.ResetAsync(TestContext.Current.CancellationToken);
+    public virtual async ValueTask InitializeAsync() =>
+        await Fixture.ResetAsync(TestContext.Current.CancellationToken);
 
     /// <inheritdoc />
     public virtual ValueTask DisposeAsync()

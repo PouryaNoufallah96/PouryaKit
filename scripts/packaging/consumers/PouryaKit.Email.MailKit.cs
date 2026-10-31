@@ -11,6 +11,11 @@ services.Configure<PouryaKitMailKitOptions>(mail =>
     mail.Host = "smtp.example.com";
     mail.From = "Shop <shop@example.com>";
 });
-var registered = services.Any(descriptor => descriptor.ServiceType == typeof(IEmailSender) && descriptor.Lifetime == ServiceLifetime.Singleton);
+var registered = services.Any(descriptor =>
+    descriptor.ServiceType == typeof(IEmailSender)
+    && descriptor.Lifetime == ServiceLifetime.Singleton
+);
 var defaults = new PouryaKitMailKitOptions();
-Console.WriteLine(registered && defaults is { Port: 587, Security: SecureSocketOptions.StartTls } ? 1 : 0);
+Console.WriteLine(
+    registered && defaults is { Port: 587, Security: SecureSocketOptions.StartTls } ? 1 : 0
+);

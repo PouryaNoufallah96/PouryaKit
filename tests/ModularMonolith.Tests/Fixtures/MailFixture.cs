@@ -13,13 +13,16 @@ namespace ModularMonolith.Tests.Fixtures;
 /// </summary>
 public sealed class MailFixture(AppFixture app) : IAsyncLifetime
 {
-    private readonly PapercutContainer _papercut = new PapercutBuilder("changemakerstudiosus/papercut-smtp:7.8.0").Build();
+    private readonly PapercutContainer _papercut = new PapercutBuilder(
+        "changemakerstudiosus/papercut-smtp:7.8.0"
+    ).Build();
     private HttpClient? _api;
     private WebApplication? _host;
     private string? _connectionString;
 
     /// <summary>The started application, whose <c>IEmailSender</c> sends to Papercut.</summary>
-    public WebApplication Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
+    public WebApplication Host =>
+        _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
 
     public async ValueTask InitializeAsync()
     {
@@ -27,7 +30,10 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
         _api = new HttpClient { BaseAddress = new Uri(_papercut.GetBaseAddress()) };
         var database = $"mail_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
-        _connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
+        _connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = database,
+        }.ConnectionString;
         _host = AppFixture.ComposeHost(
             "Development",
             _connectionString,
@@ -42,21 +48,35 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
 
     /// <summary>Waits until the SQL <paramref name="condition"/> holds on the application's database; fails after 30 s.</summary>
     public Task WaitUntilAsync(string condition, string because) =>
-        Sql.WaitUntilAsync(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."), condition, because, 30);
+        Sql.WaitUntilAsync(
+            _connectionString
+                ?? throw new InvalidOperationException(
+                    "The database is created in InitializeAsync."
+                ),
+            condition,
+            because,
+            30
+        );
 
     /// <summary>Every mail Papercut has received with the subject <paramref name="subject"/>, read through its API.</summary>
     public async Task<IReadOnlyList<ReceivedMail>> MailsAsync(string subject)
     {
-        var api = _api ?? throw new InvalidOperationException("Papercut starts in InitializeAsync.");
-        var listed = await api.GetFromJsonAsync<MailList>("/api/messages", TestContext.Current.CancellationToken);
+        var api =
+            _api ?? throw new InvalidOperationException("Papercut starts in InitializeAsync.");
+        var listed = await api.GetFromJsonAsync<MailList>(
+            "/api/messages",
+            TestContext.Current.CancellationToken
+        );
         List<ReceivedMail> mails = [];
         foreach (var summary in listed!.Messages.Where(summary => summary.Subject == subject))
         {
             mails.Add(
-                (await api.GetFromJsonAsync<ReceivedMail>(
-                    $"/api/messages/{Uri.EscapeDataString(summary.Id)}",
-                    TestContext.Current.CancellationToken
-                ))!
+                (
+                    await api.GetFromJsonAsync<ReceivedMail>(
+                        $"/api/messages/{Uri.EscapeDataString(summary.Id)}",
+                        TestContext.Current.CancellationToken
+                    )
+                )!
             );
         }
 
@@ -66,7 +86,9 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
     /// <summary>Waits until Papercut holds <paramref name="count"/> mails with <paramref name="subject"/>; fails after 30 s.</summary>
     public async Task<IReadOnlyList<ReceivedMail>> WaitForMailsAsync(string subject, int count)
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         timeout.CancelAfter(TimeSpan.FromSeconds(30));
         while (true)
         {
@@ -76,7 +98,10 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
                 return mails;
             }
 
-            Assert.False(timeout.IsCancellationRequested, $"{mails.Count} of {count} mails with the subject {subject} arrived in 30 s.");
+            Assert.False(
+                timeout.IsCancellationRequested,
+                $"{mails.Count} of {count} mails with the subject {subject} arrived in 30 s."
+            );
             await Task.Delay(50, TestContext.Current.CancellationToken);
         }
     }
@@ -104,7 +129,12 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
 }
 
 /// <summary>A mail as Papercut's API shows it.</summary>
-public sealed record ReceivedMail(string Subject, IReadOnlyList<MailboxOf> From, IReadOnlyList<MailboxOf> To, string? TextBody);
+public sealed record ReceivedMail(
+    string Subject,
+    IReadOnlyList<MailboxOf> From,
+    IReadOnlyList<MailboxOf> To,
+    string? TextBody
+);
 
 /// <summary>One address of a <see cref="ReceivedMail"/>.</summary>
 public sealed record MailboxOf(string Name, string Address);

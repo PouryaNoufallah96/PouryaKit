@@ -20,7 +20,9 @@ internal static class Sample
 {
     private static readonly HashSet<string> ProjectAssemblies =
     [
-        .. DependencyContext.Default!.RuntimeLibraries.Where(library => library.Type == "project").Select(library => library.Name),
+        .. DependencyContext
+            .Default!.RuntimeLibraries.Where(library => library.Type == "project")
+            .Select(library => library.Name),
     ];
 
     /// <summary>Every assembly of this repository's projects that <paramref name="root"/> references, directly or not.</summary>
@@ -57,7 +59,11 @@ internal static class Sample
     public static readonly IReadOnlyList<Assembly> Contracts =
     [
         .. ProjectReferencesOf(typeof(ModularMonolithHost).Assembly)
-            .Where(assembly => Modules.Any(module => assembly.GetName().Name == $"{module.GetName().Name}.Contracts"))
+            .Where(assembly =>
+                Modules.Any(module =>
+                    assembly.GetName().Name == $"{module.GetName().Name}.Contracts"
+                )
+            )
             .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal),
     ];
 
@@ -69,7 +75,9 @@ internal static class Sample
     [
         .. new[] { typeof(ModularMonolithHost).Assembly, typeof(InventoryHost).Assembly }
             .SelectMany(host => ProjectReferencesOf(host).Prepend(host))
-            .Where(assembly => !assembly.GetName().Name!.StartsWith("PouryaKit", StringComparison.Ordinal))
+            .Where(assembly =>
+                !assembly.GetName().Name!.StartsWith("PouryaKit", StringComparison.Ordinal)
+            )
             .DistinctBy(assembly => assembly.GetName().Name)
             .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal),
     ];
@@ -83,20 +91,33 @@ internal static class Sample
     public static RestoredPackage RestoredOf(Assembly assembly) =>
         RestoredPackage.Of(
             ProjectFiles.GetValueOrDefault(assembly.GetName().Name!)
-                ?? throw new InvalidOperationException($"{assembly.GetName().Name} is no project the Host restores.")
+                ?? throw new InvalidOperationException(
+                    $"{assembly.GetName().Name} is no project the Host restores."
+                )
         );
 
     private static Dictionary<string, string> HostProjectFiles()
     {
-        var host = Path.Combine(Repository.Root, "samples", "ModularMonolith", "src", "ModularMonolith.Host");
-        using var assets = JsonDocument.Parse(File.ReadAllText(Path.Combine(host, "obj", "project.assets.json")));
+        var host = Path.Combine(
+            Repository.Root,
+            "samples",
+            "ModularMonolith",
+            "src",
+            "ModularMonolith.Host"
+        );
+        using var assets = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(host, "obj", "project.assets.json"))
+        );
         return assets
             .RootElement.GetProperty("libraries")
             .EnumerateObject()
             .Where(library => library.Value.GetProperty("type").GetString() == "project")
             .ToDictionary(
                 library => library.Name.Split('/')[0],
-                library => Path.GetFullPath(Path.Combine(host, library.Value.GetProperty("path").GetString()!))
+                library =>
+                    Path.GetFullPath(
+                        Path.Combine(host, library.Value.GetProperty("path").GetString()!)
+                    )
             );
     }
 
@@ -112,8 +133,15 @@ internal static class Sample
     ];
 
     public static bool IsModule(Assembly assembly) =>
-        assembly.GetReferencedAssemblies().Any(reference => reference.Name == typeof(IModuleDefinition).Assembly.GetName().Name)
-        && assembly.GetTypes().Any(type => type is { IsClass: true, IsAbstract: false } && type.IsAssignableTo(typeof(IModuleDefinition)));
+        assembly
+            .GetReferencedAssemblies()
+            .Any(reference => reference.Name == typeof(IModuleDefinition).Assembly.GetName().Name)
+        && assembly
+            .GetTypes()
+            .Any(type =>
+                type is { IsClass: true, IsAbstract: false }
+                && type.IsAssignableTo(typeof(IModuleDefinition))
+            );
 
     /// <summary>
     /// Each Module's EF Core models, from the Host built (not started) as it composes itself: naming conventions and
@@ -129,27 +157,43 @@ internal static class Sample
 
     static Sample()
     {
-        var builder = ModularMonolithHost.CreateBuilder(
-            ["--environment", "Production", "--ConnectionStrings:app=Host=localhost;Database=architecture-tests"]
-        );
+        var builder = ModularMonolithHost.CreateBuilder([
+            "--environment",
+            "Production",
+            "--ConnectionStrings:app=Host=localhost;Database=architecture-tests",
+        ]);
         using var host = ModularMonolithHost.Build(builder);
         using var scope = host.Services.CreateScope();
         Models = Modules.ToDictionary(
             module => module,
             IReadOnlyList<IModel> (module) =>
-            [
-                .. module
-                    .GetTypes()
-                    .Where(type => type is { IsAbstract: false } && type.IsAssignableTo(typeof(DbContext)))
-                    .Select(type => ((DbContext)scope.ServiceProvider.GetRequiredService(type)).GetService<IDesignTimeModel>().Model),
-            ]
+                [
+                    .. module
+                        .GetTypes()
+                        .Where(type =>
+                            type is { IsAbstract: false } && type.IsAssignableTo(typeof(DbContext))
+                        )
+                        .Select(type =>
+                            ((DbContext)scope.ServiceProvider.GetRequiredService(type))
+                                .GetService<IDesignTimeModel>()
+                                .Model
+                        ),
+                ]
         );
         var composition = host.Services.GetRequiredService<HostComposition>();
-        TenantScopedModules = [.. Modules.Where(module => composition.IsTenantScoped(DefinitionOf(module)))];
+        TenantScopedModules =
+        [
+            .. Modules.Where(module => composition.IsTenantScoped(DefinitionOf(module))),
+        ];
     }
 
     private static Type DefinitionOf(Assembly module) =>
-        module.GetTypes().Single(type => type is { IsClass: true, IsAbstract: false } && type.IsAssignableTo(typeof(IModuleDefinition)));
+        module
+            .GetTypes()
+            .Single(type =>
+                type is { IsClass: true, IsAbstract: false }
+                && type.IsAssignableTo(typeof(IModuleDefinition))
+            );
 }
 
 internal static class Repository
@@ -160,5 +204,8 @@ internal static class Repository
     private static string Find(string folder) =>
         File.Exists(Path.Combine(folder, "PouryaKit.slnx"))
             ? folder
-            : Find(Directory.GetParent(folder)?.FullName ?? throw new InvalidOperationException("PouryaKit.slnx was not found."));
+            : Find(
+                Directory.GetParent(folder)?.FullName
+                    ?? throw new InvalidOperationException("PouryaKit.slnx was not found.")
+            );
 }

@@ -7,15 +7,24 @@ using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 using PouryaKit.Web;
 
-System.Type[] types = [typeof(IEndpoint), typeof(PlaceOrderEndpoint), typeof(IdempotencyKeyRequirement)];
+System.Type[] types =
+[
+    typeof(IEndpoint),
+    typeof(PlaceOrderEndpoint),
+    typeof(IdempotencyKeyRequirement),
+];
 
 // The packed Web's outgoing HTTP, registered and called as a Host would: the standard retry, then the Operation Context.
 var services = new ServiceCollection();
 var client = services.AddHttpClient("downstream");
-client.AddPouryaKitResilience(HttpReplay.SafeMethods).Configure(options => options.Retry.MaxRetryAttempts = 2);
+client
+    .AddPouryaKitResilience(HttpReplay.SafeMethods)
+    .Configure(options => options.Retry.MaxRetryAttempts = 2);
 client.AddPouryaKitOperationContext();
+
 // The configured defaults, set as a Host binds them from its PouryaKit:Web section.
 services.AddPouryaKitWeb();
+
 // The application's endpoints, from the assembly it names on its own services.
 services.AddPouryaKitEndpoints("/orders", typeof(PlaceOrderEndpoint).Assembly);
 services.Configure<PouryaKitCorsOptions>(cors =>
@@ -33,12 +42,17 @@ services.Configure<PouryaKitRateLimitOptions>(limit =>
     limit.QueueLimit = 2;
 });
 using var provider = services.BuildServiceProvider();
-using var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/stock").WithOperationContext(
-    new OperationContext(Actor.Person("package-consumer"))
-);
+using var request = new HttpRequestMessage(
+    HttpMethod.Get,
+    "http://localhost/stock"
+).WithOperationContext(new OperationContext(Actor.Person("package-consumer")));
 var http = provider.GetRequiredService<IHttpClientFactory>().CreateClient("downstream");
-var queueLimit = provider.GetRequiredService<IOptions<PouryaKitRateLimitOptions>>().Value.QueueLimit;
-Console.WriteLine(types.Length + (http is not null && request.Options.Any() && queueLimit == 2 ? 1 : 0));
+var queueLimit = provider
+    .GetRequiredService<IOptions<PouryaKitRateLimitOptions>>()
+    .Value.QueueLimit;
+Console.WriteLine(
+    types.Length + (http is not null && request.Options.Any() && queueLimit == 2 ? 1 : 0)
+);
 
 // An endpoint whose command opts in to idempotency requires the Idempotency-Key header.
 internal sealed class PlaceOrderEndpoint : IEndpoint

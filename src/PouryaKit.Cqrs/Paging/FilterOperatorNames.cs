@@ -22,7 +22,11 @@ public static class FilterOperatorNames
                 FilterOperator.GreaterThanOrEqual => "gte",
                 FilterOperator.LessThan => "lt",
                 FilterOperator.LessThanOrEqual => "lte",
-                _ => throw new ArgumentOutOfRangeException(nameof(filterOperator), filterOperator, "Not a filter operator."),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(filterOperator),
+                    filterOperator,
+                    "Not a filter operator."
+                ),
             };
     }
 

@@ -8,5 +8,6 @@ namespace Catalog.Products.Features.CreateProduct;
 /// never received, gets the first answer instead of a conflict on the id it chose.
 /// </summary>
 [Idempotent]
-internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, string Name) : Command<Guid>;
+internal sealed record CreateProductCommand(Guid ProductId, Guid CategoryId, string Name)
+    : Command<Guid>;
 #endregion

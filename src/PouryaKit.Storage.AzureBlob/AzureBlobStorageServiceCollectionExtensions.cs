@@ -22,30 +22,49 @@ public static class AzureBlobStorageServiceCollectionExtensions
         /// type when it registers another, before or after this call, a second call included, and naming the contract
         /// when it removes this one.
         /// </summary>
-        public IServiceCollection AddPouryaKitAzureBlobStorage(Action<PouryaKitAzureBlobStorageOptions>? configure = null)
+        public IServiceCollection AddPouryaKitAzureBlobStorage(
+            Action<PouryaKitAzureBlobStorageOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             var options = services
                 .AddOptions<PouryaKitAzureBlobStorageOptions>()
-                .Validate(blob => !string.IsNullOrWhiteSpace(blob.Container), "PouryaKitAzureBlobStorageOptions.Container names no container to store files in.")
                 .Validate(
-                    blob => string.IsNullOrWhiteSpace(blob.ConnectionString) != blob.ServiceUrl is null,
+                    blob => !string.IsNullOrWhiteSpace(blob.Container),
+                    "PouryaKitAzureBlobStorageOptions.Container names no container to store files in."
+                )
+                .Validate(
+                    blob =>
+                        string.IsNullOrWhiteSpace(blob.ConnectionString) != blob.ServiceUrl is null,
                     "PouryaKitAzureBlobStorageOptions.ConnectionString or ServiceUrl is set, one and not both."
                 )
                 .Validate(
-                    blob => string.IsNullOrWhiteSpace(blob.ConnectionString) || SignsLinks(blob.ConnectionString),
+                    blob =>
+                        string.IsNullOrWhiteSpace(blob.ConnectionString)
+                        || SignsLinks(blob.ConnectionString),
                     "PouryaKitAzureBlobStorageOptions.ConnectionString is not a storage connection string with an account key, which signs the presigned links."
                 )
                 .Validate(
-                    blob => blob.ServiceUrl is null || (blob.ServiceUrl.IsAbsoluteUri && (blob.ServiceUrl.Scheme == Uri.UriSchemeHttp || blob.ServiceUrl.Scheme == Uri.UriSchemeHttps)),
+                    blob =>
+                        blob.ServiceUrl is null
+                        || (
+                            blob.ServiceUrl.IsAbsoluteUri
+                            && (
+                                blob.ServiceUrl.Scheme == Uri.UriSchemeHttp
+                                || blob.ServiceUrl.Scheme == Uri.UriSchemeHttps
+                            )
+                        ),
                     "PouryaKitAzureBlobStorageOptions.ServiceUrl is not an absolute HTTP or HTTPS address."
                 )
                 .Validate(
-                    blob => blob.ServiceUrl is null == string.IsNullOrWhiteSpace(blob.AccountName) && blob.ServiceUrl is null == string.IsNullOrWhiteSpace(blob.AccountKey),
+                    blob =>
+                        blob.ServiceUrl is null == string.IsNullOrWhiteSpace(blob.AccountName)
+                        && blob.ServiceUrl is null == string.IsNullOrWhiteSpace(blob.AccountKey),
                     "PouryaKitAzureBlobStorageOptions.AccountName and AccountKey are set with ServiceUrl, and only with it."
                 )
                 .Validate(
-                    blob => string.IsNullOrWhiteSpace(blob.AccountKey) || IsAccountKey(blob.AccountKey),
+                    blob =>
+                        string.IsNullOrWhiteSpace(blob.AccountKey) || IsAccountKey(blob.AccountKey),
                     "PouryaKitAzureBlobStorageOptions.AccountKey is not a base64 account key."
                 )
                 .ValidateOnStart();
@@ -86,5 +105,6 @@ public static class AzureBlobStorageServiceCollectionExtensions
     }
 
     // A named method, which the one-provider check names.
-    private static AzureBlobFileStorage Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitAzureBlobStorageOptions>>().Value);
+    private static AzureBlobFileStorage Create(IServiceProvider provider) =>
+        new(provider.GetRequiredService<IOptions<PouryaKitAzureBlobStorageOptions>>().Value);
 }

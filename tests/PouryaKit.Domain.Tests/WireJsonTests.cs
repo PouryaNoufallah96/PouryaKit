@@ -11,8 +11,14 @@ public class WireJsonTests
     {
         var unnamed = new ProductCreatedDomainEvent(TypedId.New<ProductId>(), null!);
 
-        var thrown = Assert.Throws<JsonException>(() => JsonSerializer.Serialize(unnamed, new JsonSerializerOptions().UsePouryaKitWireJson()));
+        var thrown = Assert.Throws<JsonException>(() =>
+            JsonSerializer.Serialize(unnamed, new JsonSerializerOptions().UsePouryaKitWireJson())
+        );
 
-        Assert.Contains($"'name' on type '{typeof(ProductCreatedDomainEvent).FullName}' doesn't allow getting null values", thrown.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            $"'name' on type '{typeof(ProductCreatedDomainEvent).FullName}' doesn't allow getting null values",
+            thrown.Message,
+            StringComparison.Ordinal
+        );
     }
 }

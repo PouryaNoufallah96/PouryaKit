@@ -71,7 +71,11 @@ internal sealed partial class IdempotencyKeyCleanup(
         var database = dbContext.Database;
         var table = IdempotencyTable.In(dbContext);
         // A Module with no [Idempotent] command has no table; looked up first, so no failed statement is logged.
-        if (!await database.SqlQueryRaw<bool>("select to_regclass({0}) is not null as \"Value\"", table).SingleAsync(stoppingToken))
+        if (
+            !await database
+                .SqlQueryRaw<bool>("select to_regclass({0}) is not null as \"Value\"", table)
+                .SingleAsync(stoppingToken)
+        )
         {
             return;
         }
@@ -96,7 +100,13 @@ internal sealed partial class IdempotencyKeyCleanup(
         Level = LogLevel.Information,
         Message = "Removed {Count} idempotency keys reserved before {Cutoff:O} from {Table} in {Batches} batches"
     )]
-    private static partial void LogRemoved(ILogger logger, int count, string table, DateTimeOffset cutoff, int batches);
+    private static partial void LogRemoved(
+        ILogger logger,
+        int count,
+        string table,
+        DateTimeOffset cutoff,
+        int batches
+    );
 
     [LoggerMessage(
         EventName = "IdempotencyKeyCleanupFailed",

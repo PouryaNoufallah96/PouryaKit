@@ -16,13 +16,16 @@ namespace PouryaKit.Messaging.Wolverine;
 // OutboxCheck); otherwise the business change would commit with nothing behind it, so the Host does not start. By then
 // every hosted service has started, and the Host rethrows the refusal without stopping them, so the check stops the Host
 // before it throws; a stop that fails travels as the refusal's inner exception.
-internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServiceProvider services) : IHostedLifecycleService
+internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServiceProvider services)
+    : IHostedLifecycleService
 {
     // Every declaration registers both.
     public static void AddTo(IServiceCollection services)
     {
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, OutboxCheck>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, DurableQueuesCheck>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHostedService, DurableQueuesCheck>()
+        );
     }
 
     public async Task StartedAsync(CancellationToken cancellationToken)
@@ -47,7 +50,12 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
     private string? Refusal()
     {
         var delayedCommands = services.GetService<DelayedCommandDeclarations>()?.All ?? [];
-        if (!subscriptions.All.Any() && subscriptions.Publications.Count == 0 && subscriptions.SagaInputs.Count == 0 && !delayedCommands.Any())
+        if (
+            !subscriptions.All.Any()
+            && subscriptions.Publications.Count == 0
+            && subscriptions.SagaInputs.Count == 0
+            && !delayedCommands.Any()
+        )
         {
             return null;
         }
@@ -62,7 +70,8 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
                 .Select(name => new Uri($"local://{name}"))
                 .Select(address => (Address: address, Queue: transports.TryGetEndpoint(address)))
                 .Where(queue =>
-                    queue.Queue is not { Role: EndpointRole.Application, Mode: EndpointMode.Durable }
+                    queue.Queue
+                        is not { Role: EndpointRole.Application, Mode: EndpointMode.Durable }
                 )
                 .Select(queue => $"{queue.Address} ({queue.Queue?.Role}, {queue.Queue?.Mode})"),
         ];
@@ -78,10 +87,17 @@ internal sealed class DurableQueuesCheck(Subscriptions subscriptions, IServicePr
             .. transports
                 .AllEndpoints()
                 .Where(endpoint =>
-                    endpoint is { IsListener: true, Role: EndpointRole.Application } and IBrokerEndpoint
-                    && (endpoint.Mode != EndpointMode.Durable || endpoint.DeadLetterStorage != DeadLetterStorageMode.Durable)
+                    endpoint
+                        is { IsListener: true, Role: EndpointRole.Application }
+                            and IBrokerEndpoint
+                    && (
+                        endpoint.Mode != EndpointMode.Durable
+                        || endpoint.DeadLetterStorage != DeadLetterStorageMode.Durable
+                    )
                 )
-                .Select(endpoint => $"{endpoint.Uri} ({endpoint.Mode}, dead letters {endpoint.DeadLetterStorage})"),
+                .Select(endpoint =>
+                    $"{endpoint.Uri} ({endpoint.Mode}, dead letters {endpoint.DeadLetterStorage})"
+                ),
         ];
         return brokerListeners.Count == 0
             ? null

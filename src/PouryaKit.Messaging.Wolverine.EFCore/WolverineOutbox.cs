@@ -17,8 +17,7 @@ internal sealed partial class WolverineOutbox(
     OutboxWriter writer,
     ISnapshotMappers snapshotMappers,
     ILogger<WolverineOutbox> logger
-) : IUnitOfWorkOutbox,
-    IOutbox
+) : IUnitOfWorkOutbox, IOutbox
 {
     private MessageContext? _written;
 

@@ -16,33 +16,66 @@ public sealed class ModelConventionTests
     public void A_soft_deletable_type_that_no_query_filter_can_reach_fails_the_model()
     {
         // The DbContext base reads its change tracker when constructed, which builds the model.
-        var ownedRefused = Assert.Throws<InvalidOperationException>(() => new OwnedSoftDeletableContext());
-        var derivedRefused = Assert.Throws<InvalidOperationException>(() => new DerivedSoftDeletableContext());
+        var ownedRefused = Assert.Throws<InvalidOperationException>(() =>
+            new OwnedSoftDeletableContext()
+        );
+        var derivedRefused = Assert.Throws<InvalidOperationException>(() =>
+            new DerivedSoftDeletableContext()
+        );
 
-        Assert.StartsWith("Cover is ISoftDeletable but is mapped as an owned type", ownedRefused.Message);
-        Assert.StartsWith("DerivedSoftDeletable is ISoftDeletable but is mapped as a type derived from HierarchyRoot", derivedRefused.Message);
+        Assert.StartsWith(
+            "Cover is ISoftDeletable but is mapped as an owned type",
+            ownedRefused.Message
+        );
+        Assert.StartsWith(
+            "DerivedSoftDeletable is ISoftDeletable but is mapped as a type derived from HierarchyRoot",
+            derivedRefused.Message
+        );
     }
 
     [Fact]
     public void A_tenant_scoped_type_that_no_query_filter_can_reach_fails_the_model()
     {
-        var ownedRefused = Assert.Throws<InvalidOperationException>(() => new OwnedTenantScopedContext());
-        var derivedRefused = Assert.Throws<InvalidOperationException>(() => new DerivedTenantScopedContext());
+        var ownedRefused = Assert.Throws<InvalidOperationException>(() =>
+            new OwnedTenantScopedContext()
+        );
+        var derivedRefused = Assert.Throws<InvalidOperationException>(() =>
+            new DerivedTenantScopedContext()
+        );
 
-        Assert.StartsWith("Seal is ITenantScoped but is mapped as an owned type", ownedRefused.Message);
-        Assert.StartsWith("DerivedTenantScoped is ITenantScoped but is mapped as a type derived from HierarchyRoot", derivedRefused.Message);
+        Assert.StartsWith(
+            "Seal is ITenantScoped but is mapped as an owned type",
+            ownedRefused.Message
+        );
+        Assert.StartsWith(
+            "DerivedTenantScoped is ITenantScoped but is mapped as a type derived from HierarchyRoot",
+            derivedRefused.Message
+        );
     }
 
     [Fact]
     public void A_part_of_a_tenant_scoped_aggregate_that_no_query_filter_can_reach_fails_the_model()
     {
-        var derivedRefused = Assert.Throws<InvalidOperationException>(() => new DerivedPartContext());
+        var derivedRefused = Assert.Throws<InvalidOperationException>(() =>
+            new DerivedPartContext()
+        );
         var cycleRefused = Assert.Throws<InvalidOperationException>(() => new HolderCycleContext());
-        var selfHeldRefused = Assert.Throws<InvalidOperationException>(() => new SelfHeldPartContext());
+        var selfHeldRefused = Assert.Throws<InvalidOperationException>(() =>
+            new SelfHeldPartContext()
+        );
 
-        Assert.StartsWith("Latch is held by Crate in a tenant-scoped aggregate but is mapped as a type derived from Fitting", derivedRefused.Message);
-        Assert.StartsWith("Bay -> Tier -> Bay: these parts of a tenant-scoped aggregate hold one another", cycleRefused.Message);
-        Assert.StartsWith("Graft holds parts of its own type in a tenant-scoped aggregate but has no required key to another holder", selfHeldRefused.Message);
+        Assert.StartsWith(
+            "Latch is held by Crate in a tenant-scoped aggregate but is mapped as a type derived from Fitting",
+            derivedRefused.Message
+        );
+        Assert.StartsWith(
+            "Bay -> Tier -> Bay: these parts of a tenant-scoped aggregate hold one another",
+            cycleRefused.Message
+        );
+        Assert.StartsWith(
+            "Graft holds parts of its own type in a tenant-scoped aggregate but has no required key to another holder",
+            selfHeldRefused.Message
+        );
     }
 
     // EF Core reads a memo's own set unfiltered in its filter, so the reply's key to its memo judges nothing, and a memo is
@@ -54,7 +87,11 @@ public sealed class ModelConventionTests
 
         var read = context.Set<Memo>().ToQueryString();
 
-        Assert.Contains("l.\"Tenant\" = @ef_filter__Tenant AND l.\"Id\" = m.\"LedgerId\")", read, StringComparison.Ordinal);
+        Assert.Contains(
+            "l.\"Tenant\" = @ef_filter__Tenant AND l.\"Id\" = m.\"LedgerId\")",
+            read,
+            StringComparison.Ordinal
+        );
         Assert.Equal(2, read.Split("EXISTS").Length);
         Assert.DoesNotContain("FROM \"Memo\" AS m0", read, StringComparison.Ordinal);
     }
@@ -67,13 +104,28 @@ public sealed class ModelConventionTests
         using var context = LedgerContext.For("north");
 
         var read = context.Set<Leaf>().ToQueryString();
-        var removedToo = context.Set<Leaf>().IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter]).ToQueryString();
+        var removedToo = context
+            .Set<Leaf>()
+            .IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])
+            .ToQueryString();
 
         Assert.Contains("FROM \"Volume\" AS v\n    WHERE EXISTS (", read, StringComparison.Ordinal);
-        Assert.Contains("WHERE NOT (l0.\"IsDeleted\") AND l0.\"Tenant\" = @ef_filter__Tenant AND l0.\"Id\" = v.\"LedgerId\")", read, StringComparison.Ordinal);
+        Assert.Contains(
+            "WHERE NOT (l0.\"IsDeleted\") AND l0.\"Tenant\" = @ef_filter__Tenant AND l0.\"Id\" = v.\"LedgerId\")",
+            read,
+            StringComparison.Ordinal
+        );
         Assert.Contains("v.\"Id\" = l.\"VolumeId\"", read, StringComparison.Ordinal);
-        Assert.Contains("FROM \"Volume\" AS v\n    WHERE EXISTS (", removedToo, StringComparison.Ordinal);
-        Assert.Contains("WHERE l0.\"Tenant\" = @ef_filter__Tenant AND l0.\"Id\" = v.\"LedgerId\")", removedToo, StringComparison.Ordinal);
+        Assert.Contains(
+            "FROM \"Volume\" AS v\n    WHERE EXISTS (",
+            removedToo,
+            StringComparison.Ordinal
+        );
+        Assert.Contains(
+            "WHERE l0.\"Tenant\" = @ef_filter__Tenant AND l0.\"Id\" = v.\"LedgerId\")",
+            removedToo,
+            StringComparison.Ordinal
+        );
         Assert.DoesNotContain("IsDeleted", removedToo, StringComparison.Ordinal);
     }
 
@@ -86,7 +138,11 @@ public sealed class ModelConventionTests
 
         var read = context.Set<Tab>().ToQueryString();
 
-        Assert.Contains("WHERE (t.\"LedgerId\" IS NOT NULL OR t.\"VolumeId\" IS NOT NULL) AND ", read, StringComparison.Ordinal);
+        Assert.Contains(
+            "WHERE (t.\"LedgerId\" IS NOT NULL OR t.\"VolumeId\" IS NOT NULL) AND ",
+            read,
+            StringComparison.Ordinal
+        );
         Assert.Contains("(t.\"LedgerId\" IS NULL OR EXISTS (", read, StringComparison.Ordinal);
         Assert.Contains("(t.\"VolumeId\" IS NULL OR EXISTS (", read, StringComparison.Ordinal);
     }
@@ -101,7 +157,10 @@ public sealed class ModelConventionTests
         Assert.Contains("WHERE", context.Set<Drawer>().ToQueryString(), StringComparison.Ordinal);
         Assert.DoesNotContain(
             "WHERE",
-            context.Set<Drawer>().IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter]).ToQueryString(),
+            context
+                .Set<Drawer>()
+                .IgnoreQueryFilters([PouryaKitDbContext.SoftDeleteFilter])
+                .ToQueryString(),
             StringComparison.Ordinal
         );
     }
@@ -230,7 +289,9 @@ internal sealed class Graft : Entity<Guid>
 }
 
 internal sealed class OwnedSoftDeletableContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<OwnedSoftDeletableContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<OwnedSoftDeletableContext>().UseNpgsql("Host=localhost").Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -240,7 +301,11 @@ internal sealed class OwnedSoftDeletableContext()
 }
 
 internal sealed class DerivedSoftDeletableContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<DerivedSoftDeletableContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<DerivedSoftDeletableContext>()
+            .UseNpgsql("Host=localhost")
+            .Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -251,7 +316,9 @@ internal sealed class DerivedSoftDeletableContext()
 }
 
 internal sealed class OwnedTenantScopedContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<OwnedTenantScopedContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<OwnedTenantScopedContext>().UseNpgsql("Host=localhost").Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -261,7 +328,11 @@ internal sealed class OwnedTenantScopedContext()
 }
 
 internal sealed class DerivedTenantScopedContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<DerivedTenantScopedContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<DerivedTenantScopedContext>()
+            .UseNpgsql("Host=localhost")
+            .Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -272,7 +343,9 @@ internal sealed class DerivedTenantScopedContext()
 }
 
 internal sealed class SoftDeletableContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<SoftDeletableContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<SoftDeletableContext>().UseNpgsql("Host=localhost").Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -282,7 +355,9 @@ internal sealed class SoftDeletableContext()
 }
 
 internal sealed class DerivedPartContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<DerivedPartContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<DerivedPartContext>().UseNpgsql("Host=localhost").Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -294,7 +369,9 @@ internal sealed class DerivedPartContext()
 }
 
 internal sealed class HolderCycleContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<HolderCycleContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<HolderCycleContext>().UseNpgsql("Host=localhost").Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -306,12 +383,18 @@ internal sealed class HolderCycleContext()
 }
 
 internal sealed class SelfHeldPartContext()
-    : PouryaKitDbContext(new DbContextOptionsBuilder<SelfHeldPartContext>().UseNpgsql("Host=localhost").Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<SelfHeldPartContext>().UseNpgsql("Host=localhost").Options
+    )
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<Orchard>().HasMany(orchard => orchard.Grafts).WithOne().IsRequired(false);
+        modelBuilder
+            .Entity<Orchard>()
+            .HasMany(orchard => orchard.Grafts)
+            .WithOne()
+            .IsRequired(false);
         modelBuilder.Entity<Graft>().HasMany(graft => graft.Grafts).WithOne().IsRequired(false);
     }
 }
@@ -319,11 +402,20 @@ internal sealed class SelfHeldPartContext()
 // Built in a scope whose Operation runs for the tenant named: with no tenant the filter reads no row, and EF Core folds
 // every EXISTS over the ledger into FALSE.
 internal sealed class LedgerContext(IServiceProvider scope)
-    : PouryaKitDbContext(new DbContextOptionsBuilder<LedgerContext>().UseNpgsql("Host=localhost").UseApplicationServiceProvider(scope).Options)
+    : PouryaKitDbContext(
+        new DbContextOptionsBuilder<LedgerContext>()
+            .UseNpgsql("Host=localhost")
+            .UseApplicationServiceProvider(scope)
+            .Options
+    )
 {
     public static LedgerContext For(string tenant)
     {
-        var scope = new ServiceCollection().AddPouryaKitCqrs().BuildServiceProvider().CreateScope().ServiceProvider;
+        var scope = new ServiceCollection()
+            .AddPouryaKitCqrs()
+            .BuildServiceProvider()
+            .CreateScope()
+            .ServiceProvider;
         scope.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, tenant));
         return new LedgerContext(scope);
     }

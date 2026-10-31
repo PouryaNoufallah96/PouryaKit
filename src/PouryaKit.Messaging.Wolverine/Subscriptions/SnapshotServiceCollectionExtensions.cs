@@ -43,7 +43,11 @@ public static class SnapshotServiceCollectionExtensions
             where TAggregate : class, IAggregateRoot
             where TSnapshot : class
             where TMapper : class, ISnapshotMapper<TAggregate, TSnapshot> =>
-            DeclareSnapshot<TAggregate, TSnapshot, TMapper>(services, wireName, IModuleServices.ModuleOf(services));
+            DeclareSnapshot<TAggregate, TSnapshot, TMapper>(
+                services,
+                wireName,
+                IModuleServices.ModuleOf(services)
+            );
 
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, publishes the
@@ -51,11 +55,18 @@ public static class SnapshotServiceCollectionExtensions
         /// <c>PublishSnapshot</c> on that Module's builder does. Throws,
         /// besides, when called on the builder of another Module.
         /// </summary>
-        public IServiceCollection PublishSnapshot<TAggregate, TSnapshot, TMapper>(string wireName, Type module)
+        public IServiceCollection PublishSnapshot<TAggregate, TSnapshot, TMapper>(
+            string wireName,
+            Type module
+        )
             where TAggregate : class, IAggregateRoot
             where TSnapshot : class
             where TMapper : class, ISnapshotMapper<TAggregate, TSnapshot> =>
-            DeclareSnapshot<TAggregate, TSnapshot, TMapper>(services, wireName, IModuleServices.ModuleOf(services, module));
+            DeclareSnapshot<TAggregate, TSnapshot, TMapper>(
+                services,
+                wireName,
+                IModuleServices.ModuleOf(services, module)
+            );
 
         /// <summary>
         /// Declares that another Host publishes the Snapshot <typeparamref name="TSnapshot"/> under
@@ -73,17 +84,27 @@ public static class SnapshotServiceCollectionExtensions
         }
     }
 
-    private static IServiceCollection DeclareSnapshot<TAggregate, TSnapshot, TMapper>(IServiceCollection services, string wireName, Type? module)
+    private static IServiceCollection DeclareSnapshot<TAggregate, TSnapshot, TMapper>(
+        IServiceCollection services,
+        string wireName,
+        Type? module
+    )
         where TAggregate : class, IAggregateRoot
         where TSnapshot : class
         where TMapper : class, ISnapshotMapper<TAggregate, TSnapshot>
     {
         Subscriptions
             .In(services)
-            .PublishSnapshot(new SnapshotPublication(typeof(TAggregate), typeof(TSnapshot), typeof(TMapper)), wireName, module);
+            .PublishSnapshot(
+                new SnapshotPublication(typeof(TAggregate), typeof(TSnapshot), typeof(TMapper)),
+                wireName,
+                module
+            );
         services.TryAddScoped<TMapper>();
         DurableQueuesCheck.AddTo(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>()
+        );
         return services;
     }
 }

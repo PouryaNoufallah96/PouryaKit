@@ -69,7 +69,12 @@ public interface IModuleServices : IServiceCollection
         where TService : class
     {
         ArgumentNullException.ThrowIfNull(services);
-        ComposedFeatures.In(services).Route(services, ServiceDescriptor.Scoped(typeof(TService), provider => Route<TService>(provider)!));
+        ComposedFeatures
+            .In(services)
+            .Route(
+                services,
+                ServiceDescriptor.Scoped(typeof(TService), provider => Route<TService>(provider)!)
+            );
     }
 
     private static TService? Route<TService>(IServiceProvider services)
@@ -92,11 +97,18 @@ public interface IModuleServices : IServiceCollection
     /// <see cref="ModuleOf(IServiceCollection, Type)"/>, which it checks); and otherwise none. For a Kit package's
     /// registration.
     /// </summary>
-    static Assembly[] FeatureAssembliesOf(IServiceCollection services, Assembly[] featureAssemblies, Type? module = null)
+    static Assembly[] FeatureAssembliesOf(
+        IServiceCollection services,
+        Assembly[] featureAssemblies,
+        Type? module = null
+    )
     {
         ArgumentNullException.ThrowIfNull(featureAssemblies);
         var owner = module is null ? ModuleOf(services) : ModuleOf(services, module);
-        Assembly[] scanned = featureAssemblies is [] && owner is not null ? [owner.Assembly] : [.. featureAssemblies];
+        Assembly[] scanned =
+            featureAssemblies is [] && owner is not null
+                ? [owner.Assembly]
+                : [.. featureAssemblies];
         if (owner is not null || scanned.Length > 0)
         {
             ComposedFeatures.In(services).Add(owner, scanned);

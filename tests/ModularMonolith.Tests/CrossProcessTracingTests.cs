@@ -28,7 +28,9 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_product_created_in_the_catalog_host_and_stocked_by_inventory_host_is_one_trace_with_the_upstream_tracestate(bool wolverineListened)
+    public async Task A_product_created_in_the_catalog_host_and_stocked_by_inventory_host_is_one_trace_with_the_upstream_tracestate(
+        bool wolverineListened
+    )
     {
         var environment = await broker.CreateEnvironmentAsync();
         using var inventory = await environment.StartInventoryHostAsync();
@@ -51,9 +53,19 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
         await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
 
         var trace = telemetry.Of(upstream.TraceId);
-        var publishing = Assert.Single(DeliveryProbes.ActivitiesOf(Publishing).OfType<Activity>(), activity => activity.TraceId == upstream.TraceId);
-        var attempts = DeliveryProbes.ActivitiesOf(StockItems).OfType<Activity>().Where(activity => activity.TraceId == upstream.TraceId).ToList();
-        Assert.Equal([OperationTelemetry.Threw, OperationTelemetry.Succeeded], attempts.Select(attempt => Tag(attempt, OperationTelemetry.OutcomeTag)));
+        var publishing = Assert.Single(
+            DeliveryProbes.ActivitiesOf(Publishing).OfType<Activity>(),
+            activity => activity.TraceId == upstream.TraceId
+        );
+        var attempts = DeliveryProbes
+            .ActivitiesOf(StockItems)
+            .OfType<Activity>()
+            .Where(activity => activity.TraceId == upstream.TraceId)
+            .ToList();
+        Assert.Equal(
+            [OperationTelemetry.Threw, OperationTelemetry.Succeeded],
+            attempts.Select(attempt => Tag(attempt, OperationTelemetry.OutcomeTag))
+        );
         Assert.All(
             attempts,
             attempt =>
@@ -77,8 +89,18 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
     {
         var gateway = catalog.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>();
         var category = Guid.CreateVersion7();
-        Assert.True((await gateway.SendAsync(new CreateCategoryCommand(category, $"Lamps {category}"), TestContext.Current.CancellationToken)).IsSuccess);
-        using var upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!;
+        Assert.True(
+            (
+                await gateway.SendAsync(
+                    new CreateCategoryCommand(category, $"Lamps {category}"),
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
+        using var upstream = RecordedTelemetry.Upstream.StartActivity(
+            "request",
+            ActivityKind.Server
+        )!;
         upstream.TraceStateString = TraceState;
         Assert.True(
             (
@@ -95,7 +117,11 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
     // The span a delivery's copy named as its parent. When Wolverine's source is listened, the delivery's parent is
     // Wolverine's span of the copy, whose parent is its span of the envelope the broker delivered, whose parent is the
     // publishing Operation; otherwise the publishing Operation itself.
-    private static ActivitySpanId PublisherOf(Activity delivery, IReadOnlyList<Activity> trace, bool wolverineListened)
+    private static ActivitySpanId PublisherOf(
+        Activity delivery,
+        IReadOnlyList<Activity> trace,
+        bool wolverineListened
+    )
     {
         if (!wolverineListened)
         {
@@ -108,5 +134,6 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
         return received.ParentSpanId;
     }
 
-    private static string? Tag(Activity activity, string name) => activity.GetTagItem(name) as string;
+    private static string? Tag(Activity activity, string name) =>
+        activity.GetTagItem(name) as string;
 }

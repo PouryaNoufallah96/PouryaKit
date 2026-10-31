@@ -31,7 +31,11 @@ public abstract record TypedId<TValue>
             );
         }
 
-        if (value is null || (value is Guid guid && guid == Guid.Empty) || (value is string text && string.IsNullOrWhiteSpace(text)))
+        if (
+            value is null
+            || (value is Guid guid && guid == Guid.Empty)
+            || (value is string text && string.IsNullOrWhiteSpace(text))
+        )
         {
             throw new ArgumentException($"{GetType().Name} cannot be empty.", nameof(value));
         }
@@ -43,7 +47,8 @@ public abstract record TypedId<TValue>
     public TValue Value { get; }
 
     /// <inheritdoc />
-    public sealed override string ToString() => string.Create(CultureInfo.InvariantCulture, $"{Value}");
+    public sealed override string ToString() =>
+        string.Create(CultureInfo.InvariantCulture, $"{Value}");
 }
 
 /// <summary>
@@ -104,7 +109,9 @@ public static class TypedId
             }
 
             var value = Expression.Parameter(typeof(TValue), "value");
-            return Expression.Lambda<Func<TValue, TId>>(Expression.New(constructor, value), value).Compile();
+            return Expression
+                .Lambda<Func<TValue, TId>>(Expression.New(constructor, value), value)
+                .Compile();
         }
     }
 }

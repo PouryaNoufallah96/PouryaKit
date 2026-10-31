@@ -26,10 +26,15 @@ public static class ReceiptTable
                     subscription = table.Column<string>(type: "text", nullable: false),
                     message_id = table.Column<Guid>(type: "uuid", nullable: false),
                 },
-                constraints: table => table.PrimaryKey($"pk_{Name}", receipt => new { receipt.subscription, receipt.message_id })
+                constraints: table =>
+                    table.PrimaryKey(
+                        $"pk_{Name}",
+                        receipt => new { receipt.subscription, receipt.message_id }
+                    )
             );
 
         /// <summary>Drops the Receipt table from <paramref name="schema"/>, the Module's own.</summary>
-        public void DropReceiptTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
+        public void DropReceiptTable(string schema) =>
+            migrationBuilder.DropTable(name: Name, schema: schema);
     }
 }

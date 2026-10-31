@@ -33,15 +33,24 @@ public sealed class FailureLogTests
         entries.On = true;
         var on = await Dispatch();
 
-        Assert.True(off < JoinedCodeBytes, $"With its entry off, a failed query allocated {off:N0} bytes.");
-        Assert.True(on >= JoinedCodeBytes, $"With its entry on, a failed query allocated {on:N0} bytes.");
+        Assert.True(
+            off < JoinedCodeBytes,
+            $"With its entry off, a failed query allocated {off:N0} bytes."
+        );
+        Assert.True(
+            on >= JoinedCodeBytes,
+            $"With its entry on, a failed query allocated {on:N0} bytes."
+        );
 
         async Task<long> Dispatch()
         {
             await using var scope = host.CreateAsyncScope();
             var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
             var before = GC.GetAllocatedBytesForCurrentThread();
-            var refused = dispatcher.QueryAsync(new RefusedQuery(), TestContext.Current.CancellationToken);
+            var refused = dispatcher.QueryAsync(
+                new RefusedQuery(),
+                TestContext.Current.CancellationToken
+            );
             var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
             Assert.True(refused.IsCompletedSuccessfully);
@@ -60,9 +69,14 @@ public sealed class FailureLogTests
             Error.Validation(new string('B', CodeLength), "The second reason."),
         ];
 
-        private static readonly Task<Result<string>> Refused = Task.FromResult<Result<string>>(Reasons);
+        private static readonly Task<Result<string>> Refused = Task.FromResult<Result<string>>(
+            Reasons
+        );
 
-        public override Task<Result<string>> Handle(RefusedQuery query, CancellationToken cancellationToken) => Refused;
+        public override Task<Result<string>> Handle(
+            RefusedQuery query,
+            CancellationToken cancellationToken
+        ) => Refused;
     }
 
     private sealed class EntrySwitch

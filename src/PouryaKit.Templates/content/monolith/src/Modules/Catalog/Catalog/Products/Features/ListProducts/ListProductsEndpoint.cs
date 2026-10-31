@@ -12,7 +12,16 @@ internal sealed class ListProductsEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder routes) =>
         routes.MapGet(
             "/products",
-            async (HttpPageRequest page, IDispatcher dispatcher, CancellationToken cancellationToken) =>
-                (await dispatcher.QueryAsync(new ListProductsQuery(page.Request), cancellationToken)).ToHttpResult()
+            async (
+                HttpPageRequest page,
+                IDispatcher dispatcher,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await dispatcher.QueryAsync(
+                        new ListProductsQuery(page.Request),
+                        cancellationToken
+                    )
+                ).ToHttpResult()
         );
 }

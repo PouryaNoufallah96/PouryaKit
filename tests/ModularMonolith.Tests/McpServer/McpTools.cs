@@ -13,11 +13,16 @@ public static class StdioTools
 
     /// <summary>The text reversed.</summary>
     [McpServerTool(Name = "reverse"), Description("Writes a text backwards.")]
-    public static string Reverse([Description("The text to reverse.")] string text) => string.Concat(text.Reverse());
+    public static string Reverse([Description("The text to reverse.")] string text) =>
+        string.Concat(text.Reverse());
 
     /// <summary>A variable of the server's environment, or an empty text when it has none.</summary>
-    [McpServerTool(Name = "read_variable"), Description("Reads a variable of the server's environment.")]
-    public static string ReadVariable([Description("The variable's name.")] string name) => Environment.GetEnvironmentVariable(name) ?? "";
+    [
+        McpServerTool(Name = "read_variable"),
+        Description("Reads a variable of the server's environment.")
+    ]
+    public static string ReadVariable([Description("The variable's name.")] string name) =>
+        Environment.GetEnvironmentVariable(name) ?? "";
 }
 
 /// <summary>The tools of the server over HTTP, each recording its call on the server.</summary>
@@ -26,7 +31,10 @@ public static class HttpTools
 {
     /// <summary>The text in capitals.</summary>
     [McpServerTool(Name = "upper"), Description("Writes a text in capitals.")]
-    public static string Upper(McpCalls calls, [Description("The text to write in capitals.")] string text)
+    public static string Upper(
+        McpCalls calls,
+        [Description("The text to write in capitals.")] string text
+    )
     {
         calls.Add("upper");
         return text.ToUpperInvariant();

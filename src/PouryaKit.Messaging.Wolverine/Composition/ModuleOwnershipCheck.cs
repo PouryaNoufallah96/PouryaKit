@@ -20,9 +20,10 @@ internal sealed class ModuleOwnershipCheck : ICompositionCheck
             }
             else if (module is not null && !composition.Modules.Contains(module))
             {
-                var otherwise = composition.Modules.Count > 0
-                    ? "name a Module the Host composes"
-                    : $"declare it for the application, without a Module, with {call}({Application(arguments)})";
+                var otherwise =
+                    composition.Modules.Count > 0
+                        ? "name a Module the Host composes"
+                        : $"declare it for the application, without a Module, with {call}({Application(arguments)})";
                 yield return $"{declaration} is declared for {module.Name}, which this Host does not compose, so it runs in no Module of the Host and {failure} once the Host serves. Add {module.Name} with AddPouryaKitModules, or {otherwise}.";
             }
         }
@@ -32,16 +33,26 @@ internal sealed class ModuleOwnershipCheck : ICompositionCheck
 
     // Only a Module's builder infers the Feature assemblies, so the application's AddPouryaKitNotificationHandlers, the one
     // declaration whose Module form takes no argument, names them.
-    private static string Application(string arguments) => arguments is "" ? "featureAssemblies" : arguments;
+    private static string Application(string arguments) =>
+        arguments is "" ? "featureAssemblies" : arguments;
 
     // Each declaration with its Module, how to name it in a sentence, what would fail, and the call that declares it.
-    private static IEnumerable<(Type? Module, string Declaration, string Failure, string Call, string Arguments)> Declarations(IServiceProvider services)
+    private static IEnumerable<(
+        Type? Module,
+        string Declaration,
+        string Failure,
+        string Call,
+        string Arguments
+    )> Declarations(IServiceProvider services)
     {
         if (services.GetService<Subscriptions>() is { } subscriptions)
         {
             foreach (var (message, publication) in subscriptions.Publications)
             {
-                yield return subscriptions.Snapshots.FirstOrDefault(snapshot => snapshot.Snapshot == message) is { } snapshot
+                yield return subscriptions.Snapshots.FirstOrDefault(snapshot =>
+                    snapshot.Snapshot == message
+                )
+                    is { } snapshot
                     ? (
                         publication.Module,
                         $"The Snapshot {snapshot.Snapshot.FullName} of {snapshot.Aggregate.FullName}",
@@ -49,7 +60,13 @@ internal sealed class ModuleOwnershipCheck : ICompositionCheck
                         $"PublishSnapshot<{snapshot.Aggregate.Name}, {snapshot.Snapshot.Name}, {snapshot.Mapper.Name}>",
                         "wireName"
                     )
-                    : (publication.Module, $"The Integration Event {message.FullName}", "publishing it would fail", $"Publish<{message.Name}>", "wireName");
+                    : (
+                        publication.Module,
+                        $"The Integration Event {message.FullName}",
+                        "publishing it would fail",
+                        $"Publish<{message.Name}>",
+                        "wireName"
+                    );
             }
 
             foreach (var subscription in subscriptions.All)

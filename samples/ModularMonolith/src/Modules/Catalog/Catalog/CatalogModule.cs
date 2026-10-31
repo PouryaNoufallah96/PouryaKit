@@ -32,8 +32,14 @@ public sealed class CatalogModule : IModuleDefinition
         // First, so the tenant requirement runs before every other authorizer of Catalog's commands and queries.
         module.AddPouryaKitTenancy();
         module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-        module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
-        module.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConversationConfiguration.KeyIndex, UnitOfWorkErrors.ConcurrencyConflict);
+        module.MapPouryaKitUniqueConstraint<CatalogDbContext>(
+            ProductConfiguration.NameIndex,
+            ProductErrors.NameInUse
+        );
+        module.MapPouryaKitUniqueConstraint<CatalogDbContext>(
+            ProductConversationConfiguration.KeyIndex,
+            UnitOfWorkErrors.ConcurrencyConflict
+        );
         module.AddPouryaKitDapper(connectionName: "app");
         module.AddPouryaKitCqrs();
         module.AddPouryaKitValidation();
@@ -41,7 +47,9 @@ public sealed class CatalogModule : IModuleDefinition
         module.AddPouryaKitNotificationHandlers();
         module.Publish<ProductCreatedV1>("catalog.product-created.v1");
         module.Publish<Contracts.Products.Events.V2.ProductCreatedV2>("catalog.product-created.v2");
-        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1");
+        module.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>(
+            "catalog.product-snapshot.v1"
+        );
         module.AddScoped<IProductRepository, ProductRepository>();
         module.AddScoped<ICatalogProducts, CatalogProducts>();
         module.AddPouryaKitEndpoints("/catalog");
@@ -50,7 +58,10 @@ public sealed class CatalogModule : IModuleDefinition
         // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
         module.AddPouryaKitApiVersions(
             "/catalog",
-            versions => versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))
+            versions =>
+                versions
+                    .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+                    .HasApiVersion(new ApiVersion(2, 0))
         );
     }
 }

@@ -14,12 +14,21 @@ public sealed class CrossModuleTests(App app)
         using var client = app.ClientAs("ada");
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        await client.PostAsJsonAsync("/catalog/categories", new { categoryId = category, name = "Chairs" }, cancellationToken);
+        await client.PostAsJsonAsync(
+            "/catalog/categories",
+            new { categoryId = category, name = "Chairs" },
+            cancellationToken
+        );
 
         var created = await App.PostAsync(
             client,
             "/catalog/products",
-            new { productId = product, categoryId = category, name = "Armchair" },
+            new
+            {
+                productId = product,
+                categoryId = category,
+                name = "Armchair",
+            },
             Guid.CreateVersion7().ToString(),
             cancellationToken
         );
@@ -29,7 +38,10 @@ public sealed class CrossModuleTests(App app)
         await app.WaitUntilDeliveredAsync(cancellationToken);
         await using var connection = new NpgsqlConnection(app.ConnectionString);
         await connection.OpenAsync(cancellationToken);
-        await using var stockItems = new NpgsqlCommand("select count(*) from inventory.stock_items where product_id = $1", connection)
+        await using var stockItems = new NpgsqlCommand(
+            "select count(*) from inventory.stock_items where product_id = $1",
+            connection
+        )
         {
             Parameters = { new() { Value = product } },
         };

@@ -14,9 +14,14 @@ internal sealed class VersionedModuleRouteGroups(
 {
     private readonly HashSet<string> _mapped = new(StringComparer.OrdinalIgnoreCase);
 
-    public IReadOnlyList<IEndpointRouteBuilder> Map(string routePrefix, RouteGroupBuilder moduleGroup)
+    public IReadOnlyList<IEndpointRouteBuilder> Map(
+        string routePrefix,
+        RouteGroupBuilder moduleGroup
+    )
     {
-        var declared = declarations.SingleOrDefault(declaration => string.Equals(declaration.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase));
+        var declared = declarations.SingleOrDefault(declaration =>
+            string.Equals(declaration.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)
+        );
         if (declared is null)
         {
             return [moduleGroup];
@@ -37,15 +42,27 @@ internal sealed class VersionedModuleRouteGroups(
         // An endpoint name is unique in the Host, so it belongs to the versioned path; its unversioned copy has none.
         ((IEndpointConventionBuilder)unversioned).Finally(endpoint =>
         {
-            foreach (var name in endpoint.Metadata.Where(metadata => metadata is IEndpointNameMetadata or IRouteNameMetadata).ToList())
+            foreach (
+                var name in endpoint
+                    .Metadata.Where(metadata =>
+                        metadata is IEndpointNameMetadata or IRouteNameMetadata
+                    )
+                    .ToList()
+            )
             {
                 endpoint.Metadata.Remove(name);
             }
         });
-        return [moduleGroup.MapGroup("/v{version:apiVersion}").WithApiVersionSet(versionSet), unversioned];
+        return
+        [
+            moduleGroup.MapGroup("/v{version:apiVersion}").WithApiVersionSet(versionSet),
+            unversioned,
+        ];
     }
 
     /// <summary>The declared route prefixes no Module's endpoints were mapped under.</summary>
     public IEnumerable<string> Unmapped() =>
-        declarations.Select(declaration => declaration.RoutePrefix).Where(prefix => !_mapped.Contains(prefix));
+        declarations
+            .Select(declaration => declaration.RoutePrefix)
+            .Where(prefix => !_mapped.Contains(prefix));
 }

@@ -32,21 +32,26 @@ public static class ModularityHostApplicationBuilderExtensions
             builder.AddPouryaKitCompositionChecks();
             // Added after every Composition Root, so it is the IUnitOfWork the dispatcher resolves.
             builder.Services.AddScoped(RouteUnitOfWork);
-            builder.Services.AddScoped<IReadingStateGuard>(services => (RouteUnitOfWork(services, required: false) as IReadingStateGuard)!);
+            builder.Services.AddScoped<IReadingStateGuard>(services =>
+                (RouteUnitOfWork(services, required: false) as IReadingStateGuard)!
+            );
             return builder;
         }
     }
 
-    private static IUnitOfWork RouteUnitOfWork(IServiceProvider services) => RouteUnitOfWork(services, required: true)!;
+    private static IUnitOfWork RouteUnitOfWork(IServiceProvider services) =>
+        RouteUnitOfWork(services, required: true)!;
 
     private static IUnitOfWork? RouteUnitOfWork(IServiceProvider services, bool required)
     {
         var module = services.GetRequiredService<Operation>().Module;
         if (module is null)
         {
-            return required ? throw new InvalidOperationException(
-                "The Unit of Work was needed in a scope whose Operation names no Module. Send the Operation through IGatewayProcessor<TModule>, or begin the scope's Operation with its Module."
-            ) : null;
+            return required
+                ? throw new InvalidOperationException(
+                    "The Unit of Work was needed in a scope whose Operation names no Module. Send the Operation through IGatewayProcessor<TModule>, or begin the scope's Operation with its Module."
+                )
+                : null;
         }
 
         var unitOfWork = services.GetKeyedService<IUnitOfWork>(module);

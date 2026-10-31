@@ -17,13 +17,28 @@ public sealed class IntegrationEventWiringTests
     private const string ReservedRule =
         "is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.";
 
-    private static readonly Dictionary<string, (Action<IServiceCollection> Declare, string Problem)> Mistakes = new()
+    private static readonly Dictionary<
+        string,
+        (Action<IServiceCollection> Declare, string Problem)
+    > Mistakes = new()
     {
-        ["no wire name"] = (s => s.Publish<TwinV1>(""), $"{typeof(TwinV1).FullName}'s wire name is missing"),
-        ["an invalid wire name"] = (s => s.Publish<TwinV1>("tests.twin v1"), "wire name tests.twin v1 is not a valid name"),
+        ["no wire name"] = (
+            s => s.Publish<TwinV1>(""),
+            $"{typeof(TwinV1).FullName}'s wire name is missing"
+        ),
+        ["an invalid wire name"] = (
+            s => s.Publish<TwinV1>("tests.twin v1"),
+            "wire name tests.twin v1 is not a valid name"
+        ),
         // RabbitMQ refuses to declare an exchange or queue under the prefix: the Kit refuses it here instead.
-        ["a wire name RabbitMQ reserves"] = (s => s.Publish<TwinV1>("amq.twin.v1"), $"wire name amq.twin.v1 {ReservedRule}"),
-        ["a received wire name RabbitMQ reserves, in capitals"] = (s => s.Receive<TwinV1>("AMQ.Twin.V1"), $"wire name AMQ.Twin.V1 {ReservedRule}"),
+        ["a wire name RabbitMQ reserves"] = (
+            s => s.Publish<TwinV1>("amq.twin.v1"),
+            $"wire name amq.twin.v1 {ReservedRule}"
+        ),
+        ["a received wire name RabbitMQ reserves, in capitals"] = (
+            s => s.Receive<TwinV1>("AMQ.Twin.V1"),
+            $"wire name AMQ.Twin.V1 {ReservedRule}"
+        ),
         ["a subscription name RabbitMQ reserves"] = (
             s => s.Subscribe<TwinV1, TwinIntegrationEventHandler>("amq.twin"),
             $"subscription name amq.twin {ReservedRule}"
@@ -41,14 +56,19 @@ public sealed class IntegrationEventWiringTests
         ["a Notification Handler's subscription name"] = (
             s =>
                 s.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly)
-                    .Subscribe<TwinV1, TwinIntegrationEventHandler>("modular-monolith.tests.note-to-share.share-note"),
+                    .Subscribe<TwinV1, TwinIntegrationEventHandler>(
+                        "modular-monolith.tests.note-to-share.share-note"
+                    ),
             "have the subscription name modular-monolith.tests.note-to-share.share-note, ignoring case"
         ),
         ["one type under two wire names"] = (
             s => s.Publish<TwinV1>("tests.twin.v1").Publish<TwinV1>("tests.twin.v2"),
             $"{typeof(TwinV1).FullName} is published as tests.twin.v1 by the application and as tests.twin.v2"
         ),
-        ["a published Domain Event"] = (s => s.Publish<NoteToShareDomainEvent>("tests.note-shared"), "is a Domain Event"),
+        ["a published Domain Event"] = (
+            s => s.Publish<NoteToShareDomainEvent>("tests.note-shared"),
+            "is a Domain Event"
+        ),
         ["no subscription name"] = (
             s => s.Subscribe<TwinV1, TwinIntegrationEventHandler>(""),
             $"{typeof(TwinIntegrationEventHandler).FullName}'s subscription name is missing"
@@ -68,7 +88,10 @@ public sealed class IntegrationEventWiringTests
             "is abstract, so the subscription tests.twin has no handler to run"
         ),
         ["a subscribed Domain Event"] = (
-            s => s.Subscribe<NoteToShareDomainEvent, NoteToShareIntegrationEventHandler>("tests.note-shared"),
+            s =>
+                s.Subscribe<NoteToShareDomainEvent, NoteToShareIntegrationEventHandler>(
+                    "tests.note-shared"
+                ),
             "subscribes to the Domain Event"
         ),
         ["a received type the Host publishes"] = (
@@ -83,7 +106,10 @@ public sealed class IntegrationEventWiringTests
             s => s.Receive<TwinV1>("tests.twin.v1").ReceiveSnapshot<TwinV1>("tests.twin.v1"),
             $"{typeof(TwinV1).FullName} is received as the Integration Event tests.twin.v1 and as the Snapshot tests.twin.v1"
         ),
-        ["a received Domain Event"] = (s => s.Receive<NoteToShareDomainEvent>("tests.note-shared"), "is a Domain Event"),
+        ["a received Domain Event"] = (
+            s => s.Receive<NoteToShareDomainEvent>("tests.note-shared"),
+            "is a Domain Event"
+        ),
     };
 
     public static TheoryData<string> DeclarationMistakes() => [.. Mistakes.Keys];
@@ -94,7 +120,9 @@ public sealed class IntegrationEventWiringTests
     {
         var (declare, problem) = Mistakes[mistake];
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => declare(new ServiceCollection()));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            declare(new ServiceCollection())
+        );
 
         Assert.Contains(problem, thrown.Message);
     }
@@ -102,9 +130,13 @@ public sealed class IntegrationEventWiringTests
     [Fact]
     public void A_service_name_rabbitmq_reserves_is_refused_when_the_host_joins_the_broker()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--ConnectionStrings:broker=amqp://localhost/"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--ConnectionStrings:broker=amqp://localhost/",
+        ]);
 
-        var thrown = Assert.Throws<ArgumentException>(() => builder.UsePouryaKitRabbitMq("broker", "amq.inventory"));
+        var thrown = Assert.Throws<ArgumentException>(() =>
+            builder.UsePouryaKitRabbitMq("broker", "amq.inventory")
+        );
 
         Assert.StartsWith(
             "The service name amq.inventory names the Host's queue on the broker; use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
@@ -117,12 +149,16 @@ public sealed class IntegrationEventWiringTests
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    public void A_blank_broker_connection_string_is_refused_when_the_host_joins_the_broker_naming_the_connection(string blank)
+    public void A_blank_broker_connection_string_is_refused_when_the_host_joins_the_broker_naming_the_connection(
+        string blank
+    )
     {
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
         builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:broker", blank)]);
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => builder.UsePouryaKitRabbitMq("broker", "inventory"));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            builder.UsePouryaKitRabbitMq("broker", "inventory")
+        );
 
         Assert.Equal(
             "The configuration has no connection string named broker for the RabbitMQ broker, or leaves it blank. Set ConnectionStrings:broker.",
@@ -133,25 +169,36 @@ public sealed class IntegrationEventWiringTests
     [Fact]
     public void Building_fails_when_modules_publish_integration_events_and_the_host_has_no_outbox()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.UsePouryaKitWolverine();
         builder.Services.Publish<TwinV1>("tests.twin.v1");
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.StartsWith("Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox", thrown.Message);
+        Assert.StartsWith(
+            "Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox",
+            thrown.Message
+        );
     }
 
     [Fact]
     public void Building_fails_on_a_received_integration_event_wolverine_named_before_it_was_declared_and_says_it_is_received()
     {
         var named = typeof(EarlyReceivedV1).ToMessageTypeName();
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.UsePouryaKitWolverine();
         // An Outbox, as a Host that subscribes registers one, so the Outbox check stays quiet.
         builder.Services.AddSingleton<IOutbox, StandInOutbox>();
         builder.Services.Receive<EarlyReceivedV1>("tests.early-received.v1");
-        builder.Services.Subscribe<EarlyReceivedV1, EarlyReceivedIntegrationEventHandler>("tests.early-received");
+        builder.Services.Subscribe<EarlyReceivedV1, EarlyReceivedIntegrationEventHandler>(
+            "tests.early-received"
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
@@ -166,9 +213,14 @@ public sealed class IntegrationEventWiringTests
     [Theory]
     [InlineData("Receive")]
     [InlineData("ReceiveSnapshot")]
-    public void Building_fails_on_a_type_received_from_another_host_that_no_subscription_handles_naming_subscribe(string declaration)
+    public void Building_fails_on_a_type_received_from_another_host_that_no_subscription_handles_naming_subscribe(
+        string declaration
+    )
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.UsePouryaKitWolverine();
         if (declaration == "Receive")
         {
@@ -213,12 +265,24 @@ public sealed class IntegrationEventWiringTests
     public void The_same_subscription_cannot_belong_to_two_modules()
     {
         var services = new ServiceCollection();
-        services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.review.twin", typeof(CatalogModule));
-        services.Subscribe<TwinV1, TwinIntegrationEventHandler>("Tests.Review.Twin", typeof(CatalogModule));
-        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwinIntegrationEventHandler));
+        services.Subscribe<TwinV1, TwinIntegrationEventHandler>(
+            "tests.review.twin",
+            typeof(CatalogModule)
+        );
+        services.Subscribe<TwinV1, TwinIntegrationEventHandler>(
+            "Tests.Review.Twin",
+            typeof(CatalogModule)
+        );
+        Assert.Single(
+            services,
+            descriptor => descriptor.ServiceType == typeof(TwinIntegrationEventHandler)
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            services.Subscribe<TwinV1, TwinIntegrationEventHandler>("tests.review.twin", typeof(InventoryModule))
+            services.Subscribe<TwinV1, TwinIntegrationEventHandler>(
+                "tests.review.twin",
+                typeof(InventoryModule)
+            )
         );
 
         Assert.Contains("tests.review.twin", thrown.Message);
@@ -234,9 +298,13 @@ public sealed class IntegrationEventWiringTests
 // Named for the process by one test only, before it is declared.
 internal sealed record EarlyReceivedV1(Guid Id);
 
-internal sealed class EarlyReceivedIntegrationEventHandler : IIntegrationEventHandler<EarlyReceivedV1>
+internal sealed class EarlyReceivedIntegrationEventHandler
+    : IIntegrationEventHandler<EarlyReceivedV1>
 {
-    public Task<Result> Handle(EarlyReceivedV1 integrationEvent, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+    public Task<Result> Handle(
+        EarlyReceivedV1 integrationEvent,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }
 
 // Received by one test only, which no subscription handles.

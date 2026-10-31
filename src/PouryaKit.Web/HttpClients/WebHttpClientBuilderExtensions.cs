@@ -46,12 +46,18 @@ public static class WebHttpClientBuilderExtensions
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="replay"/> is not a defined value.</exception>
         /// <exception cref="ArgumentException">The client was registered with an empty name.</exception>
-        public IHttpStandardResiliencePipelineBuilder AddPouryaKitResilience(HttpReplay replay = HttpReplay.SafeMethods)
+        public IHttpStandardResiliencePipelineBuilder AddPouryaKitResilience(
+            HttpReplay replay = HttpReplay.SafeMethods
+        )
         {
             ArgumentNullException.ThrowIfNull(builder);
             if (!Enum.IsDefined(replay))
             {
-                throw new ArgumentOutOfRangeException(nameof(replay), replay, "HttpReplay has no such value.");
+                throw new ArgumentOutOfRangeException(
+                    nameof(replay),
+                    replay,
+                    "HttpReplay has no such value."
+                );
             }
 
             // The standard pipeline is named after the client: "-standard" for the defaults' builder, whose name is null,
@@ -65,7 +71,12 @@ public static class WebHttpClientBuilderExtensions
             }
 
             var pipeline = builder.AddStandardResilienceHandler();
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, SingleResilienceHandler>());
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<
+                    IHttpMessageHandlerBuilderFilter,
+                    SingleResilienceHandler
+                >()
+            );
             var policies = HttpReplayPolicies.In(builder.Services);
             if (policies.Set(pipeline.PipelineName, replay))
             {
@@ -87,7 +98,13 @@ public static class WebHttpClientBuilderExtensions
         }
     }
 
-    private static readonly HttpMethod[] SafeHttpMethods = [HttpMethod.Get, HttpMethod.Head, HttpMethod.Options, HttpMethod.Trace];
+    private static readonly HttpMethod[] SafeHttpMethods =
+    [
+        HttpMethod.Get,
+        HttpMethod.Head,
+        HttpMethod.Options,
+        HttpMethod.Trace,
+    ];
 
     // An allow-list: a method the Kit does not know to be safe, such as WebDAV's PROPPATCH, is a write and is sent once.
     // A request the pipeline cannot name is not retried either.

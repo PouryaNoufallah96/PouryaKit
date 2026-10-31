@@ -27,20 +27,26 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
 
         // A local queue's address is local://{subscription, lower-cased}/.
         var subscription = subscriptions.Named(envelope.Destination!.Host);
-        var (operationContext, traceParent) = OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
+        var (operationContext, traceParent) =
+            OperationContextHeaderExtensions.ContinuedOperationContext(envelope);
         var message = envelope.Message!;
         // Not the envelope's id: every subscription's envelope of one message has an id of its own.
         var deliver = message switch
         {
             DomainEvent domainEvent => new Deliver(subscription, message, domainEvent.Id),
-            _ when subscriptions.IsSnapshot(message.GetType()) => SnapshotDelivery(subscription, envelope),
+            _ when subscriptions.IsSnapshot(message.GetType()) => SnapshotDelivery(
+                subscription,
+                envelope
+            ),
             _ => new Deliver(subscription, message, IntegrationEventIdentity(envelope)),
         };
 
         // Each attempt runs in a scope of its own: nothing from a failed attempt reaches the next.
         await using var scope = context.Runtime.Services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(operationContext, subscription.Module, traceParent);
-        var result = await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(deliver, cancellation);
+        var result = await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(deliver, cancellation);
         if (result.IsFailure)
         {
             throw subscription.Failed(result.Errors);
@@ -60,14 +66,24 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
     {
         var message = envelope.Message!;
         var copies = new MessageBus(context.Runtime) { CorrelationId = context.CorrelationId };
-        foreach (var subscription in subscriptions.All.Where(subscription => subscription.Message == message.GetType()))
+        foreach (
+            var subscription in subscriptions.All.Where(subscription =>
+                subscription.Message == message.GetType()
+            )
+        )
         {
-            await copies.EndpointFor(new Uri($"local://{subscription.Name}")).SendAsync(message, CopiesOf(envelope));
+            await copies
+                .EndpointFor(new Uri($"local://{subscription.Name}"))
+                .SendAsync(message, CopiesOf(envelope));
         }
 
-        foreach (var saga in subscriptions.SagaInputs.Where(input => input.Message == message.GetType()))
+        foreach (
+            var saga in subscriptions.SagaInputs.Where(input => input.Message == message.GetType())
+        )
         {
-            await copies.EndpointFor(new Uri($"local://{saga.Queue}")).SendAsync(saga.Copy(message, envelope.Headers), CopiesOf(envelope));
+            await copies
+                .EndpointFor(new Uri($"local://{saga.Queue}"))
+                .SendAsync(saga.Copy(message, envelope.Headers), CopiesOf(envelope));
         }
     }
 
@@ -76,7 +92,11 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
     private static DeliveryOptions CopiesOf(Envelope envelope)
     {
         DeliveryOptions copies = new();
-        foreach (var (name, value) in envelope.Headers.Where(header => header.Key.StartsWith(KitHeaders, StringComparison.Ordinal)))
+        foreach (
+            var (name, value) in envelope.Headers.Where(header =>
+                header.Key.StartsWith(KitHeaders, StringComparison.Ordinal)
+            )
+        )
         {
             copies.Headers[name] = value;
         }
@@ -90,7 +110,8 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
     }
 
     private static Guid IntegrationEventIdentity(Envelope envelope) =>
-        envelope.Headers.TryGetValue(IntegrationEventHeaders.DomainEventId, out var value) && value is not null
+        envelope.Headers.TryGetValue(IntegrationEventHeaders.DomainEventId, out var value)
+        && value is not null
             ? Guid.Parse(value, CultureInfo.InvariantCulture)
             : throw new InvalidOperationException(
                 $"The Integration Event {envelope.Id} has no {IntegrationEventHeaders.DomainEventId} header, so its Receipt has no identity to record. Only the Unit of Work's Outbox sends Integration Events."
@@ -111,7 +132,9 @@ internal sealed class SubscriptionDelivery(Subscriptions subscriptions) : Messag
             Header(SnapshotHeaders.AggregateId),
             long.Parse(Header(SnapshotHeaders.Version), CultureInfo.InvariantCulture)
         );
-        var identity = NameBasedIdentity.Of($"{envelope.MessageType!.ToLowerInvariant()}\n{of.AggregateId}\n{of.Version.ToString(CultureInfo.InvariantCulture)}");
+        var identity = NameBasedIdentity.Of(
+            $"{envelope.MessageType!.ToLowerInvariant()}\n{of.AggregateId}\n{of.Version.ToString(CultureInfo.InvariantCulture)}"
+        );
         return new Deliver(subscription, envelope.Message!, identity, of);
     }
 }

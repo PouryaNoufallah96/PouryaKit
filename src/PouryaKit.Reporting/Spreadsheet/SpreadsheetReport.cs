@@ -11,12 +11,16 @@ namespace PouryaKit.Reporting;
 // as the Module formatted it and evaluates none as a formula.
 internal static class SpreadsheetReport
 {
-    private static readonly SearchValues<char> HexDigits = SearchValues.Create("0123456789ABCDEFabcdef");
+    private static readonly SearchValues<char> HexDigits = SearchValues.Create(
+        "0123456789ABCDEFabcdef"
+    );
 
     public static byte[] Render(ReportTable table)
     {
         using var content = new MemoryStream();
-        using (var spreadsheet = SpreadsheetDocument.Create(content, SpreadsheetDocumentType.Workbook))
+        using (
+            var spreadsheet = SpreadsheetDocument.Create(content, SpreadsheetDocumentType.Workbook)
+        )
         {
             var workbook = spreadsheet.AddWorkbookPart();
             var worksheet = workbook.AddNewPart<WorksheetPart>();
@@ -24,7 +28,14 @@ internal static class SpreadsheetReport
             rows.Append(table.Rows.Select(Row));
             worksheet.Worksheet = new Worksheet(rows);
             workbook.Workbook = new Workbook(
-                new Sheets(new Sheet { Id = workbook.GetIdOfPart(worksheet), SheetId = 1, Name = "Report" })
+                new Sheets(
+                    new Sheet
+                    {
+                        Id = workbook.GetIdOfPart(worksheet),
+                        SheetId = 1,
+                        Name = "Report",
+                    }
+                )
             );
         }
 
@@ -32,11 +43,15 @@ internal static class SpreadsheetReport
     }
 
     private static Row Row(IEnumerable<string> cells) =>
-        new(cells.Select(cell => new Cell
-        {
-            DataType = CellValues.InlineString,
-            InlineString = new InlineString(new Text(Encoded(cell)) { Space = SpaceProcessingModeValues.Preserve }),
-        }));
+        new(
+            cells.Select(cell => new Cell
+            {
+                DataType = CellValues.InlineString,
+                InlineString = new InlineString(
+                    new Text(Encoded(cell)) { Space = SpaceProcessingModeValues.Preserve }
+                ),
+            })
+        );
 
     // A spreadsheet application reads _xHHHH_ in a string as the character HHHH (ECMA-376 Part 1, 22.9.2.19), so a
     // literal one keeps its underscore as _x005F_, and a character XML cannot hold, such as a control character, is
@@ -53,7 +68,11 @@ internal static class SpreadsheetReport
                 encoded.Append("_x005F");
             }
 
-            if (char.IsHighSurrogate(character) && index + 1 < text.Length && XmlConvert.IsXmlSurrogatePair(text[index + 1], character))
+            if (
+                char.IsHighSurrogate(character)
+                && index + 1 < text.Length
+                && XmlConvert.IsXmlSurrogatePair(text[index + 1], character)
+            )
             {
                 encoded.Append(character).Append(text[++index]);
             }

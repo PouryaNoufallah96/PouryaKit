@@ -29,7 +29,10 @@ public static class DapperServiceCollectionExtensions
         /// different connection in the same Host throws here. With the Kit's composition checks (<c>AddPouryaKitCompositionChecks</c>), a connection
         /// string the Host's configuration does not set, or sets blank, fails the Host's build, before any read.
         /// </summary>
-        public IServiceCollection AddPouryaKitDapper(string connectionName, params Assembly[] typedIdAssemblies)
+        public IServiceCollection AddPouryaKitDapper(
+            string connectionName,
+            params Assembly[] typedIdAssemblies
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
@@ -43,7 +46,11 @@ public static class DapperServiceCollectionExtensions
                 .FirstOrDefault();
             if (registered is not null)
             {
-                return string.Equals(registered.Name, connectionName, StringComparison.OrdinalIgnoreCase)
+                return string.Equals(
+                    registered.Name,
+                    connectionName,
+                    StringComparison.OrdinalIgnoreCase
+                )
                     ? services
                     : throw new InvalidOperationException(
                         $"Dapper reads already use the connection '{registered.Name}' in this Host, so they cannot also use '{connectionName}'."
@@ -52,13 +59,17 @@ public static class DapperServiceCollectionExtensions
 
             var connection = new ReadConnection(connectionName);
             services.AddSingleton(connection);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>()
+            );
             services.AddKeyedSingleton(
                 typeof(ReadConnectionFactory),
                 (provider, _) =>
                 {
                     var connectionString =
-                        provider.GetRequiredService<IConfiguration>().GetConnectionString(connectionName)
+                        provider
+                            .GetRequiredService<IConfiguration>()
+                            .GetConnectionString(connectionName)
                         ?? throw new InvalidOperationException(
                             $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
                         );
@@ -84,7 +95,9 @@ public static class DapperServiceCollectionExtensions
         {
             if (TypedId.GetValueType(type) is { } valueType)
             {
-                var handler = Activator.CreateInstance(typeof(TypedIdTypeHandler<,>).MakeGenericType(type, valueType))!;
+                var handler = Activator.CreateInstance(
+                    typeof(TypedIdTypeHandler<,>).MakeGenericType(type, valueType)
+                )!;
                 SqlMapper.AddTypeHandler(type, (SqlMapper.ITypeHandler)handler);
             }
         }

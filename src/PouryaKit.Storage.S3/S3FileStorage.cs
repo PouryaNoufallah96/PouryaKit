@@ -27,13 +27,22 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
 
         _client = string.IsNullOrWhiteSpace(options.AccessKey)
             ? new AmazonS3Client(config)
-            : new AmazonS3Client(new BasicAWSCredentials(options.AccessKey, options.SecretKey), config);
+            : new AmazonS3Client(
+                new BasicAWSCredentials(options.AccessKey, options.SecretKey),
+                config
+            );
         _bucket = options.Bucket;
         // The SDK signs a link for HTTPS whatever the endpoint, so an HTTP-only store such as a local MinIO needs HTTP.
-        _linkProtocol = options.ServiceUrl?.Scheme == Uri.UriSchemeHttp ? Protocol.HTTP : Protocol.HTTPS;
+        _linkProtocol =
+            options.ServiceUrl?.Scheme == Uri.UriSchemeHttp ? Protocol.HTTP : Protocol.HTTPS;
     }
 
-    public async Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken)
+    public async Task<Result> UploadAsync(
+        string key,
+        Stream content,
+        string contentType,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentNullException.ThrowIfNull(content);
@@ -53,7 +62,10 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
         return Result.Success();
     }
 
-    public async Task<Result<StoredFile>> DownloadAsync(string key, CancellationToken cancellationToken)
+    public async Task<Result<StoredFile>> DownloadAsync(
+        string key,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         try
@@ -74,7 +86,11 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
         return Result.Success();
     }
 
-    public async Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken)
+    public async Task<Result<Uri>> GetPresignedUrlAsync(
+        string key,
+        TimeSpan lifetime,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         if (lifetime <= TimeSpan.Zero || lifetime > MaxLinkLifetime)
@@ -88,16 +104,18 @@ internal sealed class S3FileStorage : IFileStorage, IDisposable
         cancellationToken.ThrowIfCancellationRequested();
         // The SDK signs on the system clock and counts the link's lifetime from it, so the expiry is read from that
         // clock too.
-        var link = await _client.GetPreSignedURLAsync(
-            new GetPreSignedUrlRequest
-            {
-                BucketName = _bucket,
-                Key = key,
-                Verb = HttpVerb.GET,
-                Expires = DateTime.UtcNow.Add(lifetime),
-                Protocol = _linkProtocol,
-            }
-        ).WaitAsync(cancellationToken);
+        var link = await _client
+            .GetPreSignedURLAsync(
+                new GetPreSignedUrlRequest
+                {
+                    BucketName = _bucket,
+                    Key = key,
+                    Verb = HttpVerb.GET,
+                    Expires = DateTime.UtcNow.Add(lifetime),
+                    Protocol = _linkProtocol,
+                }
+            )
+            .WaitAsync(cancellationToken);
         return new Uri(link);
     }
 

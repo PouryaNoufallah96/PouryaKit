@@ -25,7 +25,10 @@ public static class PostgresServiceCollectionExtensions
         /// checks (<c>AddPouryaKitCompositionChecks</c>), a connection string the Host's configuration does not set, or
         /// sets blank, fails the Host's build, before any Operation.
         /// </summary>
-        public IServiceCollection UsePouryaKitPostgres<TDbContext>(string connectionName, string schema)
+        public IServiceCollection UsePouryaKitPostgres<TDbContext>(
+            string connectionName,
+            string schema
+        )
             where TDbContext : PouryaKitDbContext
         {
             ArgumentNullException.ThrowIfNull(services);
@@ -36,7 +39,11 @@ public static class PostgresServiceCollectionExtensions
                 options
                     .UseNpgsql(
                         $"Name=ConnectionStrings:{connectionName}",
-                        npgsql => npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, schema)
+                        npgsql =>
+                            npgsql.MigrationsHistoryTable(
+                                HistoryRepository.DefaultTableName,
+                                schema
+                            )
                     )
                     .UseSnakeCaseNamingConvention()
             );

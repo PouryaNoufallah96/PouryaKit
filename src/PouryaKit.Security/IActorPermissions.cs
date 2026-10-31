@@ -12,5 +12,9 @@ namespace PouryaKit.Security;
 public interface IActorPermissions
 {
     /// <summary>Whether the Actor <paramref name="context"/> runs for, in its tenant, holds <paramref name="permission"/>.</summary>
-    Task<bool> HasPermissionAsync(OperationContext context, string permission, CancellationToken cancellationToken);
+    Task<bool> HasPermissionAsync(
+        OperationContext context,
+        string permission,
+        CancellationToken cancellationToken
+    );
 }

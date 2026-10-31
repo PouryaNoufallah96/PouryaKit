@@ -6,25 +6,43 @@ namespace PouryaKit.Persistence.Marten;
 // transaction, which begins before the command. Under read committed, inserting a key another transaction holds waits for
 // it, then inserts nothing when it committed and the key when it rolled back. The cleanup may remove an expired key between
 // the insert and the read; the key is then reserved again, so the request runs as a new one.
-internal sealed class MartenIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider timeProvider) : IIdempotencyStore
+internal sealed class MartenIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider timeProvider)
+    : IIdempotencyStore
 {
     private const int ReserveAttempts = 3;
 
-    public async Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
+    public async Task<RecordedSuccess?> ReserveAsync(
+        IdempotencyKey key,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(key);
         for (var attempt = 1; attempt <= ReserveAttempts; attempt++)
         {
-            if (await MartenUnitOfWorkTransaction.ExecuteAsync(unitOfWork, IdempotencyStatements.Reserve, IdempotencyStatements.Table, [.. Values(key), timeProvider.GetUtcNow()], cancellationToken) == 1)
+            if (
+                await MartenUnitOfWorkTransaction.ExecuteAsync(
+                    unitOfWork,
+                    IdempotencyStatements.Reserve,
+                    IdempotencyStatements.Table,
+                    [.. Values(key), timeProvider.GetUtcNow()],
+                    cancellationToken
+                ) == 1
+            )
             {
                 return null;
             }
 
-            await using var read = MartenUnitOfWorkTransaction.Of(unitOfWork).Command(IdempotencyStatements.Read, IdempotencyStatements.Table, Values(key));
+            await using var read = MartenUnitOfWorkTransaction
+                .Of(unitOfWork)
+                .Command(IdempotencyStatements.Read, IdempotencyStatements.Table, Values(key));
             await using var recorded = await read.ExecuteReaderAsync(cancellationToken);
             if (await recorded.ReadAsync(cancellationToken))
             {
-                return new RecordedSuccess(await recorded.IsDBNullAsync(0, cancellationToken) ? null : recorded.GetString(0));
+                return new RecordedSuccess(
+                    await recorded.IsDBNullAsync(0, cancellationToken)
+                        ? null
+                        : recorded.GetString(0)
+                );
             }
         }
 
@@ -33,11 +51,23 @@ internal sealed class MartenIdempotencyStore(IUnitOfWork unitOfWork, TimeProvide
         );
     }
 
-    public async Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
+    public async Task RecordAsync(
+        IdempotencyKey key,
+        string response,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(response);
-        if (await MartenUnitOfWorkTransaction.ExecuteAsync(unitOfWork, IdempotencyStatements.Record, IdempotencyStatements.Table, [.. Values(key), response], cancellationToken) != 1)
+        if (
+            await MartenUnitOfWorkTransaction.ExecuteAsync(
+                unitOfWork,
+                IdempotencyStatements.Record,
+                IdempotencyStatements.Table,
+                [.. Values(key), response],
+                cancellationToken
+            ) != 1
+        )
         {
             throw new InvalidOperationException(
                 $"The key of request {key.RequestId} for {key.Command} was not reserved in this Unit of Work's transaction, so its success cannot be recorded."
@@ -46,5 +76,11 @@ internal sealed class MartenIdempotencyStore(IUnitOfWork unitOfWork, TimeProvide
     }
 
     private static object[] Values(IdempotencyKey key) =>
-        [key.Tenant ?? OperationContext.NoTenant, key.Actor.Kind.ToString(), key.Actor.Id, key.Command, key.RequestId];
+        [
+            key.Tenant ?? OperationContext.NoTenant,
+            key.Actor.Kind.ToString(),
+            key.Actor.Id,
+            key.Command,
+            key.RequestId,
+        ];
 }

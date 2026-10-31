@@ -23,7 +23,12 @@ internal sealed class MailKitEmailSender(PouryaKitMailKitOptions options) : IEma
         }
 
         // A From per mail: MimeKit chains a mail to its addresses' events, so a shared one would keep every mail alive.
-        using var mail = new MimeMessage([MailboxAddress.Parse(options.From!)], [to], message.Subject, new TextPart(TextFormat.Plain) { Text = message.Body });
+        using var mail = new MimeMessage(
+            [MailboxAddress.Parse(options.From!)],
+            [to],
+            message.Subject,
+            new TextPart(TextFormat.Plain) { Text = message.Body }
+        );
         using var client = new SmtpClient();
         await client.ConnectAsync(options.Host!, options.Port, options.Security, cancellationToken);
         if (options is { UserName: { Length: > 0 } userName, Password: { } password })
@@ -37,6 +42,8 @@ internal sealed class MailKitEmailSender(PouryaKitMailKitOptions options) : IEma
     }
 
     // MimeKit also reads a bare local part, such as "ada", as a mailbox; a mail needs a domain to be delivered.
-    internal static bool TryParseMailbox(string? text, [NotNullWhen(true)] out MailboxAddress? mailbox) =>
-        MailboxAddress.TryParse(text, out mailbox) && mailbox.Domain.Length > 0;
+    internal static bool TryParseMailbox(
+        string? text,
+        [NotNullWhen(true)] out MailboxAddress? mailbox
+    ) => MailboxAddress.TryParse(text, out mailbox) && mailbox.Domain.Length > 0;
 }

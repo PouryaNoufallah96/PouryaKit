@@ -13,10 +13,15 @@ public sealed class HostFixtureTests
     {
         var fixture = new StopFailingFixture();
         await fixture.InitializeAsync();
-        var database = new NpgsqlConnectionStringBuilder(fixture.ConnectionString) { Pooling = false }.ConnectionString;
+        var database = new NpgsqlConnectionStringBuilder(fixture.ConnectionString)
+        {
+            Pooling = false,
+        }.ConnectionString;
         await OpenAsync(database);
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => fixture.DisposeAsync().AsTask());
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            fixture.DisposeAsync().AsTask()
+        );
 
         Assert.Equal(StopFailingHost.Failure, thrown.Message);
         Assert.Equal([nameof(IAsyncDisposable.DisposeAsync)], fixture.Created.Disposals);

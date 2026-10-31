@@ -10,6 +10,9 @@
     <ProjectReference Include="..\Inventory.Host\Inventory.Host.csproj" />
     <ProjectReference Include="..\ModularMonolith.Host\ModularMonolith.Host.csproj" />
     <ProjectReference Include="..\ModularMonolith.ReverseProxy\ModularMonolith.ReverseProxy.csproj" />
-    <ProjectReference Include="..\..\..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" IsAspireProjectResource="false" />
+    <ProjectReference
+      Include="..\..\..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj"
+      IsAspireProjectResource="false"
+    />
   </ItemGroup>
 </Project>

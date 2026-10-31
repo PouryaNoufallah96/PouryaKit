@@ -10,6 +10,8 @@ namespace ModularMonolith.Tests.Misnamed;
 /// </summary>
 public sealed class SeparateCommandHandler : CommandHandler<UnownedCommand>
 {
-    public override Task<Result> Handle(UnownedCommand command, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success());
+    public override Task<Result> Handle(
+        UnownedCommand command,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }

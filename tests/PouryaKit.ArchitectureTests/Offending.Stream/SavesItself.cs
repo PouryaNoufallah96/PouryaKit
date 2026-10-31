@@ -23,7 +23,13 @@ public sealed class RunsMartenSteps(IUnitOfWork unitOfWork, IStreamOutbox outbox
 {
     public async Task WriteAsync(CancellationToken cancellationToken)
     {
-        await MartenUnitOfWorkTransaction.ExecuteAsync(unitOfWork, IdempotencyStatements.Reserve, IdempotencyStatements.Table, [], cancellationToken);
+        await MartenUnitOfWorkTransaction.ExecuteAsync(
+            unitOfWork,
+            IdempotencyStatements.Reserve,
+            IdempotencyStatements.Table,
+            [],
+            cancellationToken
+        );
         await outbox.WriteAsync(null!, [], cancellationToken);
     }
 }

@@ -12,16 +12,25 @@ internal sealed class SubscriptionUnitOfWorkCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        foreach (var owned in services.GetRequiredService<Subscriptions>().All.GroupBy(subscription => subscription.Module))
+        foreach (
+            var owned in services
+                .GetRequiredService<Subscriptions>()
+                .All.GroupBy(subscription => subscription.Module)
+        )
         {
             var module = owned.Key;
-            var misowned = module is null ? composition.Modules.Count > 0 : !composition.Modules.Contains(module);
+            var misowned = module is null
+                ? composition.Modules.Count > 0
+                : !composition.Modules.Contains(module);
             if (misowned || HasUnitOfWork(composition, module))
             {
                 continue;
             }
 
-            var names = string.Join(", ", owned.Select(subscription => subscription.Name).Order(StringComparer.Ordinal));
+            var names = string.Join(
+                ", ",
+                owned.Select(subscription => subscription.Name).Order(StringComparer.Ordinal)
+            );
             yield return module is null
                 ? $"The application has the subscriptions {names} but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Register the Unit of Work of a persistence package, for example with UsePouryaKitPostgres."
                 : $"{module.Name} has the subscriptions {names} but registers no Unit of Work, so each of their deliveries would fail before its handler runs. Declare its data in its Composition Root, for example with UsePouryaKitPostgres.";
@@ -32,6 +41,10 @@ internal sealed class SubscriptionUnitOfWorkCheck : ICompositionCheck
     private static bool HasUnitOfWork(HostComposition composition, Type? module) =>
         composition.Registrations.Any(descriptor =>
             descriptor.ServiceType == typeof(IUnitOfWork)
-            && (module is null ? !descriptor.IsKeyedService : descriptor.IsKeyedService && Equals(descriptor.ServiceKey, module))
+            && (
+                module is null
+                    ? !descriptor.IsKeyedService
+                    : descriptor.IsKeyedService && Equals(descriptor.ServiceKey, module)
+            )
         );
 }

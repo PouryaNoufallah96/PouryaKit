@@ -18,5 +18,6 @@ public sealed class PouryaKitOpenApiOptions
     /// <c>BinderOptions.ErrorOnUnknownConfiguration</c>. Keys are compared ordinally, so <c>"1.0-Beta"</c> and
     /// <c>"1.0-beta"</c>, which name one version, are two keys the Host refuses rather than one replacing the other.
     /// </summary>
-    public IDictionary<string, ApiVersionSunset> Sunsets { get; } = new Dictionary<string, ApiVersionSunset>(StringComparer.Ordinal);
+    public IDictionary<string, ApiVersionSunset> Sunsets { get; } =
+        new Dictionary<string, ApiVersionSunset>(StringComparer.Ordinal);
 }

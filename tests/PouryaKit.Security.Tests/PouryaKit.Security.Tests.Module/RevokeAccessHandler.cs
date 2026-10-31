@@ -12,9 +12,13 @@ public sealed class HandledCommands
 }
 
 // Handles a command its Contracts declare, outside this assembly.
-internal sealed class RevokeAccessHandler(HandledCommands handled) : CommandHandler<RevokeAccessCommand>
+internal sealed class RevokeAccessHandler(HandledCommands handled)
+    : CommandHandler<RevokeAccessCommand>
 {
-    public override Task<Result> Handle(RevokeAccessCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        RevokeAccessCommand command,
+        CancellationToken cancellationToken
+    )
     {
         handled.Commands.Add(typeof(RevokeAccessCommand));
         return Task.FromResult(Result.Success());

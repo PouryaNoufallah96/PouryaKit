@@ -10,5 +10,6 @@ public sealed class PouryaKitMessagingOptions
     /// for its retry (<c>PouryaKitMessageStoreOptions.InboxStaleTime</c>). Null, an empty schedule or a negative delay
     /// stops the Host when it starts, naming this option, so a failed delivery is always retried at least once.
     /// </summary>
-    public TimeSpan[] RetryDelays { get; set; } = [TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1)];
+    public TimeSpan[] RetryDelays { get; set; } =
+    [TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1)];
 }

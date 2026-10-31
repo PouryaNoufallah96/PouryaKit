@@ -9,15 +9,23 @@ namespace PouryaKit.Web;
 // forwarded, and a client that must authenticate to the peer adds its own credentials.
 internal sealed class OperationContextHttpHandler : DelegatingHandler
 {
-    internal static readonly HttpRequestOptionsKey<OperationContext> Key = new("PouryaKit.OperationContext");
+    internal static readonly HttpRequestOptionsKey<OperationContext> Key = new(
+        "PouryaKit.OperationContext"
+    );
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         WriteContext(request);
         return base.SendAsync(request, cancellationToken);
     }
 
-    protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override HttpResponseMessage Send(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         WriteContext(request);
         return base.Send(request, cancellationToken);

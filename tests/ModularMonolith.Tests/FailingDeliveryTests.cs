@@ -23,14 +23,19 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         var text = Unique();
         Circulation.Fail(Circulation.Archive, text, Failure.Exception);
 
-        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(new NoteToCirculateDomainEvent(text)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => CirculateAsync(new NoteToCirculateDomainEvent(text)),
+            TestContext.Current.CancellationToken
+        );
 
         var runs = Circulation.RunsOf(Circulation.Archive, text);
         Assert.Equal(1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count, runs.Count);
         Assert.Equal(runs.Count, runs.Select(run => run.Operation).Distinct().Count());
         Assert.Equal(
             typeof(InvalidOperationException).FullName,
-            Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)).ExceptionType
+            Assert
+                .Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken))
+                .ExceptionType
         );
         // Each attempt rolled back, so none of them left its copy behind.
         Assert.Equal(0L, await CopiesAsync(Circulation.Archive, text));
@@ -43,20 +48,36 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         var circulated = new NoteToCirculateDomainEvent(text);
         Circulation.Fail(Circulation.Archive, text);
 
-        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(circulated), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => CirculateAsync(circulated),
+            TestContext.Current.CancellationToken
+        );
 
         // Found by its subscription, with the Errors of the failed Result that set it aside.
-        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+        var deadLetter = Assert.Single(
+            await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)
+        );
         Assert.Equal(
-            (Circulation.Archive, WireName, typeof(IntegrationEventHandlerFailedException).FullName),
+            (
+                Circulation.Archive,
+                WireName,
+                typeof(IntegrationEventHandlerFailedException).FullName
+            ),
             (deadLetter.Subscription, deadLetter.WireName, deadLetter.ExceptionType)
         );
-        Assert.Contains($"{Circulation.Refused.Code} ({Circulation.Refused.Message})", deadLetter.ExceptionMessage);
+        Assert.Contains(
+            $"{Circulation.Refused.Code} ({Circulation.Refused.Message})",
+            deadLetter.ExceptionMessage
+        );
         // Its envelope left the Inbox for dead-letter storage instead of being marked handled; the other's, delivered
         // once, is handled.
         Assert.Equal(
-            [[$"local://{Circulation.Ledger}/", "Handled"]],
-            await Fixture.RowsAsync($"select received_at, status from wolverine.wolverine_incoming_envelopes where message_type = '{WireName}'")
+            [
+                [$"local://{Circulation.Ledger}/", "Handled"],
+            ],
+            await Fixture.RowsAsync(
+                $"select received_at, status from wolverine.wolverine_incoming_envelopes where message_type = '{WireName}'"
+            )
         );
         Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id));
         Assert.Equal(1L, await CopiesAsync(Circulation.Ledger, text));
@@ -68,10 +89,17 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         var text = Unique();
         var circulated = new NoteToCirculateDomainEvent(text);
         Circulation.Fail(Circulation.Archive, text);
-        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(circulated), TestContext.Current.CancellationToken);
-        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
+        await Fixture.WaitForDeliveriesAsync(
+            () => CirculateAsync(circulated),
+            TestContext.Current.CancellationToken
+        );
+        var deadLetter = Assert.Single(
+            await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)
+        );
         var store = Fixture.Host.Services.GetRequiredService<IWolverineRuntime>().Storage;
-        var setAside = (await store.DeadLetters.DeadLetterEnvelopeByIdAsync(deadLetter.Id))!.Envelope;
+        var setAside = (
+            await store.DeadLetters.DeadLetterEnvelopeByIdAsync(deadLetter.Id)
+        )!.Envelope;
         var failedRuns = Circulation.RunsOf(Circulation.Archive, text).Count;
 
         // The cause is fixed, then the dead letter is replayed.
@@ -81,19 +109,36 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(failedRuns + 1, Circulation.RunsOf(Circulation.Archive, text).Count);
         Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id));
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
-        Assert.Equal((1L, 1L), (await CopiesAsync(Circulation.Archive, text), await CopiesAsync(Circulation.Ledger, text)));
+        Assert.Equal(
+            (1L, 1L),
+            (
+                await CopiesAsync(Circulation.Archive, text),
+                await CopiesAsync(Circulation.Ledger, text)
+            )
+        );
 
         // The same delivery set aside once more, as Wolverine sets one aside, and replayed again: it is handed out, and
         // its Receipt stops the handler.
-        await store.Inbox.MoveToDeadLetterStorageAsync(setAside, new InvalidOperationException("Set aside once more."));
-        await Fixture.ReplayAsync(Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)), TestContext.Current.CancellationToken);
+        await store.Inbox.MoveToDeadLetterStorageAsync(
+            setAside,
+            new InvalidOperationException("Set aside once more.")
+        );
+        await Fixture.ReplayAsync(
+            Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)),
+            TestContext.Current.CancellationToken
+        );
 
-        Assert.Equal(failedRuns + 2, DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count);
+        Assert.Equal(
+            failedRuns + 2,
+            DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count
+        );
         Assert.Equal(failedRuns + 1, Circulation.RunsOf(Circulation.Archive, text).Count);
         Assert.Equal(1L, await CopiesAsync(Circulation.Archive, text));
         Assert.Equal(
             "Handled",
-            await Fixture.ScalarAsync<string>($"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Archive}/'")
+            await Fixture.ScalarAsync<string>(
+                $"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Archive}/'"
+            )
         );
     }
 
@@ -115,7 +160,10 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
     {
         var text = Unique();
         var circulated = new NoteToCirculateDomainEvent(text);
-        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(circulated), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => CirculateAsync(circulated),
+            TestContext.Current.CancellationToken
+        );
 
         // Both deliveries stored and pending again, the ledger's at the queue of a subscription this Host no longer
         // declares, as after a release that removed it while its Integration Event keeps the archive's subscription.
@@ -129,11 +177,20 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         );
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
-        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
-        Assert.Equal(("stub.circulated-retired", typeof(UnknownSubscriptionException).FullName), (deadLetter.Subscription, deadLetter.ExceptionType));
+        var deadLetter = Assert.Single(
+            await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)
+        );
         Assert.Equal(
-            [[$"local://{Circulation.Archive}/", "Handled"]],
-            await Fixture.RowsAsync($"select received_at, status from wolverine.wolverine_incoming_envelopes where message_type = '{WireName}'")
+            ("stub.circulated-retired", typeof(UnknownSubscriptionException).FullName),
+            (deadLetter.Subscription, deadLetter.ExceptionType)
+        );
+        Assert.Equal(
+            [
+                [$"local://{Circulation.Archive}/", "Handled"],
+            ],
+            await Fixture.RowsAsync(
+                $"select received_at, status from wolverine.wolverine_incoming_envelopes where message_type = '{WireName}'"
+            )
         );
         Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id).Count);
         Assert.Equal(1L, await CopiesAsync(Circulation.Archive, text));
@@ -142,10 +199,15 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
     private Task<Result> CirculateAsync(NoteToCirculateDomainEvent circulated) =>
         Fixture
             .Gateway<StubModule>()
-            .SendAsync(new WriteNoteRaisingCommand(circulated.Text, [circulated]), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new WriteNoteRaisingCommand(circulated.Text, [circulated]),
+                TestContext.Current.CancellationToken
+            );
 
     private Task<long> CopiesAsync(string subscription, string text) =>
-        Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{Circulation.CopyOf(subscription, text)}'");
+        Fixture.ScalarAsync<long>(
+            $"select count(*) from stub.notes where text = '{Circulation.CopyOf(subscription, text)}'"
+        );
 
     private static string Unique() => $"note {Guid.CreateVersion7()}";
 }

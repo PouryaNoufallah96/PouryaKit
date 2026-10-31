@@ -26,7 +26,9 @@ public static class ObservabilityServiceCollectionExtensions
         public IServiceCollection AddPouryaKitObservability()
         {
             ArgumentNullException.ThrowIfNull(services);
-            var registered = services.LastOrDefault(descriptor => descriptor.ServiceType == typeof(IDispatcher) && !descriptor.IsKeyedService);
+            var registered = services.LastOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(IDispatcher) && !descriptor.IsKeyedService
+            );
             if (registered?.ImplementationFactory?.Target is ObservedDispatcherFactory)
             {
                 return services;
@@ -41,7 +43,11 @@ public static class ObservabilityServiceCollectionExtensions
 
             services.Remove(registered);
             services.TryAddSingleton<ObservedDispatcher.Instruments>();
-            services.AddScoped<IDispatcher>(new ObservedDispatcherFactory(ActivatorUtilities.CreateFactory(dispatcher, [])).Create);
+            services.AddScoped<IDispatcher>(
+                new ObservedDispatcherFactory(
+                    ActivatorUtilities.CreateFactory(dispatcher, [])
+                ).Create
+            );
             return services;
         }
     }

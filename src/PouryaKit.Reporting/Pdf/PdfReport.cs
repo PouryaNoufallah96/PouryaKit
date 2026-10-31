@@ -17,7 +17,11 @@ internal static class PdfReport
 
         var document = new Document();
         document.Info.Title = layout.Title;
-        var accent = new Color(layout.Branding.Accent.Red, layout.Branding.Accent.Green, layout.Branding.Accent.Blue);
+        var accent = new Color(
+            layout.Branding.Accent.Red,
+            layout.Branding.Accent.Green,
+            layout.Branding.Accent.Blue
+        );
         document.Styles[StyleNames.Normal]!.Font.Name = RobotoFontResolver.Family;
         document.Styles[StyleNames.Normal]!.Font.Size = 10;
         document.Styles[StyleNames.Heading1]!.Font.Size = 18;
@@ -62,7 +66,10 @@ internal static class PdfReport
         section.AddParagraph(layout.Title, StyleNames.Heading1);
         foreach (var text in layout.Introduction)
         {
-            section.AddParagraph(text.Text, text is ReportHeading ? StyleNames.Heading2 : StyleNames.Normal);
+            section.AddParagraph(
+                text.Text,
+                text is ReportHeading ? StyleNames.Heading2 : StyleNames.Normal
+            );
         }
 
         section.LastParagraph?.Format.SpaceAfter = Unit.FromPoint(8);
@@ -86,7 +93,9 @@ internal static class PdfReport
         table.Rows.VerticalAlignment = VerticalAlignment.Center;
         foreach (var column in report.Columns)
         {
-            table.AddColumn(Unit.FromCentimeter(ContentCentimetres / report.Columns.Count)).Format.Alignment = column.Alignment switch
+            table
+                .AddColumn(Unit.FromCentimeter(ContentCentimetres / report.Columns.Count))
+                .Format.Alignment = column.Alignment switch
             {
                 ReportAlignment.Center => ParagraphAlignment.Center,
                 ReportAlignment.Right => ParagraphAlignment.Right,

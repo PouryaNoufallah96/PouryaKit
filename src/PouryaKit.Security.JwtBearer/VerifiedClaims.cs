@@ -7,17 +7,24 @@ namespace PouryaKit.Security.JwtBearer;
 // Runs on each token the handler has verified, before the application's own OnTokenValidated, which it keeps. The Kit's
 // claims are written only from the configured names: one the token itself carries under a Kit type is dropped first,
 // so no issued claim stands in for the configured one. The start check finds it installed by the delegate's target.
-internal sealed class VerifiedClaims(PouryaKitJwtBearerOptions names, Func<TokenValidatedContext, Task> next)
+internal sealed class VerifiedClaims(
+    PouryaKitJwtBearerOptions names,
+    Func<TokenValidatedContext, Task> next
+)
 {
     public static void NormalizeIn(JwtBearerOptions bearer, PouryaKitJwtBearerOptions names)
     {
         var events = bearer.Events ??= new JwtBearerEvents();
-        events.OnTokenValidated = new VerifiedClaims(names, events.OnTokenValidated).OnTokenValidated;
+        events.OnTokenValidated = new VerifiedClaims(
+            names,
+            events.OnTokenValidated
+        ).OnTokenValidated;
     }
 
     // Exactly JwtBearerEvents: a subclass may override TokenValidated and never call OnTokenValidated.
     public static bool IsInstalledIn(JwtBearerEvents? events) =>
-        events?.GetType() == typeof(JwtBearerEvents) && events.OnTokenValidated?.Target is VerifiedClaims;
+        events?.GetType() == typeof(JwtBearerEvents)
+        && events.OnTokenValidated?.Target is VerifiedClaims;
 
     private Task OnTokenValidated(TokenValidatedContext context)
     {
@@ -42,13 +49,17 @@ internal sealed class VerifiedClaims(PouryaKitJwtBearerOptions names, Func<Token
             return $"The token carries no single {names.ActorClaim} claim to identify the Actor.";
         }
 
-        List<Claim> tenants = names.TenantClaim is { } tenantClaim ? Values(identity, tenantClaim) : [];
+        List<Claim> tenants = names.TenantClaim is { } tenantClaim
+            ? Values(identity, tenantClaim)
+            : [];
         if (tenants.Count > 1)
         {
             return $"The token carries more than one {names.TenantClaim} claim.";
         }
 
-        var issued = identity.FindAll(claim => claim.Type is ClaimTypes.NameIdentifier or PouryaKitClaimTypes.Tenant);
+        var issued = identity.FindAll(claim =>
+            claim.Type is ClaimTypes.NameIdentifier or PouryaKitClaimTypes.Tenant
+        );
         foreach (var claim in issued.ToList())
         {
             identity.TryRemoveClaim(claim);

@@ -29,13 +29,13 @@
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
           "line": 28,
-          "end_line": 91,
+          "end_line": 92,
           "label": "hosts ModularMonolith.Host"
         },
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
-          "line": 94,
-          "end_line": 149,
+          "line": 106,
+          "end_line": 177,
           "label": "both Hosts on one broker"
         }
       ]
@@ -56,8 +56,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 84,
-          "end_line": 97,
+          "line": 96,
+          "end_line": 109,
           "label": "composes the Modules"
         },
         {
@@ -91,19 +91,19 @@
         {
           "path": "src/PouryaKit.Reporting.Module/ReportModule.cs",
           "line": 46,
-          "end_line": 71,
+          "end_line": 82,
           "label": "schema reports, endpoints, three commands"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs",
           "line": 15,
-          "end_line": 61,
+          "end_line": 89,
           "label": "the Host's one report kind"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 113,
-          "end_line": 120,
+          "line": 127,
+          "end_line": 136,
           "label": "S3 storage and the Host's two ports"
         }
       ]
@@ -125,13 +125,13 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
           "line": 17,
-          "end_line": 62,
+          "end_line": 65,
           "label": "Inventory alone, Catalog's wire names"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 161,
-          "end_line": 172,
+          "line": 166,
+          "end_line": 180,
           "label": "/alive always; /health in Development"
         },
         {
@@ -171,7 +171,7 @@
         {
           "path": "src/PouryaKit.Templates/content/shared/src/ModularMonolith.ReverseProxy/Program.cs",
           "line": 7,
-          "end_line": 17,
+          "end_line": 18,
           "label": "the two Catalog templates' own copy"
         }
       ]
@@ -193,7 +193,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Billing/Billing/BillingModule.cs",
           "line": 18,
-          "end_line": 25,
+          "end_line": 29,
           "label": "subscribes v1 and AccountOpenedV1; ExpireQuote"
         },
         {
@@ -221,13 +221,13 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 30,
-          "end_line": 55,
+          "end_line": 66,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Events/Notifications/PublishProductCreatedNotificationHandler.cs",
           "line": 11,
-          "end_line": 21,
+          "end_line": 29,
           "label": "v1 and v2 from one handler"
         },
         {
@@ -255,7 +255,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
           "line": 23,
-          "end_line": 46,
+          "end_line": 55,
           "label": "three subscriptions; a recurring command"
         },
         {
@@ -295,7 +295,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Ledger/Ledger/Accounts/Events/Notifications/ActivateAccountNotificationHandler.cs",
           "line": 10,
-          "end_line": 27,
+          "end_line": 37,
           "label": "activates and publishes in one commit"
         },
         {
@@ -334,8 +334,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 118,
-          "end_line": 126,
+          "line": 123,
+          "end_line": 131,
           "label": "liveness and readiness checks"
         }
       ]
@@ -363,7 +363,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
           "line": 3,
-          "end_line": 13,
+          "end_line": 16,
           "label": "the question Catalog answers"
         }
       ]
@@ -385,7 +385,7 @@
         {
           "path": "src/PouryaKit.Templates/PouryaKit.Templates.csproj",
           "line": 18,
-          "end_line": 32,
+          "end_line": 57,
           "label": "packs the sample's code when packed"
         },
         {
@@ -425,13 +425,13 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 25,
-          "end_line": 98,
+          "end_line": 105,
           "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
           "line": 1,
-          "end_line": 15,
+          "end_line": 18,
           "label": "Aspire.AppHost.Sdk, both Hosts, the proxy"
         }
       ]

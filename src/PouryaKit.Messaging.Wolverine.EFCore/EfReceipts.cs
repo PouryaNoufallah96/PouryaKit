@@ -11,7 +11,11 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // newer version replaces in one statement.
 internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
 {
-    public Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken) =>
+    public Task<bool> RecordAsync(
+        string subscription,
+        Guid messageId,
+        CancellationToken cancellationToken
+    ) =>
         ExecuteAsync(
             ReceiptTable.Name,
             "Receipts",
@@ -53,7 +57,9 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
             );
         if (dbContext.Database.CurrentTransaction is null)
         {
-            throw new InvalidOperationException($"No Unit of Work is active, so there is no transaction to keep {keeps} in.");
+            throw new InvalidOperationException(
+                $"No Unit of Work is active, so there is no transaction to keep {keeps} in."
+            );
         }
 
         // The table name comes from the Module's model, never from input; the values are parameters.
@@ -63,9 +69,14 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
         var statement = sql(table);
         try
         {
-            return await dbContext.Database.ExecuteSqlRawAsync(statement, parameters, cancellationToken) == 1;
+            return await dbContext.Database.ExecuteSqlRawAsync(
+                    statement,
+                    parameters,
+                    cancellationToken
+                ) == 1;
         }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
+        catch (PostgresException exception)
+            when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
         {
             throw new InvalidOperationException(
                 $"{dbContext.GetType().Name} has no {table} table to keep {keeps} in. Add a migration to the Module that calls {creator} with its schema.",

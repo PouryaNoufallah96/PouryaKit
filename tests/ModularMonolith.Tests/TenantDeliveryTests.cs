@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 using ModularMonolith.Tests.Stub;
+using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
@@ -33,17 +33,36 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
     [InlineData(Notification)]
     [InlineData(TenantProbes.Subscription)]
     [InlineData(TenantProbes.SnapshotSubscription)]
-    public async Task A_delivery_with_no_tenant_into_a_tenant_scoped_module_writes_nothing_and_is_dead_lettered_naming_the_reason(string subscription)
+    public async Task A_delivery_with_no_tenant_into_a_tenant_scoped_module_writes_nothing_and_is_dead_lettered_naming_the_reason(
+        string subscription
+    )
     {
-        var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(() => SendAsync(subscription, tenant: null), TestContext.Current.CancellationToken);
+        var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            () => SendAsync(subscription, tenant: null),
+            TestContext.Current.CancellationToken
+        );
 
-        Assert.Equal([new Delivery(subscription, WireNameOf(subscription), DeadLettered: true)], deliveries);
-        var deadLetter = Assert.Single(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
-        Assert.Contains($"{TenantErrors.Required.Code} ({TenantErrors.Required.Message})", deadLetter.ExceptionMessage);
+        Assert.Equal(
+            [new Delivery(subscription, WireNameOf(subscription), DeadLettered: true)],
+            deliveries
+        );
+        var deadLetter = Assert.Single(
+            await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)
+        );
+        Assert.Contains(
+            $"{TenantErrors.Required.Code} ({TenantErrors.Required.Message})",
+            deadLetter.ExceptionMessage
+        );
         // Retried, and every attempt refused before its Receipt and its handler.
         Assert.Equal(
             1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
-            EnvelopeSerializer.Deserialize(await Fixture.ScalarAsync<byte[]>("select body from wolverine.wolverine_dead_letters")).Attempts
+            EnvelopeSerializer
+                .Deserialize(
+                    await Fixture.ScalarAsync<byte[]>(
+                        "select body from wolverine.wolverine_dead_letters"
+                    )
+                )
+                .Attempts
         );
         Assert.Empty(await Fixture.RowsAsync("select * from catalog.pouryakit_receipts"));
         Assert.Empty(await Fixture.RowsAsync("select * from stub.note_tallies"));
@@ -52,11 +71,23 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
     [Fact]
     public async Task A_delivery_into_a_tenant_scoped_module_runs_under_the_tenant_it_carries()
     {
-        await Fixture.WaitForDeliveriesAsync(() => SendAsync(TenantProbes.Subscription, "north"), TestContext.Current.CancellationToken);
-        await Fixture.WaitForDeliveriesAsync(() => SendAsync(TenantProbes.Subscription, "south"), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => SendAsync(TenantProbes.Subscription, "north"),
+            TestContext.Current.CancellationToken
+        );
+        await Fixture.WaitForDeliveriesAsync(
+            () => SendAsync(TenantProbes.Subscription, "south"),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
-        Assert.Equal([["probe north"], ["probe south"]], await Fixture.RowsAsync("select text from stub.note_tallies order by text"));
+        Assert.Equal(
+            [
+                ["probe north"],
+                ["probe south"],
+            ],
+            await Fixture.RowsAsync("select text from stub.note_tallies order by text")
+        );
     }
 
     // Catalog publishes each product's Snapshot and its ProductCreatedV2 under the tenant that created it; Inventory's
@@ -69,12 +100,22 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
 
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
         Assert.Equal(
-            [["north", north, "Lamp"], ["south", south, "Lamp"]],
-            await Fixture.RowsAsync("select tenant, product_id, name from inventory.catalog_products order by tenant")
+            [
+                ["north", north, "Lamp"],
+                ["south", south, "Lamp"],
+            ],
+            await Fixture.RowsAsync(
+                "select tenant, product_id, name from inventory.catalog_products order by tenant"
+            )
         );
         Assert.Equal(
-            [["north", north], ["south", south]],
-            await Fixture.RowsAsync("select tenant, product_id from inventory.product_categories order by tenant")
+            [
+                ["north", north],
+                ["south", south],
+            ],
+            await Fixture.RowsAsync(
+                "select tenant, product_id from inventory.product_categories order by tenant"
+            )
         );
     }
 
@@ -84,13 +125,22 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
     public async Task The_migration_that_keys_inventorys_copies_by_tenant_refuses_a_table_holding_a_copy_with_no_tenant()
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        var migrator = scope.ServiceProvider.GetRequiredService<InventoryDbContext>().GetService<IMigrator>();
-        await migrator.MigrateAsync("20261016120000_StockCounts", TestContext.Current.CancellationToken);
+        var migrator = scope
+            .ServiceProvider.GetRequiredService<InventoryDbContext>()
+            .GetService<IMigrator>();
+        await migrator.MigrateAsync(
+            "20261016120000_StockCounts",
+            TestContext.Current.CancellationToken
+        );
         try
         {
-            await Fixture.RowsAsync($"insert into inventory.catalog_products (product_id, name, version) values ('{Guid.CreateVersion7()}', 'Lamp', 1)");
+            await Fixture.RowsAsync(
+                $"insert into inventory.catalog_products (product_id, name, version) values ('{Guid.CreateVersion7()}', 'Lamp', 1)"
+            );
 
-            var refused = await Assert.ThrowsAsync<PostgresException>(() => migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken));
+            var refused = await Assert.ThrowsAsync<PostgresException>(() =>
+                migrator.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken)
+            );
 
             Assert.Equal(
                 "Inventory holds copies of Catalog's products that kept no tenant, and their tenant cannot be recovered, so this migration refuses to guess one.",
@@ -104,7 +154,9 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
         }
 
         Assert.Equal(
-            [["tenant", "product_id"]],
+            [
+                ["tenant", "product_id"],
+            ],
             await Fixture.RowsAsync(
                 "select a.attname, b.attname from pg_index i join pg_attribute a on a.attrelid = i.indrelid and a.attnum = i.indkey[0] join pg_attribute b on b.attrelid = i.indrelid and b.attnum = i.indkey[1] where i.indrelid = 'inventory.catalog_products'::regclass and i.indisprimary"
             )
@@ -123,10 +175,16 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
     private async Task<bool> SendAsync(string subscription, string? tenant)
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        var options = new DeliveryOptions().WithOperationContext(new OperationContext(GatewayTestExtensions.TestActor, tenant));
+        var options = new DeliveryOptions().WithOperationContext(
+            new OperationContext(GatewayTestExtensions.TestActor, tenant)
+        );
         object message = subscription switch
         {
-            Notification => new ProductCreatedDomainEvent(new ProductId(Guid.CreateVersion7()), new CategoryId(Guid.CreateVersion7()), "Lamp"),
+            Notification => new ProductCreatedDomainEvent(
+                new ProductId(Guid.CreateVersion7()),
+                new CategoryId(Guid.CreateVersion7()),
+                "Lamp"
+            ),
             TenantProbes.Subscription => new TenantProbeV1("probe"),
             _ => new TenantProbeSnapshotV1("probe"),
         };
@@ -146,9 +204,22 @@ public sealed class TenantDeliveryTests(AppFixture app) : HostTest<AppFixture>(a
         var context = new OperationContext(GatewayTestExtensions.TestActor, tenant);
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), context, TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True(
+            (
+                await catalog.SendAsync(
+                    new CreateCategoryCommand(category, "Lamps"),
+                    context,
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
         await Fixture.WaitForDeliveriesAsync(
-            () => catalog.SendAsync(new CreateProductCommand(product, category, "Lamp"), context, TestContext.Current.CancellationToken),
+            () =>
+                catalog.SendAsync(
+                    new CreateProductCommand(product, category, "Lamp"),
+                    context,
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
         return product;

@@ -26,18 +26,33 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
         Circulation.Fail(Circulation.Ledger, circulated.Text, runs: 1);
         await using var host = await StartStaleHostAsync(StaleTime, RetryDelay);
 
-        await Fixture.WaitForDeliveriesAsync(() => CirculateAsync(host, circulated), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => CirculateAsync(host, circulated),
+            TestContext.Current.CancellationToken
+        );
 
         // The retry waited out its whole delay, twice the stale time, and nothing handed it out before.
         var ledger = DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id);
         Assert.Equal(2, ledger.Count);
-        Assert.True(ledger[1] - ledger[0] >= RetryDelay, $"The retry ran {(ledger[1] - ledger[0]).TotalMilliseconds} ms after the failure.");
+        Assert.True(
+            ledger[1] - ledger[0] >= RetryDelay,
+            $"The retry ran {(ledger[1] - ledger[0]).TotalMilliseconds} ms after the failure."
+        );
         // A bounded wait for something that must not happen: past the stale time and several recovery polls, neither
         // handled delivery is handed out again.
-        await Task.Delay(StaleTime + TestDeliveryServiceCollectionExtensions.PollingTime * 5, TestContext.Current.CancellationToken);
+        await Task.Delay(
+            StaleTime + TestDeliveryServiceCollectionExtensions.PollingTime * 5,
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(2, DeliveryProbes.AttemptsOf(Circulation.Ledger, circulated.Id).Count);
         Assert.Single(DeliveryProbes.AttemptsOf(Circulation.Archive, circulated.Id));
-        Assert.Equal((1L, 1L), (await CopiesAsync(Circulation.Ledger, circulated.Text), await CopiesAsync(Circulation.Archive, circulated.Text)));
+        Assert.Equal(
+            (1L, 1L),
+            (
+                await CopiesAsync(Circulation.Ledger, circulated.Text),
+                await CopiesAsync(Circulation.Archive, circulated.Text)
+            )
+        );
     }
 
     [Fact]
@@ -48,7 +63,10 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
         var circulated = new NoteToCirculateDomainEvent(Unique());
         Circulation.Fail(Circulation.Ledger, circulated.Text, runs: 1);
         // Due a second after the stale time has passed since the delivery was stored, which WolverineFx 6.48 counted from.
-        await using var host = await StartStaleHostAsync(staleTime, staleTime + TimeSpan.FromSeconds(1));
+        await using var host = await StartStaleHostAsync(
+            staleTime,
+            staleTime + TimeSpan.FromSeconds(1)
+        );
 
         await CirculateAsync(host, circulated);
         await Fixture.WaitUntilAsync(
@@ -69,8 +87,12 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.Equal(2, Circulation.RunsOf(Circulation.Ledger, circulated.Text).Count);
         Assert.Equal(1L, await CopiesAsync(Circulation.Ledger, circulated.Text));
         Assert.Equal(
-            [["Handled"]],
-            await Fixture.RowsAsync($"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Ledger}/'")
+            [
+                ["Handled"],
+            ],
+            await Fixture.RowsAsync(
+                $"select status from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Ledger}/'"
+            )
         );
         Assert.Empty(await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken));
     }
@@ -83,20 +105,33 @@ public sealed class InboxStaleTimeTests(AppFixture app) : HostTest<AppFixture>(a
             Fixture.Logs,
             builder =>
             {
-                builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = staleTime);
-                builder.Services.Configure<PouryaKitMessagingOptions>(messaging => messaging.RetryDelays = [retryDelay]);
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+                    store.InboxStaleTime = staleTime
+                );
+                builder.Services.Configure<PouryaKitMessagingOptions>(messaging =>
+                    messaging.RetryDelays = [retryDelay]
+                );
             }
         );
         await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
         return host;
     }
 
-    private static Task<Result> CirculateAsync(WebApplication host, NoteToCirculateDomainEvent circulated) =>
-        host.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
-            .SendAsync(new WriteNoteRaisingCommand(circulated.Text, [circulated]), TestContext.Current.CancellationToken);
+    private static Task<Result> CirculateAsync(
+        WebApplication host,
+        NoteToCirculateDomainEvent circulated
+    ) =>
+        host
+            .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+            .SendAsync(
+                new WriteNoteRaisingCommand(circulated.Text, [circulated]),
+                TestContext.Current.CancellationToken
+            );
 
     private Task<long> CopiesAsync(string subscription, string text) =>
-        Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{Circulation.CopyOf(subscription, text)}'");
+        Fixture.ScalarAsync<long>(
+            $"select count(*) from stub.notes where text = '{Circulation.CopyOf(subscription, text)}'"
+        );
 
     private static string Unique() => $"note {Guid.CreateVersion7()}";
 }

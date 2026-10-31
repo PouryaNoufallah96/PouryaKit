@@ -35,7 +35,23 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     private static readonly OperationContext Context = new(Actor.Person("ada"), "acme");
 
     // ASP.NET Core's boundaries for http.server.request.duration, in seconds.
-    private static readonly double[] SecondScale = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10];
+    private static readonly double[] SecondScale =
+    [
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.075,
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        1,
+        2.5,
+        5,
+        7.5,
+        10,
+    ];
 
     private readonly WireMockServer _downstream = WireMockServer.Start();
 
@@ -51,7 +67,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     {
         var environment = await broker.CreateEnvironmentAsync();
         var exported = new ExportedTelemetry();
-        using var inventory = await environment.StartInventoryHostAsync(configure: builder => exported.AddTo(builder.Services));
+        using var inventory = await environment.StartInventoryHostAsync(configure: builder =>
+            exported.AddTo(builder.Services)
+        );
         await using var catalog = await environment.StartCatalogHostAsync();
         var product = Guid.CreateVersion7();
         var earlier = DeliveryProbes.ActivitiesOf(StockItems).Count;
@@ -60,14 +78,25 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await StockedAsync(environment, product);
         inventory.Services.GetRequiredService<MeterProvider>().ForceFlush();
 
-        var delivery = Assert.IsType<Activity>(Assert.Single(DeliveryProbes.ActivitiesOf(StockItems).Skip(earlier)));
-        Assert.Contains(exported.Activities, activity => activity.Source.Name == OperationTelemetry.SourceName && activity.SpanId == delivery.SpanId);
+        var delivery = Assert.IsType<Activity>(
+            Assert.Single(DeliveryProbes.ActivitiesOf(StockItems).Skip(earlier))
+        );
+        Assert.Contains(
+            exported.Activities,
+            activity =>
+                activity.Source.Name == OperationTelemetry.SourceName
+                && activity.SpanId == delivery.SpanId
+        );
         // Each command the delivery's Operation sends to its database is a span of Npgsql's own source, under the Operation's.
-        Assert.Contains(exported.Activities, activity => activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId);
+        Assert.Contains(
+            exported.Activities,
+            activity => activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId
+        );
         Assert.Contains(
             exported.Durations,
             duration =>
-                (duration.Module, duration.Operation, duration.Outcome) == ("InventoryModule", "Deliver", OperationTelemetry.Succeeded)
+                (duration.Module, duration.Operation, duration.Outcome)
+                    == ("InventoryModule", "Deliver", OperationTelemetry.Succeeded)
                 && duration.Count > 0
                 && duration.Sum > 0
         );
@@ -84,7 +113,10 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         using var inventory = await environment.StartInventoryHostAsync();
         using var client = inventory.GetTestClient();
         var database = new NpgsqlConnectionStringBuilder(environment.Inventory).Database;
-        var server = new NpgsqlConnectionStringBuilder(environment.Inventory) { Database = "postgres" }.ConnectionString;
+        var server = new NpgsqlConnectionStringBuilder(environment.Inventory)
+        {
+            Database = "postgres",
+        }.ConnectionString;
         List<(HttpStatusCode, HttpStatusCode)> answers = [await HealthAsync(client)];
 
         await Sql.RowsAsync(
@@ -97,7 +129,10 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         }
         finally
         {
-            await Sql.RowsAsync(server, $"alter database {database} with allow_connections true; select 1");
+            await Sql.RowsAsync(
+                server,
+                $"alter database {database} with allow_connections true; select 1"
+            );
         }
 
         answers.Add(await HealthAsync(client));
@@ -123,11 +158,18 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         using var anonymous = host.GetTestClient();
 
         using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
-        using var health = await anonymous.GetAsync("/health", TestContext.Current.CancellationToken);
+        using var health = await anonymous.GetAsync(
+            "/health",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(
             (HttpStatusCode.OK, "Healthy", HttpStatusCode.Unauthorized),
-            (alive.StatusCode, await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), health.StatusCode)
+            (
+                alive.StatusCode,
+                await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
+                health.StatusCode
+            )
         );
     }
 
@@ -149,13 +191,27 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = host.GetTestClient();
 
-        using var first = await anonymous.GetAsync("/public", TestContext.Current.CancellationToken);
+        using var first = await anonymous.GetAsync(
+            "/public",
+            TestContext.Current.CancellationToken
+        );
         using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
-        using var aliveAgain = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
-        using var second = await anonymous.GetAsync("/public", TestContext.Current.CancellationToken);
+        using var aliveAgain = await anonymous.GetAsync(
+            "/alive",
+            TestContext.Current.CancellationToken
+        );
+        using var second = await anonymous.GetAsync(
+            "/public",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(
-            (HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests),
+            (
+                HttpStatusCode.OK,
+                HttpStatusCode.OK,
+                HttpStatusCode.OK,
+                HttpStatusCode.TooManyRequests
+            ),
             (first.StatusCode, alive.StatusCode, aliveAgain.StatusCode, second.StatusCode)
         );
     }
@@ -169,18 +225,31 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         var environment = await broker.CreateEnvironmentAsync();
         await environment.MigrateInventoryAsync();
         using var process = InventoryProcess.Start(environment);
-        using var anonymous = new HttpClient { BaseAddress = await process.ListeningAsync(TestContext.Current.CancellationToken) };
+        using var anonymous = new HttpClient
+        {
+            BaseAddress = await process.ListeningAsync(TestContext.Current.CancellationToken),
+        };
         using var readiness = new HttpRequestMessage(HttpMethod.Get, "/health")
         {
-            Headers = { Authorization = new("Bearer", TestIssuer.Token(new() { ["sub"] = "ada" })) },
+            Headers =
+            {
+                Authorization = new("Bearer", TestIssuer.Token(new() { ["sub"] = "ada" })),
+            },
         };
 
         using var alive = await anonymous.GetAsync("/alive", TestContext.Current.CancellationToken);
-        using var health = await anonymous.SendAsync(readiness, TestContext.Current.CancellationToken);
+        using var health = await anonymous.SendAsync(
+            readiness,
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(
             (HttpStatusCode.OK, "Healthy", HttpStatusCode.NotFound),
-            (alive.StatusCode, await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), health.StatusCode)
+            (
+                alive.StatusCode,
+                await alive.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
+                health.StatusCode
+            )
         );
     }
 
@@ -203,16 +272,32 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp", created);
         await StockedAsync(environment, product);
 
-        var dispatched = sink.Events.Where(logged => Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher").ToList();
+        var dispatched = sink
+            .Events.Where(logged =>
+                Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher"
+            )
+            .ToList();
         Assert.Contains(
             dispatched,
-            logged => logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms" && Scalar(logged, "Operation") == "Deliver"
+            logged =>
+                logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
+                && Scalar(logged, "Operation") == "Deliver"
         );
         // The Operation's log scope: the delivery's own id, the correlation of the CreateProduct it continues, its Module.
-        var delivery = Assert.Single(DeliveryProbes.ContextsOf(StockItems), context => context.CorrelationId == created.CorrelationId);
+        var delivery = Assert.Single(
+            DeliveryProbes.ContextsOf(StockItems),
+            context => context.CorrelationId == created.CorrelationId
+        );
         Assert.Contains(
             ("Deliver", delivery.OperationId, created.CorrelationId, "InventoryModule"),
-            dispatched.Select(logged => (Scalar(logged, "Operation"), Id(logged, "OperationId"), Id(logged, "CorrelationId"), Scalar(logged, "Module")))
+            dispatched.Select(logged =>
+                (
+                    Scalar(logged, "Operation"),
+                    Id(logged, "OperationId"),
+                    Id(logged, "CorrelationId"),
+                    Scalar(logged, "Module")
+                )
+            )
         );
     }
 
@@ -220,10 +305,15 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     [Theory]
     [InlineData("GET", 4)]
     [InlineData("POST", 1)]
-    public async Task A_client_that_keeps_the_service_defaults_retries_a_read_through_one_pipeline_and_sends_a_write_once(string method, int attempts)
+    public async Task A_client_that_keeps_the_service_defaults_retries_a_read_through_one_pipeline_and_sends_a_write_once(
+        string method,
+        int attempts
+    )
     {
         RespondUnavailable(retryAfter: "0");
-        await using var host = await StartWebHostAsync(client => client.AddPouryaKitOperationContext());
+        await using var host = await StartWebHostAsync(client =>
+            client.AddPouryaKitOperationContext()
+        );
 
         using var response = await SendAsync(host, new HttpMethod(method));
 
@@ -235,7 +325,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     public async Task A_client_that_replaces_the_service_defaults_pipeline_makes_its_configured_attempts_each_with_the_operation_context()
     {
         RespondUnavailable();
-        await using var host = await StartWebHostAsync(client => OwnPipeline(client, TimeSpan.FromMilliseconds(10)));
+        await using var host = await StartWebHostAsync(client =>
+            OwnPipeline(client, TimeSpan.FromMilliseconds(10))
+        );
 
         using var response = await SendAsync(host, HttpMethod.Get);
 
@@ -255,8 +347,13 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
                         [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
                     },
                     request
-                        .Headers!.Where(header => header.Key.StartsWith("pouryakit-", StringComparison.OrdinalIgnoreCase))
-                        .ToDictionary(header => header.Key.ToLowerInvariant(), header => string.Join(",", header.Value))
+                        .Headers!.Where(header =>
+                            header.Key.StartsWith("pouryakit-", StringComparison.OrdinalIgnoreCase)
+                        )
+                        .ToDictionary(
+                            header => header.Key.ToLowerInvariant(),
+                            header => string.Join(",", header.Value)
+                        )
                 )
         );
     }
@@ -275,12 +372,17 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
 #pragma warning disable EXTEXP0001 // RemoveAllResilienceHandlers is experimental in Microsoft.Extensions.Http.Resilience.
             unnamed.RemoveAllResilienceHandlers();
 #pragma warning restore EXTEXP0001
-            refused = Record.Exception(() => unnamed.AddPouryaKitResilience(HttpReplay.AllRequests));
+            refused = Record.Exception(() =>
+                unnamed.AddPouryaKitResilience(HttpReplay.AllRequests)
+            );
         });
 
         using var response = await SendAsync(host, HttpMethod.Post);
 
-        Assert.Equal((typeof(ArgumentException), 1), (refused?.GetType(), _downstream.LogEntries.Count()));
+        Assert.Equal(
+            (typeof(ArgumentException), 1),
+            (refused?.GetType(), _downstream.LogEntries.Count())
+        );
     }
 
     // The downstream asks for a retry after one second; the call is cancelled once the first attempt arrived, not on a
@@ -289,8 +391,12 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     public async Task Cancelling_a_call_through_the_service_defaults_pipeline_stops_further_attempts()
     {
         RespondUnavailable(retryAfter: "1");
-        await using var host = await StartWebHostAsync(client => client.AddPouryaKitOperationContext());
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        await using var host = await StartWebHostAsync(client =>
+            client.AddPouryaKitOperationContext()
+        );
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         var call = SendAsync(host, HttpMethod.Get, cancellation.Token);
         while (!_downstream.LogEntries.Any() && !call.IsCompleted)
         {
@@ -317,7 +423,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
     }
 
-    private static async Task<(HttpStatusCode Alive, HttpStatusCode Health)> HealthAsync(HttpClient client)
+    private static async Task<(HttpStatusCode Alive, HttpStatusCode Health)> HealthAsync(
+        HttpClient client
+    )
     {
         using var alive = await client.GetAsync("/alive", TestContext.Current.CancellationToken);
         using var health = await client.GetAsync("/health", TestContext.Current.CancellationToken);
@@ -339,14 +447,19 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     // A Web Host in Production with the service defaults, composed as the templates' Program.cs composes one: the tests'
     // authentication scheme in place of the bearer one, authenticated by default, the Web defaults, and the middleware in
     // the templates' order. Built, not started.
-    private static WebApplication ComposeProductionWebHost(Action<WebApplicationBuilder>? configure = null)
+    private static WebApplication ComposeProductionWebHost(
+        Action<WebApplicationBuilder>? configure = null
+    )
     {
         var builder = WebApplication.CreateBuilder(["--environment", "Production"]);
         builder.WebHost.UseTestServer();
         builder.AddServiceDefaults();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(
+                TestAuthentication.SchemeName,
+                null
+            );
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitWeb();
         configure?.Invoke(builder);
@@ -380,12 +493,23 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     private void RespondUnavailable(string? retryAfter = null)
     {
         var response = Response.Create().WithStatusCode(HttpStatusCode.ServiceUnavailable);
-        _downstream.Given(Request.Create().WithPath("/downstream")).RespondWith(retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter));
+        _downstream
+            .Given(Request.Create().WithPath("/downstream"))
+            .RespondWith(
+                retryAfter is null ? response : response.WithHeader("Retry-After", retryAfter)
+            );
     }
 
-    private async Task<HttpResponseMessage> SendAsync(WebApplication host, HttpMethod method, CancellationToken? cancellationToken = null)
+    private async Task<HttpResponseMessage> SendAsync(
+        WebApplication host,
+        HttpMethod method,
+        CancellationToken? cancellationToken = null
+    )
     {
-        using var request = new HttpRequestMessage(method, $"{_downstream.Url}/downstream").WithOperationContext(Context);
+        using var request = new HttpRequestMessage(
+            method,
+            $"{_downstream.Url}/downstream"
+        ).WithOperationContext(Context);
         return await host
             .Services.GetRequiredService<IHttpClientFactory>()
             .CreateClient(Client)
@@ -393,10 +517,16 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     }
 
     private static string? Scalar(LogEvent logged, string property) =>
-        logged.Properties.TryGetValue(property, out var value) && value is ScalarValue { Value: string text } ? text : null;
+        logged.Properties.TryGetValue(property, out var value)
+        && value is ScalarValue { Value: string text }
+            ? text
+            : null;
 
     private static Guid Id(LogEvent logged, string property) =>
-        logged.Properties.TryGetValue(property, out var value) && value is ScalarValue { Value: Guid id } ? id : Guid.Empty;
+        logged.Properties.TryGetValue(property, out var value)
+        && value is ScalarValue { Value: Guid id }
+            ? id
+            : Guid.Empty;
 
     private sealed class RecordedEvents : ILogEventSink
     {
@@ -419,13 +549,27 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
 
         public void AddTo(IServiceCollection services)
         {
-            services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(new ActivityExporter(_activities))));
-            services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddReader(new BaseExportingMetricReader(new DurationExporter(_durations))));
+            services.ConfigureOpenTelemetryTracerProvider(tracing =>
+                tracing.AddProcessor(
+                    new SimpleActivityExportProcessor(new ActivityExporter(_activities))
+                )
+            );
+            services.ConfigureOpenTelemetryMeterProvider(metrics =>
+                metrics.AddReader(new BaseExportingMetricReader(new DurationExporter(_durations)))
+            );
         }
 
-        public sealed record Duration(string? Module, string? Operation, string? Outcome, long Count, double Sum, IReadOnlyList<double> Boundaries);
+        public sealed record Duration(
+            string? Module,
+            string? Operation,
+            string? Outcome,
+            long Count,
+            double Sum,
+            IReadOnlyList<double> Boundaries
+        );
 
-        private sealed class ActivityExporter(ConcurrentQueue<Activity> exported) : BaseExporter<Activity>
+        private sealed class ActivityExporter(ConcurrentQueue<Activity> exported)
+            : BaseExporter<Activity>
         {
             public override ExportResult Export(in Batch<Activity> batch)
             {
@@ -438,7 +582,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
             }
         }
 
-        private sealed class DurationExporter(ConcurrentQueue<Duration> exported) : BaseExporter<Metric>
+        private sealed class DurationExporter(ConcurrentQueue<Duration> exported)
+            : BaseExporter<Metric>
         {
             public override ExportResult Export(in Batch<Metric> batch)
             {

@@ -22,12 +22,19 @@ internal sealed class RealtimePublisher(
     INotificationDelivery? delivery = null
 ) : IRealtimePublisher
 {
-    public async Task<Result> PublishAsync<TEvent>(string channel, TEvent realtimeEvent, CancellationToken cancellationToken)
+    public async Task<Result> PublishAsync<TEvent>(
+        string channel,
+        TEvent realtimeEvent,
+        CancellationToken cancellationToken
+    )
         where TEvent : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(channel);
         ArgumentNullException.ThrowIfNull(realtimeEvent);
-        if (channel is RealtimeEvents.Connected or RealtimeEvents.Gap || channel.AsSpan().ContainsAny('\r', '\n'))
+        if (
+            channel is RealtimeEvents.Connected or RealtimeEvents.Gap
+            || channel.AsSpan().ContainsAny('\r', '\n')
+        )
         {
             throw new ArgumentException(
                 $"The channel {channel} holds a line break or is named as one of the Kit's own events, {RealtimeEvents.Connected} and {RealtimeEvents.Gap}. Name the channel otherwise.",
@@ -42,7 +49,11 @@ internal sealed class RealtimePublisher(
             );
         }
 
-        if (delivery?.Notification is null || operation.Context is not { } context || !operation.IsUnitOfWorkActive)
+        if (
+            delivery?.Notification is null
+            || operation.Context is not { } context
+            || !operation.IsUnitOfWorkActive
+        )
         {
             throw new InvalidOperationException(
                 $"{realtimeEvent.GetType().Name} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit."
@@ -50,7 +61,11 @@ internal sealed class RealtimePublisher(
         }
 
         var payload = JsonSerializer.SerializeToUtf8Bytes(
-            new RealtimeNotification(channel, context.Tenant ?? OperationContext.NoTenant, realtimeEvent),
+            new RealtimeNotification(
+                channel,
+                context.Tenant ?? OperationContext.NoTenant,
+                realtimeEvent
+            ),
             json.Value.SerializerOptions
         );
         if (payload.Length >= RealtimeNotification.Limit)
@@ -62,8 +77,12 @@ internal sealed class RealtimePublisher(
         await using var notify = connection.CreateCommand();
         notify.Transaction = transaction;
         notify.CommandText = "select pg_notify(@channel, @payload)";
-        notify.Parameters.Add(new NpgsqlParameter<string>("channel", RealtimeNotification.PostgresChannel));
-        notify.Parameters.Add(new NpgsqlParameter<string>("payload", Encoding.UTF8.GetString(payload)));
+        notify.Parameters.Add(
+            new NpgsqlParameter<string>("channel", RealtimeNotification.PostgresChannel)
+        );
+        notify.Parameters.Add(
+            new NpgsqlParameter<string>("payload", Encoding.UTF8.GetString(payload))
+        );
         await notify.ExecuteNonQueryAsync(cancellationToken);
         return Result.Success();
     }

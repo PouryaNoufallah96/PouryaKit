@@ -12,11 +12,19 @@ namespace Catalog.Products.Events.Notifications;
 internal sealed class PublishProductCreatedNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<ProductCreatedDomainEvent>
 {
-    public Task<Result> Handle(ProductCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        ProductCreatedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         events.Publish(
             domainEvent.Id,
-            new ProductCreatedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.ProductId.Value, domainEvent.Name)
+            new ProductCreatedV1(
+                domainEvent.Id,
+                domainEvent.OccurredOn,
+                domainEvent.ProductId.Value,
+                domainEvent.Name
+            )
         );
         events.Publish(
             domainEvent.Id,

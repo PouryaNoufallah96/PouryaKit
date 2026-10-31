@@ -23,7 +23,10 @@ public sealed class LocalizationTests(AppFixture app) : HostTest<AppFixture>(app
     [InlineData("de", English)]
     [InlineData("fa;q=0", English)]
     [InlineData("fa;q=0, en;q=0", English)]
-    public async Task The_same_key_resolves_in_the_culture_of_the_accept_language_header(string? acceptLanguage, string expected)
+    public async Task The_same_key_resolves_in_the_culture_of_the_accept_language_header(
+        string? acceptLanguage,
+        string expected
+    )
     {
         using var client = Fixture.Client("localized-caller");
         if (acceptLanguage is not null)
@@ -31,7 +34,10 @@ public sealed class LocalizationTests(AppFixture app) : HostTest<AppFixture>(app
             client.DefaultRequestHeaders.Add("Accept-Language", acceptLanguage);
         }
 
-        var message = await client.GetFromJsonAsync<string>("/stub/greeting", TestContext.Current.CancellationToken);
+        var message = await client.GetFromJsonAsync<string>(
+            "/stub/greeting",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(expected, message);
     }
@@ -58,8 +64,14 @@ public sealed class LocalizationTests(AppFixture app) : HostTest<AppFixture>(app
         using var english = Fixture.Client(caller);
         english.DefaultRequestHeaders.Add("Accept-Language", "en");
 
-        var first = await persian.GetFromJsonAsync<string>("/stub/greeting/cached", TestContext.Current.CancellationToken);
-        var second = await english.GetFromJsonAsync<string>("/stub/greeting/cached", TestContext.Current.CancellationToken);
+        var first = await persian.GetFromJsonAsync<string>(
+            "/stub/greeting/cached",
+            TestContext.Current.CancellationToken
+        );
+        var second = await english.GetFromJsonAsync<string>(
+            "/stub/greeting/cached",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(Persian, first);
         Assert.Equal(English, second);

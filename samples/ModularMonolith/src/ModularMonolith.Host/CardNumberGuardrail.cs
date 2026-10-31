@@ -15,14 +15,20 @@ public sealed partial class CardNumberGuardrail : IChatGuardrail
 {
     public const string Refusal = "Card numbers are not taken here: ask again without one.";
 
-    public Task<string?> CheckRequestAsync(IReadOnlyList<ChatMessage> messages, CancellationToken cancellationToken) =>
-        Task.FromResult(HoldsCardNumber(messages) ? Refusal : null);
+    public Task<string?> CheckRequestAsync(
+        IReadOnlyList<ChatMessage> messages,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(HoldsCardNumber(messages) ? Refusal : null);
 
-    public Task<string?> CheckResponseAsync(ChatResponse response, CancellationToken cancellationToken) =>
-        Task.FromResult(HoldsCardNumber(response.Messages) ? Refusal : null);
+    public Task<string?> CheckResponseAsync(
+        ChatResponse response,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(HoldsCardNumber(response.Messages) ? Refusal : null);
 
     private static bool HoldsCardNumber(IEnumerable<ChatMessage> messages) =>
-        messages.SelectMany(message => message.Contents).Any(content => CardNumber().IsMatch(TextOf(content)));
+        messages
+            .SelectMany(message => message.Contents)
+            .Any(content => CardNumber().IsMatch(TextOf(content)));
 
     // A message's Text is its TextContent alone: a tool call's arguments and a tool's answer are read as their JSON.
     private static string TextOf(AIContent content) =>

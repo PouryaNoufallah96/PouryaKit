@@ -30,7 +30,10 @@ internal sealed class ReadOperationContextEndpoint : IEndpoint
         OperationContext context,
         IGatewayProcessor<StubModule> stub,
         CancellationToken cancellationToken
-    ) => (await stub.QueryAsync(new ReadOperationContextQuery(), context, cancellationToken)).ToHttpResult();
+    ) =>
+        (
+            await stub.QueryAsync(new ReadOperationContextQuery(), context, cancellationToken)
+        ).ToHttpResult();
 }
 
 internal sealed class RejectedNoteEndpoint : IEndpoint
@@ -38,9 +41,17 @@ internal sealed class RejectedNoteEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder routes) =>
         routes.MapPost(
             "/notes/rejected",
-            async (OperationContext context, IGatewayProcessor<StubModule> stub, CancellationToken cancellationToken) =>
+            async (
+                OperationContext context,
+                IGatewayProcessor<StubModule> stub,
+                CancellationToken cancellationToken
+            ) =>
                 (
-                    await stub.SendAsync(new WriteNoteThenFailCommand("rejected", Ending.Fail), context, cancellationToken)
+                    await stub.SendAsync(
+                        new WriteNoteThenFailCommand("rejected", Ending.Fail),
+                        context,
+                        cancellationToken
+                    )
                 ).ToHttpResult()
         );
 }
@@ -50,9 +61,17 @@ internal sealed class ThrowingNoteEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder routes) =>
         routes.MapPost(
             "/notes/throwing",
-            async (OperationContext context, IGatewayProcessor<StubModule> stub, CancellationToken cancellationToken) =>
+            async (
+                OperationContext context,
+                IGatewayProcessor<StubModule> stub,
+                CancellationToken cancellationToken
+            ) =>
                 (
-                    await stub.SendAsync(new WriteNoteThenFailCommand("throwing", Ending.Throw), context, cancellationToken)
+                    await stub.SendAsync(
+                        new WriteNoteThenFailCommand("throwing", Ending.Throw),
+                        context,
+                        cancellationToken
+                    )
                 ).ToHttpResult()
         );
 }
@@ -71,7 +90,10 @@ internal sealed class CountedNoteEndpoint : IEndpoint
         OperationContext context,
         IGatewayProcessor<StubModule> stub,
         CancellationToken cancellationToken
-    ) => (await stub.SendAsync(new CountNoteCommand(text), context, cancellationToken)).ToHttpResult();
+    ) =>
+        (
+            await stub.SendAsync(new CountNoteCommand(text), context, cancellationToken)
+        ).ToHttpResult();
 }
 
 /// <summary>Registered only by a test that builds a Host of its own, to map <see cref="PlainAnonymousEndpoint"/>.</summary>
@@ -135,5 +157,6 @@ internal sealed class MixedErrorsEndpoint : IEndpoint
         Error.Conflict("Note.Rejected", "The note was rejected."),
     ];
 
-    public void Map(IEndpointRouteBuilder routes) => routes.MapGet("/mixed-errors", () => ((Result)Errors).ToHttpResult());
+    public void Map(IEndpointRouteBuilder routes) =>
+        routes.MapGet("/mixed-errors", () => ((Result)Errors).ToHttpResult());
 }

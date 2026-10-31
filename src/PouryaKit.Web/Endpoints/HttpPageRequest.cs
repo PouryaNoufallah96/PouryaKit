@@ -55,7 +55,9 @@ public sealed class HttpPageRequest
                 {
                     "asc" => SortDirection.Ascending,
                     "desc" => SortDirection.Descending,
-                    _ => throw new KitBadRequestException("The direction query parameter is asc or desc."),
+                    _ => throw new KitBadRequestException(
+                        "The direction query parameter is asc or desc."
+                    ),
                 },
             };
         }
@@ -70,17 +72,24 @@ public sealed class HttpPageRequest
 
             // filter[{field}][{operator}]
             var parts = key[FilterPrefix.Length..].Split("][");
-            if (parts is not [{ Length: > 0 } field, [.. var name, ']']] || !FilterOperator.TryParseName(name, out var filterOperator))
+            if (
+                parts is not [{ Length: > 0 } field, [.. var name, ']']]
+                || !FilterOperator.TryParseName(name, out var filterOperator)
+            )
             {
                 throw new KitBadRequestException(
                     "A filter query parameter is filter[field][operator], with an operator such as eq or contains."
                 );
             }
 
-            filters.AddRange(values.Select(value => new PageFilter(field, filterOperator, value ?? "")));
+            filters.AddRange(
+                values.Select(value => new PageFilter(field, filterOperator, value ?? ""))
+            );
         }
 
-        return ValueTask.FromResult<HttpPageRequest?>(new HttpPageRequest(request with { Filters = filters }));
+        return ValueTask.FromResult<HttpPageRequest?>(
+            new HttpPageRequest(request with { Filters = filters })
+        );
     }
 
     private static string? Single(IQueryCollection query, string key) =>
@@ -91,7 +100,12 @@ public sealed class HttpPageRequest
             : null;
 
     private static int WholeNumber(string key, string text) =>
-        int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var number)
+        int.TryParse(
+            text,
+            NumberStyles.AllowLeadingSign,
+            CultureInfo.InvariantCulture,
+            out var number
+        )
             ? number
             : throw new KitBadRequestException($"The {key} query parameter is a whole number.");
 }

@@ -29,9 +29,19 @@ public static class RealtimeServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
 
-            if (services.Select(descriptor => descriptor.ImplementationInstance).OfType<RealtimeConnection>().FirstOrDefault() is { } listened)
+            if (
+                services
+                    .Select(descriptor => descriptor.ImplementationInstance)
+                    .OfType<RealtimeConnection>()
+                    .FirstOrDefault() is
+                { } listened
+            )
             {
-                return string.Equals(listened.Name, connectionName, StringComparison.OrdinalIgnoreCase)
+                return string.Equals(
+                    listened.Name,
+                    connectionName,
+                    StringComparison.OrdinalIgnoreCase
+                )
                     ? services
                     : throw new InvalidOperationException(
                         $"Realtime already listens over the connection string {listened.Name}, so it cannot also listen over {connectionName}. A Host listens over one connection string."
@@ -42,7 +52,9 @@ public static class RealtimeServiceCollectionExtensions
             services.AddSingleton<RealtimeClients>();
             services.AddHostedService<RealtimeListener>();
             services.AddScoped<IRealtimePublisher, RealtimePublisher>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RealtimeConnectionCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, RealtimeConnectionCheck>()
+            );
             return services;
         }
     }

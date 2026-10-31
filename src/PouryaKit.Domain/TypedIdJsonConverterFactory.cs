@@ -11,14 +11,21 @@ namespace PouryaKit.Domain;
 /// </summary>
 internal sealed class TypedIdJsonConverterFactory : JsonConverterFactory
 {
-    public override bool CanConvert(Type typeToConvert) => TypedId.GetValueType(typeToConvert) is not null;
+    public override bool CanConvert(Type typeToConvert) =>
+        TypedId.GetValueType(typeToConvert) is not null;
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         var valueType =
             TypedId.GetValueType(typeToConvert)
-            ?? throw new ArgumentException($"{typeToConvert.Name} is not a typed ID.", nameof(typeToConvert));
-        return (JsonConverter)Activator.CreateInstance(typeof(Converter<,>).MakeGenericType(typeToConvert, valueType))!;
+            ?? throw new ArgumentException(
+                $"{typeToConvert.Name} is not a typed ID.",
+                nameof(typeToConvert)
+            );
+        return (JsonConverter)
+            Activator.CreateInstance(
+                typeof(Converter<,>).MakeGenericType(typeToConvert, valueType)
+            )!;
     }
 
     private sealed class Converter<TId, TValue> : JsonConverter<TId>
@@ -26,17 +33,30 @@ internal sealed class TypedIdJsonConverterFactory : JsonConverterFactory
         where TValue : notnull
     {
         // Through JsonSerializer, not the value converter, so the options' number handling applies as to a raw value.
-        public override TId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-            Create(JsonSerializer.Deserialize<TValue>(ref reader, options)!);
+        public override TId Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options
+        ) => Create(JsonSerializer.Deserialize<TValue>(ref reader, options)!);
 
-        public override void Write(Utf8JsonWriter writer, TId value, JsonSerializerOptions options) =>
-            JsonSerializer.Serialize(writer, value.Value, options);
+        public override void Write(
+            Utf8JsonWriter writer,
+            TId value,
+            JsonSerializerOptions options
+        ) => JsonSerializer.Serialize(writer, value.Value, options);
 
-        public override TId ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        public override TId ReadAsPropertyName(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options
+        ) =>
             Create(ValueConverter(options).ReadAsPropertyName(ref reader, typeof(TValue), options));
 
-        public override void WriteAsPropertyName(Utf8JsonWriter writer, TId value, JsonSerializerOptions options) =>
-            ValueConverter(options).WriteAsPropertyName(writer, value.Value, options);
+        public override void WriteAsPropertyName(
+            Utf8JsonWriter writer,
+            TId value,
+            JsonSerializerOptions options
+        ) => ValueConverter(options).WriteAsPropertyName(writer, value.Value, options);
 
         private static JsonConverter<TValue> ValueConverter(JsonSerializerOptions options) =>
             (JsonConverter<TValue>)options.GetConverter(typeof(TValue));

@@ -12,7 +12,8 @@ internal static class InventoryProcess
             new Dictionary<string, string>(TestIssuer.HostEnvironment)
             {
                 ["ConnectionStrings__app"] = environment.Inventory,
-                [$"ConnectionStrings__{InventoryHost.BrokerConnection}"] = environment.Broker.ToString(),
+                [$"ConnectionStrings__{InventoryHost.BrokerConnection}"] =
+                    environment.Broker.ToString(),
             }
         );
 }

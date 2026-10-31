@@ -7,7 +7,10 @@ namespace Catalog.Contracts.Products;
 public interface ICatalogProducts
 {
     /// <summary>The product with <paramref name="productId"/>, or null when Catalog has no such product.</summary>
-    Task<ProductSummary?> FindProductAsync(Guid productId, CancellationToken cancellationToken = default);
+    Task<ProductSummary?> FindProductAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public sealed record ProductSummary(Guid Id, string Name);

@@ -29,9 +29,18 @@ public sealed class SagaBuilder<TSaga>
                 typeof(SagaInput<TSaga, TEvent>),
                 integrationEvent =>
                     Convert.ToString(key((TEvent)integrationEvent), CultureInfo.InvariantCulture)
-                    ?? throw new InvalidOperationException($"The Saga {typeof(TSaga).FullName} found no business id in {typeof(TEvent).FullName}."),
+                    ?? throw new InvalidOperationException(
+                        $"The Saga {typeof(TSaga).FullName} found no business id in {typeof(TEvent).FullName}."
+                    ),
                 (integrationEvent, sagaId, tenant, correlation, eventId) =>
-                    new SagaInput<TSaga, TEvent>(sagaId, tenant, correlation, typeof(TEvent).ToMessageTypeName(), eventId, (TEvent)integrationEvent)
+                    new SagaInput<TSaga, TEvent>(
+                        sagaId,
+                        tenant,
+                        correlation,
+                        typeof(TEvent).ToMessageTypeName(),
+                        eventId,
+                        (TEvent)integrationEvent
+                    )
             )
         );
         return this;

@@ -35,16 +35,31 @@ internal sealed class SnapshotKeyTenancyCheck : ICompositionCheck
 
             // A declaration without a Module in a Host of Modules has no DbContext of its own: ModuleOwnershipCheck's line.
             DbContextConnection[] own = module is not null
-                ? services.GetKeyedService<DbContextConnection>(module) is { } connection ? [connection] : []
-                : composition.Modules.Count == 0 ? [.. services.GetServices<DbContextConnection>()]
-                : [];
-            var roots = own.Where(connection => connection.Name is not { } name || !string.IsNullOrWhiteSpace(configuration.GetConnectionString(name)))
-                .SelectMany(connection => ((DbContext)scope.ServiceProvider.GetRequiredService(connection.DbContext)).Model.GetEntityTypes())
+                ? services.GetKeyedService<DbContextConnection>(module) is { } connection
+                    ? [connection]
+                    : []
+                : composition.Modules.Count == 0
+                    ? [.. services.GetServices<DbContextConnection>()]
+                    : [];
+            var roots = own.Where(connection =>
+                    connection.Name is not { } name
+                    || !string.IsNullOrWhiteSpace(configuration.GetConnectionString(name))
+                )
+                .SelectMany(connection =>
+                    (
+                        (DbContext)scope.ServiceProvider.GetRequiredService(connection.DbContext)
+                    ).Model.GetEntityTypes()
+                )
                 .Where(type => !type.IsOwned() && type.BaseType is null)
                 .ToList();
             foreach (var aggregate in declared)
             {
-                foreach (var root in roots.Where(root => root.GetDerivedTypesInclusive().Any(type => aggregate.IsAssignableFrom(type.ClrType))))
+                foreach (
+                    var root in roots.Where(root =>
+                        root.GetDerivedTypesInclusive()
+                            .Any(type => aggregate.IsAssignableFrom(type.ClrType))
+                    )
+                )
                 {
                     var key = root.FindPrimaryKey()!.Properties;
                     if (!IsTenantUnique(root, key))
@@ -57,6 +72,12 @@ internal sealed class SnapshotKeyTenancyCheck : ICompositionCheck
     }
 
     private static bool IsTenantUnique(IEntityType root, IReadOnlyList<IProperty> key) =>
-        (typeof(ITenantScoped).IsAssignableFrom(root.ClrType) && key.Any(property => property.Name == nameof(ITenantScoped.Tenant)))
-        || (key is [var only] && (only.GetTypeMapping().Converter?.ProviderClrType ?? only.ClrType) == typeof(Guid));
+        (
+            typeof(ITenantScoped).IsAssignableFrom(root.ClrType)
+            && key.Any(property => property.Name == nameof(ITenantScoped.Tenant))
+        )
+        || (
+            key is [var only]
+            && (only.GetTypeMapping().Converter?.ProviderClrType ?? only.ClrType) == typeof(Guid)
+        );
 }

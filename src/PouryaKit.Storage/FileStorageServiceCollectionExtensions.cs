@@ -16,11 +16,17 @@ public static class FileStorageServiceCollectionExtensions
         /// it, when it registers another <see cref="IFileStorage"/>, before or after this call, a second call included,
         /// and naming the contract when it removes every one.
         /// </summary>
-        public IServiceCollection AddPouryaKitFileStorage(Func<IServiceProvider, IFileStorage> factory)
+        public IServiceCollection AddPouryaKitFileStorage(
+            Func<IServiceProvider, IFileStorage> factory
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(factory);
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new OneProviderCheck<IFileStorage>("AddPouryaKitFileStorage", "file storage")));
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck>(
+                    new OneProviderCheck<IFileStorage>("AddPouryaKitFileStorage", "file storage")
+                )
+            );
             services.AddSingleton(factory);
             return services;
         }

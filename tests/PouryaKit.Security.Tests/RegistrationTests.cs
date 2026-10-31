@@ -22,14 +22,19 @@ public sealed class RegistrationTests
                 typeof(GenericCommand<>).FullName,
                 typeof(NotAnOperation).FullName,
             ],
-            thrown.Message.Split(Environment.NewLine).Select(line => line.Split(' ')[0]).Order(StringComparer.Ordinal)
+            thrown
+                .Message.Split(Environment.NewLine)
+                .Select(line => line.Split(' ')[0])
+                .Order(StringComparer.Ordinal)
         );
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_command_declared_in_another_assembly_and_handled_in_the_scanned_one_is_permission_checked(bool granted)
+    public async Task A_command_declared_in_another_assembly_and_handled_in_the_scanned_one_is_permission_checked(
+        bool granted
+    )
     {
         var module = typeof(HandledCommands).Assembly;
         await using var host = new ServiceCollection()
@@ -38,8 +43,12 @@ public sealed class RegistrationTests
             .AddLogging()
             .AddScoped<HandledCommands>()
             .AddScoped<IUnitOfWork, UnitOfWorkStandIn>()
-            .AddSingleton<IActorPermissions>(new ActorPermissionsStandIn(granted ? [RevokeAccessCommand.Permission] : []))
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+            .AddSingleton<IActorPermissions>(
+                new ActorPermissionsStandIn(granted ? [RevokeAccessCommand.Permission] : [])
+            )
+            .BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }
+            );
         using var scope = host.CreateScope();
         scope.ServiceProvider.BeginOperation(new OperationContext(Actor.Person("ada")));
 
@@ -63,14 +72,19 @@ public sealed class RegistrationTests
 
 internal sealed class ActorPermissionsStandIn(HashSet<string> held) : IActorPermissions
 {
-    public Task<bool> HasPermissionAsync(OperationContext context, string permission, CancellationToken cancellationToken) =>
-        Task.FromResult(held.Contains(permission));
+    public Task<bool> HasPermissionAsync(
+        OperationContext context,
+        string permission,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(held.Contains(permission));
 }
 
 internal sealed class UnitOfWorkStandIn : IUnitOfWork
 {
-    public Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken) =>
-        command(cancellationToken);
+    public Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    ) => command(cancellationToken);
 }
 
 [RequiresPermission("tests.declared")]
@@ -88,6 +102,8 @@ internal sealed class NotAnOperation;
 // Brings an abstract command another assembly declares into the assembly's dispatchable set.
 internal sealed class AbstractContractHandler : CommandHandler<AbstractContractCommand>
 {
-    public override Task<Result> Handle(AbstractContractCommand command, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success());
+    public override Task<Result> Handle(
+        AbstractContractCommand command,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }

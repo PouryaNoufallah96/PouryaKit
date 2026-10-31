@@ -19,12 +19,14 @@ public static class PredicateBuilder
         /// <summary>
         /// True when both predicates are; <paramref name="right"/> is evaluated only when the left predicate is true.
         /// </summary>
-        public Expression<Func<T, bool>> AndAlso(Expression<Func<T, bool>> right) => Compose(left, right, Expression.AndAlso);
+        public Expression<Func<T, bool>> AndAlso(Expression<Func<T, bool>> right) =>
+            Compose(left, right, Expression.AndAlso);
 
         /// <summary>
         /// True when either predicate is; <paramref name="right"/> is evaluated only when the left predicate is false.
         /// </summary>
-        public Expression<Func<T, bool>> OrElse(Expression<Func<T, bool>> right) => Compose(left, right, Expression.OrElse);
+        public Expression<Func<T, bool>> OrElse(Expression<Func<T, bool>> right) =>
+            Compose(left, right, Expression.OrElse);
     }
 
     private static Expression<Func<T, bool>> Compose<T>(
@@ -43,8 +45,10 @@ public static class PredicateBuilder
         return Expression.Lambda<Func<T, bool>>(combine(leftBody, rightBody), parameter);
     }
 
-    private sealed class ParameterReplacer(ParameterExpression from, ParameterExpression to) : ExpressionVisitor
+    private sealed class ParameterReplacer(ParameterExpression from, ParameterExpression to)
+        : ExpressionVisitor
     {
-        protected override Expression VisitParameter(ParameterExpression node) => node == from ? to : node;
+        protected override Expression VisitParameter(ParameterExpression node) =>
+            node == from ? to : node;
     }
 }

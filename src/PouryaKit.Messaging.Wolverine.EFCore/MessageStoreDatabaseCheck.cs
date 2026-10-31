@@ -21,7 +21,11 @@ namespace PouryaKit.Messaging.Wolverine.EFCore;
 // the hosts, ports and database they name; nothing resolves a host name, so localhost and 127.0.0.1 differ. A string that
 // names no database names its user's, as Npgsql and PostgreSQL read it; one that names neither leaves the database to the
 // client's user, which the string does not show, so it fails the build too, asking for the database to be named.
-internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, string storeConnectionString, string storeSchema) : ICompositionCheck
+internal sealed class MessageStoreDatabaseCheck(
+    string storeConnectionName,
+    string storeConnectionString,
+    string storeSchema
+) : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
@@ -37,7 +41,10 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
         foreach (var connection in services.GetServices<DbContextConnection>())
         {
             // A missing or blank named one is DbContextConnectionsCheck's line, which AddPouryaKitEfCore registers with every record.
-            if (connection.Name is { } name && string.IsNullOrWhiteSpace(configuration.GetConnectionString(name)))
+            if (
+                connection.Name is { } name
+                && string.IsNullOrWhiteSpace(configuration.GetConnectionString(name))
+            )
             {
                 continue;
             }
@@ -58,7 +65,10 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
             // configuration lacks fails the build as EF Core's own exception. The connection is not opened; Npgsql's provider
             // gives a DbContext with no string, connection or data source one with an empty string, which names no database.
             var context = (DbContext)scope.ServiceProvider.GetRequiredService(connection.DbContext);
-            if (PostgresDatabase.Of(context.Database.GetDbConnection().ConnectionString ?? "") is not { } database)
+            if (
+                PostgresDatabase.Of(context.Database.GetDbConnection().ConnectionString ?? "")
+                is not { } database
+            )
             {
                 yield return $"{stored}, which names neither a database nor a user, so its database is left to the client's user and cannot be compared with the message store's, the database {store}. {fix}";
             }
@@ -80,7 +90,10 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
                 yield return $"{outbox.Writer} is built over the database {database}, but UsePouryaKitWolverine keeps the message store over the connection string {storeConnectionName}, the database {store}, so its Outbox would write envelopes to its own database, where the store never delivers them. Use one database for both.";
             }
 
-            if (outbox.Schema(services) is var schema && !string.Equals(schema, storeSchema, StringComparison.Ordinal))
+            if (
+                outbox.Schema(services) is var schema
+                && !string.Equals(schema, storeSchema, StringComparison.Ordinal)
+            )
             {
                 yield return $"{outbox.Writer} keeps the message store's tables in the schema {schema ?? "of its own store"}, but UsePouryaKitWolverine keeps them in {storeSchema}, so Wolverine would find two main message stores when the Host starts. Give both the schema {storeSchema}.";
             }
@@ -88,7 +101,10 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
     }
 
     // A database is its servers, each a host and a port, in order, and its name.
-    private sealed record PostgresDatabase(IReadOnlyList<(string Host, int Port)> Servers, string Name)
+    private sealed record PostgresDatabase(
+        IReadOnlyList<(string Host, int Port)> Servers,
+        string Name
+    )
     {
         // Null when the string names neither a database nor a user.
         public static PostgresDatabase? Of(string connectionString)
@@ -98,7 +114,11 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
                 ? new(
                     [
                         .. (settings.Host ?? "")
-                            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                            .Split(
+                                ',',
+                                StringSplitOptions.TrimEntries
+                                    | StringSplitOptions.RemoveEmptyEntries
+                            )
                             .Select(host => Server(host, settings.Port))
                             .OrderBy(server => server.Host, StringComparer.Ordinal)
                             .ThenBy(server => server.Port),
@@ -108,9 +128,11 @@ internal sealed class MessageStoreDatabaseCheck(string storeConnectionName, stri
                 : null;
         }
 
-        public bool Matches(PostgresDatabase other) => Servers.SequenceEqual(other.Servers) && Name == other.Name;
+        public bool Matches(PostgresDatabase other) =>
+            Servers.SequenceEqual(other.Servers) && Name == other.Name;
 
-        public override string ToString() => $"{string.Join(',', Servers.Select(server => $"{server.Host}:{server.Port}"))}/{Name}";
+        public override string ToString() =>
+            $"{string.Join(',', Servers.Select(server => $"{server.Host}:{server.Port}"))}/{Name}";
 
         // Npgsql's reading of one host (NpgsqlConnectionStringBuilder.IsUnixSocket, then TrySplitHostPort). A rooted path, or
         // one starting with @, is the directory of a Unix socket, whose name the separate port completes: its case is kept and

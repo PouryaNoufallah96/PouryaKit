@@ -3,11 +3,11 @@ using System.Net.Http.Json;
 using System.Net.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using PouryaKit.Cqrs;
 using PouryaKit.Messaging;
 using PouryaKit.Testing;
 using PouryaKit.Web;
-using Polly;
 using WireMock;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -79,10 +79,14 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task Cancelling_the_call_stops_further_attempts()
     {
         RespondInTurn("GET", 503);
-        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         using var services = Clients(cancelOnFirstResponse: cancellation);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => SendAsync(services, HttpMethod.Get, cancellation.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            SendAsync(services, HttpMethod.Get, cancellation.Token)
+        );
 
         Assert.Single(Journal());
     }
@@ -91,7 +95,9 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     [Theory]
     [InlineData("POST")]
     [InlineData("PROPPATCH")]
-    public async Task An_unsafe_write_is_sent_once_by_default_and_retried_only_by_a_replay_safe_client(string method)
+    public async Task An_unsafe_write_is_sent_once_by_default_and_retried_only_by_a_replay_safe_client(
+        string method
+    )
     {
         RespondInTurn(method, 503, 200);
         using var safeMethods = Clients();
@@ -111,7 +117,12 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     // its last registration, either way round.
     [Theory]
     [InlineData(HttpReplay.SafeMethods, HttpReplay.AllRequests, HttpStatusCode.OK, 2)]
-    [InlineData(HttpReplay.AllRequests, HttpReplay.SafeMethods, HttpStatusCode.ServiceUnavailable, 1)]
+    [InlineData(
+        HttpReplay.AllRequests,
+        HttpReplay.SafeMethods,
+        HttpStatusCode.ServiceUnavailable,
+        1
+    )]
     public async Task The_replay_policy_of_a_clients_last_registration_decides_whether_a_write_is_retried(
         HttpReplay first,
         HttpReplay last,
@@ -133,7 +144,9 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     {
         var client = new ServiceCollection().AddHttpClient(Client);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => client.AddPouryaKitResilience((HttpReplay)2));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            client.AddPouryaKitResilience((HttpReplay)2)
+        );
     }
 
     // A claims-derived value that could end a header line, or that HTTP cannot carry as it is, fails the call before
@@ -158,9 +171,10 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     {
         RespondInTurn("GET", 200);
         using var services = Clients();
-        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_downstream.Url}/downstream").WithOperationContext(
-            new OperationContext(Actor.Person(actor), tenant)
-        );
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{_downstream.Url}/downstream"
+        ).WithOperationContext(new OperationContext(Actor.Person(actor), tenant));
 
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             services
@@ -183,16 +197,24 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         listener.Start();
         var connections = 0;
         // Runs until the listener is disposed with the test.
-        _ = Task.Run(async () =>
-        {
-            while (true)
+        _ = Task.Run(
+            async () =>
             {
-                using var connection = await listener.AcceptSocketAsync(TestContext.Current.CancellationToken);
-                Interlocked.Increment(ref connections);
-                await connection.ReceiveAsync(new byte[4096], TestContext.Current.CancellationToken);
-                connection.LingerState = new LingerOption(true, 0);
-            }
-        }, TestContext.Current.CancellationToken);
+                while (true)
+                {
+                    using var connection = await listener.AcceptSocketAsync(
+                        TestContext.Current.CancellationToken
+                    );
+                    Interlocked.Increment(ref connections);
+                    await connection.ReceiveAsync(
+                        new byte[4096],
+                        TestContext.Current.CancellationToken
+                    );
+                    connection.LingerState = new LingerOption(true, 0);
+                }
+            },
+            TestContext.Current.CancellationToken
+        );
         using var services = Clients();
         var url = $"http://{listener.LocalEndpoint}/downstream";
 
@@ -248,9 +270,18 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
 
         var received = Journal();
         Assert.Equal(2, received.Count);
-        Assert.All(received, request => Assert.DoesNotContain("authorization", Headers(request).Keys));
+        Assert.All(
+            received,
+            request => Assert.DoesNotContain("authorization", Headers(request).Keys)
+        );
         Assert.Equal(
-            sent.Select(context => (context!.Actor.Id, context.CorrelationId.ToString(), context.OperationId.ToString()))
+            sent.Select(context =>
+                    (
+                        context!.Actor.Id,
+                        context.CorrelationId.ToString(),
+                        context.OperationId.ToString()
+                    )
+                )
                 .Order(),
             received
                 .Select(ContextHeaders)
@@ -270,7 +301,9 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     {
         for (var turn = 0; turn < statuses.Length; turn++)
         {
-            var mapping = _downstream.Given(Request.Create().WithPath("/downstream").UsingMethod(method)).InScenario(method);
+            var mapping = _downstream
+                .Given(Request.Create().WithPath("/downstream").UsingMethod(method))
+                .InScenario(method);
             if (turn > 0)
             {
                 mapping = mapping.WhenStateIs($"answered {turn}");
@@ -327,7 +360,8 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
     }
 
     // Innermost, below the resilience handler: cancels the call once the first attempt's response has arrived.
-    private sealed class CancelOnFirstResponse(CancellationTokenSource cancellation) : DelegatingHandler
+    private sealed class CancelOnFirstResponse(CancellationTokenSource cancellation)
+        : DelegatingHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -346,18 +380,27 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         CancellationToken? cancellationToken = null
     )
     {
-        using var request = new HttpRequestMessage(method, $"{_downstream.Url}/downstream").WithOperationContext(Context);
+        using var request = new HttpRequestMessage(
+            method,
+            $"{_downstream.Url}/downstream"
+        ).WithOperationContext(Context);
         return await services
             .GetRequiredService<IHttpClientFactory>()
             .CreateClient(Client)
             .SendAsync(request, cancellationToken ?? TestContext.Current.CancellationToken);
     }
 
-    private List<IRequestMessage> Journal() => [.. _downstream.LogEntries.Select(entry => entry.RequestMessage!)];
+    private List<IRequestMessage> Journal() =>
+        [.. _downstream.LogEntries.Select(entry => entry.RequestMessage!)];
 
     private static Dictionary<string, string> Headers(IRequestMessage request) =>
-        request.Headers!.ToDictionary(header => header.Key.ToLowerInvariant(), header => string.Join(",", header.Value));
+        request.Headers!.ToDictionary(
+            header => header.Key.ToLowerInvariant(),
+            header => string.Join(",", header.Value)
+        );
 
     private static Dictionary<string, string> ContextHeaders(IRequestMessage request) =>
-        Headers(request).Where(header => header.Key.StartsWith("pouryakit-", StringComparison.Ordinal)).ToDictionary();
+        Headers(request)
+            .Where(header => header.Key.StartsWith("pouryakit-", StringComparison.Ordinal))
+            .ToDictionary();
 }

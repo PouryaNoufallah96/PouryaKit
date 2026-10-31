@@ -9,9 +9,13 @@ namespace Inventory.StockItems.Features.GetStockItem;
 // Inventory is not tenant-scoped, so nothing filters its reads: the SQL compares the tenant the delivery stored with the
 // one the lease bound, the Operation's. A tenantless Operation's lease binds the empty string, which no stored tenant
 // equals, and a stock item opened with no tenant equals none, so neither is ever answered.
-internal sealed class GetStockItemQueryHandler(IReadConnectionFactory connections) : QueryHandler<GetStockItemQuery, StockItemDto>
+internal sealed class GetStockItemQueryHandler(IReadConnectionFactory connections)
+    : QueryHandler<GetStockItemQuery, StockItemDto>
 {
-    public override async Task<Result<StockItemDto>> Handle(GetStockItemQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<StockItemDto>> Handle(
+        GetStockItemQuery query,
+        CancellationToken cancellationToken
+    )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var stockItem = await connection.QuerySingleOrDefaultAsync<StockItemDto>(

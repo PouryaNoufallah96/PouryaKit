@@ -21,7 +21,10 @@ public sealed class MessageStoreWithoutEfTests(AppFixture app)
     {
         var database = $"store_without_ef_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
-        var connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
+        var connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = database,
+        }.ConnectionString;
         using var host = Compose(connectionString).Build();
 
         await host.StartAsync(TestContext.Current.CancellationToken);
@@ -33,18 +36,33 @@ public sealed class MessageStoreWithoutEfTests(AppFixture app)
                 new[]
                 {
                     descriptor.ServiceType,
-                    descriptor.IsKeyedService ? descriptor.KeyedImplementationType : descriptor.ImplementationType,
-                    (descriptor.IsKeyedService ? descriptor.KeyedImplementationInstance : descriptor.ImplementationInstance)?.GetType(),
-                    (descriptor.IsKeyedService ? descriptor.KeyedImplementationFactory?.Method : descriptor.ImplementationFactory?.Method)?.DeclaringType,
+                    descriptor.IsKeyedService
+                        ? descriptor.KeyedImplementationType
+                        : descriptor.ImplementationType,
+                    (
+                        descriptor.IsKeyedService
+                            ? descriptor.KeyedImplementationInstance
+                            : descriptor.ImplementationInstance
+                    )?.GetType(),
+                    (
+                        descriptor.IsKeyedService
+                            ? descriptor.KeyedImplementationFactory?.Method
+                            : descriptor.ImplementationFactory?.Method
+                    )?.DeclaringType,
                 }
             )
             .OfType<Type>()
             .Select(type => type.Assembly.GetName().Name!)
-            .Where(assembly => assembly.Contains("EntityFrameworkCore", StringComparison.Ordinal) || assembly.EndsWith(".EFCore", StringComparison.Ordinal))
+            .Where(assembly =>
+                assembly.Contains("EntityFrameworkCore", StringComparison.Ordinal)
+                || assembly.EndsWith(".EFCore", StringComparison.Ordinal)
+            )
             .Distinct();
         Assert.Empty(ef);
         Assert.Equal(
-            [[1L]],
+            [
+                [1L],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"select count(*) from information_schema.tables where table_schema = '{Schema}' and table_name = 'wolverine_incoming_envelopes'"
@@ -60,21 +78,30 @@ public sealed class MessageStoreWithoutEfTests(AppFixture app)
         builder.Services.Configure<PouryaKitIdempotencyOptions>(options => options.BatchSize = 0);
         using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
-        Assert.Equal(["The idempotency key BatchSize is 0; it must be at least 1."], thrown.Failures);
+        Assert.Equal(
+            ["The idempotency key BatchSize is 0; it must be at least 1."],
+            thrown.Failures
+        );
     }
 
     private static HostApplicationBuilder Compose(string connectionString)
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Development", $"--ConnectionStrings:app={connectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+            $"--ConnectionStrings:app={connectionString}",
+        ]);
         builder.UsePouryaKitMessageStore(
             "app",
             (wolverine, store) => wolverine.PersistMessagesWithPostgresql(store, Schema)
         );
-        builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.Durability = DurabilityMode.Solo);
+        builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+            store.Durability = DurabilityMode.Solo
+        );
         builder.Services.AddPouryaKitIdempotencyOptions();
         return builder;
     }

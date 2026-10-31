@@ -14,24 +14,36 @@ internal sealed record CountedNote(RunId Run, int Number, string Text);
 // Notification, and an unguarded repeat succeeds again with another value. With a Hold it waits after its change until
 // released; with Fail it then fails, so only a rollback removes what it wrote.
 [Idempotent]
-internal sealed record CountNoteCommand(string Text, Hold? Hold = null, bool Fail = false) : Command<CountedNote>;
+internal sealed record CountNoteCommand(string Text, Hold? Hold = null, bool Fail = false)
+    : Command<CountedNote>;
 
 internal sealed class CountNoteCommandHandler(IRepository<Note, NoteId> notes, NoteRuns runs)
     : CommandHandler<CountNoteCommand, CountedNote>
 {
-    public static readonly Error Refused = Error.Conflict("Note.CountRefused", "The counted note was refused after it was written.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.CountRefused",
+        "The counted note was refused after it was written."
+    );
 
-    public override async Task<Result<CountedNote>> Handle(CountNoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<CountedNote>> Handle(
+        CountNoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var number = runs.Next(command.Text);
-        await notes.AddAsync(Note.Write(command.Text).Raising(new NotePostedDomainEvent(command.Text)), cancellationToken);
+        await notes.AddAsync(
+            Note.Write(command.Text).Raising(new NotePostedDomainEvent(command.Text)),
+            cancellationToken
+        );
         if (command.Hold is { } hold)
         {
             hold.Changed.SetResult();
             await hold.Released.Task.WaitAsync(cancellationToken);
         }
 
-        return command.Fail ? Refused : new CountedNote(new RunId(Guid.CreateVersion7()), number, command.Text);
+        return command.Fail
+            ? Refused
+            : new CountedNote(new RunId(Guid.CreateVersion7()), number, command.Text);
     }
 }
 

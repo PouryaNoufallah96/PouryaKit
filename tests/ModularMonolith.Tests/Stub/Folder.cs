@@ -44,7 +44,12 @@ internal sealed class Folder : AggregateRoot<FolderId>, IAuditable, ISoftDeletab
 
     public static Folder Create(FolderId id, string name, string colour, params string[] pages)
     {
-        var folder = new Folder { Id = id, Name = name, Label = new Label(colour) };
+        var folder = new Folder
+        {
+            Id = id,
+            Name = name,
+            Label = new Label(colour),
+        };
         folder._stickers.Add(new Sticker(new StickerId(Guid.CreateVersion7()), "fragile"));
         foreach (var text in pages)
         {
@@ -62,9 +67,11 @@ internal sealed class Folder : AggregateRoot<FolderId>, IAuditable, ISoftDeletab
 
     public void Relabel(string colour) => Label = new Label(colour);
 
-    public void AddPage(string text) => _pages.Add(new Page(new PageId(Guid.CreateVersion7()), text));
+    public void AddPage(string text) =>
+        _pages.Add(new Page(new PageId(Guid.CreateVersion7()), text));
 
-    public void RewritePage(string text, string newText) => _pages.Single(page => page.Text == text).Rewrite(newText);
+    public void RewritePage(string text, string newText) =>
+        _pages.Single(page => page.Text == text).Rewrite(newText);
 
     public void TearOutPage(string text) => _pages.Remove(_pages.Single(page => page.Text == text));
 

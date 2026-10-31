@@ -50,9 +50,16 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         await using var listening = await Listening.OpenAsync(client, NewProducts);
 
         // Created, delivered and pushed by the first instance, whose local queue holds the Notification.
-        var lamp = await CreateProductAsync(AppFixture.TestTenant, "Lamp", first.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>());
+        var lamp = await CreateProductAsync(
+            AppFixture.TestTenant,
+            "Lamp",
+            first.Services.GetRequiredService<IGatewayProcessor<CatalogModule>>()
+        );
 
-        Assert.Equal((NewProduct.Channel, $$"""{"productId":"{{lamp}}","name":"Lamp"}"""), Pushed(await listening.NextAsync()));
+        Assert.Equal(
+            (NewProduct.Channel, $$"""{"productId":"{{lamp}}","name":"Lamp"}"""),
+            Pushed(await listening.NextAsync())
+        );
     }
 
     [Fact]
@@ -67,8 +74,14 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         var desk = await CreateProductAsync("tenant-y", "Desk");
         var lamp = await CreateProductAsync("tenant-x", "Lamp");
 
-        Assert.Equal($$"""{"productId":"{{lamp}}","name":"Lamp"}""", (await listeningX.NextAsync()).Data);
-        Assert.Equal($$"""{"productId":"{{desk}}","name":"Desk"}""", (await listeningY.NextAsync()).Data);
+        Assert.Equal(
+            $$"""{"productId":"{{lamp}}","name":"Lamp"}""",
+            (await listeningX.NextAsync()).Data
+        );
+        Assert.Equal(
+            $$"""{"productId":"{{desk}}","name":"Desk"}""",
+            (await listeningY.NextAsync()).Data
+        );
     }
 
     [Fact]
@@ -76,16 +89,39 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var ada = Fixture.Client("ada");
 
-        using var refused = await ada.GetAsync($"/stub/realtime?channel={StubChannels.InboxOf("grace")}", HttpCompletionOption.ResponseHeadersRead, Cancellation);
-        using var unnamed = await ada.GetAsync("/stub/realtime", HttpCompletionOption.ResponseHeadersRead, Cancellation);
-        await using var listening = await Listening.OpenAsync(ada, $"/stub/realtime?channel={StubChannels.InboxOf("ada")}");
+        using var refused = await ada.GetAsync(
+            $"/stub/realtime?channel={StubChannels.InboxOf("grace")}",
+            HttpCompletionOption.ResponseHeadersRead,
+            Cancellation
+        );
+        using var unnamed = await ada.GetAsync(
+            "/stub/realtime",
+            HttpCompletionOption.ResponseHeadersRead,
+            Cancellation
+        );
+        await using var listening = await Listening.OpenAsync(
+            ada,
+            $"/stub/realtime?channel={StubChannels.InboxOf("ada")}"
+        );
         // Delivered before the admitted push, which would come second had either reached the client.
-        await PushAsync(new NotePushedDomainEvent(StubChannels.InboxOf("grace"), "for grace"), new NotePushedDomainEvent(StubChannels.Notes, "for everyone"));
+        await PushAsync(
+            new NotePushedDomainEvent(StubChannels.InboxOf("grace"), "for grace"),
+            new NotePushedDomainEvent(StubChannels.Notes, "for everyone")
+        );
         await PushAsync(new NotePushedDomainEvent(StubChannels.InboxOf("ada"), "for ada"));
 
-        Assert.Equal(RealtimeErrors.ChannelNotAdmitted.Code, Code(await ProblemResponses.ProblemAsync(refused, HttpStatusCode.Forbidden)));
-        Assert.Equal(RealtimeErrors.ChannelRequired.Code, Code(await ProblemResponses.ProblemAsync(unnamed, HttpStatusCode.BadRequest)));
-        Assert.Equal((StubChannels.InboxOf("ada"), """{"text":"for ada"}"""), Pushed(await listening.NextAsync()));
+        Assert.Equal(
+            RealtimeErrors.ChannelNotAdmitted.Code,
+            Code(await ProblemResponses.ProblemAsync(refused, HttpStatusCode.Forbidden))
+        );
+        Assert.Equal(
+            RealtimeErrors.ChannelRequired.Code,
+            Code(await ProblemResponses.ProblemAsync(unnamed, HttpStatusCode.BadRequest))
+        );
+        Assert.Equal(
+            (StubChannels.InboxOf("ada"), """{"text":"for ada"}"""),
+            Pushed(await listening.NextAsync())
+        );
     }
 
     // A trusted continuation in a Unit of Work, which a Notification Handler's delivery also is, is not one.
@@ -97,11 +133,23 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         using var peer = Fixture.Client(AppFixture.TrustedPeer);
         peer.DefaultRequestHeaders.Add(OperationContextHeaders.ActorId, "ada");
         peer.DefaultRequestHeaders.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
-        peer.DefaultRequestHeaders.Add(OperationContextHeaders.CorrelationId, Guid.CreateVersion7().ToString());
-        peer.DefaultRequestHeaders.Add(OperationContextHeaders.CausationId, Guid.CreateVersion7().ToString());
+        peer.DefaultRequestHeaders.Add(
+            OperationContextHeaders.CorrelationId,
+            Guid.CreateVersion7().ToString()
+        );
+        peer.DefaultRequestHeaders.Add(
+            OperationContextHeaders.CausationId,
+            Guid.CreateVersion7().ToString()
+        );
 
-        using var sent = await peer.PostAsync($"/stub/realtime/notes/{fromPeer}", null, Cancellation);
-        var relayed = await Fixture.Gateway<StubModule>().SendAsync(new RelayPushNoteCommand(continued), Cancellation);
+        using var sent = await peer.PostAsync(
+            $"/stub/realtime/notes/{fromPeer}",
+            null,
+            Cancellation
+        );
+        var relayed = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new RelayPushNoteCommand(continued), Cancellation);
 
         Assert.Equal(HttpStatusCode.NoContent, sent.StatusCode);
         Assert.True(relayed.IsSuccess);
@@ -109,7 +157,10 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         {
             var (trusted, refusal) = PushNoteCommandHandler.Pushes[text];
             Assert.True(trusted);
-            Assert.Equal($"{nameof(PushedNote)} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit.", refusal);
+            Assert.Equal(
+                $"{nameof(PushedNote)} was pushed outside a Notification Handler's delivery. Push a realtime event from a Notification Handler, so it is sent with that delivery's commit.",
+                refusal
+            );
         }
     }
 
@@ -175,9 +226,16 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var ada = Fixture.Client("ada");
 
-        using var blank = await ada.GetAsync($"/stub/realtime{query}", HttpCompletionOption.ResponseHeadersRead, Cancellation);
+        using var blank = await ada.GetAsync(
+            $"/stub/realtime{query}",
+            HttpCompletionOption.ResponseHeadersRead,
+            Cancellation
+        );
 
-        Assert.Equal(RealtimeErrors.ChannelRequired.Code, Code(await ProblemResponses.ProblemAsync(blank, HttpStatusCode.BadRequest)));
+        Assert.Equal(
+            RealtimeErrors.ChannelRequired.Code,
+            Code(await ProblemResponses.ProblemAsync(blank, HttpStatusCode.BadRequest))
+        );
     }
 
     [Fact]
@@ -199,14 +257,25 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         using var client = Fixture.Client("ada");
         await using var listening = await Listening.OpenAsync(client, Notes);
         // The notification is the Channel, the tenant, none here, and the event, in the Kit's JSON.
-        var envelope = Encoding.UTF8.GetByteCount($$$"""{"channel":"{{{StubChannels.Notes}}}","tenant":"","body":{"text":""}}""");
-        var refused = new NotePushedDomainEvent(StubChannels.Notes, new string('r', RealtimeNotificationLimit - envelope));
-        var sent = new NotePushedDomainEvent(StubChannels.Notes, new string('s', RealtimeNotificationLimit - 1 - envelope));
+        var envelope = Encoding.UTF8.GetByteCount(
+            $$$"""{"channel":"{{{StubChannels.Notes}}}","tenant":"","body":{"text":""}}"""
+        );
+        var refused = new NotePushedDomainEvent(
+            StubChannels.Notes,
+            new string('r', RealtimeNotificationLimit - envelope)
+        );
+        var sent = new NotePushedDomainEvent(
+            StubChannels.Notes,
+            new string('s', RealtimeNotificationLimit - 1 - envelope)
+        );
 
         await PushAsync(refused, sent);
 
         Assert.Equal($$"""{"text":"{{sent.Text}}"}""", (await listening.NextAsync()).Data);
-        Assert.Equal(RealtimeErrors.PayloadTooLarge, Assert.Single(PushNoteNotificationHandler.Pushed[refused.Id].Errors));
+        Assert.Equal(
+            RealtimeErrors.PayloadTooLarge,
+            Assert.Single(PushNoteNotificationHandler.Pushed[refused.Id].Errors)
+        );
         Assert.True(PushNoteNotificationHandler.Pushed[sent.Id].IsSuccess);
     }
 
@@ -216,28 +285,43 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         using var client = Fixture.Client("ada");
         await using var listening = await Listening.OpenAsync(client, Notes);
 
-        await Fixture.RowsAsync("select pg_terminate_backend(pid) from pg_stat_activity where application_name = 'pouryakit-realtime'");
+        await Fixture.RowsAsync(
+            "select pg_terminate_backend(pid) from pg_stat_activity where application_name = 'pouryakit-realtime'"
+        );
         var gap = await listening.NextAsync();
         await PushAsync(new NotePushedDomainEvent(StubChannels.Notes, "after the gap"));
 
         Assert.Equal(RealtimeEvents.Gap, gap.EventType);
-        Assert.Equal((StubChannels.Notes, """{"text":"after the gap"}"""), Pushed(await listening.NextAsync()));
+        Assert.Equal(
+            (StubChannels.Notes, """{"text":"after the gap"}"""),
+            Pushed(await listening.NextAsync())
+        );
     }
 
     [Fact]
     public async Task The_rate_limiter_counts_one_permit_for_a_connection_whatever_it_streams()
     {
-        await using var host = await StartAsync("--PouryaKit:Web:RateLimit:Enabled=true", "--PouryaKit:Web:RateLimit:PermitLimit=2", "--PouryaKit:Web:RateLimit:Window=01:00:00");
+        await using var host = await StartAsync(
+            "--PouryaKit:Web:RateLimit:Enabled=true",
+            "--PouryaKit:Web:RateLimit:PermitLimit=2",
+            "--PouryaKit:Web:RateLimit:Window=01:00:00"
+        );
         using var client = AppFixture.ClientOf(host, "ada");
         await using var listening = await Listening.OpenAsync(client, Notes);
-        await PushAsync(new NotePushedDomainEvent(StubChannels.Notes, "one"), new NotePushedDomainEvent(StubChannels.Notes, "two"));
+        await PushAsync(
+            new NotePushedDomainEvent(StubChannels.Notes, "one"),
+            new NotePushedDomainEvent(StubChannels.Notes, "two")
+        );
         await listening.NextAsync();
         await listening.NextAsync();
 
         using var second = await client.GetAsync("/stub/realtime", Cancellation);
         using var third = await client.GetAsync("/stub/realtime", Cancellation);
 
-        Assert.Equal((HttpStatusCode.BadRequest, HttpStatusCode.TooManyRequests), (second.StatusCode, third.StatusCode));
+        Assert.Equal(
+            (HttpStatusCode.BadRequest, HttpStatusCode.TooManyRequests),
+            (second.StatusCode, third.StatusCode)
+        );
     }
 
     [Fact]
@@ -245,7 +329,13 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         // Even where the Host asks to compress event streams: the stream states its own encoding, which compression keeps.
         await using var host = await StartAsync(
-            builder => builder.Services.Configure<ResponseCompressionOptions>(compression => compression.MimeTypes = [.. ResponseCompressionDefaults.MimeTypes, "text/event-stream"]),
+            builder =>
+                builder.Services.Configure<ResponseCompressionOptions>(compression =>
+                    compression.MimeTypes = [
+                        .. ResponseCompressionDefaults.MimeTypes,
+                        "text/event-stream",
+                    ]
+                ),
             "--PouryaKit:Web:Compression:Enabled=true"
         );
         using var client = AppFixture.ClientOf(host, "ada");
@@ -266,7 +356,11 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         await using var host = await StartAsync();
         using var client = AppFixture.ClientOf(host, "ada");
         using var unanswered = await client.DeleteAsync("/stub/realtime", Cancellation);
-        using var connection = await client.GetAsync(Notes, HttpCompletionOption.ResponseHeadersRead, Cancellation);
+        using var connection = await client.GetAsync(
+            Notes,
+            HttpCompletionOption.ResponseHeadersRead,
+            Cancellation
+        );
         await using var body = await connection.Content.ReadAsStreamAsync(Cancellation);
         using var reader = new StreamReader(body);
         var connected = await reader.ReadLineAsync(Cancellation);
@@ -276,7 +370,10 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         var rest = await reader.ReadToEndAsync(Cancellation);
 
         await ProblemResponses.ProblemAsync(unanswered, HttpStatusCode.MethodNotAllowed);
-        Assert.Equal((HttpStatusCode.OK, "text/event-stream"), (connection.StatusCode, connection.Content.Headers.ContentType?.MediaType));
+        Assert.Equal(
+            (HttpStatusCode.OK, "text/event-stream"),
+            (connection.StatusCode, connection.Content.Headers.ContentType?.MediaType)
+        );
         Assert.Equal($"event: {RealtimeEvents.Connected}", connected);
         Assert.Equal("data: \n\n", rest.ReplaceLineEndings("\n"));
     }
@@ -287,7 +384,9 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     public void A_dbcontext_that_configure_db_context_moves_off_the_listeners_connection_fails_the_host_when_built()
     {
         var builder = ComposeListener("Host=db;Database=app");
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Host=db;Database=elsewhere"));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql("Host=db;Database=elsewhere")
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
@@ -299,7 +398,9 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var dataSource = NpgsqlDataSource.Create("Host=db;Database=elsewhere");
         var builder = ComposeListener("Host=db;Database=app");
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql((string?)null).UseNpgsql(dataSource));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql((string?)null).UseNpgsql(dataSource)
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
@@ -313,7 +414,9 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
         const string connectionString = "Host=db;Database=app;Username=catalog;Password=secret";
         using var dataSource = NpgsqlDataSource.Create(connectionString);
         var builder = ComposeListener(connectionString);
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql((string?)null).UseNpgsql(dataSource));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql((string?)null).UseNpgsql(dataSource)
+        );
 
         using var host = builder.Build();
     }
@@ -321,9 +424,11 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     // PostgreSQL's NOTIFY carries a payload shorter than this.
     private const int RealtimeNotificationLimit = 8000;
 
-    private static (string Channel, string Data) Pushed(SseItem<string> item) => (item.EventType, item.Data);
+    private static (string Channel, string Data) Pushed(SseItem<string> item) =>
+        (item.EventType, item.Data);
 
-    private static string? Code(JsonElement problem) => problem.GetProperty("errors")[0].GetProperty("code").GetString();
+    private static string? Code(JsonElement problem) =>
+        problem.GetProperty("errors")[0].GetProperty("code").GetString();
 
     private const string MovedOffTheListener =
         "EF Core connects StubDbContext, stored over the connection string app, with other settings than the connection string app that AddPouryaKitRealtime listens over, so what its Notification Handlers push may be written in another database than the listener's, and PostgreSQL hands a notification only to the listeners of its own database. Use one connection string for Realtime and every Module's DbContext.";
@@ -332,9 +437,11 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     // message store, whose own check would report the same move. Nothing connects while the Host is built.
     private static HostApplicationBuilder ComposeListener(string connectionString)
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={connectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={connectionString}",
+        ]);
         builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.AddPouryaKitCompositionChecks();
@@ -342,15 +449,27 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     // A second instance of the Host, on the fixture's store; disposing it stops it.
-    private Task<WebApplication> StartAsync(params string[] arguments) => StartAsync(null, arguments);
+    private Task<WebApplication> StartAsync(params string[] arguments) =>
+        StartAsync(null, arguments);
 
     // Configured after the test delivery's Solo, so the composed instance runs as a Host does by default.
     private static void Balanced(WebApplicationBuilder builder) =>
-        builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.Durability = DurabilityMode.Balanced);
+        builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+            store.Durability = DurabilityMode.Balanced
+        );
 
-    private async Task<WebApplication> StartAsync(Action<WebApplicationBuilder>? configure, params string[] arguments)
+    private async Task<WebApplication> StartAsync(
+        Action<WebApplicationBuilder>? configure,
+        params string[] arguments
+    )
     {
-        var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, configure, arguments);
+        var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs,
+            configure,
+            arguments
+        );
         await HostFixture.StartHostAsync(host, Cancellation);
         return host;
     }
@@ -359,22 +478,45 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     private async Task PushAsync(params DomainEvent[] raised)
     {
         var (written, _) = await Fixture.WaitForDeliveriesAsync(
-            () => Fixture.Gateway<StubModule>().SendAsync(new WriteNoteRaisingCommand($"note {Guid.CreateVersion7()}", raised), Cancellation),
+            () =>
+                Fixture
+                    .Gateway<StubModule>()
+                    .SendAsync(
+                        new WriteNoteRaisingCommand($"note {Guid.CreateVersion7()}", raised),
+                        Cancellation
+                    ),
             Cancellation
         );
         Assert.True(written.IsSuccess);
     }
 
     // Waits for the push's delivery, so pushes of successive calls commit in their order.
-    private async Task<Guid> CreateProductAsync(string tenant, string name, IGatewayProcessor<CatalogModule>? through = null)
+    private async Task<Guid> CreateProductAsync(
+        string tenant,
+        string name,
+        IGatewayProcessor<CatalogModule>? through = null
+    )
     {
         var catalog = through ?? Fixture.Gateway<CatalogModule>();
         var context = new OperationContext(GatewayTestExtensions.TestActor, tenant);
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, $"{name}s"), context, Cancellation)).IsSuccess);
+        Assert.True(
+            (
+                await catalog.SendAsync(
+                    new CreateCategoryCommand(category, $"{name}s"),
+                    context,
+                    Cancellation
+                )
+            ).IsSuccess
+        );
         var (created, _) = await Fixture.WaitForDeliveriesAsync(
-            () => catalog.SendAsync(new CreateProductCommand(product, category, name), context, Cancellation),
+            () =>
+                catalog.SendAsync(
+                    new CreateProductCommand(product, category, name),
+                    context,
+                    Cancellation
+                ),
             Cancellation
         );
         Assert.True(created.IsSuccess);
@@ -382,15 +524,25 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     // One client's connection, read event by event once its connected event arrived.
-    private sealed class Listening(HttpResponseMessage response, IAsyncEnumerator<SseItem<string>> events) : IAsyncDisposable
+    private sealed class Listening(
+        HttpResponseMessage response,
+        IAsyncEnumerator<SseItem<string>> events
+    ) : IAsyncDisposable
     {
         public HttpResponseMessage Response { get; } = response;
 
         public static async Task<Listening> OpenAsync(HttpClient client, string path)
         {
-            var response = await client.GetAsync(path, HttpCompletionOption.ResponseHeadersRead, Cancellation);
+            var response = await client.GetAsync(
+                path,
+                HttpCompletionOption.ResponseHeadersRead,
+                Cancellation
+            );
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var events = SseParser.Create(await response.Content.ReadAsStreamAsync(Cancellation)).EnumerateAsync(Cancellation).GetAsyncEnumerator(Cancellation);
+            var events = SseParser
+                .Create(await response.Content.ReadAsStreamAsync(Cancellation))
+                .EnumerateAsync(Cancellation)
+                .GetAsyncEnumerator(Cancellation);
             Listening listening = new(response, events);
             Assert.Equal(RealtimeEvents.Connected, (await listening.NextAsync()).EventType);
             return listening;
@@ -398,7 +550,10 @@ public sealed class RealtimeTests(AppFixture app) : HostTest<AppFixture>(app)
 
         public async Task<SseItem<string>> NextAsync()
         {
-            Assert.True(await events.MoveNextAsync().AsTask().WaitAsync(Patience, Cancellation), "The connection ended.");
+            Assert.True(
+                await events.MoveNextAsync().AsTask().WaitAsync(Patience, Cancellation),
+                "The connection ended."
+            );
             return events.Current;
         }
 

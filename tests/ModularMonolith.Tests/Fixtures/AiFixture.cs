@@ -21,10 +21,12 @@ public sealed class AiFixture(AppFixture app) : IAsyncLifetime
     private WebApplication? _host;
 
     /// <summary>The model the application's chat client calls.</summary>
-    public ChatStub Stub => _stub ?? throw new InvalidOperationException("The stub starts in InitializeAsync.");
+    public ChatStub Stub =>
+        _stub ?? throw new InvalidOperationException("The stub starts in InitializeAsync.");
 
     /// <summary>The started application.</summary>
-    public WebApplication Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
+    public WebApplication Host =>
+        _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
 
     /// <summary>The configuration that points a Host's chat client at <paramref name="stub"/>, beside the sample's own.</summary>
     public static string[] StubArguments(ChatStub stub) =>
@@ -41,7 +43,10 @@ public sealed class AiFixture(AppFixture app) : IAsyncLifetime
         _stub = await ChatStub.StartAsync(TestContext.Current.CancellationToken);
         var database = $"ai_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
-        var connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
+        var connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = database,
+        }.ConnectionString;
         _host = AppFixture.ComposeHost(
             "Development",
             connectionString,

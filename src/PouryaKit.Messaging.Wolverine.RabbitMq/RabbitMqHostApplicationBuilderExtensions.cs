@@ -35,7 +35,10 @@ public static class RabbitMqHostApplicationBuilderExtensions
         /// the configuration has no such connection string or leaves it blank, and when <paramref name="serviceName"/> is
         /// missing or invalid.
         /// </summary>
-        public IHostApplicationBuilder UsePouryaKitRabbitMq(string connectionName, string serviceName)
+        public IHostApplicationBuilder UsePouryaKitRabbitMq(
+            string connectionName,
+            string serviceName
+        )
         {
             ArgumentNullException.ThrowIfNull(builder);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
@@ -57,9 +60,11 @@ public static class RabbitMqHostApplicationBuilderExtensions
                 );
             }
 
-            builder.Services.AddSingleton<IWolverineExtension>(services =>
-                new RabbitMqExtension(connectionString, serviceName, services.GetRequiredService<IWireNames>())
-            );
+            builder.Services.AddSingleton<IWolverineExtension>(services => new RabbitMqExtension(
+                connectionString,
+                serviceName,
+                services.GetRequiredService<IWireNames>()
+            ));
             return builder;
         }
     }

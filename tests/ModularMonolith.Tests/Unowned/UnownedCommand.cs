@@ -8,6 +8,8 @@ public sealed record UnownedCommand : Command;
 
 internal sealed class UnownedCommandHandler : CommandHandler<UnownedCommand>
 {
-    public override Task<Result> Handle(UnownedCommand command, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success());
+    public override Task<Result> Handle(
+        UnownedCommand command,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }

@@ -37,7 +37,10 @@ internal static partial class Sql
                 code.Append(quote == '"' ? sql[at..end] : "''");
                 at = end;
             }
-            else if ((at == 0 || !(char.IsLetterOrDigit(sql[at - 1]) || sql[at - 1] is '_' or '$')) && DollarTag().Match(sql, at) is { Success: true } tag)
+            else if (
+                (at == 0 || !(char.IsLetterOrDigit(sql[at - 1]) || sql[at - 1] is '_' or '$'))
+                && DollarTag().Match(sql, at) is { Success: true } tag
+            )
             {
                 if (keepDollarQuoted)
                 {
@@ -95,7 +98,8 @@ internal static partial class Sql
                     return (tokens, "holds a quote that never closes");
                 }
 
-                var body = sql[(start + 1)..(at - 1)].Replace($"{character}{character}", $"{character}", StringComparison.Ordinal);
+                var body = sql[(start + 1)..(at - 1)]
+                    .Replace($"{character}{character}", $"{character}", StringComparison.Ordinal);
                 if (body.Contains('\\'))
                 {
                     return (tokens, "holds a backslash");
@@ -147,7 +151,8 @@ internal static partial class Sql
 
     private const string Punctuation = "(),.;=<>!+-*/%:[]|~^";
 
-    private static bool IsWordStart(char character) => char.IsAsciiLetter(character) || character == '_';
+    private static bool IsWordStart(char character) =>
+        char.IsAsciiLetter(character) || character == '_';
 
     private static int WordEnd(string sql, int at)
     {
@@ -250,10 +255,12 @@ internal enum SqlTokenKind
 internal readonly record struct SqlToken(SqlTokenKind Kind, string Text)
 {
     /// <summary>Whether this is the unquoted word <paramref name="word"/>, in any case.</summary>
-    public bool Is(string word) => Kind == SqlTokenKind.Word && Text.Equals(word, StringComparison.OrdinalIgnoreCase);
+    public bool Is(string word) =>
+        Kind == SqlTokenKind.Word && Text.Equals(word, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Whether this is the punctuation mark <paramref name="mark"/>.</summary>
-    public bool Is(char mark) => Kind == SqlTokenKind.Punctuation && Text is [var only] && only == mark;
+    public bool Is(char mark) =>
+        Kind == SqlTokenKind.Punctuation && Text is [var only] && only == mark;
 
     /// <summary>Whether this can name a table, a column or an alias: a word or a double-quoted identifier.</summary>
     public bool IsName => Kind is SqlTokenKind.Word or SqlTokenKind.Quoted;

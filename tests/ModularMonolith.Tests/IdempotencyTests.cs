@@ -31,25 +31,46 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         var stub = Fixture.Gateway<StubModule>();
 
         var (first, _) = await Fixture.WaitForDeliveriesAsync(
-            () => stub.SendAsync(new CountNoteCommand(text), Context("r1"), TestContext.Current.CancellationToken),
+            () =>
+                stub.SendAsync(
+                    new CountNoteCommand(text),
+                    Context("r1"),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
         var repeat = await Fixture.AssertNothingSentAsync(
-            () => stub.SendAsync(new CountNoteCommand(text), Context("r1"), TestContext.Current.CancellationToken),
+            () =>
+                stub.SendAsync(
+                    new CountNoteCommand(text),
+                    Context("r1"),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
 
         Assert.Equal(1, first.Value.Number);
         Assert.Equal(first.Value, repeat.Value);
         Assert.Equal(1, Runs.Of(text));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = '{text}'"
+            )
+        );
         // Recorded in the Kit's one JSON representation: camelCase, a typed ID as its bare value.
         Assert.Equal(
             $$"""{"run":"{{first.Value.Run.Value}}","number":1,"text":"{{text}}"}""",
-            await Fixture.ScalarAsync<string>("select response from stub.pouryakit_idempotency_keys")
+            await Fixture.ScalarAsync<string>(
+                "select response from stub.pouryakit_idempotency_keys"
+            )
         );
         // The Notification the first run stored was delivered as a continuation, which carries no request id.
-        Assert.Null(Assert.Single(Fixture.Host.Services.GetRequiredService<DeliveryLog>().For(text)).Context.RequestId);
+        Assert.Null(
+            Assert
+                .Single(Fixture.Host.Services.GetRequiredService<DeliveryLog>().For(text))
+                .Context.RequestId
+        );
     }
 
     [Fact]
@@ -59,17 +80,34 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         var stub = Fixture.Gateway<StubModule>();
 
         var failed = await Fixture.AssertNothingSentAsync(
-            () => stub.SendAsync(new PostNoteThenNestCommand(text, NestedFailure.Handler), Context("r1"), TestContext.Current.CancellationToken),
+            () =>
+                stub.SendAsync(
+                    new PostNoteThenNestCommand(text, NestedFailure.Handler),
+                    Context("r1"),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
-        var keysAfterFailure = await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_idempotency_keys");
+        var keysAfterFailure = await Fixture.ScalarAsync<long>(
+            "select count(*) from stub.pouryakit_idempotency_keys"
+        );
         var (retried, _) = await Fixture.WaitForDeliveriesAsync(
-            () => stub.SendAsync(new PostNoteThenNestCommand(text, NestedFailure.None), Context("r1"), TestContext.Current.CancellationToken),
+            () =>
+                stub.SendAsync(
+                    new PostNoteThenNestCommand(text, NestedFailure.None),
+                    Context("r1"),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
         // A command without a value replays its success too, and runs nothing: its nested note is not written again.
         var repeat = await Fixture.AssertNothingSentAsync(
-            () => stub.SendAsync(new PostNoteThenNestCommand(text, NestedFailure.None), Context("r1"), TestContext.Current.CancellationToken),
+            () =>
+                stub.SendAsync(
+                    new PostNoteThenNestCommand(text, NestedFailure.None),
+                    Context("r1"),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -79,7 +117,9 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.True(repeat.IsSuccess);
         Assert.Equal(
             2L,
-            await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text in ('{text}', 'nested {text}')")
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text in ('{text}', 'nested {text}')"
+            )
         );
     }
 
@@ -89,7 +129,15 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         var text = $"note {Guid.CreateVersion7()}";
         var stub = Fixture.Gateway<StubModule>();
         async Task<int> CountAs(OperationContext context) =>
-            (await stub.SendAsync(new CountNoteCommand(text), context, TestContext.Current.CancellationToken)).Value.Number;
+            (
+                await stub.SendAsync(
+                    new CountNoteCommand(text),
+                    context,
+                    TestContext.Current.CancellationToken
+                )
+            )
+                .Value
+                .Number;
 
         Assert.Equal(1, await CountAs(Context("r1")));
         Assert.Equal(1, await CountAs(Context("r1")));
@@ -105,11 +153,18 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.True(otherCommand.IsSuccess);
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = 'nested {text}'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = 'nested {text}'"
+            )
+        );
         Assert.Equal(5, Runs.Of(text));
         Assert.Equal(
             4L,
-            await Fixture.ScalarAsync<long>($"select count(*) from stub.pouryakit_idempotency_keys where tenant = '{IdempotencyTable.NoTenant}'")
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.pouryakit_idempotency_keys where tenant = '{IdempotencyTable.NoTenant}'"
+            )
         );
     }
 
@@ -122,7 +177,12 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(first.Value, repeat.Value);
         Assert.Equal(1, Runs.Of(text));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = '{text}'"
+            )
+        );
     }
 
     [Fact]
@@ -135,7 +195,12 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(CountNoteCommandHandler.Refused, Assert.Single(first.Errors));
         Assert.Equal(2, repeat.Value.Number);
         Assert.Equal(2, Runs.Of(text));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = '{text}'"
+            )
+        );
     }
 
     [Fact]
@@ -143,12 +208,24 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
         var import = new ImportProductsCommand(category, ["Desk lamp", "Floor lamp"]);
 
-        var first = await catalog.SendAsync(import, Context("r1", tenant: AppFixture.TestTenant), TestContext.Current.CancellationToken);
+        var first = await catalog.SendAsync(
+            import,
+            Context("r1", tenant: AppFixture.TestTenant),
+            TestContext.Current.CancellationToken
+        );
         var repeat = await Fixture.AssertNothingSentAsync(
-            () => catalog.SendAsync(import, Context("r1", tenant: AppFixture.TestTenant), TestContext.Current.CancellationToken),
+            () =>
+                catalog.SendAsync(
+                    import,
+                    Context("r1", tenant: AppFixture.TestTenant),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -163,17 +240,39 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         using var client = Fixture.Client("ada", AppFixture.TestTenant);
         var category = Guid.CreateVersion7();
-        await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await Fixture
+            .Gateway<CatalogModule>()
+            .SendAsync(
+                new CreateCategoryCommand(category, "Lamps"),
+                TestContext.Current.CancellationToken
+            );
         var product = Guid.CreateVersion7();
-        var body = new { productId = product, categoryId = category, name = "Desk lamp" };
+        var body = new
+        {
+            productId = product,
+            categoryId = category,
+            name = "Desk lamp",
+        };
         var key = IdempotentRequests.NewKey();
 
         var (first, _) = await Fixture.WaitForDeliveriesAsync(
-            () => client.PostAsJsonAsync("/catalog/products", body, key, TestContext.Current.CancellationToken),
+            () =>
+                client.PostAsJsonAsync(
+                    "/catalog/products",
+                    body,
+                    key,
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
         var repeat = await Fixture.AssertNothingSentAsync(
-            () => client.PostAsJsonAsync("/catalog/products", body, key, TestContext.Current.CancellationToken),
+            () =>
+                client.PostAsJsonAsync(
+                    "/catalog/products",
+                    body,
+                    key,
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -181,7 +280,10 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.Created, repeat.StatusCode);
         Assert.Equal($"/catalog/v2/products/{product}", repeat.Headers.Location?.OriginalString);
         Assert.Equal(first.Headers.Location, repeat.Headers.Location);
-        Assert.Equal($$"""{"id":"{{product}}"}""", await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            $$"""{"id":"{{product}}"}""",
+            await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
         Assert.Equal(
             await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
             await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
@@ -207,7 +309,10 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
             return request;
         }
 
-        var seen = await blank.GetFromJsonAsync<SeenContext>("/stub/context", TestContext.Current.CancellationToken);
+        var seen = await blank.GetFromJsonAsync<SeenContext>(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
         var first = await blank.SendAsync(Counting(), TestContext.Current.CancellationToken);
         var repeat = await noTenant.SendAsync(Counting(), TestContext.Current.CancellationToken);
 
@@ -217,22 +322,46 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
             await first.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
             await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
         );
-        Assert.Equal([[IdempotencyTable.NoTenant]], await Fixture.RowsAsync("select tenant from stub.pouryakit_idempotency_keys"));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Equal(
+            [
+                [IdempotencyTable.NoTenant],
+            ],
+            await Fixture.RowsAsync("select tenant from stub.pouryakit_idempotency_keys")
+        );
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = '{text}'"
+            )
+        );
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" padded ")]
-    public async Task A_request_without_a_readable_idempotency_key_answers_400_as_a_problem_response_and_creates_nothing(string? key)
+    public async Task A_request_without_a_readable_idempotency_key_answers_400_as_a_problem_response_and_creates_nothing(
+        string? key
+    )
     {
         using var client = Fixture.Client("ada");
         var category = Guid.CreateVersion7();
-        await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await Fixture
+            .Gateway<CatalogModule>()
+            .SendAsync(
+                new CreateCategoryCommand(category, "Lamps"),
+                TestContext.Current.CancellationToken
+            );
         using var request = new HttpRequestMessage(HttpMethod.Post, "/catalog/products")
         {
-            Content = JsonContent.Create(new { productId = Guid.CreateVersion7(), categoryId = category, name = "Lamp" }),
+            Content = JsonContent.Create(
+                new
+                {
+                    productId = Guid.CreateVersion7(),
+                    categoryId = category,
+                    name = "Lamp",
+                }
+            ),
         };
         if (key is not null)
         {
@@ -250,7 +379,9 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
     [Theory]
     [InlineData("PUT")]
     [InlineData("DELETE")]
-    public async Task An_idempotent_put_or_delete_without_a_key_answers_400_and_with_one_replays_the_first_response(string method)
+    public async Task An_idempotent_put_or_delete_without_a_key_answers_400_and_with_one_replays_the_first_response(
+        string method
+    )
     {
         using var client = Fixture.Client("ada");
         var text = $"note-{Guid.CreateVersion7():N}";
@@ -278,7 +409,10 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         var problem = await ProblemAsync(refused, HttpStatusCode.BadRequest);
-        Assert.Equal("https://tools.ietf.org/html/rfc9110#section-15.5.1", problem.GetProperty("type").GetString());
+        Assert.Equal(
+            "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+            problem.GetProperty("type").GetString()
+        );
         Assert.Equal(KeyRefused, problem.GetProperty("detail").GetString());
         Assert.Equal((HttpStatusCode.OK, HttpStatusCode.OK), (first.StatusCode, repeat.StatusCode));
         Assert.Equal(
@@ -286,22 +420,41 @@ public sealed class IdempotencyTests(AppFixture app) : HostTest<AppFixture>(app)
             await repeat.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
         );
         Assert.Equal(1, Runs.Of(text));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = '{text}'"
+            )
+        );
     }
 
-    private static OperationContext Context(string requestId, Actor? actor = null, string? tenant = null) =>
-        new(actor ?? Actor.Person("ada"), tenant) { RequestId = requestId };
+    private static OperationContext Context(
+        string requestId,
+        Actor? actor = null,
+        string? tenant = null
+    ) => new(actor ?? Actor.Person("ada"), tenant) { RequestId = requestId };
 
     // Two Operations with one key: the first holds its uncommitted key while the repeat is shown waiting on that row in
     // PostgreSQL, with its handler not yet run; then the first ends, committing or rolling back.
-    private async Task<(Result<CountedNote> First, Result<CountedNote> Repeat)> RaceAsync(string text, bool firstFails)
+    private async Task<(Result<CountedNote> First, Result<CountedNote> Repeat)> RaceAsync(
+        string text,
+        bool firstFails
+    )
     {
         var stub = Fixture.Gateway<StubModule>();
         var hold = new Hold();
-        var first = stub.SendAsync(new CountNoteCommand(text, hold, firstFails), Context("r1"), TestContext.Current.CancellationToken);
+        var first = stub.SendAsync(
+            new CountNoteCommand(text, hold, firstFails),
+            Context("r1"),
+            TestContext.Current.CancellationToken
+        );
         await hold.Changed.Task.WaitAsync(TestContext.Current.CancellationToken);
 
-        var repeat = stub.SendAsync(new CountNoteCommand(text), Context("r1"), TestContext.Current.CancellationToken);
+        var repeat = stub.SendAsync(
+            new CountNoteCommand(text),
+            Context("r1"),
+            TestContext.Current.CancellationToken
+        );
         await Fixture.WaitUntilAsync(
             "exists (select 1 from pg_stat_activity where wait_event_type = 'Lock' and query like 'insert into \"stub\".pouryakit_idempotency_keys%')",
             "The repeat never waited on the key the first Operation holds."

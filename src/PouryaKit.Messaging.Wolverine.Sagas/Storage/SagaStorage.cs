@@ -18,7 +18,10 @@ namespace PouryaKit.Messaging.Wolverine.Sagas;
 /// </summary>
 public static class SagaStorage
 {
-    private static readonly ConditionalWeakTable<IMessageDatabase, ConcurrentDictionary<Type, object>> Schemas = [];
+    private static readonly ConditionalWeakTable<
+        IMessageDatabase,
+        ConcurrentDictionary<Type, object>
+    > Schemas = [];
 
     /// <summary>
     /// Opens a connection and a transaction on the message store's database, refuses an Integration Event with no tenant,
@@ -36,7 +39,9 @@ public static class SagaStorage
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(factory);
         var envelope = context.Envelope!;
-        var saga = context.Runtime.Services.GetRequiredService<SagaDeclarations>().Of(typeof(TSaga));
+        var saga = context
+            .Runtime.Services.GetRequiredService<SagaDeclarations>()
+            .Of(typeof(TSaga));
         if (envelope.Message is ISagaInput { Tenant: null } tenantless)
         {
             throw new SagaInputRefusedException(
@@ -54,15 +59,35 @@ public static class SagaStorage
         try
         {
             var transaction = await connection.BeginTransactionAsync();
-            var schema = (IDatabaseSagaSchema<TId, TSaga>)
-                Schemas.GetOrCreateValue(database).GetOrAdd(typeof(TSaga), _ => factory(new SagaTableDefinition(typeof(TSaga), saga.Table), database.Settings));
-            var input = envelope.Message is ISagaInput delivered
-                ? Input(saga, delivered.WireName, delivered.EventId, delivered.SagaId)
-                : await schema.LoadAsync((TId)(object)envelope.SagaId!, transaction, CancellationToken.None) is PouryaKitSaga scheduler
+            var schema =
+                (IDatabaseSagaSchema<TId, TSaga>)
+                    Schemas
+                        .GetOrCreateValue(database)
+                        .GetOrAdd(
+                            typeof(TSaga),
+                            _ =>
+                                factory(
+                                    new SagaTableDefinition(typeof(TSaga), saga.Table),
+                                    database.Settings
+                                )
+                        );
+            var input =
+                envelope.Message is ISagaInput delivered
+                    ? Input(saga, delivered.WireName, delivered.EventId, delivered.SagaId)
+                : await schema.LoadAsync(
+                    (TId)(object)envelope.SagaId!,
+                    transaction,
+                    CancellationToken.None
+                )
+                    is PouryaKitSaga scheduler
                     ? TimeoutInput(saga, envelope, scheduler)
-                    : (SagaStepInput?)null;
-            var claimed = input is not { } step || await ClaimAsync(connection, transaction, database.SchemaName, saga.Name, step);
-            await context.EnlistInOutboxAsync(new DatabaseEnvelopeTransaction(database, transaction));
+                : (SagaStepInput?)null;
+            var claimed =
+                input is not { } step
+                || await ClaimAsync(connection, transaction, database.SchemaName, saga.Name, step);
+            await context.EnlistInOutboxAsync(
+                new DatabaseEnvelopeTransaction(database, transaction)
+            );
             return new SagaStepStorage<TId, TSaga>(
                 new DatabaseSagaStorage<TId, TSaga>(connection, transaction, schema),
                 transaction,
@@ -108,7 +133,8 @@ public static class SagaStorage
         NameBasedIdentity.Of($"{saga}\n{sagaId}\n{inputWireName}\n{inputId:D}");
 
     /// <summary>The identity of what a step emits of one type: from the step's identity and the emission's wire name.</summary>
-    public static Guid EmissionId(Guid stepId, string wireName) => NameBasedIdentity.Of($"{stepId:D}\n{wireName}");
+    public static Guid EmissionId(Guid stepId, string wireName) =>
+        NameBasedIdentity.Of($"{stepId:D}\n{wireName}");
 
     /// <summary>
     /// The identity of a timeout a step schedules: from the scheduling step's identity, the timeout's wire name and its
@@ -116,13 +142,23 @@ public static class SagaStorage
     /// scheduled them, so two timeouts of one type from one step are two.
     /// </summary>
     public static Guid TimeoutId(Guid schedulingStepId, string timeoutWireName, int ordinal) =>
-        NameBasedIdentity.Of($"{schedulingStepId:D}\n{timeoutWireName}\n{ordinal.ToString(CultureInfo.InvariantCulture)}\ntimeout");
+        NameBasedIdentity.Of(
+            $"{schedulingStepId:D}\n{timeoutWireName}\n{ordinal.ToString(CultureInfo.InvariantCulture)}\ntimeout"
+        );
 
-    private static SagaStepInput Input(SagaDeclaration saga, string wireName, Guid id, string sagaId) =>
-        new(wireName, id, sagaId, StepId(saga.Name, sagaId, wireName, id));
+    private static SagaStepInput Input(
+        SagaDeclaration saga,
+        string wireName,
+        Guid id,
+        string sagaId
+    ) => new(wireName, id, sagaId, StepId(saga.Name, sagaId, wireName, id));
 
     // A timeout's identity is the one its saga's state kept when the step that scheduled it stored the saga.
-    private static SagaStepInput TimeoutInput(SagaDeclaration saga, Envelope envelope, PouryaKitSaga scheduler) =>
+    private static SagaStepInput TimeoutInput(
+        SagaDeclaration saga,
+        Envelope envelope,
+        PouryaKitSaga scheduler
+    ) =>
         scheduler.Timeouts.TryGetValue(envelope.Id, out var timeout)
             ? Input(saga, envelope.MessageType!, timeout, envelope.SagaId!)
             : throw new InvalidOperationException(
@@ -132,15 +168,34 @@ public static class SagaStorage
     // On conflict the insert waits for a concurrent claim of the same key to commit or roll back: committed, it inserts
     // nothing and the step is skipped; rolled back, it inserts and the step runs. A claim rolls back with its step, so a
     // step that dies before its commit is claimed again by its redelivery.
-    private static async Task<bool> ClaimAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string schema, string saga, SagaStepInput step)
+    private static async Task<bool> ClaimAsync(
+        NpgsqlConnection connection,
+        NpgsqlTransaction transaction,
+        string schema,
+        string saga,
+        SagaStepInput step
+    )
     {
         await using var claim = new NpgsqlCommand(
-            string.Format(CultureInfo.InvariantCulture, SagaStepStatements.Claim($"\"{schema}\".{SagaStepStatements.Table}"), "$1", "$2", "$3", "$4"),
+            string.Format(
+                CultureInfo.InvariantCulture,
+                SagaStepStatements.Claim($"\"{schema}\".{SagaStepStatements.Table}"),
+                "$1",
+                "$2",
+                "$3",
+                "$4"
+            ),
             connection,
             transaction
         )
         {
-            Parameters = { new() { Value = saga }, new() { Value = step.WireName }, new() { Value = step.Id }, new() { Value = step.SagaId } },
+            Parameters =
+            {
+                new() { Value = saga },
+                new() { Value = step.WireName },
+                new() { Value = step.Id },
+                new() { Value = step.SagaId },
+            },
         };
         return await claim.ExecuteNonQueryAsync() == 1;
     }

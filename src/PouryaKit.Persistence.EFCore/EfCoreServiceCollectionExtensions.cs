@@ -45,20 +45,28 @@ public static class EfCoreServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             // An Outbox writes on this DbContext's connection, whoever registered the DbContext.
             var recorded = services.FirstOrDefault(descriptor =>
-                descriptor.ImplementationInstance is DbContextConnection connection && connection.DbContext == typeof(TDbContext)
+                descriptor.ImplementationInstance is DbContextConnection connection
+                && connection.DbContext == typeof(TDbContext)
             );
             if (recorded is null)
             {
                 services.AddSingleton(new DbContextConnection(connectionName, typeof(TDbContext)));
             }
-            else if (connectionName is not null && recorded.ImplementationInstance is DbContextConnection { Name: var recordedName })
+            else if (
+                connectionName is not null
+                && recorded.ImplementationInstance is DbContextConnection { Name: var recordedName }
+            )
             {
                 if (recordedName is null)
                 {
-                    services[services.IndexOf(recorded)] = ServiceDescriptor.Singleton(new DbContextConnection(connectionName, typeof(TDbContext)));
+                    services[services.IndexOf(recorded)] = ServiceDescriptor.Singleton(
+                        new DbContextConnection(connectionName, typeof(TDbContext))
+                    );
                 }
                 // Configuration keys ignore case, so "app" and "APP" name one connection string.
-                else if (!string.Equals(recordedName, connectionName, StringComparison.OrdinalIgnoreCase))
+                else if (
+                    !string.Equals(recordedName, connectionName, StringComparison.OrdinalIgnoreCase)
+                )
                 {
                     throw new InvalidOperationException(
                         $"{typeof(TDbContext).Name} is already stored over the connection string {recordedName}, so it cannot also be stored over {connectionName}. Give one DbContext one connection string."
@@ -66,12 +74,19 @@ public static class EfCoreServiceCollectionExtensions
                 }
             }
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, DbContextConnectionsCheck>());
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkOutboxCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, DbContextConnectionsCheck>()
+            );
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, UnitOfWorkOutboxCheck>()
+            );
             var module = IModuleServices.ModuleOf(services);
             if (module is not null)
             {
-                services.AddKeyedSingleton<DbContextConnection>(module, new DbContextConnection(connectionName, typeof(TDbContext)));
+                services.AddKeyedSingleton<DbContextConnection>(
+                    module,
+                    new DbContextConnection(connectionName, typeof(TDbContext))
+                );
             }
 
             // Added, not tried: on a Module's builder it becomes that Module's own, whatever the Host already holds.
@@ -110,7 +125,10 @@ public static class EfCoreServiceCollectionExtensions
         /// a violation of one declared <c>DEFERRABLE INITIALLY DEFERRED</c> surfaces when the transaction commits, as an
         /// exception. Throws when the constraint is already mapped for that DbContext.
         /// </summary>
-        public IServiceCollection MapPouryaKitUniqueConstraint<TDbContext>(string constraint, Error error)
+        public IServiceCollection MapPouryaKitUniqueConstraint<TDbContext>(
+            string constraint,
+            Error error
+        )
             where TDbContext : PouryaKitDbContext
         {
             ArgumentNullException.ThrowIfNull(services);
@@ -131,7 +149,10 @@ public static class EfCoreServiceCollectionExtensions
                 );
             }
 
-            services.AddKeyedSingleton<UniqueConstraintError>(typeof(TDbContext), new UniqueConstraintError(constraint, error));
+            services.AddKeyedSingleton<UniqueConstraintError>(
+                typeof(TDbContext),
+                new UniqueConstraintError(constraint, error)
+            );
             return services;
         }
     }

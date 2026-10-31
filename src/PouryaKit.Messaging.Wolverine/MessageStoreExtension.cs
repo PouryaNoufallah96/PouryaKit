@@ -5,7 +5,8 @@ namespace PouryaKit.Messaging.Wolverine;
 
 // Applied when Wolverine's options are first resolved, so a Host or a test can still change the settings after
 // UsePouryaKitWolverine.
-internal sealed class MessageStoreExtension(IOptions<PouryaKitMessageStoreOptions> options) : IWolverineExtension
+internal sealed class MessageStoreExtension(IOptions<PouryaKitMessageStoreOptions> options)
+    : IWolverineExtension
 {
     public void Configure(WolverineOptions wolverine)
     {

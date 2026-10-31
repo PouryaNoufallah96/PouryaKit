@@ -17,15 +17,26 @@ internal sealed record HandlingAssemblyQuery(string Key) : Query<string>, ICache
 
 internal sealed class HandlingAssemblyQueryHandler : QueryHandler<HandlingAssemblyQuery, string>
 {
-    public override Task<Result<string>> Handle(HandlingAssemblyQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<string>>(typeof(HandlingAssemblyQueryHandler).Assembly.GetName().Name!);
+    public override Task<Result<string>> Handle(
+        HandlingAssemblyQuery query,
+        CancellationToken cancellationToken
+    ) =>
+        Task.FromResult<Result<string>>(
+            typeof(HandlingAssemblyQueryHandler).Assembly.GetName().Name!
+        );
 }
 
 [Idempotent]
 internal sealed record NameHandlingAssemblyCommand : Command<string>;
 
-internal sealed class NameHandlingAssemblyCommandHandler : CommandHandler<NameHandlingAssemblyCommand, string>
+internal sealed class NameHandlingAssemblyCommandHandler
+    : CommandHandler<NameHandlingAssemblyCommand, string>
 {
-    public override Task<Result<string>> Handle(NameHandlingAssemblyCommand command, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<string>>(typeof(NameHandlingAssemblyCommandHandler).Assembly.GetName().Name!);
+    public override Task<Result<string>> Handle(
+        NameHandlingAssemblyCommand command,
+        CancellationToken cancellationToken
+    ) =>
+        Task.FromResult<Result<string>>(
+            typeof(NameHandlingAssemblyCommandHandler).Assembly.GetName().Name!
+        );
 }

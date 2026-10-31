@@ -4,7 +4,11 @@ public sealed class PageTests
 {
     private static readonly PageDeclaration Declaration = new(
         sorts: ["name"],
-        filters: [FilterField.Of<Guid>("category", FilterOperator.Equal), FilterField.Of<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual)],
+        filters:
+        [
+            FilterField.Of<Guid>("category", FilterOperator.Equal),
+            FilterField.Of<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual),
+        ],
         maxSize: 50
     );
 
@@ -26,7 +30,10 @@ public sealed class PageTests
     {
         var page = new Page<string>([], number, size, total);
 
-        Assert.Equal((totalPages, hasNext, hasPrevious), (page.TotalPages, page.HasNext, page.HasPrevious));
+        Assert.Equal(
+            (totalPages, hasNext, hasPrevious),
+            (page.TotalPages, page.HasNext, page.HasPrevious)
+        );
     }
 
     [Fact]
@@ -36,7 +43,9 @@ public sealed class PageTests
 
         var beyond = Declaration.Validate(new PageRequest { Number = reachable + 1, Size = 50 });
 
-        Assert.True(Declaration.Validate(new PageRequest { Number = reachable, Size = 50 }).IsSuccess);
+        Assert.True(
+            Declaration.Validate(new PageRequest { Number = reachable, Size = 50 }).IsSuccess
+        );
         Assert.Equal(PageErrorCodes.NumberOutOfRange, Assert.Single(beyond.Errors).Code);
     }
 
@@ -50,7 +59,11 @@ public sealed class PageTests
             new("category", FilterOperator.Equal, category.ToString()),
             new("created", FilterOperator.GreaterThanOrEqual, "2026-10-07T12:00:00"),
             new("created", FilterOperator.GreaterThanOrEqual, "2026-10-07T15:30:00+03:30"),
-            new("created", FilterOperator.GreaterThanOrEqual, new DateTimeOffset(2026, 10, 7, 15, 30, 0, TimeSpan.FromHours(3.5))),
+            new(
+                "created",
+                FilterOperator.GreaterThanOrEqual,
+                new DateTimeOffset(2026, 10, 7, 15, 30, 0, TimeSpan.FromHours(3.5))
+            ),
         ];
         var noon = new DateTimeOffset(2026, 10, 7, 12, 0, 0, TimeSpan.Zero);
 
@@ -58,21 +71,40 @@ public sealed class PageTests
 
         Assert.Equal([category, category, noon, noon, noon], values);
         // Every time is read as UTC, whatever offset it was given in, so both helpers send the same value.
-        Assert.All(values.OfType<DateTimeOffset>(), time => Assert.Equal(TimeSpan.Zero, time.Offset));
-        Assert.Throws<InvalidOperationException>(() => Declaration.ValueOf(new("category", FilterOperator.Equal, 42)));
+        Assert.All(
+            values.OfType<DateTimeOffset>(),
+            time => Assert.Equal(TimeSpan.Zero, time.Offset)
+        );
+        Assert.Throws<InvalidOperationException>(() =>
+            Declaration.ValueOf(new("category", FilterOperator.Equal, 42))
+        );
     }
 
     [Fact]
     public void A_declaration_refuses_a_name_that_is_not_plain_letters_and_digits_and_an_operator_its_type_cannot_use()
     {
         Assert.Throws<ArgumentException>(() => new PageDeclaration(["name desc"]));
-        Assert.Throws<ArgumentException>(() => new PageDeclaration(["name"], [FilterField.Of<string>("na-me", FilterOperator.Equal)]));
-        Assert.Throws<ArgumentException>(() => FilterField.Of<Guid>("category", FilterOperator.Contains));
-        Assert.Throws<ArgumentException>(() => FilterField.Of<string>("name", FilterOperator.GreaterThan));
-        Assert.Throws<ArgumentException>(() => FilterField.Of<float>("weight", FilterOperator.Equal));
+        Assert.Throws<ArgumentException>(() =>
+            new PageDeclaration(["name"], [FilterField.Of<string>("na-me", FilterOperator.Equal)])
+        );
+        Assert.Throws<ArgumentException>(() =>
+            FilterField.Of<Guid>("category", FilterOperator.Contains)
+        );
+        Assert.Throws<ArgumentException>(() =>
+            FilterField.Of<string>("name", FilterOperator.GreaterThan)
+        );
+        Assert.Throws<ArgumentException>(() =>
+            FilterField.Of<float>("weight", FilterOperator.Equal)
+        );
         // A maximum below the default size would refuse every request that states no size.
-        Assert.Throws<ArgumentOutOfRangeException>(() => new PageDeclaration(["name"], maxSize: PageRequest.DefaultSize - 1));
-        Assert.True(new PageDeclaration(["name"], maxSize: PageRequest.DefaultSize).Validate(new PageRequest()).IsSuccess);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new PageDeclaration(["name"], maxSize: PageRequest.DefaultSize - 1)
+        );
+        Assert.True(
+            new PageDeclaration(["name"], maxSize: PageRequest.DefaultSize)
+                .Validate(new PageRequest())
+                .IsSuccess
+        );
     }
 
     [Fact]
@@ -85,7 +117,10 @@ public sealed class PageTests
         Assert.All(
             Enum.GetValues<FilterOperator>(),
             filterOperator =>
-                Assert.True(FilterOperator.TryParseName(filterOperator.Name, out var parsed) && parsed == filterOperator)
+                Assert.True(
+                    FilterOperator.TryParseName(filterOperator.Name, out var parsed)
+                        && parsed == filterOperator
+                )
         );
         Assert.False(FilterOperator.TryParseName("Equal", out _));
         Assert.False(FilterOperator.TryParseName(null, out _));

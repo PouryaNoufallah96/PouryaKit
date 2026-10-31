@@ -8,8 +8,11 @@ namespace PouryaKit.Observability;
 // Wraps the scope's dispatcher, so the activity encloses the whole pipeline, the Unit of Work included: it is current
 // while the Unit of Work writes the Outbox, where Wolverine takes it as each envelope's parent-id (ADR 0009). A handler
 // sends a nested command through the same scoped dispatcher, so its activity is a child of the one current there.
-internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation operation, ObservedDispatcher.Instruments instruments)
-    : IDispatcher
+internal sealed class ObservedDispatcher(
+    IDispatcher dispatcher,
+    Operation operation,
+    ObservedDispatcher.Instruments instruments
+) : IDispatcher
 {
     private static readonly ActivitySource Source = new(OperationTelemetry.SourceName);
 
@@ -21,25 +24,43 @@ internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation opera
     {
         ArgumentNullException.ThrowIfNull(command);
         return Observing
-            ? ObserveAsync(command, static (inner, sent, ct) => inner.SendAsync(sent, ct), cancellationToken)
+            ? ObserveAsync(
+                command,
+                static (inner, sent, ct) => inner.SendAsync(sent, ct),
+                cancellationToken
+            )
             : dispatcher.SendAsync(command, cancellationToken);
     }
 
-    public Task<Result<TResponse>> SendAsync<TResponse>(Command<TResponse> command, CancellationToken cancellationToken = default)
+    public Task<Result<TResponse>> SendAsync<TResponse>(
+        Command<TResponse> command,
+        CancellationToken cancellationToken = default
+    )
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(command);
         return Observing
-            ? ObserveAsync(command, static (inner, sent, ct) => inner.SendAsync(sent, ct), cancellationToken)
+            ? ObserveAsync(
+                command,
+                static (inner, sent, ct) => inner.SendAsync(sent, ct),
+                cancellationToken
+            )
             : dispatcher.SendAsync(command, cancellationToken);
     }
 
-    public Task<Result<TResponse>> QueryAsync<TResponse>(Query<TResponse> query, CancellationToken cancellationToken = default)
+    public Task<Result<TResponse>> QueryAsync<TResponse>(
+        Query<TResponse> query,
+        CancellationToken cancellationToken = default
+    )
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(query);
         return Observing
-            ? ObserveAsync(query, static (inner, asked, ct) => inner.QueryAsync(asked, ct), cancellationToken)
+            ? ObserveAsync(
+                query,
+                static (inner, asked, ct) => inner.QueryAsync(asked, ct),
+                cancellationToken
+            )
             : dispatcher.QueryAsync(query, cancellationToken);
     }
 
@@ -65,9 +86,21 @@ internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation opera
         // A delivery's parent is Wolverine's span of the envelope when one is current; with none of that trace, the
         // publishing Operation's context the delivery restored. A default parent means the current activity.
         var restored = operation.TraceParent;
-        var parent = restored != default && Activity.Current?.TraceId != restored.TraceId ? restored : default;
-        using var activity = Source.StartActivity(OperationTelemetry.ActivityName, ActivityKind.Internal, parent, tags);
-        if (activity is not null && restored.TraceState is { } traceState && activity.TraceId == restored.TraceId)
+        var parent =
+            restored != default && Activity.Current?.TraceId != restored.TraceId
+                ? restored
+                : default;
+        using var activity = Source.StartActivity(
+            OperationTelemetry.ActivityName,
+            ActivityKind.Internal,
+            parent,
+            tags
+        );
+        if (
+            activity is not null
+            && restored.TraceState is { } traceState
+            && activity.TraceId == restored.TraceId
+        )
         {
             activity.TraceStateString = traceState;
         }
@@ -85,7 +118,10 @@ internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation opera
             else
             {
                 outcome = OperationTelemetry.Failed;
-                activity?.SetStatus(ActivityStatusCode.Error, string.Join(", ", result.Errors.Select(error => error.Code)));
+                activity?.SetStatus(
+                    ActivityStatusCode.Error,
+                    string.Join(", ", result.Errors.Select(error => error.Code))
+                );
             }
 
             return result;
@@ -117,7 +153,26 @@ internal sealed class ObservedDispatcher(IDispatcher dispatcher, Operation opera
                     // ASP.NET Core's second-scale boundaries for http.server.request.duration (dotnet/aspnetcore@7387de9,
                     // v10.0.0, src/Shared/Metrics/MetricsConstants.cs): an exporter's defaults are for milliseconds, and
                     // would put nearly every Operation in the first bucket.
-                    advice: new InstrumentAdvice<double> { HistogramBucketBoundaries = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10] }
+                    advice: new InstrumentAdvice<double>
+                    {
+                        HistogramBucketBoundaries =
+                        [
+                            0.005,
+                            0.01,
+                            0.025,
+                            0.05,
+                            0.075,
+                            0.1,
+                            0.25,
+                            0.5,
+                            0.75,
+                            1,
+                            2.5,
+                            5,
+                            7.5,
+                            10,
+                        ],
+                    }
                 );
     }
 }

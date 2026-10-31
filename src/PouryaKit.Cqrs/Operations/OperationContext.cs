@@ -14,12 +14,20 @@ public sealed record OperationContext
     /// <paramref name="causationId"/> is recorded as given, but the context is never a trusted continuation. A
     /// <paramref name="tenant"/> is never blank: null is the Operation without one.
     /// </summary>
-    public OperationContext(Actor actor, string? tenant = null, Guid? correlationId = null, Guid? causationId = null)
+    public OperationContext(
+        Actor actor,
+        string? tenant = null,
+        Guid? correlationId = null,
+        Guid? causationId = null
+    )
     {
         ArgumentNullException.ThrowIfNull(actor);
         if (tenant is not null && string.IsNullOrWhiteSpace(tenant))
         {
-            throw new ArgumentException("A tenant is not blank; an Operation without one has a null tenant.", nameof(tenant));
+            throw new ArgumentException(
+                "A tenant is not blank; an Operation without one has a null tenant.",
+                nameof(tenant)
+            );
         }
 
         OperationId = Guid.CreateVersion7();
@@ -76,9 +84,11 @@ public sealed record OperationContext
     public string? RequestId
     {
         get;
-        init => field = value is null || !string.IsNullOrWhiteSpace(value)
-            ? value
-            : throw new ArgumentException("A request id is not blank.", nameof(RequestId));
+        init =>
+            field =
+                value is null || !string.IsNullOrWhiteSpace(value)
+                    ? value
+                    : throw new ArgumentException("A request id is not blank.", nameof(RequestId));
     }
 
     /// <summary>
@@ -89,12 +99,19 @@ public sealed record OperationContext
     /// causation and is not trusted.
     /// </summary>
     public OperationContext Continue() =>
-        new(Actor, Tenant, CorrelationId, OperationId) { IsTrustedContinuation = AuthorizedOperation.Runs(this) };
+        new(Actor, Tenant, CorrelationId, OperationId)
+        {
+            IsTrustedContinuation = AuthorizedOperation.Runs(this),
+        };
 
     // The one way to establish trust outside a running Operation, for Kit code that restores a context from material the
     // Kit wrote: delivery in PouryaKit.Messaging.Wolverine, and the trusted-peer binding of PouryaKit.Web, the two
     // assemblies this one's InternalsVisibleTo names. No public entry point could be callable by them and not by an
     // application.
-    internal static OperationContext RestoreTrusted(Actor actor, string? tenant, Guid correlationId, Guid causationId) =>
-        new(actor, tenant, correlationId, causationId) { IsTrustedContinuation = true };
+    internal static OperationContext RestoreTrusted(
+        Actor actor,
+        string? tenant,
+        Guid correlationId,
+        Guid causationId
+    ) => new(actor, tenant, correlationId, causationId) { IsTrustedContinuation = true };
 }

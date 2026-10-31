@@ -26,14 +26,22 @@ internal sealed class Subscriptions : IWireNames
         "system"
     );
 
-    private readonly Dictionary<string, Subscription> _byName = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Subscription> _byName = new(
+        StringComparer.OrdinalIgnoreCase
+    );
+
     // The wire name of every Domain Event delivered as a Notification and of every Integration Event published.
-    private readonly Dictionary<string, Type> _typeByWireName = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Type> _typeByWireName = new(
+        StringComparer.OrdinalIgnoreCase
+    );
     private readonly Dictionary<Type, Publication> _publications = [];
+
     // Every published Snapshot contract, by its type.
     private readonly Dictionary<Type, SnapshotPublication> _snapshots = [];
+
     // Every Integration Event and Snapshot another Host publishes, by its type, with its wire name and whether it is a Snapshot.
     private readonly Dictionary<Type, (string WireName, bool IsSnapshot)> _received = [];
+
     // The Integration Events a Saga takes (PouryaKit.Messaging.Wolverine.Sagas), each delivered to its saga's own queue.
     private readonly List<SagaInputRoute> _sagaInputs = [];
 
@@ -41,7 +49,10 @@ internal sealed class Subscriptions : IWireNames
 
     // A type a Saga takes is one too: from another Host, it reaches the saga's queue through the same fan-out.
     public IEnumerable<Type> MessageTypes =>
-        _byName.Values.Select(subscription => subscription.Message).Concat(_sagaInputs.Select(input => input.Message)).Distinct();
+        _byName
+            .Values.Select(subscription => subscription.Message)
+            .Concat(_sagaInputs.Select(input => input.Message))
+            .Distinct();
 
     /// <summary>Every Integration Event a Saga of this Host takes, with the saga's queue and the input it is delivered as.</summary>
     public IReadOnlyList<SagaInputRoute> SagaInputs => _sagaInputs;
@@ -53,7 +64,8 @@ internal sealed class Subscriptions : IWireNames
 
     public IEnumerable<SnapshotPublication> Snapshots => _snapshots.Values;
 
-    public bool IsSnapshot(Type message) => _snapshots.ContainsKey(message) || _received.GetValueOrDefault(message).IsSnapshot;
+    public bool IsSnapshot(Type message) =>
+        _snapshots.ContainsKey(message) || _received.GetValueOrDefault(message).IsSnapshot;
 
     /// <summary>Every Integration Event and Snapshot this Host receives from another Host.</summary>
     public IReadOnlySet<Type> ReceivedTypes => _received.Keys.ToHashSet();
@@ -62,18 +74,30 @@ internal sealed class Subscriptions : IWireNames
     public IReadOnlyDictionary<Type, string> WireNames =>
         _publications
             .Select(publication => KeyValuePair.Create(publication.Key, publication.Value.WireName))
-            .Concat(_received.Select(received => KeyValuePair.Create(received.Key, received.Value.WireName)))
+            .Concat(
+                _received.Select(received =>
+                    KeyValuePair.Create(received.Key, received.Value.WireName)
+                )
+            )
             .ToDictionary();
 
     IReadOnlyDictionary<Type, string> IWireNames.Published =>
-        _publications.ToDictionary(publication => publication.Key, publication => publication.Value.WireName);
+        _publications.ToDictionary(
+            publication => publication.Key,
+            publication => publication.Value.WireName
+        );
 
     IReadOnlyCollection<string> IWireNames.Received =>
         [.. MessageTypes.Where(_received.ContainsKey).Select(type => _received[type].WireName)];
 
     public static Subscriptions In(IServiceCollection services)
     {
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(Subscriptions)) is { } existing)
+        if (
+            services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(Subscriptions)
+            ) is
+            { } existing
+        )
         {
             return (Subscriptions)existing.ImplementationInstance!;
         }
@@ -85,7 +109,9 @@ internal sealed class Subscriptions : IWireNames
     }
 
     public Subscription Named(string name) =>
-        _byName.TryGetValue(name, out var subscription) ? subscription : throw new UnknownSubscriptionException(name);
+        _byName.TryGetValue(name, out var subscription)
+            ? subscription
+            : throw new UnknownSubscriptionException(name);
 
     /// <summary>
     /// Adds every subscription, or none: throws, naming each problem, when a name is missing or invalid, or equal
@@ -95,7 +121,10 @@ internal sealed class Subscriptions : IWireNames
     public void Add(IReadOnlyList<Subscription> subscriptions, List<string> problems)
     {
         Dictionary<string, Subscription> byName = new(_byName, StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, Type> typeByWireName = new(_typeByWireName, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, Type> typeByWireName = new(
+            _typeByWireName,
+            StringComparer.OrdinalIgnoreCase
+        );
         foreach (var subscription in subscriptions)
         {
             // An Integration Event's wire name is declared where it is published. A derived subscription name starts
@@ -103,12 +132,22 @@ internal sealed class Subscriptions : IWireNames
             if (subscription.IsNotification)
             {
                 var wireName = MessageNames.WireNameOf(subscription.Message);
-                if (!Check(wireName, $"{subscription.Message.FullName}'s wire name", isQueue: false, problems))
+                if (
+                    !Check(
+                        wireName,
+                        $"{subscription.Message.FullName}'s wire name",
+                        isQueue: false,
+                        problems
+                    )
+                )
                 {
                     continue;
                 }
 
-                if (!typeByWireName.TryAdd(wireName, subscription.Message) && typeByWireName[wireName] != subscription.Message)
+                if (
+                    !typeByWireName.TryAdd(wireName, subscription.Message)
+                    && typeByWireName[wireName] != subscription.Message
+                )
                 {
                     problems.Add(
                         $"{subscription.Message.FullName} and {typeByWireName[wireName].FullName} have the wire name {wireName}, ignoring case; give one a WireName of its own."
@@ -116,14 +155,24 @@ internal sealed class Subscriptions : IWireNames
                 }
             }
 
-            if (!Check(subscription.Name, $"{subscription.Handler.FullName}'s subscription name", isQueue: true, problems))
+            if (
+                !Check(
+                    subscription.Name,
+                    $"{subscription.Handler.FullName}'s subscription name",
+                    isQueue: true,
+                    problems
+                )
+            )
             {
                 continue;
             }
 
             if (byName.TryGetValue(subscription.Name, out var existing))
             {
-                if (existing.Handler != subscription.Handler || existing.Message != subscription.Message)
+                if (
+                    existing.Handler != subscription.Handler
+                    || existing.Message != subscription.Message
+                )
                 {
                     problems.Add(
                         $"{subscription.Handler.FullName} and {existing.Handler.FullName} have the subscription name {subscription.Name}, ignoring case; {(subscription.IsNotification ? "give one a SubscriptionName of its own" : "subscribe one under another name")}."
@@ -193,7 +242,9 @@ internal sealed class Subscriptions : IWireNames
         }
         else if (!message.IsClass || message.IsAbstract || message.ContainsGenericParameters)
         {
-            problems.Add($"{message.FullName} is not a concrete class; receive the concrete Integration Event or Snapshot type.");
+            problems.Add(
+                $"{message.FullName} is not a concrete class; receive the concrete Integration Event or Snapshot type."
+            );
         }
         else if (Check(wireName, $"{message.FullName}'s wire name", isQueue: false, problems))
         {
@@ -227,12 +278,18 @@ internal sealed class Subscriptions : IWireNames
         _typeByWireName.Add(wireName, message);
     }
 
-    private static string Kind(bool isSnapshot) => isSnapshot ? "the Snapshot" : "the Integration Event";
+    private static string Kind(bool isSnapshot) =>
+        isSnapshot ? "the Snapshot" : "the Integration Event";
 
     private static string Both(Type message, Type? module) =>
         $"{message.FullName} is published by {module?.Name ?? "the application"} in this Host and declared as received from another Host. A Host publishes a contract or receives it: its subscriptions here receive it from its publication, so remove the Receive declaration.";
 
-    private void Publish(Type integrationEvent, string wireName, Type? module, SnapshotPublication? snapshot)
+    private void Publish(
+        Type integrationEvent,
+        string wireName,
+        Type? module,
+        SnapshotPublication? snapshot
+    )
     {
         List<string> problems = [];
         if (integrationEvent.IsAssignableTo(typeof(DomainEvent)))
@@ -241,11 +298,19 @@ internal sealed class Subscriptions : IWireNames
                 $"{integrationEvent.FullName} is a Domain Event; it reaches its own Module's Notification Handlers. Publish a record of the Module's Contracts for other Modules."
             );
         }
-        else if (!integrationEvent.IsClass || integrationEvent.IsAbstract || integrationEvent.ContainsGenericParameters)
+        else if (
+            !integrationEvent.IsClass
+            || integrationEvent.IsAbstract
+            || integrationEvent.ContainsGenericParameters
+        )
         {
-            problems.Add($"{integrationEvent.FullName} is not a concrete class; publish the concrete Integration Event type.");
+            problems.Add(
+                $"{integrationEvent.FullName} is not a concrete class; publish the concrete Integration Event type."
+            );
         }
-        else if (Check(wireName, $"{integrationEvent.FullName}'s wire name", isQueue: false, problems))
+        else if (
+            Check(wireName, $"{integrationEvent.FullName}'s wire name", isQueue: false, problems)
+        )
         {
             if (_publications.TryGetValue(integrationEvent, out var published))
             {
@@ -308,7 +373,8 @@ internal sealed class Subscriptions : IWireNames
         [
             .. from routed in subscribed.Union(_publications.Keys)
             from message in named
-            where message.Type != routed
+            where
+                message.Type != routed
                 && new[] { message.WireName, message.Type.Name, message.Type.FullName }.Contains(
                     routed.FullName,
                     StringComparer.OrdinalIgnoreCase
@@ -373,4 +439,8 @@ internal sealed record SnapshotPublication(Type Aggregate, Type Snapshot, Type M
 /// <see cref="Copy"/> builds from the event and the Kit's headers it was published with, on the Kit's route inside the Host
 /// and by the fan-out of a delivery from another Host alike.
 /// </summary>
-internal sealed record SagaInputRoute(Type Message, string Queue, Func<object, IReadOnlyDictionary<string, string?>, object> Copy);
+internal sealed record SagaInputRoute(
+    Type Message,
+    string Queue,
+    Func<object, IReadOnlyDictionary<string, string?>, object> Copy
+);

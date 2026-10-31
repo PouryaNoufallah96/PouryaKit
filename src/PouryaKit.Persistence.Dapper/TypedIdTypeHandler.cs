@@ -20,6 +20,8 @@ internal sealed class TypedIdTypeHandler<TId, TValue> : SqlMapper.TypeHandler<TI
     // A column of another type, such as an integer column read into a long ID, is converted to the ID's value type.
     public override TId Parse(object value) =>
         TypedId.From<TId, TValue>(
-            value is TValue typed ? typed : (TValue)Convert.ChangeType(value, typeof(TValue), CultureInfo.InvariantCulture)
+            value is TValue typed
+                ? typed
+                : (TValue)Convert.ChangeType(value, typeof(TValue), CultureInfo.InvariantCulture)
         );
 }

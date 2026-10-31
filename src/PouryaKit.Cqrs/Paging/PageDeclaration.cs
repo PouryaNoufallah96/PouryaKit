@@ -33,13 +33,20 @@ public sealed class PageDeclaration
     /// <paramref name="maxSize"/> is below <see cref="PageRequest.DefaultSize"/>, which would refuse every request that
     /// states no size.
     /// </summary>
-    public PageDeclaration(IReadOnlyList<string> sorts, IReadOnlyList<FilterField>? filters = null, int maxSize = DefaultMaxSize)
+    public PageDeclaration(
+        IReadOnlyList<string> sorts,
+        IReadOnlyList<FilterField>? filters = null,
+        int maxSize = DefaultMaxSize
+    )
     {
         ArgumentNullException.ThrowIfNull(sorts);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxSize, PageRequest.DefaultSize);
         if (sorts.Count == 0)
         {
-            throw new ArgumentException("A Page read declares at least one sort key; the first is its default.", nameof(sorts));
+            throw new ArgumentException(
+                "A Page read declares at least one sort key; the first is its default.",
+                nameof(sorts)
+            );
         }
 
         foreach (var sort in sorts)
@@ -58,7 +65,10 @@ public sealed class PageDeclaration
             throw new ArgumentNullException(nameof(filters));
         }
 
-        if (filters.Select(filter => filter.Name).Distinct(StringComparer.Ordinal).Count() != filters.Count)
+        if (
+            filters.Select(filter => filter.Name).Distinct(StringComparer.Ordinal).Count()
+            != filters.Count
+        )
         {
             throw new ArgumentException("A filter field is declared twice.", nameof(filters));
         }
@@ -98,23 +108,50 @@ public sealed class PageDeclaration
         var errors = ImmutableArray.CreateBuilder<Error>();
         if (request.Size < 1 || request.Size > MaxSize)
         {
-            errors.Add(Error.Validation(PageErrorCodes.SizeOutOfRange, $"The page size is from 1 to {MaxSize}.", "Size"));
+            errors.Add(
+                Error.Validation(
+                    PageErrorCodes.SizeOutOfRange,
+                    $"The page size is from 1 to {MaxSize}.",
+                    "Size"
+                )
+            );
         }
 
         // The offset of the Page's first item must fit an int, which EF Core's Skip takes.
-        if (request.Number < 1 || (request.Size >= 1 && request.Number - 1 > int.MaxValue / request.Size))
+        if (
+            request.Number < 1
+            || (request.Size >= 1 && request.Number - 1 > int.MaxValue / request.Size)
+        )
         {
-            errors.Add(Error.Validation(PageErrorCodes.NumberOutOfRange, "The page number is 1 or more, within the reachable pages.", "Number"));
+            errors.Add(
+                Error.Validation(
+                    PageErrorCodes.NumberOutOfRange,
+                    "The page number is 1 or more, within the reachable pages.",
+                    "Number"
+                )
+            );
         }
 
         if (request.Sort is { } sort && !Sorts.Contains(sort, StringComparer.Ordinal))
         {
-            errors.Add(Error.Validation(PageErrorCodes.SortUnknown, $"Sort by one of: {string.Join(", ", Sorts)}.", "Sort"));
+            errors.Add(
+                Error.Validation(
+                    PageErrorCodes.SortUnknown,
+                    $"Sort by one of: {string.Join(", ", Sorts)}.",
+                    "Sort"
+                )
+            );
         }
 
         if (!Enum.IsDefined(request.Direction))
         {
-            errors.Add(Error.Validation(PageErrorCodes.DirectionUnknown, "Sort ascending or descending.", "Direction"));
+            errors.Add(
+                Error.Validation(
+                    PageErrorCodes.DirectionUnknown,
+                    "Sort ascending or descending.",
+                    "Direction"
+                )
+            );
         }
 
         var filters = request.Filters ?? [];
@@ -122,7 +159,10 @@ public sealed class PageDeclaration
         for (var index = 0; index < filters.Count; index++)
         {
             var target = $"Filters[{index}]";
-            if (filters[index] is not { Field: { } name } filter || !_fields.TryGetValue(name, out var field))
+            if (
+                filters[index] is not { Field: { } name } filter
+                || !_fields.TryGetValue(name, out var field)
+            )
             {
                 errors.Add(
                     Error.Validation(
@@ -147,7 +187,11 @@ public sealed class PageDeclaration
             else if (field.Read(filter.Value) is null)
             {
                 errors.Add(
-                    Error.Validation(PageErrorCodes.FilterValueInvalid, $"Filter {field.Name} with a {field.TypeName} value.", target)
+                    Error.Validation(
+                        PageErrorCodes.FilterValueInvalid,
+                        $"Filter {field.Name} with a {field.TypeName} value.",
+                        target
+                    )
                 );
             }
             else if (!given.Add((field.Name, filter.Operator)))
@@ -173,11 +217,14 @@ public sealed class PageDeclaration
     public object ValueOf(PageFilter filter)
     {
         ArgumentNullException.ThrowIfNull(filter);
-        return filter.Field is { } name
+        return
+            filter.Field is { } name
             && _fields.TryGetValue(name, out var field)
             && field.Operators.Contains(filter.Operator)
             && field.Read(filter.Value) is { } value
             ? value
-            : throw new InvalidOperationException("The filter is not one this declaration accepts; validate the request first.");
+            : throw new InvalidOperationException(
+                "The filter is not one this declaration accepts; validate the request first."
+            );
     }
 }

@@ -23,7 +23,10 @@ public sealed class SharedStoreSchemaTests
     {
         await using var fixture = new SharedSchemaFixture();
         await fixture.InitializeAsync();
-        await fixture.WaitForDeliveriesAsync(() => fixture.FileForCopyAsync("before the reset"), TestContext.Current.CancellationToken);
+        await fixture.WaitForDeliveriesAsync(
+            () => fixture.FileForCopyAsync("before the reset"),
+            TestContext.Current.CancellationToken
+        );
         var before = await fixture.CountsAsync();
 
         await fixture.ResetAsync(TestContext.Current.CancellationToken);
@@ -45,16 +48,26 @@ public sealed class SharedStoreSchemaTests
     {
         protected override IHost CreateHost(string connectionString)
         {
-            var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-                ["--environment", "Production", $"--ConnectionStrings:app={connectionString}"]
+            var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+                "--environment",
+                "Production",
+                $"--ConnectionStrings:app={connectionString}",
+            ]);
+            builder.Services.UsePouryaKitPostgres<StubDbContext>(
+                connectionName: "app",
+                schema: "stub"
             );
-            builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
             // The one command it sends, by hand, and what the Stub's Notification Handlers need: its other Features need
             // the Stub Module's services, and the Kit's container is validated when it is built.
-            builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
+            builder.Services.AddScoped<
+                CommandHandler<WriteNoteRaisingCommand>,
+                WriteNoteRaisingCommandHandler
+            >();
             builder.Services.AddSingleton<DeliveryLog>();
             builder.Services.AddPouryaKitMailKit();
-            builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+            builder.Services.Configure<PouryaKitMailKitOptions>(
+                builder.Configuration.GetSection("PouryaKit:Email")
+            );
             builder.Services.AddPouryaKitRealtime(connectionName: "app");
             builder.Services.AddPouryaKitDapper(connectionName: "app");
             builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
@@ -67,7 +80,9 @@ public sealed class SharedStoreSchemaTests
         public async Task<Result> FileForCopyAsync(string text)
         {
             await using var scope = Host.Services.CreateAsyncScope();
-            scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("shared-schema")));
+            scope.ServiceProvider.BeginOperation(
+                new OperationContext(Actor.System("shared-schema"))
+            );
             return await scope
                 .ServiceProvider.GetRequiredService<IDispatcher>()
                 .SendAsync(
@@ -87,7 +102,9 @@ public sealed class SharedStoreSchemaTests
                 """,
                 connection
             );
-            await using var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken);
+            await using var reader = await command.ExecuteReaderAsync(
+                TestContext.Current.CancellationToken
+            );
             await reader.ReadAsync(TestContext.Current.CancellationToken);
             return (reader.GetInt64(0), reader.GetInt64(1), reader.GetInt64(2));
         }

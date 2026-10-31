@@ -26,7 +26,8 @@ internal sealed class EfUnitOfWork(
     /// <summary>The Operation this Unit of Work belongs to.</summary>
     public Operation Operation => operation;
 
-    IDisposable IReadingStateGuard.OnlyReading(string step) => new ReadingState(TrackedState.Capture(dbContext, includeQueryLoads: true), step);
+    IDisposable IReadingStateGuard.OnlyReading(string step) =>
+        new ReadingState(TrackedState.Capture(dbContext, includeQueryLoads: true), step);
 
     private sealed class ReadingState(TrackedState state, string step) : IDisposable
     {
@@ -39,18 +40,24 @@ internal sealed class EfUnitOfWork(
         }
     }
 
-    public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
+    public async Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(command);
 
         // Disposing an uncommitted transaction rolls it back. A commit exception can instead mean the database
         // committed but its acknowledgement was lost, leaving the outcome unknown to the caller (ADR 0004).
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            cancellationToken
+        );
         var result = await command(cancellationToken);
         if (result.IsSuccess && !operation.IsRollbackOnly)
         {
             var handled = await domainEvents.RunAsync(
-                () => dbContext.ChangeTracker.Entries<IAggregateRoot>().Select(entry => entry.Entity),
+                () =>
+                    dbContext.ChangeTracker.Entries<IAggregateRoot>().Select(entry => entry.Entity),
                 cancellationToken
             );
 
@@ -109,7 +116,9 @@ internal sealed class EfUnitOfWork(
         }
         catch (DbUpdateException exception)
             when (uniqueConstraints?.ViolatedConstraint(exception) is { } constraint
-                && uniqueConstraintErrors.FirstOrDefault(error => error.Constraint == constraint) is { } mapped)
+                && uniqueConstraintErrors.FirstOrDefault(error => error.Constraint == constraint)
+                    is { } mapped
+            )
         {
             return mapped.Error;
         }

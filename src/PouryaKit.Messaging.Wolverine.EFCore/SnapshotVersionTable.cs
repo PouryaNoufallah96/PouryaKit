@@ -28,10 +28,15 @@ public static class SnapshotVersionTable
                     aggregate_id = table.Column<string>(type: "text", nullable: false),
                     version = table.Column<long>(type: "bigint", nullable: false),
                 },
-                constraints: table => table.PrimaryKey($"pk_{Name}", applied => new { applied.subscription, applied.aggregate_id })
+                constraints: table =>
+                    table.PrimaryKey(
+                        $"pk_{Name}",
+                        applied => new { applied.subscription, applied.aggregate_id }
+                    )
             );
 
         /// <summary>Drops the Snapshot version table from <paramref name="schema"/>, the Module's own.</summary>
-        public void DropSnapshotVersionTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
+        public void DropSnapshotVersionTable(string schema) =>
+            migrationBuilder.DropTable(name: Name, schema: schema);
     }
 }

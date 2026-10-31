@@ -18,7 +18,12 @@ public sealed class SharedJsonTests
     [Fact]
     public void Web_messaging_wolverine_cqrs_and_caching_apply_domains_json_options_and_nothing_else_sets_up_its_own()
     {
-        Assert.Empty(Sample.KitPackages.Where(package => package != Domain).Concat(Sample.Modules).SelectMany(OwnJsonSetups));
+        Assert.Empty(
+            Sample
+                .KitPackages.Where(package => package != Domain)
+                .Concat(Sample.Modules)
+                .SelectMany(OwnJsonSetups)
+        );
         Assert.Equal(
             [
                 "PouryaKit.AI.GatewayToolExtensions",
@@ -29,10 +34,19 @@ public sealed class SharedJsonTests
                 "PouryaKit.Persistence.Marten.MartenHostApplicationBuilderExtensions",
                 "PouryaKit.Web.WebServiceCollectionExtensions",
             ],
-            Sample.KitPackages.Where(package => package != Domain).SelectMany(Il.CallsIn).Where(AppliesKitJson).Select(call => call.Owner.FullName).Distinct().Order(StringComparer.Ordinal)
+            Sample
+                .KitPackages.Where(package => package != Domain)
+                .SelectMany(Il.CallsIn)
+                .Where(AppliesKitJson)
+                .Select(call => call.Owner.FullName)
+                .Distinct()
+                .Order(StringComparer.Ordinal)
         );
         // Domain itself is where the options are set up, and the rule sees it.
-        Assert.Contains("PouryaKit.Domain.JsonSerializerOptionsExtensions calls JsonSerializerOptions.set_PropertyNamingPolicy.", OwnJsonSetups(Domain));
+        Assert.Contains(
+            "PouryaKit.Domain.JsonSerializerOptionsExtensions calls JsonSerializerOptions.set_PropertyNamingPolicy.",
+            OwnJsonSetups(Domain)
+        );
     }
 
     // A body of another shape is never handled with defaults where it crosses between Hosts or waits in the store, while
@@ -41,11 +55,24 @@ public sealed class SharedJsonTests
     [Fact]
     public void Only_messaging_wolverine_reads_strictly_and_web_cqrs_and_caching_keep_the_lenient_reading()
     {
-        var calls = Sample.KitPackages.Where(package => package != Domain).SelectMany(Il.CallsIn).Where(AppliesKitJson).ToList();
+        var calls = Sample
+            .KitPackages.Where(package => package != Domain)
+            .SelectMany(Il.CallsIn)
+            .Where(AppliesKitJson)
+            .ToList();
         string[] Callers(string method) =>
-            [.. calls.Where(call => call.Callee.Name == method).Select(call => call.Owner.FullName!).Distinct().Order(StringComparer.Ordinal)];
+            [
+                .. calls
+                    .Where(call => call.Callee.Name == method)
+                    .Select(call => call.Owner.FullName!)
+                    .Distinct()
+                    .Order(StringComparer.Ordinal),
+            ];
 
-        Assert.Equal(["PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions"], Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson)));
+        Assert.Equal(
+            ["PouryaKit.Messaging.Wolverine.WolverineHostApplicationBuilderExtensions"],
+            Callers(nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson))
+        );
         Assert.Equal(
             [
                 "PouryaKit.AI.GatewayToolExtensions",
@@ -81,9 +108,13 @@ public sealed class SharedJsonTests
             .Select(call =>
                 (call.Callee, call.Callee.DeclaringType) switch
                 {
-                    (ConstructorInfo, var type) when type == typeof(JsonSerializerOptions) && !applying.Contains(call.Caller) =>
+                    (ConstructorInfo, var type)
+                        when type == typeof(JsonSerializerOptions)
+                            && !applying.Contains(call.Caller) =>
                         $"{call.Owner.FullName} creates JsonSerializerOptions without applying UsePouryaKitJson.",
-                    (MethodInfo { Name: var name }, var type) when type == typeof(JsonSerializerOptions) && name.StartsWith("set_", StringComparison.Ordinal) =>
+                    (MethodInfo { Name: var name }, var type)
+                        when type == typeof(JsonSerializerOptions)
+                            && name.StartsWith("set_", StringComparison.Ordinal) =>
                         $"{call.Owner.FullName} calls JsonSerializerOptions.{name}.",
                     _ => null,
                 }
@@ -94,5 +125,7 @@ public sealed class SharedJsonTests
 
     private static bool AppliesKitJson(Il.Call call) =>
         call.Callee.DeclaringType == typeof(JsonSerializerOptionsExtensions)
-        && call.Callee.Name is nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson) or nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson);
+        && call.Callee.Name
+            is nameof(JsonSerializerOptionsExtensions.UsePouryaKitJson)
+                or nameof(JsonSerializerOptionsExtensions.UsePouryaKitWireJson);
 }

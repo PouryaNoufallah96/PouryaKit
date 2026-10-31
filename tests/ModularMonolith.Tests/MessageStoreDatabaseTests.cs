@@ -27,7 +27,10 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
         string? storeHost
     )
     {
-        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = "module" };
+        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = "module",
+        };
         var store = new NpgsqlConnectionStringBuilder(module.ConnectionString);
         store.Database = storeDatabase ?? store.Database;
         store.Port += portOffset ?? 0;
@@ -45,9 +48,24 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     // Read as Npgsql reads them: a string that names no database names its user's, and a Unix socket's directory keeps its
     // case and takes the separate port.
     [Theory]
-    [InlineData("Host=db;Username=catalog", "Host=db;Username=messages", "db:5432/catalog", "db:5432/messages")]
-    [InlineData("Host=/run/postgresql;Database=app", "Host=/run/PostgreSQL;Database=app", "/run/postgresql:5432/app", "/run/PostgreSQL:5432/app")]
-    [InlineData("Host=/run/postgresql;Port=5432;Database=app", "Host=/run/postgresql;Port=5433;Database=app", "/run/postgresql:5432/app", "/run/postgresql:5433/app")]
+    [InlineData(
+        "Host=db;Username=catalog",
+        "Host=db;Username=messages",
+        "db:5432/catalog",
+        "db:5432/messages"
+    )]
+    [InlineData(
+        "Host=/run/postgresql;Database=app",
+        "Host=/run/PostgreSQL;Database=app",
+        "/run/postgresql:5432/app",
+        "/run/PostgreSQL:5432/app"
+    )]
+    [InlineData(
+        "Host=/run/postgresql;Port=5432;Database=app",
+        "Host=/run/postgresql;Port=5433;Database=app",
+        "/run/postgresql:5432/app",
+        "/run/postgresql:5433/app"
+    )]
     public void A_dbcontext_on_another_database_as_npgsql_reads_the_strings_fails_the_host_when_built_naming_both(
         string module,
         string store,
@@ -108,7 +126,9 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     public void A_dbcontext_that_configure_db_context_moves_to_another_database_fails_the_host_when_built_naming_it()
     {
         var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Host=db;Database=elsewhere"));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql("Host=db;Database=elsewhere")
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
@@ -123,9 +143,13 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     [Fact]
     public void A_dbcontext_moved_onto_a_data_source_on_another_database_fails_the_host_when_built_naming_it()
     {
-        using var dataSource = NpgsqlDataSource.Create("Host=db;Database=elsewhere;Username=catalog");
+        using var dataSource = NpgsqlDataSource.Create(
+            "Host=db;Database=elsewhere;Username=catalog"
+        );
         var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql((string?)null).UseNpgsql(dataSource));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql((string?)null).UseNpgsql(dataSource)
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
@@ -140,7 +164,9 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     {
         using var dataSource = NpgsqlDataSource.Create("Host=db;Database=app;Username=catalog");
         var builder = Compose("Host=db;Database=elsewhere", "Host=db;Database=app");
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql(dataSource));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql(dataSource)
+        );
 
         using var host = builder.Build();
     }
@@ -151,7 +177,9 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     public void A_dbcontext_on_a_named_string_the_configuration_lacks_fails_the_host_when_built_with_ef_cores_exception()
     {
         var builder = Compose("Host=db;Database=app", "Host=db;Database=app");
-        builder.Services.ConfigureDbContext<StubDbContext>(options => options.UseNpgsql("Name=ConnectionStrings:missing"));
+        builder.Services.ConfigureDbContext<StubDbContext>(options =>
+            options.UseNpgsql("Name=ConnectionStrings:missing")
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
@@ -164,15 +192,23 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     [Fact]
     public void A_dbcontext_whose_model_ef_core_refuses_fails_the_host_when_built_with_ef_cores_exception()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", "--ConnectionStrings:app=Host=db;Database=app"]
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            "--ConnectionStrings:app=Host=db;Database=app",
+        ]);
+        builder.Services.UsePouryaKitPostgres<KeylessModelContext>(
+            connectionName: "app",
+            schema: "keyless"
         );
-        builder.Services.UsePouryaKitPostgres<KeylessModelContext>(connectionName: "app", schema: "keyless");
         builder.UsePouryaKitWolverine(connectionName: "app");
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.StartsWith("The entity type 'Keyless' requires a primary key to be defined.", thrown.Message);
+        Assert.StartsWith(
+            "The entity type 'Keyless' requires a primary key to be defined.",
+            thrown.Message
+        );
     }
 
     // The store's string names the fixture's database in other words: Server for Host, the port inside the host, the host
@@ -192,12 +228,19 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     [Fact]
     public void A_dbcontext_the_application_registered_on_another_database_fails_the_host_when_built_naming_it()
     {
-        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = "module" };
+        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = "module",
+        };
         var store = new NpgsqlConnectionStringBuilder(app.ConnectionString);
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:messages={store.ConnectionString}"]
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:messages={store.ConnectionString}",
+        ]);
+        builder.Services.AddDbContext<StubDbContext>(options =>
+            options.UseNpgsql(module.ConnectionString)
         );
-        builder.Services.AddDbContext<StubDbContext>(options => options.UseNpgsql(module.ConnectionString));
         builder.Services.AddPouryaKitEfCore<StubDbContext>();
         builder.UsePouryaKitWolverine(connectionName: "messages");
 
@@ -214,11 +257,18 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     [Fact]
     public void A_connection_name_add_pouryakit_ef_core_records_and_the_configuration_lacks_fails_the_host_when_built_naming_its_key()
     {
-        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = "module" };
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:messages={app.ConnectionString}"]
+        var module = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = "module",
+        };
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:messages={app.ConnectionString}",
+        ]);
+        builder.Services.AddDbContext<StubDbContext>(options =>
+            options.UseNpgsql(module.ConnectionString)
         );
-        builder.Services.AddDbContext<StubDbContext>(options => options.UseNpgsql(module.ConnectionString));
         builder.Services.AddPouryaKitEfCore<StubDbContext>("unset");
         builder.UsePouryaKitWolverine(connectionName: "messages");
 
@@ -235,7 +285,9 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     public void A_dbcontext_the_application_registered_on_the_message_stores_database_builds_beside_use_pouryakit_postgres()
     {
         var builder = Compose(app.ConnectionString, app.ConnectionString);
-        builder.Services.AddDbContext<ReadCollectionDbContext>(options => options.UseNpgsql(app.ConnectionString));
+        builder.Services.AddDbContext<ReadCollectionDbContext>(options =>
+            options.UseNpgsql(app.ConnectionString)
+        );
         builder.Services.AddPouryaKitEfCore<ReadCollectionDbContext>();
 
         using var host = builder.Build();
@@ -247,12 +299,19 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    public void A_blank_message_store_connection_string_is_refused_while_the_host_is_composed_naming_the_connection(string blank)
+    public void A_blank_message_store_connection_string_is_refused_while_the_host_is_composed_naming_the_connection(
+        string blank
+    )
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Configuration.AddInMemoryCollection([new("ConnectionStrings:messages", blank)]);
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => builder.UsePouryaKitWolverine(connectionName: "messages"));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            builder.UsePouryaKitWolverine(connectionName: "messages")
+        );
 
         Assert.Equal(
             "The configuration has no connection string named messages for the message store, or leaves it blank. Set ConnectionStrings:messages.",
@@ -262,9 +321,12 @@ public sealed class MessageStoreDatabaseTests(AppFixture app)
 
     private static HostApplicationBuilder Compose(string module, string store)
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={module}", $"--ConnectionStrings:messages={store}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={module}",
+            $"--ConnectionStrings:messages={store}",
+        ]);
         builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         builder.UsePouryaKitWolverine(connectionName: "messages");
         return builder;
@@ -276,7 +338,8 @@ internal sealed class Keyless
     public string Name { get; private set; } = "";
 }
 
-internal sealed class KeylessModelContext(DbContextOptions<KeylessModelContext> options) : PouryaKitDbContext(options)
+internal sealed class KeylessModelContext(DbContextOptions<KeylessModelContext> options)
+    : PouryaKitDbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -29,7 +29,13 @@ public sealed class BillingModule : IModuleDefinition
 }
 
 /// <summary>What one of Billing's deliveries received and the Operation Context it ran under.</summary>
-internal sealed record BillingDelivery(string Subscription, Guid OrderId, OperationContext Context, string? TraceId, string? TraceState);
+internal sealed record BillingDelivery(
+    string Subscription,
+    Guid OrderId,
+    OperationContext Context,
+    string? TraceId,
+    string? TraceState
+);
 
 /// <summary>Every delivery Billing applied in this process, and the deliveries a test holds.</summary>
 internal static class BillingLog
@@ -38,7 +44,8 @@ internal static class BillingLog
     private static readonly ConcurrentDictionary<Guid, TaskCompletionSource> Held = [];
 
     /// <summary>Billing's deliveries of the order <paramref name="orderId"/>.</summary>
-    public static List<BillingDelivery> Of(Guid orderId) => [.. Deliveries.Where(delivery => delivery.OrderId == orderId)];
+    public static List<BillingDelivery> Of(Guid orderId) =>
+        [.. Deliveries.Where(delivery => delivery.OrderId == orderId)];
 
     /// <summary>Holds each delivery of <paramref name="orderId"/>'s fulfilment before it applies, until the returned release.</summary>
     public static Action Hold(Guid orderId)
@@ -60,13 +67,23 @@ internal static class BillingLog
         }
 
         var activity = System.Diagnostics.Activity.Current;
-        Deliveries.Enqueue(new BillingDelivery(subscription, orderId, context, activity?.TraceId.ToString(), activity?.TraceStateString));
+        Deliveries.Enqueue(
+            new BillingDelivery(
+                subscription,
+                orderId,
+                context,
+                activity?.TraceId.ToString(),
+                activity?.TraceStateString
+            )
+        );
     }
 }
 
-internal sealed class BillingDbContext(DbContextOptions<BillingDbContext> options) : PouryaKitDbContext(options);
+internal sealed class BillingDbContext(DbContextOptions<BillingDbContext> options)
+    : PouryaKitDbContext(options);
 
-internal sealed class OpenInvoice(OperationContext context) : IIntegrationEventHandler<OrderPlacedV1>
+internal sealed class OpenInvoice(OperationContext context)
+    : IIntegrationEventHandler<OrderPlacedV1>
 {
     public async Task<Result> Handle(OrderPlacedV1 placed, CancellationToken cancellationToken)
     {
@@ -75,18 +92,26 @@ internal sealed class OpenInvoice(OperationContext context) : IIntegrationEventH
     }
 }
 
-internal sealed class CloseInvoice(OperationContext context) : IIntegrationEventHandler<OrderFulfilledV1>
+internal sealed class CloseInvoice(OperationContext context)
+    : IIntegrationEventHandler<OrderFulfilledV1>
 {
-    public async Task<Result> Handle(OrderFulfilledV1 fulfilled, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        OrderFulfilledV1 fulfilled,
+        CancellationToken cancellationToken
+    )
     {
         await BillingLog.AddAsync("billing.order-fulfilled", fulfilled.OrderId, context);
         return Result.Success();
     }
 }
 
-internal sealed class VoidInvoice(OperationContext context) : IIntegrationEventHandler<OrderCancelledV1>
+internal sealed class VoidInvoice(OperationContext context)
+    : IIntegrationEventHandler<OrderCancelledV1>
 {
-    public async Task<Result> Handle(OrderCancelledV1 cancelled, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        OrderCancelledV1 cancelled,
+        CancellationToken cancellationToken
+    )
     {
         await BillingLog.AddAsync("billing.order-cancelled", cancelled.OrderId, context);
         return Result.Success();

@@ -122,8 +122,8 @@
       "sources": [
         {
           "path": ".github/workflows/ci.yml",
-          "line": 42,
-          "end_line": 45,
+          "line": 56,
+          "end_line": 59,
           "label": "parallel to ai-setup, no needs"
         },
         {
@@ -214,8 +214,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs",
-          "line": 24,
-          "end_line": 42,
+          "line": 36,
+          "end_line": 70,
           "label": "metadata, graph, SourceLink, set"
         },
         {
@@ -273,8 +273,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs",
-          "line": 44,
-          "end_line": 68,
+          "line": 72,
+          "end_line": 113,
           "label": "consumer closures and licences"
         },
         {
@@ -302,14 +302,14 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 136,
-          "end_line": 141,
+          "line": 165,
+          "end_line": 170,
           "label": "generated tests use HostFixture"
         },
         {
           "path": "src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 112,
-          "end_line": 125,
+          "line": 141,
+          "end_line": 156,
           "label": "the service's tests start RabbitMQ first"
         }
       ]

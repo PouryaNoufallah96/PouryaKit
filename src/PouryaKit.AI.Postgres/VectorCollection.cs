@@ -14,7 +14,11 @@ internal static class VectorCollection
             name is not [var first, ..]
             || name.Length > MaximumLength
             || !char.IsAsciiLetterLower(first)
-            || !name.All(character => char.IsAsciiLetterLower(character) || char.IsAsciiDigit(character) || character == '_')
+            || !name.All(character =>
+                char.IsAsciiLetterLower(character)
+                || char.IsAsciiDigit(character)
+                || character == '_'
+            )
         )
         {
             throw new ArgumentException(

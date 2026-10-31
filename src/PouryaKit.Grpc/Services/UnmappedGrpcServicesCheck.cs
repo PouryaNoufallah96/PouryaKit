@@ -11,7 +11,13 @@ internal sealed class UnmappedGrpcServicesCheck : IStartupCheck
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
         var mapped = services.GetRequiredService<MappedGrpcServices>();
-        if (services.GetServices<GrpcService>().Where(service => !mapped.Contains(service.Type)).ToList() is [_, ..] unmapped)
+        if (
+            services
+                .GetServices<GrpcService>()
+                .Where(service => !mapped.Contains(service.Type))
+                .ToList()
+            is [_, ..] unmapped
+        )
         {
             yield return $"The gRPC services {string.Join(", ", unmapped.Select(service => service.Type.FullName))} are declared but never mapped, so every call to them answers Unimplemented. Call app.MapPouryaKitGrpcServices() once the Host is built.";
         }

@@ -26,9 +26,15 @@ public sealed class InventoryModule : IModuleDefinition
         // Stock counts take gap-free numbers per year; the StockCounts migration creates the table.
         module.AddPouryaKitNumberSequences();
         module.AddPouryaKitCqrs();
-        module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>("inventory.product-created");
-        module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>("inventory.product-categories");
-        module.Subscribe<ProductSnapshotV1, CopyProductIntegrationEventHandler>("inventory.catalog-products");
+        module.Subscribe<ProductCreatedV1, OpenStockItemIntegrationEventHandler>(
+            "inventory.product-created"
+        );
+        module.Subscribe<ProductCreatedV2, FileProductCategoryIntegrationEventHandler>(
+            "inventory.product-categories"
+        );
+        module.Subscribe<ProductSnapshotV1, CopyProductIntegrationEventHandler>(
+            "inventory.catalog-products"
+        );
         // Recurring work no person asks for, so it runs as the system Actor named here, at the cadence the Host's
         // configuration sets (Inventory:ReconcileStock:Every).
         module
@@ -42,6 +48,9 @@ public sealed class InventoryModule : IModuleDefinition
         module.AddPouryaKitEndpoints("/inventory");
         // 2.0, Catalog's current version: a Host's documents and sunsets go by version number, so in a Host beside Catalog a
         // 1.0 here would share Catalog's deprecated 1.0, leave its document undeprecated and announce its sunset here.
-        module.AddPouryaKitApiVersions("/inventory", versions => versions.HasApiVersion(new ApiVersion(2, 0)));
+        module.AddPouryaKitApiVersions(
+            "/inventory",
+            versions => versions.HasApiVersion(new ApiVersion(2, 0))
+        );
     }
 }

@@ -24,16 +24,29 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
             await dispatcher.SendAsync(new RemoveProductsCommand(["Lamp"]), ct);
 
         // Each removal raises a Domain Event whose handler lowers the category's count.
-        var (first, second) = await RaceAsync(remove, remove, TestContext.Current.CancellationToken);
+        var (first, second) = await RaceAsync(
+            remove,
+            remove,
+            TestContext.Current.CancellationToken
+        );
 
         Assert.True(first.IsSuccess);
         Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(second.Errors));
         // Created, counted the product, then lowered once by the commit that won.
         Assert.Equal(
-            [[0, 3L]],
-            await Fixture.RowsAsync($"select product_count, version from catalog.categories where id = '{category}'")
+            [
+                [0, 3L],
+            ],
+            await Fixture.RowsAsync(
+                $"select product_count, version from catalog.categories where id = '{category}'"
+            )
         );
-        Assert.Equal([[true, 2L]], await Fixture.RowsAsync("select is_deleted, version from catalog.products"));
+        Assert.Equal(
+            [
+                [true, 2L],
+            ],
+            await Fixture.RowsAsync("select is_deleted, version from catalog.products")
+        );
         Assert.Equal(["held first"], await HeldMarksAsync());
     }
 
@@ -44,14 +57,21 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
 
         // Renaming raises no Domain Event.
         var (first, second) = await RaceAsync(
-            async (dispatcher, ct) => await dispatcher.SendAsync(new RenameProductCommand(lamp, "Desk lamp"), ct),
-            async (dispatcher, ct) => await dispatcher.SendAsync(new RenameProductCommand(lamp, "Floor lamp"), ct),
+            async (dispatcher, ct) =>
+                await dispatcher.SendAsync(new RenameProductCommand(lamp, "Desk lamp"), ct),
+            async (dispatcher, ct) =>
+                await dispatcher.SendAsync(new RenameProductCommand(lamp, "Floor lamp"), ct),
             TestContext.Current.CancellationToken
         );
 
         Assert.True(first.IsSuccess);
         Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(second.Errors));
-        Assert.Equal([["Desk lamp", 2L]], await Fixture.RowsAsync("select name, version from catalog.products"));
+        Assert.Equal(
+            [
+                ["Desk lamp", 2L],
+            ],
+            await Fixture.RowsAsync("select name, version from catalog.products")
+        );
         Assert.Equal(["held first"], await HeldMarksAsync());
     }
 
@@ -67,8 +87,16 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(ProductErrors.NameInUse, Assert.Single(created.Errors));
-        Assert.Equal([["Lamp"]], await Fixture.RowsAsync("select name from catalog.products"));
-        Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+        Assert.Equal(
+            [
+                ["Lamp"],
+            ],
+            await Fixture.RowsAsync("select name from catalog.products")
+        );
+        Assert.Equal(
+            1,
+            await Fixture.ScalarAsync<int>("select product_count from catalog.categories")
+        );
     }
 
     [Fact]
@@ -76,7 +104,10 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var (category, _) = await CreateLampAsync();
-        await catalog.SendAsync(new RemoveProductsCommand(["Lamp"]), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new RemoveProductsCommand(["Lamp"]),
+            TestContext.Current.CancellationToken
+        );
 
         var created = await catalog.SendAsync(
             new CreateProductCommand(Guid.CreateVersion7(), category, "Lamp"),
@@ -96,11 +127,22 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
         await Assert.ThrowsAsync<DbUpdateException>(() =>
             Fixture
                 .Gateway<CatalogModule>()
-                .SendAsync(new CreateProductCommand(lamp, category, "Desk"), TestContext.Current.CancellationToken)
+                .SendAsync(
+                    new CreateProductCommand(lamp, category, "Desk"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
-        Assert.Equal([["Lamp"]], await Fixture.RowsAsync("select name from catalog.products"));
-        Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+        Assert.Equal(
+            [
+                ["Lamp"],
+            ],
+            await Fixture.RowsAsync("select name from catalog.products")
+        );
+        Assert.Equal(
+            1,
+            await Fixture.ScalarAsync<int>("select product_count from catalog.categories")
+        );
     }
 
     private async Task<(Guid Category, Guid Lamp)> CreateLampAsync()
@@ -108,13 +150,21 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
         var lamp = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateProductCommand(lamp, category, "Lamp"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
+        await catalog.SendAsync(
+            new CreateProductCommand(lamp, category, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
         return (category, lamp);
     }
 
     private async Task<IEnumerable<string>> HeldMarksAsync() =>
-        (await Fixture.RowsAsync("select name from catalog.categories where name like 'held %'")).Select(row => (string)row[0]);
+        (
+            await Fixture.RowsAsync("select name from catalog.categories where name like 'held %'")
+        ).Select(row => (string)row[0]);
 
     // Runs the changes in two Catalog Operations at once, lets both make them, then lets the first save and commit before
     // the second saves.
@@ -124,7 +174,8 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
         CancellationToken cancellationToken
     )
     {
-        Hold first = new("held first"), second = new("held second");
+        Hold first = new("held first"),
+            second = new("held second");
         var firstRun = RunHeldAsync(firstChange, first, cancellationToken);
         var secondRun = RunHeldAsync(secondChange, second, cancellationToken);
         await Task.WhenAll(first.Changed.Task, second.Changed.Task).WaitAsync(cancellationToken);
@@ -144,7 +195,10 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
         // Yields first, so both Operations start before either reaches its hold.
         await Task.Yield();
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+            typeof(CatalogModule)
+        );
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .SendAsync(new HoldChangeCommand(change, hold), cancellationToken);

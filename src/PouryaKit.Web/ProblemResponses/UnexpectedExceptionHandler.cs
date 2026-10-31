@@ -16,7 +16,8 @@ namespace PouryaKit.Web;
 // handler throws, but an exception raised outside an Operation (authentication, binding, an endpoint) has only this
 // one, and since .NET 10 the exception handler middleware no longer logs an exception a handler handled. A request the
 // client aborted is not an error: the middleware's own aborted-request path answers it with 499 before any handler runs.
-internal sealed partial class UnexpectedExceptionHandler(ILogger<UnexpectedExceptionHandler> logger) : IExceptionHandler
+internal sealed partial class UnexpectedExceptionHandler(ILogger<UnexpectedExceptionHandler> logger)
+    : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
@@ -28,7 +29,13 @@ internal sealed partial class UnexpectedExceptionHandler(ILogger<UnexpectedExcep
         string? detail = null;
         if (exception is BadHttpRequestException badRequest)
         {
-            LogBadRequest(logger, badRequest, httpContext.Request.Method, httpContext.Request.Path, badRequest.StatusCode);
+            LogBadRequest(
+                logger,
+                badRequest,
+                httpContext.Request.Method,
+                httpContext.Request.Path,
+                badRequest.StatusCode
+            );
             status = badRequest.StatusCode;
             detail = (badRequest as KitBadRequestException)?.Message;
         }
@@ -47,12 +54,23 @@ internal sealed partial class UnexpectedExceptionHandler(ILogger<UnexpectedExcep
         Level = LogLevel.Error,
         Message = "{Method} {Path} failed with an unexpected exception"
     )]
-    private static partial void LogUnexpected(ILogger logger, Exception exception, string method, PathString path);
+    private static partial void LogUnexpected(
+        ILogger logger,
+        Exception exception,
+        string method,
+        PathString path
+    );
 
     [LoggerMessage(
         EventName = "BadRequest",
         Level = LogLevel.Debug,
         Message = "{Method} {Path} was refused with {StatusCode}: the request could not be read"
     )]
-    private static partial void LogBadRequest(ILogger logger, Exception exception, string method, PathString path, int statusCode);
+    private static partial void LogBadRequest(
+        ILogger logger,
+        Exception exception,
+        string method,
+        PathString path,
+        int statusCode
+    );
 }

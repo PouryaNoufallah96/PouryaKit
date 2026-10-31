@@ -19,5 +19,8 @@ public abstract class CommandHandler<TCommand, TResponse>
     /// Runs the business behaviour of <paramref name="command"/> and returns its Result, which holds the response on
     /// success.
     /// </summary>
-    public abstract Task<Result<TResponse>> Handle(TCommand command, CancellationToken cancellationToken);
+    public abstract Task<Result<TResponse>> Handle(
+        TCommand command,
+        CancellationToken cancellationToken
+    );
 }

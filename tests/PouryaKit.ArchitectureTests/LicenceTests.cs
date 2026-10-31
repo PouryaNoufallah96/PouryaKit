@@ -5,12 +5,22 @@ namespace PouryaKit.ArchitectureTests;
 public sealed class LicenceTests
 {
     // Permissive licences only, as SPDX identifiers; adding one is an owner decision.
-    private static readonly HashSet<string> Permissive = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "PostgreSQL"];
+    private static readonly HashSet<string> Permissive =
+    [
+        "MIT",
+        "Apache-2.0",
+        "BSD-2-Clause",
+        "BSD-3-Clause",
+        "PostgreSQL",
+    ];
 
     [Fact]
     public void Every_package_in_every_kit_closure_carries_a_permissive_licence_expression()
     {
-        var packages = RestoredPackage.All.SelectMany(package => package.Packages).DistinctBy(package => (package.Id, package.Version)).ToList();
+        var packages = RestoredPackage
+            .All.SelectMany(package => package.Packages)
+            .DistinctBy(package => (package.Id, package.Version))
+            .ToList();
 
         Assert.Contains(packages, package => package.Id == "WolverineFx");
         Assert.Empty(Violations(packages));

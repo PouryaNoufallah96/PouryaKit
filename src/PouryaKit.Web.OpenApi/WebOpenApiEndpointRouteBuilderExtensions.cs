@@ -29,7 +29,8 @@ public static class WebOpenApiEndpointRouteBuilderExtensions
             documents.MapScalarApiReference(
                 (scalar, httpContext) =>
                 {
-                    var versions = httpContext.RequestServices.GetRequiredService<IApiVersionDescriptionProvider>();
+                    var versions =
+                        httpContext.RequestServices.GetRequiredService<IApiVersionDescriptionProvider>();
                     foreach (var version in versions.ApiVersionDescriptions)
                     {
                         scalar.AddDocument(version.GroupName);

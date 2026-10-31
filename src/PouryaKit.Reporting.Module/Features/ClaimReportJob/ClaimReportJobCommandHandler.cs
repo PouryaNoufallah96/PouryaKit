@@ -18,7 +18,10 @@ internal sealed class ClaimReportJobCommandHandler(
     IOptions<ReportOptions> options
 ) : CommandHandler<ClaimReportJobCommand>
 {
-    public override async Task<Result> Handle(ClaimReportJobCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ClaimReportJobCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var job = await jobs.FindAsync(new ReportJobId(command.JobId), cancellationToken);
         var now = time.GetUtcNow();
@@ -30,7 +33,10 @@ internal sealed class ClaimReportJobCommandHandler(
         later.Schedule(new RenderReportCommand(command.JobId, command.Attempt), now);
         if (command.Attempt == 1)
         {
-            later.Schedule(new ClaimReportJobCommand(command.JobId, Attempt: 2), now + options.Value.ClaimTimeout);
+            later.Schedule(
+                new ClaimReportJobCommand(command.JobId, Attempt: 2),
+                now + options.Value.ClaimTimeout
+            );
         }
 
         return Result.Success();

@@ -23,5 +23,8 @@ public interface IUnitOfWork
     /// <see cref="OperationContext"/>, or a change to a part of an aggregate the Operation did not load.
     /// Returning any other success is a bug the dispatcher reports with an <see cref="InvalidOperationException"/>.
     /// </summary>
-    Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken);
+    Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    );
 }

@@ -14,7 +14,12 @@ internal sealed class HttpReplayPolicies
 
     public static HttpReplayPolicies In(IServiceCollection services)
     {
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(HttpReplayPolicies)) is { } existing)
+        if (
+            services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(HttpReplayPolicies)
+            ) is
+            { } existing
+        )
         {
             return (HttpReplayPolicies)existing.ImplementationInstance!;
         }
@@ -27,7 +32,8 @@ internal sealed class HttpReplayPolicies
     /// <summary>Records <paramref name="replay"/> as the pipeline's policy; true when the pipeline had none.</summary>
     public bool Set(string pipelineName, HttpReplay replay)
     {
-        CollectionsMarshal.GetValueRefOrAddDefault(_byPipeline, pipelineName, out var existed) = replay;
+        CollectionsMarshal.GetValueRefOrAddDefault(_byPipeline, pipelineName, out var existed) =
+            replay;
         return !existed;
     }
 

@@ -8,8 +8,10 @@ namespace PouryaKit.Web.OpenApi;
 internal sealed class UnmappedApiVersionsCheck : IStartupCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) =>
-        services.GetService<IModuleRouteGroups>() is VersionedModuleRouteGroups versioned && versioned.Unmapped().ToList() is [_, ..] unmapped
-            ? [
+        services.GetService<IModuleRouteGroups>() is VersionedModuleRouteGroups versioned
+        && versioned.Unmapped().ToList() is [_, ..] unmapped
+            ?
+            [
                 $"API versions are declared for the route group {string.Join(", ", unmapped)}, but no Module's endpoints are mapped under it. Declare them with the prefix the Module's AddPouryaKitEndpoints names, and map the Modules with MapPouryaKitModuleEndpoints.",
             ]
             : [];

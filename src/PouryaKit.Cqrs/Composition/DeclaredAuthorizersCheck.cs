@@ -8,7 +8,9 @@ internal sealed class DeclaredAuthorizersCheck : ICompositionCheck
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
         // A keyed descriptor's ImplementationType is null, and the dispatcher resolves handlers and authorizers unkeyed.
-        var unkeyed = composition.Registrations.Where(descriptor => !descriptor.IsKeyedService).ToList();
+        var unkeyed = composition
+            .Registrations.Where(descriptor => !descriptor.IsKeyedService)
+            .ToList();
         var registered = unkeyed
             .Where(descriptor => descriptor.ImplementationType is not null)
             .Select(descriptor => (descriptor.ServiceType, descriptor.ImplementationType!))
@@ -22,7 +24,12 @@ internal sealed class DeclaredAuthorizersCheck : ICompositionCheck
                     .GetCustomAttributes(inherit: false)
                     .OfType<IRequiresAuthorizer>()
                     .Where(declared =>
-                        !registered.Contains((typeof(IAuthorizer<>).MakeGenericType(operation), declared.AuthorizerOf(operation)))
+                        !registered.Contains(
+                            (
+                                typeof(IAuthorizer<>).MakeGenericType(operation),
+                                declared.AuthorizerOf(operation)
+                            )
+                        )
                     )
                     .Select(declared =>
                         $"{operation.FullName} declares {declared.GetType().Name}, but its check is not registered, so it would run unchecked. Call {declared.Registration} with the assembly {operation.Assembly.GetName().Name} in the Composition Root that registers its handler."

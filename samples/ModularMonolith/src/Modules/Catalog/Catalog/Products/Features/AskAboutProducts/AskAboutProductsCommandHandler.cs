@@ -31,7 +31,10 @@ internal sealed class AskAboutProductsCommandHandler(
     // The last messages of the conversation each turn sends the model, its tool calls and their results left out.
     private const int HistoryLength = 20;
 
-    public override async Task<Result<string>> Handle(AskAboutProductsCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        AskAboutProductsCommand command,
+        CancellationToken cancellationToken
+    )
     {
         #region get-product-tool
         var getProduct = catalog.Tool(
@@ -48,13 +51,19 @@ internal sealed class AskAboutProductsCommandHandler(
             new ChatClientAgentOptions
             {
                 ChatOptions = new() { Instructions = Instructions, Tools = [getProduct] },
-                ChatHistoryProvider = new InMemoryChatHistoryProvider(new() { ChatReducer = new MessageCountingChatReducer(HistoryLength) }),
+                ChatHistoryProvider = new InMemoryChatHistoryProvider(
+                    new() { ChatReducer = new MessageCountingChatReducer(HistoryLength) }
+                ),
                 AIContextProviders = [new ProductsAskedAbout(store, key)],
             }
         );
 #pragma warning restore MEAI001
         var session = await agent.LoadSessionAsync(store, key, cancellationToken);
-        var answer = await agent.RunAsync(command.Question, session, cancellationToken: cancellationToken);
+        var answer = await agent.RunAsync(
+            command.Question,
+            session,
+            cancellationToken: cancellationToken
+        );
         // A refused turn fails, so the Unit of Work keeps nothing of it, what the memory noted included: a refused question
         // kept in the session would be sent again, and refused again, with every later one.
         if (answer.FinishReason == ChatFinishReason.ContentFilter)

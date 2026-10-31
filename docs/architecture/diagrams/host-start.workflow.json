@@ -117,8 +117,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Modularity/HostModules.cs",
-          "line": 27,
-          "end_line": 35,
+          "line": 30,
+          "end_line": 38,
           "label": "a Module added twice throws"
         },
         {
@@ -129,8 +129,8 @@
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 101,
-          "end_line": 115,
+          "line": 122,
+          "end_line": 136,
           "label": "UseWolverine lambda, then configure"
         }
       ],
@@ -150,7 +150,7 @@
         {
           "path": "src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs",
           "line": 13,
-          "end_line": 15,
+          "end_line": 18,
           "label": "ValidateOnBuild and ValidateScopes"
         },
         {
@@ -173,14 +173,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs",
-          "line": 17,
-          "end_line": 25,
+          "line": 20,
+          "end_line": 33,
           "label": "every check on the built container"
         },
         {
           "path": "src/PouryaKit.Cqrs/Composition/ValidatingServiceProviderFactory.cs",
-          "line": 34,
-          "end_line": 40,
+          "line": 42,
+          "end_line": 48,
           "label": "one exception, every problem"
         },
         {
@@ -203,8 +203,8 @@
       "sources": [
         {
           "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
-          "line": 402,
-          "end_line": 403,
+          "line": 494,
+          "end_line": 495,
           "label": "built as hosted services resolve"
         },
         {
@@ -216,7 +216,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
           "line": 7,
-          "end_line": 29,
+          "end_line": 32,
           "label": "routes, handlers, retry policy"
         }
       ]
@@ -233,20 +233,20 @@
       "sources": [
         {
           "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
-          "line": 331,
-          "end_line": 332,
+          "line": 400,
+          "end_line": 401,
           "label": "observed at start, by ValidateOnStart"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
-          "line": 120,
-          "end_line": 126,
+          "line": 159,
+          "end_line": 167,
           "label": "recurring cadence validated"
         },
         {
           "path": "tests/ModularMonolith.Tests/MisconfiguredHostTests.cs",
-          "line": 433,
-          "end_line": 434,
+          "line": 539,
+          "end_line": 540,
           "label": "store options read when options built"
         }
       ]
@@ -264,7 +264,7 @@
         {
           "path": "src/PouryaKit.Cqrs/Composition/CompositionCheckRunner.cs",
           "line": 6,
-          "end_line": 24,
+          "end_line": 31,
           "label": "StartingAsync runs every startup check"
         },
         {
@@ -324,14 +324,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
-          "line": 28,
-          "end_line": 72,
+          "line": 31,
+          "end_line": 81,
           "label": "subscription, Saga and delayed queues"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Composition/DurableQueuesCheck.cs",
-          "line": 74,
-          "end_line": 88,
+          "line": 83,
+          "end_line": 104,
           "label": "broker listeners durable"
         }
       ]
@@ -350,19 +350,19 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
           "line": 12,
-          "end_line": 45,
+          "end_line": 49,
           "label": "after DurableQueuesCheck"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/RecurringCommandStart.cs",
-          "line": 48,
-          "end_line": 70,
+          "line": 52,
+          "end_line": 93,
           "label": "unless one waits in the store"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/DelayedCommands/DelayedCommandServiceCollectionExtensions.cs",
-          "line": 116,
-          "end_line": 119,
+          "line": 149,
+          "end_line": 158,
           "label": "registered after DurableQueuesCheck"
         }
       ]
@@ -378,14 +378,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 203,
-          "end_line": 219,
+          "line": 229,
+          "end_line": 249,
           "label": "StartHostAsync migrates, then starts"
         },
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 223,
-          "end_line": 228,
+          "line": 253,
+          "end_line": 258,
           "label": "InitializeAsync starts it the same way"
         }
       ]

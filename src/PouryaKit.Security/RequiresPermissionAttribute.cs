@@ -22,7 +22,9 @@ public sealed class RequiresPermissionAttribute : Attribute, IRequiresAuthorizer
     /// <summary>The permission's name, as the application's <see cref="IActorPermissions"/> knows it.</summary>
     public string Permission { get; }
 
-    string IRequiresAuthorizer.Registration => nameof(SecurityServiceCollectionExtensions.AddPouryaKitPermissions);
+    string IRequiresAuthorizer.Registration =>
+        nameof(SecurityServiceCollectionExtensions.AddPouryaKitPermissions);
 
-    Type IRequiresAuthorizer.AuthorizerOf(Type operation) => typeof(PermissionAuthorizer<>).MakeGenericType(operation);
+    Type IRequiresAuthorizer.AuthorizerOf(Type operation) =>
+        typeof(PermissionAuthorizer<>).MakeGenericType(operation);
 }

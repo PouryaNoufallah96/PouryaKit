@@ -33,7 +33,13 @@ internal sealed partial class RealtimeListener(
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
-        NpgsqlConnectionStringBuilder settings = new(configuration.GetConnectionString(realtime.Name)) { Pooling = false, Multiplexing = false };
+        NpgsqlConnectionStringBuilder settings = new(
+            configuration.GetConnectionString(realtime.Name)
+        )
+        {
+            Pooling = false,
+            Multiplexing = false,
+        };
         settings.KeepAlive = settings.KeepAlive > 0 ? settings.KeepAlive : KeepAliveSeconds;
         settings.ApplicationName ??= ApplicationName;
         _connectionString = settings.ConnectionString;
@@ -61,9 +67,7 @@ internal sealed partial class RealtimeListener(
                 }
             }
         }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-        {
-        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
         finally
         {
             await listening.DisposeAsync();
@@ -72,7 +76,11 @@ internal sealed partial class RealtimeListener(
 
     private async Task<NpgsqlConnection> ReconnectAsync(CancellationToken stoppingToken)
     {
-        for (var delay = TimeSpan.FromSeconds(1); ; delay = delay * 2 < LongestRetryDelay ? delay * 2 : LongestRetryDelay)
+        for (
+            var delay = TimeSpan.FromSeconds(1);
+            ;
+            delay = delay * 2 < LongestRetryDelay ? delay * 2 : LongestRetryDelay
+        )
         {
             try
             {
@@ -91,7 +99,10 @@ internal sealed partial class RealtimeListener(
         NpgsqlConnection listening = new(_connectionString);
         listening.Notification += (_, notification) =>
         {
-            if (RealtimeNotification.Read(notification.Payload, json.Value.SerializerOptions) is { } read)
+            if (
+                RealtimeNotification.Read(notification.Payload, json.Value.SerializerOptions) is
+                { } read
+            )
             {
                 clients.Push(read);
             }
@@ -103,7 +114,10 @@ internal sealed partial class RealtimeListener(
         try
         {
             await listening.OpenAsync(cancellationToken);
-            await using NpgsqlCommand listen = new($"LISTEN {RealtimeNotification.PostgresChannel}", listening);
+            await using NpgsqlCommand listen = new(
+                $"LISTEN {RealtimeNotification.PostgresChannel}",
+                listening
+            );
             await listen.ExecuteNonQueryAsync(cancellationToken);
             return listening;
         }
@@ -114,12 +128,24 @@ internal sealed partial class RealtimeListener(
         }
     }
 
-    [LoggerMessage(EventName = "ListenerLost", Level = LogLevel.Warning, Message = "The realtime listener lost its connection; it reconnects, then sends every connected client a gap.")]
+    [LoggerMessage(
+        EventName = "ListenerLost",
+        Level = LogLevel.Warning,
+        Message = "The realtime listener lost its connection; it reconnects, then sends every connected client a gap."
+    )]
     private static partial void LogLost(ILogger logger, Exception exception);
 
-    [LoggerMessage(EventName = "ListenerRetrying", Level = LogLevel.Warning, Message = "The realtime listener could not listen again; it retries in {Delay}.")]
+    [LoggerMessage(
+        EventName = "ListenerRetrying",
+        Level = LogLevel.Warning,
+        Message = "The realtime listener could not listen again; it retries in {Delay}."
+    )]
     private static partial void LogRetrying(ILogger logger, Exception exception, TimeSpan delay);
 
-    [LoggerMessage(EventName = "NotificationUnread", Level = LogLevel.Warning, Message = "A notification on the realtime channel from the session {Pid} is not a realtime push; it was ignored.")]
+    [LoggerMessage(
+        EventName = "NotificationUnread",
+        Level = LogLevel.Warning,
+        Message = "A notification on the realtime channel from the session {Pid} is not a realtime push; it was ignored."
+    )]
     private static partial void LogUnread(ILogger logger, int pid);
 }

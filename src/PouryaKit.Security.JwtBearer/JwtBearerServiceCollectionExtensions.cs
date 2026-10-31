@@ -32,7 +32,9 @@ public static class JwtBearerServiceCollectionExtensions
         /// <c>Configure&lt;JwtBearerOptions&gt;("Bearer", ...)</c>, never replace <c>Events</c> in a PostConfigure,
         /// subclass <see cref="JwtBearerEvents"/> or set <c>EventsType</c>.
         /// </remarks>
-        public AuthenticationBuilder AddPouryaKitJwtBearer(Action<PouryaKitJwtBearerOptions>? configure = null)
+        public AuthenticationBuilder AddPouryaKitJwtBearer(
+            Action<PouryaKitJwtBearerOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
 
@@ -43,7 +45,9 @@ public static class JwtBearerServiceCollectionExtensions
                     "PouryaKitJwtBearerOptions.ActorClaim names no claim to identify the Actor."
                 )
                 .Validate(
-                    options => options.TenantClaim is null || !string.IsNullOrWhiteSpace(options.TenantClaim),
+                    options =>
+                        options.TenantClaim is null
+                        || !string.IsNullOrWhiteSpace(options.TenantClaim),
                     "PouryaKitJwtBearerOptions.TenantClaim is blank; leave it null when the application has no tenant."
                 )
                 .ValidateOnStart();
@@ -62,7 +66,10 @@ public static class JwtBearerServiceCollectionExtensions
                 )
                 .ValidateOnStart();
             services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IValidateOptions<JwtBearerOptions>, JwtBearerValidation>()
+                ServiceDescriptor.Singleton<
+                    IValidateOptions<JwtBearerOptions>,
+                    JwtBearerValidation
+                >()
             );
             return authentication;
         }

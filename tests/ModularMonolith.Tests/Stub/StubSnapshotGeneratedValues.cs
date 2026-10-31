@@ -24,20 +24,31 @@ internal sealed class Ticket : AggregateRoot<TicketId>
     public static Ticket Issue(TicketId id) => new() { Id = id };
 }
 
-internal sealed record TicketSnapshotV1(Guid TicketId, string? Serial, bool IsRemoved, long Version);
+internal sealed record TicketSnapshotV1(
+    Guid TicketId,
+    string? Serial,
+    bool IsRemoved,
+    long Version
+);
 
 internal sealed class TicketSnapshotMapper : ISnapshotMapper<Ticket, TicketSnapshotV1>
 {
-    public TicketSnapshotV1 Map(Ticket ticket) => new(ticket.Id.Value, ticket.Serial, IsRemoved: false, ticket.Version);
+    public TicketSnapshotV1 Map(Ticket ticket) =>
+        new(ticket.Id.Value, ticket.Serial, IsRemoved: false, ticket.Version);
 
-    public TicketSnapshotV1 Tombstone(Ticket ticket) => new(ticket.Id.Value, ticket.Serial, IsRemoved: true, ticket.Version);
+    public TicketSnapshotV1 Tombstone(Ticket ticket) =>
+        new(ticket.Id.Value, ticket.Serial, IsRemoved: true, ticket.Version);
 }
 
 internal sealed record IssueTicketCommand(Guid Ticket) : Command;
 
-internal sealed class IssueTicketCommandHandler(IRepository<Ticket, TicketId> tickets) : CommandHandler<IssueTicketCommand>
+internal sealed class IssueTicketCommandHandler(IRepository<Ticket, TicketId> tickets)
+    : CommandHandler<IssueTicketCommand>
 {
-    public override async Task<Result> Handle(IssueTicketCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        IssueTicketCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await tickets.AddAsync(Ticket.Issue(new TicketId(command.Ticket)), cancellationToken);
         return Result.Success();
@@ -63,7 +74,8 @@ internal sealed class Drawer : AggregateRoot<DrawerId>
 
     public Knob Knob { get; private set; } = null!;
 
-    public static Drawer Fit(DrawerId id, string finish) => new() { Id = id, Knob = new Knob(finish) };
+    public static Drawer Fit(DrawerId id, string finish) =>
+        new() { Id = id, Knob = new Knob(finish) };
 }
 
 internal sealed class Knob(string finish)
@@ -73,22 +85,36 @@ internal sealed class Knob(string finish)
     public string? Label { get; private set; }
 }
 
-internal sealed record DrawerSnapshotV1(Guid DrawerId, string? KnobLabel, bool IsRemoved, long Version);
+internal sealed record DrawerSnapshotV1(
+    Guid DrawerId,
+    string? KnobLabel,
+    bool IsRemoved,
+    long Version
+);
 
 internal sealed class DrawerSnapshotMapper : ISnapshotMapper<Drawer, DrawerSnapshotV1>
 {
-    public DrawerSnapshotV1 Map(Drawer drawer) => new(drawer.Id.Value, drawer.Knob.Label, IsRemoved: false, drawer.Version);
+    public DrawerSnapshotV1 Map(Drawer drawer) =>
+        new(drawer.Id.Value, drawer.Knob.Label, IsRemoved: false, drawer.Version);
 
-    public DrawerSnapshotV1 Tombstone(Drawer drawer) => new(drawer.Id.Value, drawer.Knob.Label, IsRemoved: true, drawer.Version);
+    public DrawerSnapshotV1 Tombstone(Drawer drawer) =>
+        new(drawer.Id.Value, drawer.Knob.Label, IsRemoved: true, drawer.Version);
 }
 
 internal sealed record FitDrawerCommand(Guid Drawer, string Finish) : Command;
 
-internal sealed class FitDrawerCommandHandler(IRepository<Drawer, DrawerId> drawers) : CommandHandler<FitDrawerCommand>
+internal sealed class FitDrawerCommandHandler(IRepository<Drawer, DrawerId> drawers)
+    : CommandHandler<FitDrawerCommand>
 {
-    public override async Task<Result> Handle(FitDrawerCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        FitDrawerCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        await drawers.AddAsync(Drawer.Fit(new DrawerId(command.Drawer), command.Finish), cancellationToken);
+        await drawers.AddAsync(
+            Drawer.Fit(new DrawerId(command.Drawer), command.Finish),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
@@ -98,7 +124,12 @@ internal sealed class DrawerConfiguration : IEntityTypeConfiguration<Drawer>
     public void Configure(EntityTypeBuilder<Drawer> builder)
     {
         builder.ToTable("drawers");
-        builder.OwnsOne(drawer => drawer.Knob, knob => knob.Property(part => part.Label).HasComputedColumnSql("upper(knob_finish)", stored: true));
+        builder.OwnsOne(
+            drawer => drawer.Knob,
+            knob =>
+                knob.Property(part => part.Label)
+                    .HasComputedColumnSql("upper(knob_finish)", stored: true)
+        );
     }
 }
 
@@ -117,16 +148,22 @@ internal sealed record BadgeSnapshotV1(Guid BadgeId, Guid Code, bool IsRemoved, 
 
 internal sealed class BadgeSnapshotMapper : ISnapshotMapper<Badge, BadgeSnapshotV1>
 {
-    public BadgeSnapshotV1 Map(Badge badge) => new(badge.Id.Value, badge.Code, IsRemoved: false, badge.Version);
+    public BadgeSnapshotV1 Map(Badge badge) =>
+        new(badge.Id.Value, badge.Code, IsRemoved: false, badge.Version);
 
-    public BadgeSnapshotV1 Tombstone(Badge badge) => new(badge.Id.Value, badge.Code, IsRemoved: true, badge.Version);
+    public BadgeSnapshotV1 Tombstone(Badge badge) =>
+        new(badge.Id.Value, badge.Code, IsRemoved: true, badge.Version);
 }
 
 internal sealed record IssueBadgeCommand(Guid Badge) : Command;
 
-internal sealed class IssueBadgeCommandHandler(IRepository<Badge, BadgeId> badges) : CommandHandler<IssueBadgeCommand>
+internal sealed class IssueBadgeCommandHandler(IRepository<Badge, BadgeId> badges)
+    : CommandHandler<IssueBadgeCommand>
 {
-    public override async Task<Result> Handle(IssueBadgeCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        IssueBadgeCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await badges.AddAsync(Badge.Issue(new BadgeId(command.Badge)), cancellationToken);
         return Result.Success();
@@ -138,6 +175,9 @@ internal sealed class BadgeConfiguration : IEntityTypeConfiguration<Badge>
     public void Configure(EntityTypeBuilder<Badge> builder)
     {
         builder.ToTable("badges");
-        builder.Property(badge => badge.Code).ValueGeneratedOnAdd().HasValueGenerator<GuidValueGenerator>();
+        builder
+            .Property(badge => badge.Code)
+            .ValueGeneratedOnAdd()
+            .HasValueGenerator<GuidValueGenerator>();
     }
 }

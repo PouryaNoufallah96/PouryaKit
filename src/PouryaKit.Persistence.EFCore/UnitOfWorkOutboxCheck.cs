@@ -18,10 +18,13 @@ internal sealed class UnitOfWorkOutboxCheck : ICompositionCheck
         }
 
         var modules = composition
-            .Modules.Where(module => services.GetKeyedService<DbContextConnection>(module) is not null)
+            .Modules.Where(module =>
+                services.GetKeyedService<DbContextConnection>(module) is not null
+            )
             .Select(module => module.Name)
             .DefaultIfEmpty("the application");
-        return [
+        return
+        [
             $"The Operations of {string.Join(", ", modules)} would commit their changes and never write what they publish or schedule: the Host has an Outbox, but none in the EF Core Unit of Work. Call UsePouryaKitWolverine(connectionName) of PouryaKit.Messaging.Wolverine.EFCore on the Host, before UsePouryaKitMarten.",
         ];
     }

@@ -28,8 +28,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 85,
-          "end_line": 97,
+          "line": 97,
+          "end_line": 109,
           "label": "adds each Module"
         },
         {
@@ -41,7 +41,7 @@
         {
           "path": "src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs",
           "line": 25,
-          "end_line": 37,
+          "end_line": 39,
           "label": "one container; composition checks"
         }
       ]
@@ -63,19 +63,19 @@
         {
           "path": "src/PouryaKit.Modularity/IGatewayProcessor.cs",
           "line": 6,
-          "end_line": 25,
+          "end_line": 29,
           "label": "the only way in; one Operation per call"
         },
         {
           "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
-          "line": 44,
-          "end_line": 60,
+          "line": 56,
+          "end_line": 75,
           "label": "new scope, Operation begun with its Module"
         },
         {
           "path": "src/PouryaKit.Modularity/HostModules.cs",
-          "line": 91,
-          "end_line": 106,
+          "line": 98,
+          "end_line": 113,
           "label": "refuses another Module's command"
         }
       ]
@@ -103,13 +103,13 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 28,
-          "end_line": 55,
+          "end_line": 66,
           "label": "declares data, Features, publications"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 84,
-          "end_line": 92,
+          "line": 144,
+          "end_line": 155,
           "label": "the Module's only public type"
         }
       ]
@@ -130,20 +130,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Modularity/ModuleBuilder.cs",
-          "line": 98,
-          "end_line": 130,
+          "line": 99,
+          "end_line": 131,
           "label": "registered keyed by the Module"
         },
         {
           "path": "src/PouryaKit.Modularity/ModularityHostApplicationBuilderExtensions.cs",
-          "line": 40,
-          "end_line": 58,
+          "line": 42,
+          "end_line": 63,
           "label": "the Operation's Module picks it"
         },
         {
           "path": "src/PouryaKit.Modularity/HostModules.cs",
-          "line": 71,
-          "end_line": 89,
+          "line": 74,
+          "end_line": 96,
           "label": "a Module with commands must register one"
         }
       ]
@@ -165,13 +165,13 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs",
           "line": 15,
-          "end_line": 33,
+          "end_line": 51,
           "label": "sends through Catalog's Gateway"
         },
         {
           "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
-          "line": 165,
-          "end_line": 174,
+          "line": 197,
+          "end_line": 211,
           "label": "the request's Operation Context"
         }
       ]
@@ -193,7 +193,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
           "line": 1,
-          "end_line": 30,
+          "end_line": 35,
           "label": "Kit types: CommandHandler, Result"
         },
         {
@@ -205,7 +205,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/GetProduct/CatalogProducts.cs",
           "line": 8,
-          "end_line": 14,
+          "end_line": 24,
           "label": "answers its Contracts via its Gateway"
         }
       ]
@@ -232,14 +232,14 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 36,
-          "end_line": 60,
+          "line": 50,
+          "end_line": 94,
           "label": "no reference to another Module's code"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
           "line": 31,
-          "end_line": 42,
+          "end_line": 46,
           "label": "read from the restored closure"
         }
       ]
@@ -267,13 +267,13 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog.Contracts/Products/ICatalogProducts.cs",
           "line": 3,
-          "end_line": 13,
+          "end_line": 16,
           "label": "the question Catalog answers"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 62,
-          "end_line": 79,
+          "line": 96,
+          "end_line": 131,
           "label": "nothing of the Kit, no Module"
         }
       ]
@@ -294,14 +294,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 298,
-          "end_line": 359,
+          "line": 381,
+          "end_line": 447,
           "label": "IDispatcher, IUnitOfWork, IQueryCache..."
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PipelineContractTests.cs",
           "line": 10,
-          "end_line": 57,
+          "end_line": 69,
           "label": "Modules and Hosts implement none"
         }
       ]
@@ -322,20 +322,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 61,
-          "end_line": 97,
+          "line": 69,
+          "end_line": 113,
           "label": "saves, commits, bulk writes, Kit steps"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 272,
-          "end_line": 296,
+          "line": 349,
+          "end_line": 379,
           "label": "the Kit steps Feature code never calls"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs",
           "line": 16,
-          "end_line": 61,
+          "end_line": 67,
           "label": "only the Unit of Work saves (ADR 0003)"
         }
       ]
@@ -356,14 +356,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 17,
-          "end_line": 129,
+          "line": 21,
+          "end_line": 222,
           "label": "the allowed references"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs",
-          "line": 12,
-          "end_line": 17,
+          "line": 13,
+          "end_line": 22,
           "label": "each package checked against it"
         }
       ]
@@ -384,20 +384,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 52,
-          "end_line": 57,
+          "line": 71,
+          "end_line": 82,
           "label": "only the Messaging.Wolverine packages"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleRules.cs",
-          "line": 113,
-          "end_line": 175,
+          "line": 135,
+          "end_line": 203,
           "label": "no transport type in a Module"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs",
-          "line": 84,
-          "end_line": 98,
+          "line": 96,
+          "end_line": 116,
           "label": "Modules and Contracts name none"
         }
       ]

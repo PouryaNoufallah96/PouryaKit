@@ -26,7 +26,12 @@ internal sealed class RecordedTelemetry : IDisposable
     private readonly ConcurrentQueue<Activity> _stopped = [];
     private readonly ConcurrentQueue<Duration> _measured = [];
 
-    public RecordedTelemetry(bool wolverine = false, bool activities = true, bool durations = true, string[]? sources = null)
+    public RecordedTelemetry(
+        bool wolverine = false,
+        bool activities = true,
+        bool durations = true,
+        string[]? sources = null
+    )
     {
         _activities = new ActivityListener
         {
@@ -46,7 +51,10 @@ internal sealed class RecordedTelemetry : IDisposable
 
         _durations.InstrumentPublished = (instrument, listener) =>
         {
-            if (instrument.Meter.Name == OperationTelemetry.SourceName && instrument.Name == OperationTelemetry.DurationName)
+            if (
+                instrument.Meter.Name == OperationTelemetry.SourceName
+                && instrument.Name == OperationTelemetry.DurationName
+            )
             {
                 listener.EnableMeasurementEvents(instrument);
             }
@@ -70,7 +78,8 @@ internal sealed class RecordedTelemetry : IDisposable
     }
 
     /// <summary>Every recorded activity of <paramref name="trace"/> that stopped.</summary>
-    public IReadOnlyList<Activity> Of(ActivityTraceId trace) => [.. _stopped.Where(activity => activity.TraceId == trace)];
+    public IReadOnlyList<Activity> Of(ActivityTraceId trace) =>
+        [.. _stopped.Where(activity => activity.TraceId == trace)];
 
     /// <summary>Every Operation duration measured, with its tags.</summary>
     public IReadOnlyList<Duration> Durations => [.. _measured];
@@ -95,10 +104,13 @@ internal sealed class ExportedActivities : BaseExporter<Activity>
 
     /// <summary>Adds this exporter to the tracer provider the Host's OpenTelemetry builds.</summary>
     public void AddTo(IServiceCollection services) =>
-        services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(this)));
+        services.ConfigureOpenTelemetryTracerProvider(tracing =>
+            tracing.AddProcessor(new SimpleActivityExportProcessor(this))
+        );
 
     /// <summary>Every exported activity of <paramref name="trace"/>.</summary>
-    public IReadOnlyList<Activity> Of(ActivityTraceId trace) => [.. _exported.Where(activity => activity.TraceId == trace)];
+    public IReadOnlyList<Activity> Of(ActivityTraceId trace) =>
+        [.. _exported.Where(activity => activity.TraceId == trace)];
 
     public override ExportResult Export(in Batch<Activity> batch)
     {

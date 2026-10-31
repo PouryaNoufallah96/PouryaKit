@@ -34,7 +34,9 @@ public static class WebOpenApiServiceCollectionExtensions
         /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them. A second call
         /// adds only its <paramref name="configure"/>.
         /// </summary>
-        public IServiceCollection AddPouryaKitOpenApi(Action<PouryaKitOpenApiOptions>? configure = null)
+        public IServiceCollection AddPouryaKitOpenApi(
+            Action<PouryaKitOpenApiOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
 
@@ -45,12 +47,21 @@ public static class WebOpenApiServiceCollectionExtensions
             }
 
             // Asp.Versioning's AddOpenApi appends its delegate on every call: a second one would run each transformer twice.
-            if (services.Any(descriptor => descriptor.ImplementationType == typeof(SunsetValidation)))
+            if (
+                services.Any(descriptor =>
+                    descriptor.ImplementationType == typeof(SunsetValidation)
+                )
+            )
             {
                 return services;
             }
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitOpenApiOptions>, SunsetValidation>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<
+                    IValidateOptions<PouryaKitOpenApiOptions>,
+                    SunsetValidation
+                >()
+            );
 
             services
                 .AddApiVersioning(versioning =>
@@ -71,7 +82,8 @@ public static class WebOpenApiServiceCollectionExtensions
                     document.Document.AddOperationTransformer<BearerSecurity>();
                     document.Document.AddOperationTransformer<IdempotencyKeyParameter>();
                     // The library's own notices say "was" or "will be" by comparing the date with the current time.
-                    document.DocumentDescription.DeprecationNotice = _ => "This API version is deprecated.";
+                    document.DocumentDescription.DeprecationNotice = _ =>
+                        "This API version is deprecated.";
                     document.DocumentDescription.SunsetNotice = sunset =>
                         sunset.Date is { } date
                             ? $"Its sunset date is {date.ToString("R", CultureInfo.InvariantCulture)}."
@@ -79,7 +91,9 @@ public static class WebOpenApiServiceCollectionExtensions
                 });
             services
                 .AddOptions<ApiVersioningOptions>()
-                .Configure<IOptions<PouryaKitOpenApiOptions>>((versioning, kit) => AddSunsets(versioning, kit.Value));
+                .Configure<IOptions<PouryaKitOpenApiOptions>>(
+                    (versioning, kit) => AddSunsets(versioning, kit.Value)
+                );
             return services;
         }
 
@@ -96,7 +110,10 @@ public static class WebOpenApiServiceCollectionExtensions
         /// An endpoint's name (<c>WithName</c>) stays on its versioned path only. A Module that declares no version keeps
         /// its unversioned paths.
         /// </summary>
-        public IServiceCollection AddPouryaKitApiVersions(string routePrefix, Action<ApiVersionSetBuilder> declare)
+        public IServiceCollection AddPouryaKitApiVersions(
+            string routePrefix,
+            Action<ApiVersionSetBuilder> declare
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(routePrefix);
@@ -105,16 +122,24 @@ public static class WebOpenApiServiceCollectionExtensions
             if (
                 services.Any(descriptor =>
                     descriptor.ImplementationInstance is ModuleApiVersions declared
-                    && string.Equals(declared.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(
+                        declared.RoutePrefix,
+                        routePrefix,
+                        StringComparison.OrdinalIgnoreCase
+                    )
                 )
             )
             {
-                throw new InvalidOperationException($"The API versions of the route group {routePrefix} are already declared.");
+                throw new InvalidOperationException(
+                    $"The API versions of the route group {routePrefix} are already declared."
+                );
             }
 
             services.AddSingleton(new ModuleApiVersions(routePrefix, declare));
             services.TryAddSingleton<IModuleRouteGroups, VersionedModuleRouteGroups>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedApiVersionsCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IStartupCheck, UnmappedApiVersionsCheck>()
+            );
             return services;
         }
     }
@@ -189,7 +214,9 @@ public static class WebOpenApiServiceCollectionExtensions
                         $"PouryaKitOpenApiOptions.Sunsets has the keys {string.Join(" and ", keys)}, which name one API version; keep one sunset per version."
                     )
             );
-            return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+            return failures.Count == 0
+                ? ValidateOptionsResult.Success
+                : ValidateOptionsResult.Fail(failures);
         }
     }
 }

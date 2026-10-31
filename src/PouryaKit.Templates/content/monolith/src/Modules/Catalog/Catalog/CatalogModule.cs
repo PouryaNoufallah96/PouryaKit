@@ -37,9 +37,18 @@ public static class CatalogModule
             var catalog = typeof(CatalogModule).Assembly;
             // First, so the tenant requirement runs before every other authorizer of Catalog's commands and queries.
             services.AddPouryaKitTenancy(catalog);
-            services.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-            services.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConfiguration.NameIndex, ProductErrors.NameInUse);
-            services.MapPouryaKitUniqueConstraint<CatalogDbContext>(ProductConversationConfiguration.KeyIndex, UnitOfWorkErrors.ConcurrencyConflict);
+            services.UsePouryaKitPostgres<CatalogDbContext>(
+                connectionName: "app",
+                schema: "catalog"
+            );
+            services.MapPouryaKitUniqueConstraint<CatalogDbContext>(
+                ProductConfiguration.NameIndex,
+                ProductErrors.NameInUse
+            );
+            services.MapPouryaKitUniqueConstraint<CatalogDbContext>(
+                ProductConversationConfiguration.KeyIndex,
+                UnitOfWorkErrors.ConcurrencyConflict
+            );
             services.AddPouryaKitDapper(connectionName: "app", catalog);
             services.AddPouryaKitCqrs(catalog);
             services.AddPouryaKitValidation(catalog);
@@ -47,7 +56,9 @@ public static class CatalogModule
             services.AddPouryaKitNotificationHandlers(catalog);
             services.Publish<ProductCreatedV1>("catalog.product-created.v1");
             services.Publish<ProductCreatedV2>("catalog.product-created.v2");
-            services.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>("catalog.product-snapshot.v1");
+            services.PublishSnapshot<Product, ProductSnapshotV1, ProductSnapshotMapper>(
+                "catalog.product-snapshot.v1"
+            );
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddPouryaKitEndpoints("/catalog", catalog);
             // Another Host asks for a product over gRPC, through the same dispatcher as the HTTP endpoints.
@@ -55,7 +66,10 @@ public static class CatalogModule
             // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
             services.AddPouryaKitApiVersions(
                 "/catalog",
-                versions => versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))
+                versions =>
+                    versions
+                        .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+                        .HasApiVersion(new ApiVersion(2, 0))
             );
             return services;
         }

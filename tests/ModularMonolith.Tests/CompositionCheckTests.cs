@@ -20,8 +20,8 @@ using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
-using PouryaKit.Reporting.Module;
 using PouryaKit.Persistence.Postgres;
+using PouryaKit.Reporting.Module;
 using PouryaKit.Testing;
 
 namespace ModularMonolith.Tests;
@@ -35,32 +35,51 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
     // One for each Module-aware declaration whose Module parameter #61 removed, made on the Host's services, where it
     // belongs to the application, in a Host of Modules.
-    private static readonly Dictionary<string, (Action<IServiceCollection> Declare, string Problem)> Unowned = new()
+    private static readonly Dictionary<
+        string,
+        (Action<IServiceCollection> Declare, string Problem)
+    > Unowned = new()
     {
         ["Publish"] = (
             services => services.Publish<UnownedV1>("tests.unowned.v1"),
             $"The Integration Event {typeof(UnownedV1).FullName} is declared without a Module in a Host of Modules, so it runs in no Module and publishing it would fail once the Host serves. Declare it in its Module's Composition Root with Publish<UnownedV1>(wireName), or name the Module in the Host's composition with Publish<UnownedV1>(wireName, {TheModule}."
         ),
         ["PublishSnapshot"] = (
-            services => services.PublishSnapshot<Stub.Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>("tests.mislaid-shelf.v1"),
+            services =>
+                services.PublishSnapshot<
+                    Stub.Shelf,
+                    MislaidShelfSnapshotV1,
+                    MislaidShelfSnapshotMapper
+                >("tests.mislaid-shelf.v1"),
             $"The Snapshot {typeof(MislaidShelfSnapshotV1).FullName} of {typeof(Stub.Shelf).FullName} is declared without a Module in a Host of Modules, so it runs in no Module and a commit that changes its aggregate would fail once the Host serves. Declare it in its Module's Composition Root with PublishSnapshot<Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>(wireName), or name the Module in the Host's composition with PublishSnapshot<Shelf, MislaidShelfSnapshotV1, MislaidShelfSnapshotMapper>(wireName, {TheModule}."
         ),
         ["Subscribe"] = (
-            services => services.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>("tests.unowned-shared"),
+            services =>
+                services.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>(
+                    "tests.unowned-shared"
+                ),
             $"The subscription tests.unowned-shared of {typeof(RecordSharedNoteIntegrationEventHandler).FullName} is declared without a Module in a Host of Modules, so it runs in no Module and its deliveries would fail once the Host serves. Declare it in its Module's Composition Root with Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>(subscriptionName), or name the Module in the Host's composition with Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>(subscriptionName, {TheModule}."
         ),
         ["AddPouryaKitNotificationHandlers"] = (
-            services => services.AddPouryaKitNotificationHandlers(typeof(UnownedNotificationHandler).Assembly),
+            services =>
+                services.AddPouryaKitNotificationHandlers(
+                    typeof(UnownedNotificationHandler).Assembly
+                ),
             $"The Notification Handler {typeof(UnownedNotificationHandler).FullName}, subscribed as {MessageNames.SubscriptionNameOf(typeof(UnownedNotificationHandler), typeof(UnownedDomainEvent))}, is declared without a Module in a Host of Modules, so it runs in no Module and its deliveries would fail once the Host serves. Declare it in its Module's Composition Root with AddPouryaKitNotificationHandlers(), or name the Module in the Host's composition with AddPouryaKitNotificationHandlers({TheModule}."
         ),
         ["AddPouryaKitDelayedCommand"] = (
-            services => services.AddPouryaKitDelayedCommand<WriteNoteCommand>("tests.unowned-delayed"),
+            services =>
+                services.AddPouryaKitDelayedCommand<WriteNoteCommand>("tests.unowned-delayed"),
             $"The delayed command tests.unowned-delayed, {typeof(WriteNoteCommand).FullName}, is declared without a Module in a Host of Modules, so it runs in no Module and scheduling it would fail once the Host serves. Declare it in its Module's Composition Root with AddPouryaKitDelayedCommand<WriteNoteCommand>(name), or name the Module in the Host's composition with AddPouryaKitDelayedCommand<WriteNoteCommand>(name, {TheModule}."
         ),
         ["AddPouryaKitRecurringCommand"] = (
             services =>
                 services
-                    .AddPouryaKitRecurringCommand("tests.unowned-recurring", "tests.unowned", at => new WriteNoteCommand($"at {at:O}"))
+                    .AddPouryaKitRecurringCommand(
+                        "tests.unowned-recurring",
+                        "tests.unowned",
+                        at => new WriteNoteCommand($"at {at:O}")
+                    )
                     .Configure(options => options.Every = TimeSpan.FromHours(1)),
             $"The recurring command tests.unowned-recurring, {typeof(WriteNoteCommand).FullName}, is declared without a Module in a Host of Modules, so it runs in no Module and its occurrences would fail once the Host serves. Declare it in its Module's Composition Root with AddPouryaKitRecurringCommand<WriteNoteCommand>(name, systemActor, occurrence), or name the Module in the Host's composition with AddPouryaKitRecurringCommand<WriteNoteCommand>(name, systemActor, occurrence, {TheModule}."
         ),
@@ -70,10 +89,17 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
     [Theory]
     [MemberData(nameof(UnownedDeclarations))]
-    public void A_module_declaration_made_without_its_module_in_a_host_of_modules_fails_the_host_when_built(string declaration)
+    public void A_module_declaration_made_without_its_module_in_a_host_of_modules_fails_the_host_when_built(
+        string declaration
+    )
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            AppFixture.ComposeHost("Development", Fixture.ConnectionString, new RecordedLogs(), builder => Unowned[declaration].Declare(builder.Services))
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                builder => Unowned[declaration].Declare(builder.Services)
+            )
         );
 
         Assert.Equal(Unowned[declaration].Problem, thrown.Message);
@@ -82,9 +108,14 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_composition_root_that_names_another_module_is_refused_while_the_host_is_composed()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => builder.AddPouryaKitModules(modules => modules.Add<OtherModuleNamingModule>()));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            builder.AddPouryaKitModules(modules => modules.Add<OtherModuleNamingModule>())
+        );
 
         Assert.Equal(
             "The Composition Root of OtherModuleNamingModule declares for StubModule. A Composition Root declares only for its own Module and names none; the Host's composition names the Module of a declaration it makes on a Module's behalf.",
@@ -99,10 +130,15 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
             "Development",
             Fixture.ConnectionString,
             new RecordedLogs(),
-            builder => ((IHostApplicationBuilder)builder).ConfigureContainer(new DefaultServiceProviderFactory())
+            builder =>
+                ((IHostApplicationBuilder)builder).ConfigureContainer(
+                    new DefaultServiceProviderFactory()
+                )
         );
 
-        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.StartsWith(
             "The Host's container was built by another service provider factory than the Kit's: a ConfigureContainer call after AddPouryaKitCompositionChecks, which AddPouryaKitModules and UsePouryaKitWolverine call, replaced it.",
@@ -116,7 +152,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     public void A_composition_check_that_throws_fails_the_build_with_its_own_exception_and_the_container_is_disposed()
     {
         var resolved = new DisposalProbe();
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddSingleton(_ => new FailingDisposal());
         builder.Services.AddSingleton(_ => resolved);
         builder.Services.AddSingleton<ICompositionCheck, ThrowingCheck>();
@@ -134,10 +173,15 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     public void Composition_problems_fail_the_build_with_every_problem_though_a_singletons_disposal_throws()
     {
         var resolved = new DisposalProbe();
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddSingleton(_ => new FailingDisposal());
         builder.Services.AddSingleton(_ => resolved);
-        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(FailingDisposal)));
+        builder.Services.AddSingleton<ICompositionCheck>(
+            new ReportingCheck(typeof(FailingDisposal))
+        );
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -154,10 +198,15 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     {
         var first = new DisposalProbe();
         var asyncOnly = new AsyncOnlyDisposal();
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddSingleton(_ => first);
         builder.Services.AddSingleton(_ => asyncOnly);
-        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(DisposalProbe), typeof(AsyncOnlyDisposal)));
+        builder.Services.AddSingleton<ICompositionCheck>(
+            new ReportingCheck(typeof(DisposalProbe), typeof(AsyncOnlyDisposal))
+        );
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -174,10 +223,15 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     public void A_failed_build_on_a_thread_with_a_synchronization_context_still_ends_and_disposes_what_awaits()
     {
         var awaiting = new AwaitingDisposal();
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddSingleton(_ => awaiting);
         builder.Services.AddSingleton<DisposalProbe>();
-        builder.Services.AddSingleton<ICompositionCheck>(new ReportingCheck(typeof(AwaitingDisposal)));
+        builder.Services.AddSingleton<ICompositionCheck>(
+            new ReportingCheck(typeof(AwaitingDisposal))
+        );
         builder.AddPouryaKitCompositionChecks();
         var blocked = new BlockedContext();
         Exception? thrown = null;
@@ -194,8 +248,14 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         building.Start();
 
-        Assert.True(building.Join(TimeSpan.FromSeconds(30)), "The failed build never ended: its disposal waits for the thread it blocks.");
-        Assert.Equal(string.Join(Environment.NewLine, ReportingCheck.Problems), Assert.IsType<InvalidOperationException>(thrown).Message);
+        Assert.True(
+            building.Join(TimeSpan.FromSeconds(30)),
+            "The failed build never ended: its disposal waits for the thread it blocks."
+        );
+        Assert.Equal(
+            string.Join(Environment.NewLine, ReportingCheck.Problems),
+            Assert.IsType<InvalidOperationException>(thrown).Message
+        );
         Assert.True(awaiting.Disposed);
         // The thread has its own context back once the wait is over.
         Assert.Same(blocked, afterwards);
@@ -205,10 +265,18 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     public void A_cacheable_query_in_a_host_without_caching_fails_the_host_when_built_naming_the_call()
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            AppFixture.ComposeHost("Development", Fixture.ConnectionString, new RecordedLogs(), builder => builder.Services.RemoveAll<IQueryCache>())
+            AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                new RecordedLogs(),
+                builder => builder.Services.RemoveAll<IQueryCache>()
+            )
         );
 
-        Assert.StartsWith("The Host registers no query cache, so every cacheable query would run uncached: ", thrown.Message);
+        Assert.StartsWith(
+            "The Host registers no query cache, so every cacheable query would run uncached: ",
+            thrown.Message
+        );
         Assert.Contains(typeof(GetProductQuery).FullName!, thrown.Message);
         Assert.Contains(typeof(CountNotesQuery).FullName!, thrown.Message);
         Assert.EndsWith(". Call AddPouryaKitCaching() on the Host's services.", thrown.Message);
@@ -218,7 +286,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_features_command_in_a_host_without_a_unit_of_work_fails_the_host_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddPouryaKitCqrs(typeof(UnownedCommand).Assembly);
         builder.AddPouryaKitCompositionChecks();
 
@@ -236,7 +307,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_scanned_handler_of_a_command_from_another_assembly_in_a_host_without_a_unit_of_work_fails_the_host_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddPouryaKitCqrs(typeof(SeparateCommandHandler).Assembly);
         builder.AddPouryaKitCompositionChecks();
 
@@ -253,7 +327,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public async Task A_host_with_wolverine_and_no_declaration_or_unit_of_work_builds_and_starts()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Development"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+        ]);
         builder.UsePouryaKitWolverine();
         builder.AddPouryaKitCompositionChecks();
         using var host = builder.Build();
@@ -272,7 +349,8 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
                 "Development",
                 Fixture.ConnectionString,
                 new RecordedLogs(),
-                builder => builder.AddPouryaKitModules(modules => modules.Add<SubscriptionOnlyModule>())
+                builder =>
+                    builder.AddPouryaKitModules(modules => modules.Add<SubscriptionOnlyModule>())
             )
         );
 
@@ -291,7 +369,11 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
                 "Development",
                 Fixture.ConnectionString,
                 new RecordedLogs(),
-                builder => builder.Services.AddPouryaKitDelayedCommand<WriteNoteCommand>("Stub.Note-Shared", typeof(StubModule))
+                builder =>
+                    builder.Services.AddPouryaKitDelayedCommand<WriteNoteCommand>(
+                        "Stub.Note-Shared",
+                        typeof(StubModule)
+                    )
             )
         );
 
@@ -305,7 +387,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_declaration_without_its_module_fails_the_build_of_a_host_whose_modules_make_no_kit_registration()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<QueryOnlyModule>());
         builder.Services.Publish<UnownedV1>("tests.unowned.v1");
 
@@ -318,7 +403,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_declaration_for_a_module_the_host_never_composed_fails_the_host_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<QueryOnlyModule>());
         builder.Services.Publish<UnownedV1>("tests.unowned.v1", typeof(BillingModule));
 
@@ -335,7 +423,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_declaration_naming_a_module_in_a_host_without_modules_fails_the_host_when_built_offering_the_form_without_one()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.Publish<UnownedV1>("tests.unowned.v1", typeof(BillingModule));
         builder.AddPouryaKitCompositionChecks();
 
@@ -353,9 +444,11 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_tenant_scoped_module_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<PartlyTenantScopedModule>());
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -369,9 +462,15 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_tenant_scoped_application_that_dispatches_an_operation_its_tenancy_declaration_did_not_name_fails_the_host_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.Services.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
-        builder.Services.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
+        builder.Services.AddPouryaKitCqrs(
+            typeof(UnversionedEndpoints).Assembly,
+            typeof(UnownedCommand).Assembly
+        );
         builder.AddPouryaKitCompositionChecks();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -388,16 +487,21 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_tenant_scoped_module_whose_localization_names_an_assembly_cqrs_did_not_scan_builds()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<LocalizedTenantScopedModule>());
 
         using var host = builder.Build();
 
         var composition = host.Services.GetRequiredService<HostComposition>();
         Assert.True(composition.IsTenantScoped(typeof(LocalizedTenantScopedModule)));
-        Assert.Contains(typeof(UnownedCommand).Assembly, composition.FeatureAssembliesOf(typeof(LocalizedTenantScopedModule)));
+        Assert.Contains(
+            typeof(UnownedCommand).Assembly,
+            composition.FeatureAssembliesOf(typeof(LocalizedTenantScopedModule))
+        );
     }
 
     // A recurring command runs as a system Actor with no tenant (ticket #117); a delayed command, which runs with the
@@ -405,9 +509,11 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_recurring_command_in_a_tenant_scoped_module_fails_the_host_when_built_naming_the_module()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.UsePouryaKitWolverine("app");
         builder.AddPouryaKitModules(modules => modules.Add<TenantScopedSchedulingModule>());
 
@@ -424,9 +530,11 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_snapshot_in_a_tenant_scoped_module_of_an_aggregate_whose_key_two_tenants_could_share_fails_the_host_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.UsePouryaKitWolverine("app");
         builder.AddPouryaKitModules(modules => modules.Add<TenantScopedSnapshotsModule>());
 
@@ -444,9 +552,11 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_snapshot_in_a_tenant_scoped_module_is_judged_by_the_aggregates_of_its_own_db_context_only()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.UsePouryaKitWolverine("app");
         builder.AddPouryaKitModules(modules =>
         {
@@ -456,7 +566,10 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         using var host = builder.Build();
 
-        Assert.True(host.Services.GetRequiredService<HostComposition>().IsTenantScoped(typeof(TenantScopedEveryAggregateModule)));
+        Assert.True(
+            host.Services.GetRequiredService<HostComposition>()
+                .IsTenantScoped(typeof(TenantScopedEveryAggregateModule))
+        );
     }
 
     // AddPouryaKitModules registers what a Module's Operation needs, the Domain Event drain its Unit of Work resolves
@@ -464,18 +577,29 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public async Task A_module_that_registers_its_handler_by_hand_commits_a_command_through_its_gateway()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<HandRegisteredModule>());
         using var host = builder.Build();
 
         var written = await host
             .Services.GetRequiredService<IGatewayProcessor<HandRegisteredModule>>()
-            .SendAsync(new WriteNoteCommand("by hand"), new OperationContext(GatewayTestExtensions.TestActor), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new WriteNoteCommand("by hand"),
+                new OperationContext(GatewayTestExtensions.TestActor),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.True(written.IsSuccess);
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes where text = 'by hand'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                "select count(*) from stub.notes where text = 'by hand'"
+            )
+        );
     }
 
     // What the checks of ticket #62 read: each Module the Host composed, with the Feature assemblies its Composition Root
@@ -486,10 +610,20 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
         var composition = Fixture.Host.Services.GetRequiredService<HostComposition>();
 
         Assert.Equal(
-            [typeof(CatalogModule), typeof(InventoryModule), typeof(BillingModule), typeof(LedgerModule), typeof(ReportModule), typeof(StubModule)],
+            [
+                typeof(CatalogModule),
+                typeof(InventoryModule),
+                typeof(BillingModule),
+                typeof(LedgerModule),
+                typeof(ReportModule),
+                typeof(StubModule),
+            ],
             composition.Modules
         );
-        Assert.All(composition.Modules, module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module)));
+        Assert.All(
+            composition.Modules,
+            module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module))
+        );
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }
 
@@ -497,33 +631,50 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public void A_host_with_one_embedding_generator_builds_with_the_check_installed()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.AddPouryaKitCompositionChecks();
         builder.Services.AddPouryaKitEmbeddings();
 
         using var host = builder.Build();
 
-        Assert.Contains(host.Services.GetServices<ICompositionCheck>(), check => check is OneProviderCheck<IEmbeddingGenerator<string, Embedding<float>>>);
+        Assert.Contains(
+            host.Services.GetServices<ICompositionCheck>(),
+            check => check is OneProviderCheck<IEmbeddingGenerator<string, Embedding<float>>>
+        );
     }
 
     [Theory]
     [InlineData("before")]
     [InlineData("after")]
-    public void A_host_that_registers_another_embedding_generator_fails_when_it_is_built_naming_both(string order)
+    public void A_host_that_registers_another_embedding_generator_fails_when_it_is_built_naming_both(
+        string order
+    )
     {
-        const string Kit = "the factory PouryaKit.AI.AIServiceCollectionExtensions.CreateEmbeddingGenerator";
-        var other = $"the factory {typeof(CompositionCheckTests).FullName}.{nameof(OtherEmbeddingGenerator)}";
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        const string Kit =
+            "the factory PouryaKit.AI.AIServiceCollectionExtensions.CreateEmbeddingGenerator";
+        var other =
+            $"the factory {typeof(CompositionCheckTests).FullName}.{nameof(OtherEmbeddingGenerator)}";
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         builder.AddPouryaKitCompositionChecks();
         if (order == "before")
         {
-            builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(OtherEmbeddingGenerator);
+            builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(
+                OtherEmbeddingGenerator
+            );
         }
 
         builder.Services.AddPouryaKitEmbeddings();
         if (order == "after")
         {
-            builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(OtherEmbeddingGenerator);
+            builder.Services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(
+                OtherEmbeddingGenerator
+            );
         }
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
@@ -535,7 +686,9 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
     }
 
     // A Host's own embedding generator, never called.
-    private static IEmbeddingGenerator<string, Embedding<float>> OtherEmbeddingGenerator(IServiceProvider services) => throw new NotSupportedException();
+    private static IEmbeddingGenerator<string, Embedding<float>> OtherEmbeddingGenerator(
+        IServiceProvider services
+    ) => throw new NotSupportedException();
 }
 
 /// <summary>An Integration Event no Module publishes.</summary>
@@ -558,7 +711,11 @@ internal sealed class ThrowingCheck : ICompositionCheck
 // given, and answers with two problems.
 internal sealed class ReportingCheck(params Type[] resolved) : ICompositionCheck
 {
-    public static readonly string[] Problems = ["The first problem, with its fix.", "The second problem, with its fix."];
+    public static readonly string[] Problems =
+    [
+        "The first problem, with its fix.",
+        "The second problem, with its fix.",
+    ];
 
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
@@ -632,7 +789,10 @@ public sealed class PartlyTenantScopedModule : IModuleDefinition
     {
         module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
-        module.AddPouryaKitCqrs(typeof(UnversionedEndpoints).Assembly, typeof(UnownedCommand).Assembly);
+        module.AddPouryaKitCqrs(
+            typeof(UnversionedEndpoints).Assembly,
+            typeof(UnownedCommand).Assembly
+        );
         module.AddScoped<IAuthorizer<UnownedCommand>, AllowingUnownedCommandAuthorizer>();
     }
 }
@@ -657,7 +817,11 @@ public sealed class TenantScopedSchedulingModule : IModuleDefinition
         module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         module.AddPouryaKitDelayedCommand<WriteDelayedNoteCommand>("stub.delayed-note");
-        module.AddPouryaKitRecurringCommand("tests.tenant-recurring", "tests.recurring", at => new WriteNoteCommand($"at {at:O}"));
+        module.AddPouryaKitRecurringCommand(
+            "tests.tenant-recurring",
+            "tests.recurring",
+            at => new WriteNoteCommand($"at {at:O}")
+        );
     }
 }
 
@@ -668,9 +832,15 @@ public sealed class TenantScopedSnapshotsModule : IModuleDefinition
     {
         module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
         module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
-        module.PublishSnapshot<Folder, FolderSnapshotV1, FolderSnapshotMapper>("stub.folder-snapshot.v1");
-        module.PublishSnapshot<Docket, DocketSnapshotV1, DocketSnapshotMapper>("stub.docket-snapshot.v1");
-        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>("stub.shelf-snapshot.v1");
+        module.PublishSnapshot<Folder, FolderSnapshotV1, FolderSnapshotMapper>(
+            "stub.folder-snapshot.v1"
+        );
+        module.PublishSnapshot<Docket, DocketSnapshotV1, DocketSnapshotMapper>(
+            "stub.docket-snapshot.v1"
+        );
+        module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>(
+            "stub.shelf-snapshot.v1"
+        );
     }
 }
 
@@ -682,40 +852,53 @@ public sealed class TenantScopedEveryAggregateModule : IModuleDefinition
     {
         module.AddPouryaKitTenancy(typeof(UnversionedEndpoints).Assembly);
         module.UsePouryaKitPostgres<CatalogDbContext>(connectionName: "app", schema: "catalog");
-        module.PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>("tests.aggregate-snapshot.v1");
+        module.PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>(
+            "tests.aggregate-snapshot.v1"
+        );
     }
 }
 
 // Not tenant-scoped, over the Stub's DbContext, and publishing nothing.
 public sealed class StubDataModule : IModuleDefinition
 {
-    public void Configure(ModuleBuilder module) => module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+    public void Configure(ModuleBuilder module) =>
+        module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
 }
 
 internal sealed record AggregateSnapshotV1(string Aggregate, long Version);
 
 internal sealed class AggregateSnapshotMapper : ISnapshotMapper<IAggregateRoot, AggregateSnapshotV1>
 {
-    public AggregateSnapshotV1 Map(IAggregateRoot aggregate) => new(aggregate.GetType().Name, aggregate.Version);
+    public AggregateSnapshotV1 Map(IAggregateRoot aggregate) =>
+        new(aggregate.GetType().Name, aggregate.Version);
 
-    public AggregateSnapshotV1 Tombstone(IAggregateRoot aggregate) => new(aggregate.GetType().Name, aggregate.Version);
+    public AggregateSnapshotV1 Tombstone(IAggregateRoot aggregate) =>
+        new(aggregate.GetType().Name, aggregate.Version);
 }
 
 internal sealed class AllowingUnownedCommandAuthorizer : IAuthorizer<UnownedCommand>
 {
-    public Task<Result> AuthorizeAsync(UnownedCommand operation, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+    public Task<Result> AuthorizeAsync(
+        UnownedCommand operation,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }
 
 // Subscribes to an Integration Event the Stub publishes, and declares no data.
 public sealed class SubscriptionOnlyModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module) =>
-        module.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>("tests.subscription-only");
+        module.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>(
+            "tests.subscription-only"
+        );
 }
 
 // Declares, on its own builder, a subscription it names for the Stub Module.
 public sealed class OtherModuleNamingModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module) =>
-        module.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>("tests.other-module", typeof(StubModule));
+        module.Subscribe<NoteSharedV1, RecordSharedNoteIntegrationEventHandler>(
+            "tests.other-module",
+            typeof(StubModule)
+        );
 }

@@ -18,7 +18,11 @@ public interface IReceipts
     /// the active Unit of Work's transaction. Returns false, recording nothing, when a committed Receipt says it already
     /// did. A concurrent delivery of the same message waits until the first one commits or rolls back.
     /// </summary>
-    Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken);
+    Task<bool> RecordAsync(
+        string subscription,
+        Guid messageId,
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// Records that <paramref name="subscription"/> applies version <paramref name="version"/> of the aggregate
@@ -28,5 +32,10 @@ public interface IReceipts
     /// compares with what committed. If the older version commits first, both handlers can run in increasing version
     /// order; if the newer commits first, the older is skipped. The committed version only increases.
     /// </summary>
-    Task<bool> RecordVersionAsync(string subscription, string aggregateId, long version, CancellationToken cancellationToken);
+    Task<bool> RecordVersionAsync(
+        string subscription,
+        string aggregateId,
+        long version,
+        CancellationToken cancellationToken
+    );
 }

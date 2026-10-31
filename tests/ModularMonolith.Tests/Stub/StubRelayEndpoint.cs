@@ -14,9 +14,17 @@ internal sealed class RelayEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder routes) =>
         routes.MapGet(
             "/relay",
-            async (string url, OperationContext context, IHttpClientFactory clients, CancellationToken cancellationToken) =>
+            async (
+                string url,
+                OperationContext context,
+                IHttpClientFactory clients,
+                CancellationToken cancellationToken
+            ) =>
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, url).WithOperationContext(context);
+                using var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    url
+                ).WithOperationContext(context);
                 using var response = await clients
                     .CreateClient(ModularMonolithHost.DownstreamClient)
                     .SendAsync(request, cancellationToken);

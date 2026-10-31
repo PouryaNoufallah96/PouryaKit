@@ -15,8 +15,19 @@ internal sealed class GetAccountEndpoint : IEndpoint
         routes
             .MapGet(
                 "/accounts/{accountId}",
-                async (Guid accountId, OperationContext context, IGatewayProcessor<LedgerModule> ledger, CancellationToken cancellationToken) =>
-                    (await ledger.QueryAsync(new GetAccountQuery(accountId), context, cancellationToken)).ToHttpResult()
+                async (
+                    Guid accountId,
+                    OperationContext context,
+                    IGatewayProcessor<LedgerModule> ledger,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await ledger.QueryAsync(
+                            new GetAccountQuery(accountId),
+                            context,
+                            cancellationToken
+                        )
+                    ).ToHttpResult()
             )
             .WithName(Name);
 }

@@ -29,13 +29,13 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs",
           "line": 17,
-          "end_line": 20,
+          "end_line": 21,
           "label": "POST /products in Catalog's group"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
-          "line": 47,
-          "end_line": 47,
+          "line": 55,
+          "end_line": 55,
           "label": "Catalog's routes under /catalog"
         }
       ]
@@ -48,20 +48,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 145,
-          "end_line": 157,
+          "line": 163,
+          "end_line": 175,
           "label": "the order of the Host's middleware"
         },
         {
           "path": "src/PouryaKit.Web/WebServiceCollectionExtensions.cs",
           "line": 52,
-          "end_line": 69,
+          "end_line": 75,
           "label": "problem responses, authenticated default"
         },
         {
           "path": "src/PouryaKit.Web/Defaults/ActorRateLimiting.cs",
-          "line": 90,
-          "end_line": 113,
+          "line": 104,
+          "end_line": 131,
           "label": "rate limit partitioned by Actor"
         }
       ]
@@ -74,20 +74,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
-          "line": 165,
-          "end_line": 174,
+          "line": 197,
+          "end_line": 211,
           "label": "context resolved, Operation begun"
         },
         {
           "path": "src/PouryaKit.Web/HttpCallerContext.cs",
           "line": 20,
-          "end_line": 34,
+          "end_line": 42,
           "label": "one resolution per request"
         },
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductEndpoint.cs",
-          "line": 28,
-          "end_line": 49,
+          "line": 27,
+          "end_line": 53,
           "label": "the Gateway call and ToHttpResult"
         }
       ]
@@ -100,8 +100,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
-          "line": 44,
-          "end_line": 60,
+          "line": 56,
+          "end_line": 75,
           "label": "ownership check, a scope with the Module"
         }
       ]
@@ -114,20 +114,20 @@
       "sources": [
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
-          "line": 86,
-          "end_line": 147,
+          "line": 96,
+          "end_line": 172,
           "label": "clock, rollback-only mark, log scope"
         },
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
-          "line": 193,
-          "end_line": 243,
+          "line": 231,
+          "end_line": 285,
           "label": "authorizers, validator, query cache"
         },
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
-          "line": 251,
-          "end_line": 316,
+          "line": 293,
+          "end_line": 368,
           "label": "Unit of Work, key, eviction"
         }
       ]
@@ -140,14 +140,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Persistence.EFCore/UnitOfWork/EfUnitOfWork.cs",
-          "line": 42,
-          "end_line": 96,
+          "line": 43,
+          "end_line": 103,
           "label": "transaction and commit sequence"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
-          "line": 21,
-          "end_line": 64,
+          "line": 22,
+          "end_line": 79,
           "label": "the key in the same transaction"
         }
       ]
@@ -161,7 +161,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/CreateProduct/CreateProductCommandHandler.cs",
           "line": 10,
-          "end_line": 30,
+          "end_line": 35,
           "label": "returns a Result, saves nothing"
         }
       ]
@@ -174,14 +174,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
-          "line": 25,
-          "end_line": 103,
+          "line": 27,
+          "end_line": 109,
           "label": "one run per key, keyed by Actor"
         },
         {
           "path": "src/PouryaKit.Caching/HybridQueryCache.cs",
-          "line": 112,
-          "end_line": 137,
+          "line": 118,
+          "end_line": 143,
           "label": "eviction by tag"
         }
       ]

@@ -25,7 +25,12 @@ public sealed class GetStockItemTests(BrokerFixture broker)
         using var inventory = await environment.StartInventoryHostAsync();
         await using var catalog = await environment.StartCatalogHostAsync();
         var product = Guid.CreateVersion7();
-        await BrokerEnvironment.CreateProductAsync(catalog, product, "Lamp", new OperationContext(GatewayTestExtensions.TestActor, "north"));
+        await BrokerEnvironment.CreateProductAsync(
+            catalog,
+            product,
+            "Lamp",
+            new OperationContext(GatewayTestExtensions.TestActor, "north")
+        );
         await BrokerEnvironment.WaitUntilAsync(
             environment.Inventory,
             $"exists (select from inventory.stock_items where product_id = '{product}')",
@@ -36,18 +41,41 @@ public sealed class GetStockItemTests(BrokerFixture broker)
         using var south = ClientOf(inventory, "south");
         using var tenantless = ClientOf(inventory, tenant: null);
 
-        using var answered = await north.GetAsync($"/inventory/v2/stock-items/{product}", TestContext.Current.CancellationToken);
-        using var otherTenant = await south.GetAsync($"/inventory/v2/stock-items/{product}", TestContext.Current.CancellationToken);
-        using var noTenant = await tenantless.GetAsync($"/inventory/v2/stock-items/{product}", TestContext.Current.CancellationToken);
+        using var answered = await north.GetAsync(
+            $"/inventory/v2/stock-items/{product}",
+            TestContext.Current.CancellationToken
+        );
+        using var otherTenant = await south.GetAsync(
+            $"/inventory/v2/stock-items/{product}",
+            TestContext.Current.CancellationToken
+        );
+        using var noTenant = await tenantless.GetAsync(
+            $"/inventory/v2/stock-items/{product}",
+            TestContext.Current.CancellationToken
+        );
 
-        Assert.Equal([["north"]], await Sql.RowsAsync(environment.Inventory, $"select tenant from inventory.stock_items where product_id = '{product}'"));
+        Assert.Equal(
+            [
+                ["north"],
+            ],
+            await Sql.RowsAsync(
+                environment.Inventory,
+                $"select tenant from inventory.stock_items where product_id = '{product}'"
+            )
+        );
         Assert.Equal(HttpStatusCode.OK, answered.StatusCode);
         Assert.Equal(
             $$"""{"productId":"{{product}}","quantityOnHand":0}""",
             await answered.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
         );
-        Assert.Equal("StockItem.NotFound", ErrorCodeOf(await ProblemAsync(otherTenant, HttpStatusCode.NotFound)));
-        Assert.Equal("StockItem.NotFound", ErrorCodeOf(await ProblemAsync(noTenant, HttpStatusCode.NotFound)));
+        Assert.Equal(
+            "StockItem.NotFound",
+            ErrorCodeOf(await ProblemAsync(otherTenant, HttpStatusCode.NotFound))
+        );
+        Assert.Equal(
+            "StockItem.NotFound",
+            ErrorCodeOf(await ProblemAsync(noTenant, HttpStatusCode.NotFound))
+        );
     }
 
     // Authenticated by default and versioned as the Catalog endpoints are: an anonymous caller is refused before the
@@ -60,20 +88,38 @@ public sealed class GetStockItemTests(BrokerFixture broker)
         var product = Guid.CreateVersion7();
         using var anonymous = inventory.GetTestClient();
         using var north = ClientOf(inventory, "north");
-        using var byHeader = new HttpRequestMessage(HttpMethod.Get, $"/inventory/stock-items/{product}")
+        using var byHeader = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"/inventory/stock-items/{product}"
+        )
         {
             Headers = { { WebOpenApiServiceCollectionExtensions.ApiVersionHeader, "2.0" } },
         };
 
-        using var refusedAnonymous = await anonymous.GetAsync($"/inventory/v2/stock-items/{product}", TestContext.Current.CancellationToken);
-        using var unversioned = await north.GetAsync($"/inventory/stock-items/{product}", TestContext.Current.CancellationToken);
-        using var versioned = await north.SendAsync(byHeader, TestContext.Current.CancellationToken);
+        using var refusedAnonymous = await anonymous.GetAsync(
+            $"/inventory/v2/stock-items/{product}",
+            TestContext.Current.CancellationToken
+        );
+        using var unversioned = await north.GetAsync(
+            $"/inventory/stock-items/{product}",
+            TestContext.Current.CancellationToken
+        );
+        using var versioned = await north.SendAsync(
+            byHeader,
+            TestContext.Current.CancellationToken
+        );
 
         await ProblemAsync(refusedAnonymous, HttpStatusCode.Unauthorized);
-        Assert.Equal(JwtBearerDefaults.AuthenticationScheme, Assert.Single(refusedAnonymous.Headers.WwwAuthenticate).Scheme);
+        Assert.Equal(
+            JwtBearerDefaults.AuthenticationScheme,
+            Assert.Single(refusedAnonymous.Headers.WwwAuthenticate).Scheme
+        );
         await ProblemAsync(unversioned, HttpStatusCode.BadRequest);
         // The endpoint's own answer, which no stock item of the product makes NotFound, under the version the header named.
-        Assert.Equal("StockItem.NotFound", ErrorCodeOf(await ProblemAsync(versioned, HttpStatusCode.NotFound)));
+        Assert.Equal(
+            "StockItem.NotFound",
+            ErrorCodeOf(await ProblemAsync(versioned, HttpStatusCode.NotFound))
+        );
         Assert.Equal(["2.0"], versioned.Headers.GetValues("api-supported-versions"));
     }
 
@@ -87,10 +133,16 @@ public sealed class GetStockItemTests(BrokerFixture broker)
         }
 
         var client = inventory.GetTestClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, TestIssuer.Token(claims));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            JwtBearerDefaults.AuthenticationScheme,
+            TestIssuer.Token(claims)
+        );
         return client;
     }
 
     private static string? ErrorCodeOf(System.Text.Json.JsonElement problem) =>
-        Assert.Single(problem.GetProperty("errors").EnumerateArray()).GetProperty("code").GetString();
+        Assert
+            .Single(problem.GetProperty("errors").EnumerateArray())
+            .GetProperty("code")
+            .GetString();
 }

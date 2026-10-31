@@ -27,35 +27,61 @@ public sealed class OffendingModule : IModuleDefinition
 
 internal sealed record OffendCommand : Command;
 
-internal sealed class SavingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
+internal sealed class SavingCommandHandler(OffendingDbContext dbContext)
+    : CommandHandler<OffendCommand>
 {
-    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OffendCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 }
 
-internal sealed class CommittingCommandHandler(IUnitOfWorkConnection unitOfWork) : CommandHandler<OffendCommand>
+internal sealed class CommittingCommandHandler(IUnitOfWorkConnection unitOfWork)
+    : CommandHandler<OffendCommand>
 {
-    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OffendCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var (connection, _) = unitOfWork.Join();
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition("commit", cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition("select 1;\n  END ;", cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition("update offending_marks set seen = true; abort work", cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(
+            new CommandDefinition("commit", cancellationToken: cancellationToken)
+        );
+        await connection.ExecuteAsync(
+            new CommandDefinition("select 1;\n  END ;", cancellationToken: cancellationToken)
+        );
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "update offending_marks set seen = true; abort work",
+                cancellationToken: cancellationToken
+            )
+        );
         return Result.Success();
     }
 }
 
 // Writes rows at once, outside the changes the Unit of Work tracks and prepares.
-internal sealed class BulkWritingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
+internal sealed class BulkWritingCommandHandler(OffendingDbContext dbContext)
+    : CommandHandler<OffendCommand>
 {
-    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OffendCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        await dbContext.Set<OffendingRow>().ExecuteUpdateAsync(setters => setters.SetProperty(row => row.Name, "renamed"), cancellationToken);
+        await dbContext
+            .Set<OffendingRow>()
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(row => row.Name, "renamed"),
+                cancellationToken
+            );
         Func<int> forget = () => dbContext.Set<OffendingRow>().ExecuteDelete();
         return forget() > 0 ? Result.Success() : Result.Success();
     }
@@ -88,7 +114,10 @@ internal sealed class KitStepCallingCommandHandler(
     OffendingDbContext dbContext
 ) : CommandHandler<OffendCommand>
 {
-    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OffendCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await unitOfWork.RunAsync(_ => Task.FromResult(Result.Success()), cancellationToken);
         _ = EfUnitOfWorkDbContext.Of(unitOfWork);
@@ -98,7 +127,12 @@ internal sealed class KitStepCallingCommandHandler(
         _ = snapshots.Map(command, removed: false);
         integrationEvents.Add(Guid.CreateVersion7(), command);
         delayedCommands.Add(command, DateTimeOffset.UnixEpoch);
-        var key = new IdempotencyKey(null, Actor.System("offending"), nameof(OffendCommand), "offending");
+        var key = new IdempotencyKey(
+            null,
+            Actor.System("offending"),
+            nameof(OffendCommand),
+            "offending"
+        );
         _ = await idempotency.ReserveAsync(key, cancellationToken);
         await idempotency.RecordAsync(key, "{}", cancellationToken);
         await drain.RunAsync(() => [], cancellationToken);
@@ -132,7 +166,8 @@ internal sealed class OwnQueryCache : IQueryCache
 // Says the Host has an Outbox, as only a messaging package registers it: a pipeline step by another name.
 internal sealed class OwnOutbox : IOutbox;
 
-internal sealed class ConnectingCommandHandler(OffendingDbContext dbContext) : CommandHandler<OffendCommand>
+internal sealed class ConnectingCommandHandler(OffendingDbContext dbContext)
+    : CommandHandler<OffendCommand>
 {
     public override Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
     {
@@ -143,7 +178,10 @@ internal sealed class ConnectingCommandHandler(OffendingDbContext dbContext) : C
 
 internal sealed class PublishingCommandHandler(IMessageBus bus) : CommandHandler<OffendCommand>
 {
-    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OffendCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await bus.PublishAsync(command);
         return Result.Success();
@@ -153,22 +191,32 @@ internal sealed class PublishingCommandHandler(IMessageBus bus) : CommandHandler
 // Maps the message store's envelopes into the Module's own model.
 internal sealed class OffendingDbContext(DbContextOptions options) : DbContext(options)
 {
-    protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.MapWolverineEnvelopeStorage("wolverine");
+    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+        modelBuilder.MapWolverineEnvelopeStorage("wolverine");
 }
 
 internal sealed record OffendQuery : Query<int>;
 
 // Reads Catalog's tenant-scoped tables in shapes that still cross tenants: the lease's tenant inside a top-level OR, in one
 // branch of a UNION, and for one table of a join but not the other; and with a tenant the handler binds itself.
-internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory connections, OperationContext context)
-    : QueryHandler<OffendQuery, int>
+internal sealed class CrossTenantReadingQueryHandler(
+    IReadConnectionFactory connections,
+    OperationContext context
+) : QueryHandler<OffendQuery, int>
 {
-    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<int>> Handle(
+        OffendQuery query,
+        CancellationToken cancellationToken
+    )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var parameters = new { Name = "Lamp" };
         var either = await connection.QueryAsync<Guid>(
-            new CommandDefinition("select id from catalog.products where tenant = current_setting('pouryakit.tenant') or name = @Name", parameters, cancellationToken: cancellationToken)
+            new CommandDefinition(
+                "select id from catalog.products where tenant = current_setting('pouryakit.tenant') or name = @Name",
+                parameters,
+                cancellationToken: cancellationToken
+            )
         );
         var united = await connection.QueryAsync<Guid>(
             new CommandDefinition(
@@ -185,24 +233,47 @@ internal sealed class CrossTenantReadingQueryHandler(IReadConnectionFactory conn
             )
         );
         var bound = await connection.QueryAsync<Guid>(
-            new CommandDefinition("select id from catalog.products where tenant = @Tenant", new { context.Tenant }, cancellationToken: cancellationToken)
+            new CommandDefinition(
+                "select id from catalog.products where tenant = @Tenant",
+                new { context.Tenant },
+                cancellationToken: cancellationToken
+            )
         );
         return either.Count() + united.Count() + joined.Count() + bound.Count();
     }
 }
 
 // Rebinds the tenant the lease set, then reads with the accepted conjunct, so the read returns another tenant's rows.
-internal sealed class TenantRebindingQueryHandler(IReadConnectionFactory connections) : QueryHandler<OffendQuery, int>
+internal sealed class TenantRebindingQueryHandler(IReadConnectionFactory connections)
+    : QueryHandler<OffendQuery, int>
 {
-    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<int>> Handle(
+        OffendQuery query,
+        CancellationToken cancellationToken
+    )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        await connection.ExecuteAsync(new CommandDefinition("select set_config('pouryakit.tenant', 'south', false)", cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition("set pouryakit.tenant = 'south'", cancellationToken: cancellationToken));
-        var read = await connection.QueryAsync<Guid>(
-            new CommandDefinition("select id from catalog.products where tenant = current_setting('pouryakit.tenant')", cancellationToken: cancellationToken)
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "select set_config('pouryakit.tenant', 'south', false)",
+                cancellationToken: cancellationToken
+            )
         );
-        await connection.ExecuteAsync(new CommandDefinition("reset pouryakit.tenant", cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "set pouryakit.tenant = 'south'",
+                cancellationToken: cancellationToken
+            )
+        );
+        var read = await connection.QueryAsync<Guid>(
+            new CommandDefinition(
+                "select id from catalog.products where tenant = current_setting('pouryakit.tenant')",
+                cancellationToken: cancellationToken
+            )
+        );
+        await connection.ExecuteAsync(
+            new CommandDefinition("reset pouryakit.tenant", cancellationToken: cancellationToken)
+        );
         return read.Count();
     }
 }
@@ -292,27 +363,55 @@ internal sealed class LedgerDbContext(DbContextOptions options) : PouryaKitDbCon
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<Ledger>().ToTable("ledgers").HasMany(ledger => ledger.Entries).WithOne().IsRequired();
-        modelBuilder.Entity<LedgerEntry>().UseTptMappingStrategy().ToTable("ledger_entries").HasMany(entry => entry.Lines).WithOne().IsRequired();
+        modelBuilder
+            .Entity<Ledger>()
+            .ToTable("ledgers")
+            .HasMany(ledger => ledger.Entries)
+            .WithOne()
+            .IsRequired();
+        modelBuilder
+            .Entity<LedgerEntry>()
+            .UseTptMappingStrategy()
+            .ToTable("ledger_entries")
+            .HasMany(entry => entry.Lines)
+            .WithOne()
+            .IsRequired();
         modelBuilder.Entity<SpecialEntry>().ToTable("special_entries");
-        modelBuilder.Entity<EntryLine>().ToTable("entry_lines").SplitToTable("entry_line_notes", table => table.Property(line => line.Note));
-        modelBuilder.Entity<Journal>().ToTable("journals").HasKey(journal => new { journal.Tenant, journal.Id });
+        modelBuilder
+            .Entity<EntryLine>()
+            .ToTable("entry_lines")
+            .SplitToTable("entry_line_notes", table => table.Property(line => line.Note));
+        modelBuilder
+            .Entity<Journal>()
+            .ToTable("journals")
+            .HasKey(journal => new { journal.Tenant, journal.Id });
         modelBuilder.Entity<Journal>().HasMany(journal => journal.Lines).WithOne().IsRequired();
         modelBuilder.Entity<JournalLine>().ToTable("journal_lines");
-        modelBuilder.Entity<Account>().ToTable("accounts", "books").SplitToTable("account_notes", table => table.Property(account => account.Note));
+        modelBuilder
+            .Entity<Account>()
+            .ToTable("accounts", "books")
+            .SplitToTable("account_notes", table => table.Property(account => account.Note));
     }
 }
 
 // Reads a ledger's entries, whose table has no tenant column: once with no join to the ledger, and once joined to it
 // without holding the ledger to the tenant.
-internal sealed class PartReadingQueryHandler(IReadConnectionFactory connections) : QueryHandler<OffendQuery, int>
+internal sealed class PartReadingQueryHandler(IReadConnectionFactory connections)
+    : QueryHandler<OffendQuery, int>
 {
-    public override async Task<Result<int>> Handle(OffendQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<int>> Handle(
+        OffendQuery query,
+        CancellationToken cancellationToken
+    )
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var parameters = new { Ledger = Guid.Empty, Name = "Cash" };
         var direct = await connection.QueryAsync<decimal>(
-            new CommandDefinition("select amount from offending.ledger_entries where ledger_id = @Ledger", parameters, cancellationToken: cancellationToken)
+            new CommandDefinition(
+                "select amount from offending.ledger_entries where ledger_id = @Ledger",
+                parameters,
+                cancellationToken: cancellationToken
+            )
         );
         var joined = await connection.QueryAsync<decimal>(
             new CommandDefinition(
@@ -326,19 +425,37 @@ internal sealed class PartReadingQueryHandler(IReadConnectionFactory connections
 }
 
 // Writes Catalog's aggregate tables around the tracked path, once named with its schema and once without.
-internal sealed class RenamingProductsCommandHandler(IUnitOfWorkConnection unitOfWork) : CommandHandler<OffendCommand>
+internal sealed class RenamingProductsCommandHandler(IUnitOfWorkConnection unitOfWork)
+    : CommandHandler<OffendCommand>
 {
     private static readonly string ForgetCategories = "delete from categories";
 
-    public override async Task<Result> Handle(OffendCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        OffendCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var (connection, transaction) = unitOfWork.Join();
         await connection.ExecuteAsync(
-            new CommandDefinition("update catalog.products set name = 'renamed'", transaction: transaction, cancellationToken: cancellationToken)
+            new CommandDefinition(
+                "update catalog.products set name = 'renamed'",
+                transaction: transaction,
+                cancellationToken: cancellationToken
+            )
         );
-        await connection.ExecuteAsync(new CommandDefinition(ForgetCategories, transaction: transaction, cancellationToken: cancellationToken));
         await connection.ExecuteAsync(
-            new CommandDefinition("update catalog\n.\tproducts set name = 'renamed again'", transaction: transaction, cancellationToken: cancellationToken)
+            new CommandDefinition(
+                ForgetCategories,
+                transaction: transaction,
+                cancellationToken: cancellationToken
+            )
+        );
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "update catalog\n.\tproducts set name = 'renamed again'",
+                transaction: transaction,
+                cancellationToken: cancellationToken
+            )
         );
         return Result.Success();
     }
@@ -346,9 +463,13 @@ internal sealed class RenamingProductsCommandHandler(IUnitOfWorkConnection unitO
 
 internal sealed record OffendingHappenedDomainEvent : DomainEvent;
 
-internal sealed class ClearingDomainEventHandler(IAggregateRoot aggregate) : IDomainEventHandler<OffendingHappenedDomainEvent>
+internal sealed class ClearingDomainEventHandler(IAggregateRoot aggregate)
+    : IDomainEventHandler<OffendingHappenedDomainEvent>
 {
-    public Task<Result> Handle(OffendingHappenedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        OffendingHappenedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         Action<IAggregateRoot> clear = raised => raised.ClearDomainEvents();
         clear(aggregate);
@@ -368,8 +489,10 @@ public sealed record ExposedQuery : Query<int>;
 
 public sealed class ExposedQueryHandler : QueryHandler<ExposedQuery, int>
 {
-    public override Task<Result<int>> Handle(ExposedQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<int>>(1);
+    public override Task<Result<int>> Handle(
+        ExposedQuery query,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result<int>>(1);
 }
 
 // Lists an assembly's types itself instead of asking PouryaKit.Core's ImplementingTypes.
@@ -377,7 +500,8 @@ internal static class OwnTypeLookup
 {
     public static IEnumerable<Type> All(Assembly assembly)
     {
-        Func<Module, IEnumerable<Type>> inModule = module => module.GetTypes().Concat(module.FindTypes(null, null));
+        Func<Module, IEnumerable<Type>> inModule = module =>
+            module.GetTypes().Concat(module.FindTypes(null, null));
         return assembly
             .GetTypes()
             .Concat(assembly.DefinedTypes)

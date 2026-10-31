@@ -8,9 +8,13 @@ namespace ModularMonolith.Tests.Stub;
 // waits to be let go, so two of them that take the same keys in opposite orders each hold one row the other needs.
 internal sealed record TakeNumbersCommand(string[] ScopeKeys, Hold Hold) : Command;
 
-internal sealed class TakeNumbersCommandHandler(INumberSequences sequences) : CommandHandler<TakeNumbersCommand>
+internal sealed class TakeNumbersCommandHandler(INumberSequences sequences)
+    : CommandHandler<TakeNumbersCommand>
 {
-    public override async Task<Result> Handle(TakeNumbersCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        TakeNumbersCommand command,
+        CancellationToken cancellationToken
+    )
     {
         foreach (var scopeKey in command.ScopeKeys)
         {

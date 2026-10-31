@@ -9,8 +9,10 @@ internal static class PackageValidationProgram
             try
             {
                 var violations = PackageArtifacts.Violations(evidence).ToArray();
-                foreach (var violation in violations) Console.Error.WriteLine(violation);
-                if (violations.Length != 0) return 1;
+                foreach (var violation in violations)
+                    Console.Error.WriteLine(violation);
+                if (violations.Length != 0)
+                    return 1;
                 Console.WriteLine("Package artifacts and restored consumer closures passed.");
                 return 0;
             }
@@ -23,7 +25,13 @@ internal static class PackageValidationProgram
 
         // Preserve xUnit's generated entrypoint, including Microsoft.Testing.Platform's MSBuild protocol.
         return args.Any(argument => argument is "--server" or "--internal-msbuild-node")
-            ? Xunit.MicrosoftTestingPlatform.TestPlatformTestFramework.RunAsync(args, SelfRegisteredExtensions.AddSelfRegisteredExtensions).GetAwaiter().GetResult()
+            ? Xunit
+                .MicrosoftTestingPlatform.TestPlatformTestFramework.RunAsync(
+                    args,
+                    SelfRegisteredExtensions.AddSelfRegisteredExtensions
+                )
+                .GetAwaiter()
+                .GetResult()
             : Xunit.Runner.InProc.SystemConsole.ConsoleRunner.Run(args).GetAwaiter().GetResult();
     }
 }

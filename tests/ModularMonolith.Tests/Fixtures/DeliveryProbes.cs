@@ -20,8 +20,16 @@ namespace ModularMonolith.Tests.Fixtures;
 internal static class DeliveryProbes
 {
     private static readonly AsyncLocal<List<object>?> Written = new();
-    private static readonly ConcurrentQueue<(string Subscription, Guid MessageId, DateTimeOffset At, OperationContext Context, Activity? Activity)> Attempts = [];
-    private static readonly ConcurrentDictionary<string, int> TurnedAway = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentQueue<(
+        string Subscription,
+        Guid MessageId,
+        DateTimeOffset At,
+        OperationContext Context,
+        Activity? Activity
+    )> Attempts = [];
+    private static readonly ConcurrentDictionary<string, int> TurnedAway = new(
+        StringComparer.OrdinalIgnoreCase
+    );
     private static Hold? _receiptHold;
     private static Hold? _commitHold;
     private static Hold? _versionHold;
@@ -34,11 +42,23 @@ internal static class DeliveryProbes
     /// its Receipt, in any Host of the process: every attempt the store handed out, whether or not its handler then ran.
     /// </summary>
     public static IReadOnlyList<DateTimeOffset> AttemptsOf(string subscription, Guid messageId) =>
-        [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.At)];
+        [
+            .. Attempts
+                .Where(attempt =>
+                    attempt.Subscription == subscription && attempt.MessageId == messageId
+                )
+                .Select(attempt => attempt.At),
+        ];
 
     /// <summary>The Operation Context each delivery <see cref="AttemptsOf"/> counts ran with, in the same order.</summary>
     public static IReadOnlyList<OperationContext> ContextsOf(string subscription, Guid messageId) =>
-        [.. Attempts.Where(attempt => attempt.Subscription == subscription && attempt.MessageId == messageId).Select(attempt => attempt.Context)];
+        [
+            .. Attempts
+                .Where(attempt =>
+                    attempt.Subscription == subscription && attempt.MessageId == messageId
+                )
+                .Select(attempt => attempt.Context),
+        ];
 
     /// <summary>
     /// The activity current in each delivery attempt to <paramref name="subscription"/> when it began recording its Receipt,
@@ -46,11 +66,19 @@ internal static class DeliveryProbes
     /// Operations, and null when no activity was current.
     /// </summary>
     public static IReadOnlyList<Activity?> ActivitiesOf(string subscription) =>
-        [.. Attempts.Where(attempt => attempt.Subscription == subscription).Select(attempt => attempt.Activity)];
+        [
+            .. Attempts
+                .Where(attempt => attempt.Subscription == subscription)
+                .Select(attempt => attempt.Activity),
+        ];
 
     /// <summary>The Operation Context of every delivery to <paramref name="subscription"/> that began recording its Receipt.</summary>
     public static IReadOnlyList<OperationContext> ContextsOf(string subscription) =>
-        [.. Attempts.Where(attempt => attempt.Subscription == subscription).Select(attempt => attempt.Context)];
+        [
+            .. Attempts
+                .Where(attempt => attempt.Subscription == subscription)
+                .Select(attempt => attempt.Context),
+        ];
 
     /// <summary>Adds every message the commits of this flow write to the Outbox to <paramref name="written"/>, until disposed.</summary>
     public static IDisposable RecordWritten(List<object> written)
@@ -64,14 +92,24 @@ internal static class DeliveryProbes
     /// its transaction stays open with the Receipt written and not committed.
     /// </summary>
     public static Hold HoldAfterReceipt(string subscription) =>
-        _receiptHold = new Hold(reached => reached is string recordedFor && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase), () => _receiptHold = null);
+        _receiptHold = new Hold(
+            reached =>
+                reached is string recordedFor
+                && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase),
+            () => _receiptHold = null
+        );
 
     /// <summary>
     /// Holds the first delivery to <paramref name="subscription"/> that records a Snapshot's version as the newest, until
     /// released or disposed: its transaction stays open with the version written and not committed.
     /// </summary>
     public static Hold HoldAfterVersion(string subscription) =>
-        _versionHold = new Hold(reached => reached is string recordedFor && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase), () => _versionHold = null);
+        _versionHold = new Hold(
+            reached =>
+                reached is string recordedFor
+                && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase),
+            () => _versionHold = null
+        );
 
     /// <summary>
     /// Holds the first delivery to <paramref name="subscription"/> of <paramref name="module"/> that commits, until
@@ -79,7 +117,10 @@ internal static class DeliveryProbes
     /// </summary>
     public static Hold HoldAfterCommit(Type module, string subscription) =>
         _commitHold = new Hold(
-            reached => reached is (Type committed, string recordedFor) && committed == module && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase),
+            reached =>
+                reached is (Type committed, string recordedFor)
+                && committed == module
+                && string.Equals(recordedFor, subscription, StringComparison.OrdinalIgnoreCase),
             () => _commitHold = null
         );
 
@@ -107,7 +148,8 @@ internal static class DeliveryProbes
     }
 
     /// <summary>How many deliveries to <paramref name="subscription"/> found their Receipt already committed.</summary>
-    public static int TurnedAwayFrom(string subscription) => TurnedAway.GetValueOrDefault(subscription);
+    public static int TurnedAwayFrom(string subscription) =>
+        TurnedAway.GetValueOrDefault(subscription);
 
     /// <summary>Wraps the Host's Outbox and Receipts, after <see cref="CommitProbe.Install"/>.</summary>
     public static void Install(IServiceCollection services)
@@ -115,38 +157,59 @@ internal static class DeliveryProbes
         services.AddScoped<DeliveredSubscription>();
         Decorate<IUnitOfWorkOutbox>(
             services,
-            (provider, outbox) => new RecordedOutbox(outbox, provider.GetRequiredService<Operation>(), provider.GetRequiredService<DeliveredSubscription>())
+            (provider, outbox) =>
+                new RecordedOutbox(
+                    outbox,
+                    provider.GetRequiredService<Operation>(),
+                    provider.GetRequiredService<DeliveredSubscription>()
+                )
         );
         Decorate<IReceipts>(
             services,
-            (provider, receipts) => new HeldReceipts(receipts, provider.GetRequiredService<DeliveredSubscription>(), provider.GetRequiredService<OperationContext>)
+            (provider, receipts) =>
+                new HeldReceipts(
+                    receipts,
+                    provider.GetRequiredService<DeliveredSubscription>(),
+                    provider.GetRequiredService<OperationContext>
+                )
         );
     }
 
-    private static void Decorate<TService>(IServiceCollection services, Func<IServiceProvider, TService, TService> decorate)
+    private static void Decorate<TService>(
+        IServiceCollection services,
+        Func<IServiceProvider, TService, TService> decorate
+    )
         where TService : class
     {
         // The unkeyed one the Kit resolves: in a Host of Modules, the resolver of the Operation's Module's own.
-        var descriptor = services.Single(descriptor => descriptor.ServiceType == typeof(TService) && !descriptor.IsKeyedService);
+        var descriptor = services.Single(descriptor =>
+            descriptor.ServiceType == typeof(TService) && !descriptor.IsKeyedService
+        );
         services.Remove(descriptor);
         services.AddScoped(provider =>
             decorate(
                 provider,
                 descriptor.ImplementationFactory is { } factory
                     ? (TService)factory(provider)
-                    : (TService)ActivatorUtilities.CreateInstance(provider, descriptor.ImplementationType!)
+                    : (TService)
+                        ActivatorUtilities.CreateInstance(provider, descriptor.ImplementationType!)
             )
         );
     }
 
     public sealed class Hold(Func<object?, bool> matches, Action clear) : IDisposable
     {
-        private readonly TaskCompletionSource _held = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly TaskCompletionSource _released = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _held = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        private readonly TaskCompletionSource _released = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
         private int _taken;
 
         /// <summary>Completes once the held delivery has reached its stop point and waits.</summary>
-        public Task Held => _held.Task.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
+        public Task Held =>
+            _held.Task.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
         public void Release() => _released.TrySetResult();
 
@@ -181,8 +244,11 @@ internal static class DeliveryProbes
         public string? Name { get; set; }
     }
 
-    private sealed class RecordedOutbox(IUnitOfWorkOutbox outbox, Operation operation, DeliveredSubscription delivered)
-        : IUnitOfWorkOutbox
+    private sealed class RecordedOutbox(
+        IUnitOfWorkOutbox outbox,
+        Operation operation,
+        DeliveredSubscription delivered
+    ) : IUnitOfWorkOutbox
     {
         public Task WriteAsync(
             DbContext dbContext,
@@ -207,11 +273,21 @@ internal static class DeliveryProbes
         }
     }
 
-    private sealed class HeldReceipts(IReceipts receipts, DeliveredSubscription delivered, Func<OperationContext> context) : IReceipts
+    private sealed class HeldReceipts(
+        IReceipts receipts,
+        DeliveredSubscription delivered,
+        Func<OperationContext> context
+    ) : IReceipts
     {
-        public async Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken)
+        public async Task<bool> RecordAsync(
+            string subscription,
+            Guid messageId,
+            CancellationToken cancellationToken
+        )
         {
-            Attempts.Enqueue((subscription, messageId, DateTimeOffset.UtcNow, context(), Activity.Current));
+            Attempts.Enqueue(
+                (subscription, messageId, DateTimeOffset.UtcNow, context(), Activity.Current)
+            );
             delivered.Name ??= subscription;
             var recorded = await receipts.RecordAsync(subscription, messageId, cancellationToken);
             if (!recorded)
@@ -226,12 +302,21 @@ internal static class DeliveryProbes
             if (
                 recorded
                 && (
-                    (string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase) && Interlocked.Decrement(ref _failures) >= 0)
-                    || (_failingOnce is { } once && string.Equals(once, subscription, StringComparison.OrdinalIgnoreCase) && Interlocked.CompareExchange(ref _failingOnce, null, once) == once)
+                    (
+                        string.Equals(_failing, subscription, StringComparison.OrdinalIgnoreCase)
+                        && Interlocked.Decrement(ref _failures) >= 0
+                    )
+                    || (
+                        _failingOnce is { } once
+                        && string.Equals(once, subscription, StringComparison.OrdinalIgnoreCase)
+                        && Interlocked.CompareExchange(ref _failingOnce, null, once) == once
+                    )
                 )
             )
             {
-                throw new InvalidOperationException($"The test failed the delivery to {subscription} after its Receipt.");
+                throw new InvalidOperationException(
+                    $"The test failed the delivery to {subscription} after its Receipt."
+                );
             }
 
             return recorded;
@@ -244,7 +329,12 @@ internal static class DeliveryProbes
             CancellationToken cancellationToken
         )
         {
-            var recorded = await receipts.RecordVersionAsync(subscription, aggregateId, version, cancellationToken);
+            var recorded = await receipts.RecordVersionAsync(
+                subscription,
+                aggregateId,
+                version,
+                cancellationToken
+            );
             if (recorded && _versionHold is { } hold)
             {
                 await hold.OnReachedAsync(subscription);

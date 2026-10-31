@@ -9,7 +9,14 @@ namespace ModularMonolith.Tests.Stub;
 // Stub publishes them and records every one it receives, and a Notification Handler publishes one by hand, as nothing
 // may.
 
-internal sealed record FolderSnapshotV1(Guid FolderId, string Name, string Colour, int Pages, bool IsRemoved, long Version);
+internal sealed record FolderSnapshotV1(
+    Guid FolderId,
+    string Name,
+    string Colour,
+    int Pages,
+    bool IsRemoved,
+    long Version
+);
 
 internal sealed class FolderSnapshotMapper : ISnapshotMapper<Folder, FolderSnapshotV1>
 {
@@ -29,20 +36,32 @@ internal sealed class FolderSnapshotMapper : ISnapshotMapper<Folder, FolderSnaps
     public FolderSnapshotV1 Tombstone(Folder folder) => Of(folder, isRemoved: true);
 
     private static FolderSnapshotV1 Of(Folder folder, bool isRemoved) =>
-        new(folder.Id.Value, folder.Name, folder.Label.Colour, folder.Pages.Count, isRemoved, folder.Version);
+        new(
+            folder.Id.Value,
+            folder.Name,
+            folder.Label.Colour,
+            folder.Pages.Count,
+            isRemoved,
+            folder.Version
+        );
 }
 
 internal sealed record TraySnapshotV1(Guid TrayId, int Pins, bool IsRemoved, long Version);
 
 internal sealed class TraySnapshotMapper : ISnapshotMapper<Tray, TraySnapshotV1>
 {
-    public TraySnapshotV1 Map(Tray tray) => new(tray.Id.Value, tray.Pins.Count, IsRemoved: false, tray.Version);
+    public TraySnapshotV1 Map(Tray tray) =>
+        new(tray.Id.Value, tray.Pins.Count, IsRemoved: false, tray.Version);
 
-    public TraySnapshotV1 Tombstone(Tray tray) => new(tray.Id.Value, tray.Pins.Count, IsRemoved: true, tray.Version);
+    public TraySnapshotV1 Tombstone(Tray tray) =>
+        new(tray.Id.Value, tray.Pins.Count, IsRemoved: true, tray.Version);
 }
 
-internal sealed class RecordFolderSnapshotIntegrationEventHandler(IntegrationEventLog log, OperationContext context, Operation operation)
-    : IIntegrationEventHandler<FolderSnapshotV1>
+internal sealed class RecordFolderSnapshotIntegrationEventHandler(
+    IntegrationEventLog log,
+    OperationContext context,
+    Operation operation
+) : IIntegrationEventHandler<FolderSnapshotV1>
 {
     public Task<Result> Handle(FolderSnapshotV1 snapshot, CancellationToken cancellationToken)
     {
@@ -51,8 +70,11 @@ internal sealed class RecordFolderSnapshotIntegrationEventHandler(IntegrationEve
     }
 }
 
-internal sealed class RecordTraySnapshotIntegrationEventHandler(IntegrationEventLog log, OperationContext context, Operation operation)
-    : IIntegrationEventHandler<TraySnapshotV1>
+internal sealed class RecordTraySnapshotIntegrationEventHandler(
+    IntegrationEventLog log,
+    OperationContext context,
+    Operation operation
+) : IIntegrationEventHandler<TraySnapshotV1>
 {
     public Task<Result> Handle(TraySnapshotV1 snapshot, CancellationToken cancellationToken)
     {
@@ -63,12 +85,19 @@ internal sealed class RecordTraySnapshotIntegrationEventHandler(IntegrationEvent
 
 internal sealed record FolderSnapshotPublishedByHandDomainEvent(Guid FolderId) : DomainEvent;
 
-internal sealed class PublishFolderSnapshotByHandNotificationHandler(IIntegrationEventPublisher events)
-    : INotificationHandler<FolderSnapshotPublishedByHandDomainEvent>
+internal sealed class PublishFolderSnapshotByHandNotificationHandler(
+    IIntegrationEventPublisher events
+) : INotificationHandler<FolderSnapshotPublishedByHandDomainEvent>
 {
-    public Task<Result> Handle(FolderSnapshotPublishedByHandDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        FolderSnapshotPublishedByHandDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        events.Publish(domainEvent.Id, new FolderSnapshotV1(domainEvent.FolderId, "by hand", "grey", 0, false, 99L));
+        events.Publish(
+            domainEvent.Id,
+            new FolderSnapshotV1(domainEvent.FolderId, "by hand", "grey", 0, false, 99L)
+        );
         return Task.FromResult(Result.Success());
     }
 }

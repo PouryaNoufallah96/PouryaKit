@@ -5,6 +5,7 @@ public enum SortDirection
 {
     /// <summary>The smallest value first.</summary>
     Ascending,
+
     /// <summary>The largest value first.</summary>
     Descending,
 }

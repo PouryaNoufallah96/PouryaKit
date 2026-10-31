@@ -46,15 +46,25 @@ internal sealed partial class MartenIdempotencyKeyCleanup(
         {
             foreach (var schema in streams.Schemas)
             {
-                var table = $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{IdempotencyStatements.Table}";
+                var table =
+                    $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{IdempotencyStatements.Table}";
                 try
                 {
-                    var (cutoff, batchSize) = (timeProvider.GetUtcNow() - options.Value.Retention, options.Value.BatchSize);
+                    var (cutoff, batchSize) = (
+                        timeProvider.GetUtcNow() - options.Value.Retention,
+                        options.Value.BatchSize
+                    );
                     int batch;
                     do
                     {
-                        await using var connection = await dataSource.OpenConnectionAsync(stoppingToken);
-                        await using var delete = Statements.Command(IdempotencyStatements.RemoveExpired(table), [cutoff, batchSize], connection);
+                        await using var connection = await dataSource.OpenConnectionAsync(
+                            stoppingToken
+                        );
+                        await using var delete = Statements.Command(
+                            IdempotencyStatements.RemoveExpired(table),
+                            [cutoff, batchSize],
+                            connection
+                        );
                         batch = await delete.ExecuteNonQueryAsync(stoppingToken);
                     } while (batch == batchSize);
                 }

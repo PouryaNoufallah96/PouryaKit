@@ -19,13 +19,20 @@ internal sealed partial class Dispatcher(
     private static readonly ConcurrentDictionary<Type, object> Invokers = new();
 
     // The Operation's ids and Module on every entry it logs, so its logs join their request without a tracing exporter.
-    private static readonly Func<ILogger, string, Guid?, Guid?, string?, IDisposable?> OperationScope =
-        LoggerMessage.DefineScope<string, Guid?, Guid?, string?>(
-            "Operation {Operation} {OperationId} correlation {CorrelationId} in {Module}"
-        );
+    private static readonly Func<
+        ILogger,
+        string,
+        Guid?,
+        Guid?,
+        string?,
+        IDisposable?
+    > OperationScope = LoggerMessage.DefineScope<string, Guid?, Guid?, string?>(
+        "Operation {Operation} {OperationId} correlation {CorrelationId} in {Module}"
+    );
 
     // An idempotent command's recorded response, in the one JSON representation the Kit writes everywhere.
-    private static readonly JsonSerializerOptions ResponseJson = new JsonSerializerOptions().UsePouryaKitJson();
+    private static readonly JsonSerializerOptions ResponseJson =
+        new JsonSerializerOptions().UsePouryaKitJson();
 
     // The exception last logged in this scope: one that leaves several nested pipelines is logged once, where it began.
     private Exception? _loggedException;
@@ -33,7 +40,10 @@ internal sealed partial class Dispatcher(
     public Task<Result> SendAsync(Command command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-        var invoker = Invokers.GetOrAdd(command.GetType(), static type => Create(typeof(CommandInvoker<>), type));
+        var invoker = Invokers.GetOrAdd(
+            command.GetType(),
+            static type => Create(typeof(CommandInvoker<>), type)
+        );
         return ((Invoker<Result>)invoker).Invoke(this, command, cancellationToken);
     }
 
@@ -100,7 +110,16 @@ internal sealed partial class Dispatcher(
 
             try
             {
-                var result = await Pipeline(commandOrQuery, ownsUnitOfWork, reading, handle, fail, idempotent, cached, cancellationToken);
+                var result = await Pipeline(
+                    commandOrQuery,
+                    ownsUnitOfWork,
+                    reading,
+                    handle,
+                    fail,
+                    idempotent,
+                    cached,
+                    cancellationToken
+                );
                 if (isCommand && result.IsFailure)
                 {
                     operation.MarkRollbackOnly(result.Errors);
@@ -143,7 +162,13 @@ internal sealed partial class Dispatcher(
     {
         var name = typeof(TCommandOrQuery).Name;
         var context = operation.Context;
-        using var scope = OperationScope(logger, name, context?.OperationId, context?.CorrelationId, operation.Module?.Name);
+        using var scope = OperationScope(
+            logger,
+            name,
+            context?.OperationId,
+            context?.CorrelationId,
+            operation.Module?.Name
+        );
         LogRunning(logger, name);
         var started = Stopwatch.GetTimestamp();
 
@@ -152,12 +177,25 @@ internal sealed partial class Dispatcher(
         {
             using (reading)
             {
-                result = await Steps(commandOrQuery, ownsUnitOfWork, reading, handle, fail, idempotent, cached, cancellationToken);
+                result = await Steps(
+                    commandOrQuery,
+                    ownsUnitOfWork,
+                    reading,
+                    handle,
+                    fail,
+                    idempotent,
+                    cached,
+                    cancellationToken
+                );
             }
         }
         catch (Exception exception)
             when (!ReferenceEquals(exception, _loggedException)
-                && !(exception is OperationCanceledException && cancellationToken.IsCancellationRequested))
+                && !(
+                    exception is OperationCanceledException
+                    && cancellationToken.IsCancellationRequested
+                )
+            )
         {
             _loggedException = exception;
             LogThrew(logger, exception, name, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
@@ -222,7 +260,11 @@ internal sealed partial class Dispatcher(
         // such a query neither reads nor stores an entry. A command's declared tags are evicted once the Operation commits.
         if (cached is not null)
         {
-            return queryCache is not null && operation.IsOutermostQuery && !operation.IsRollbackOnly && operation.Context is { } context
+            return
+                queryCache is not null
+                && operation.IsOutermostQuery
+                && !operation.IsRollbackOnly
+                && operation.Context is { } context
                 ? await cached(
                     queryCache,
                     commandOrQuery,
@@ -266,14 +308,20 @@ internal sealed partial class Dispatcher(
             outcome = await unitOfWork.RunAsync(
                 async ct =>
                 {
-                    if (reservation is not null && await reservation.ReplayAsync(ct) is { } replayed)
+                    if (
+                        reservation is not null
+                        && await reservation.ReplayAsync(ct) is { } replayed
+                    )
                     {
                         returned = replayed;
                         return returned;
                     }
 
                     var handled = await handle(services, commandOrQuery, ct);
-                    returned = handled.IsSuccess && operation.IsRollbackOnly ? fail(operation.RollbackErrors) : handled;
+                    returned =
+                        handled.IsSuccess && operation.IsRollbackOnly
+                            ? fail(operation.RollbackErrors)
+                            : handled;
                     if (reservation is not null)
                     {
                         await reservation.RecordAsync(returned, ct);
@@ -301,7 +349,11 @@ internal sealed partial class Dispatcher(
         if (ReferenceEquals(outcome, returned))
         {
             // After the commit only: a rolled-back Operation evicts nothing, so a valid entry survives it.
-            if (outcome.IsSuccess && queryCache is not null && operation.TagsToEvict is { Count: > 0 } tags)
+            if (
+                outcome.IsSuccess
+                && queryCache is not null
+                && operation.TagsToEvict is { Count: > 0 } tags
+            )
             {
                 await queryCache.EvictAsync(tags);
             }
@@ -318,7 +370,9 @@ internal sealed partial class Dispatcher(
 
     // The outermost command's reservation: null when its Operation carries no request id, and an exception when the
     // request id cannot be honoured, since running the command anyway would silently drop the promised guarantee.
-    private Reservation<TResult>? Reserving<TCommand, TResult>(IdempotentResponses<TResult>? idempotent)
+    private Reservation<TResult>? Reserving<TCommand, TResult>(
+        IdempotentResponses<TResult>? idempotent
+    )
         where TResult : Result
     {
         if (operation.Context is not { RequestId: { } requestId } context)
@@ -340,7 +394,12 @@ internal sealed partial class Dispatcher(
             );
         return new Reservation<TResult>(
             store,
-            new IdempotencyKey(context.Tenant, context.Actor, OperationTypes.KeyName(typeof(TCommand)), requestId),
+            new IdempotencyKey(
+                context.Tenant,
+                context.Actor,
+                OperationTypes.KeyName(typeof(TCommand)),
+                requestId
+            ),
             idempotent
         );
     }
@@ -353,7 +412,11 @@ internal sealed partial class Dispatcher(
         Level = LogLevel.Information,
         Message = "{Operation} succeeded in {ElapsedMilliseconds} ms"
     )]
-    private static partial void LogSucceeded(ILogger logger, string operation, double elapsedMilliseconds);
+    private static partial void LogSucceeded(
+        ILogger logger,
+        string operation,
+        double elapsedMilliseconds
+    );
 
     // Its caller checks the level, so the error codes are joined only when the entry is written.
     [LoggerMessage(
@@ -362,18 +425,31 @@ internal sealed partial class Dispatcher(
         Message = "{Operation} failed with {ErrorCodes} in {ElapsedMilliseconds} ms",
         SkipEnabledCheck = true
     )]
-    private static partial void LogFailed(ILogger logger, string operation, string errorCodes, double elapsedMilliseconds);
+    private static partial void LogFailed(
+        ILogger logger,
+        string operation,
+        string errorCodes,
+        double elapsedMilliseconds
+    );
 
     [LoggerMessage(
         EventName = "Threw",
         Level = LogLevel.Error,
         Message = "{Operation} threw after {ElapsedMilliseconds} ms"
     )]
-    private static partial void LogThrew(ILogger logger, Exception exception, string operation, double elapsedMilliseconds);
+    private static partial void LogThrew(
+        ILogger logger,
+        Exception exception,
+        string operation,
+        double elapsedMilliseconds
+    );
 
     // How an [Idempotent] command's success is recorded and replayed: its value as JSON, or no response for a command
     // without a value.
-    private sealed record IdempotentResponses<TResult>(Func<TResult, string?> Record, Func<string?, TResult> Replay)
+    private sealed record IdempotentResponses<TResult>(
+        Func<TResult, string?> Record,
+        Func<string?, TResult> Replay
+    )
         where TResult : Result;
 
     private sealed class Reservation<TResult>(
@@ -385,7 +461,9 @@ internal sealed partial class Dispatcher(
     {
         // Null once this Operation holds the key; otherwise the success the committed holder recorded.
         public async Task<TResult?> ReplayAsync(CancellationToken cancellationToken) =>
-            await store.ReserveAsync(key, cancellationToken) is { } recorded ? responses.Replay(recorded.Response) : null;
+            await store.ReserveAsync(key, cancellationToken) is { } recorded
+                ? responses.Replay(recorded.Response)
+                : null;
 
         // A failure records nothing: the Unit of Work rolls back, and the key with it.
         public async Task RecordAsync(TResult result, CancellationToken cancellationToken)
@@ -397,7 +475,8 @@ internal sealed partial class Dispatcher(
         }
     }
 
-    private static bool IsIdempotent(Type command) => command.IsDefined(typeof(IdempotentAttribute), inherit: false);
+    private static bool IsIdempotent(Type command) =>
+        command.IsDefined(typeof(IdempotentAttribute), inherit: false);
 
     // How a query's Result goes through the query cache: its invoker knows the TResponse the steps do not.
     private delegate Task<TResult> CachedQuery<in TQuery, TResult>(
@@ -423,7 +502,9 @@ internal sealed partial class Dispatcher(
     private sealed class CommandInvoker<TCommand> : Invoker<Result>
         where TCommand : Command
     {
-        private static readonly IdempotentResponses<Result>? Idempotent = IsIdempotent(typeof(TCommand))
+        private static readonly IdempotentResponses<Result>? Idempotent = IsIdempotent(
+            typeof(TCommand)
+        )
             ? new(static _ => null, static _ => Result.Success())
             : null;
 
@@ -449,11 +530,14 @@ internal sealed partial class Dispatcher(
         where TResponse : notnull
     {
         // A recorded success always has a value: replaying a default in its place is what this slot exists to prevent.
-        private static readonly IdempotentResponses<Result<TResponse>>? Idempotent = IsIdempotent(typeof(TCommand))
+        private static readonly IdempotentResponses<Result<TResponse>>? Idempotent = IsIdempotent(
+            typeof(TCommand)
+        )
             ? new(
                 static result => JsonSerializer.Serialize(result.Value, ResponseJson),
                 static response =>
-                    response is not null && JsonSerializer.Deserialize<TResponse>(response, ResponseJson) is { } value
+                    response is not null
+                    && JsonSerializer.Deserialize<TResponse>(response, ResponseJson) is { } value
                         ? value
                         : throw new InvalidOperationException(
                             $"The success recorded for this request id of {typeof(TCommand).Name} has no value to replay."
@@ -470,7 +554,9 @@ internal sealed partial class Dispatcher(
                 (TCommand)commandOrQuery,
                 isCommand: true,
                 static (services, command, ct) =>
-                    services.GetRequiredService<CommandHandler<TCommand, TResponse>>().Handle(command, ct),
+                    services
+                        .GetRequiredService<CommandHandler<TCommand, TResponse>>()
+                        .Handle(command, ct),
                 static errors => errors,
                 Idempotent,
                 cached: null,
@@ -482,8 +568,14 @@ internal sealed partial class Dispatcher(
         where TQuery : Query<TResponse>
         where TResponse : notnull
     {
-        private static readonly CachedQuery<TQuery, Result<TResponse>> Cached = static (cache, query, context, handle, endRead, ct) =>
-            cache.QueryAsync(query, context, handle, endRead, ct);
+        private static readonly CachedQuery<TQuery, Result<TResponse>> Cached = static (
+            cache,
+            query,
+            context,
+            handle,
+            endRead,
+            ct
+        ) => cache.QueryAsync(query, context, handle, endRead, ct);
 
         public override Task<Result<TResponse>> Invoke(
             Dispatcher dispatcher,
@@ -494,7 +586,9 @@ internal sealed partial class Dispatcher(
                 (TQuery)commandOrQuery,
                 isCommand: false,
                 static (services, query, ct) =>
-                    services.GetRequiredService<QueryHandler<TQuery, TResponse>>().Handle(query, ct),
+                    services
+                        .GetRequiredService<QueryHandler<TQuery, TResponse>>()
+                        .Handle(query, ct),
                 static errors => errors,
                 idempotent: null,
                 Cached,

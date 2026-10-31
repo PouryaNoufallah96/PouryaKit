@@ -12,9 +12,14 @@ namespace ModularMonolith.Tests.Fixtures;
 // as a named system Actor of the Host would.
 internal sealed class TestActorPermissions(CallerPermissions callers) : IActorPermissions
 {
-    public static IReadOnlyList<string> Granted { get; } = [RemoveProductsCommand.Permission, ReadStampLedgerQuery.Permission];
+    public static IReadOnlyList<string> Granted { get; } =
+    [RemoveProductsCommand.Permission, ReadStampLedgerQuery.Permission];
 
-    public Task<bool> HasPermissionAsync(OperationContext context, string permission, CancellationToken cancellationToken) =>
+    public Task<bool> HasPermissionAsync(
+        OperationContext context,
+        string permission,
+        CancellationToken cancellationToken
+    ) =>
         context.Actor == GatewayTestExtensions.TestActor
             ? Task.FromResult(Granted.Contains(permission))
             : callers.HasPermissionAsync(context, permission, cancellationToken);

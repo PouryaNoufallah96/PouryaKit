@@ -43,7 +43,12 @@ public sealed class HostTests(App app) : HostTest<App>(app)
                 connection
             )
             {
-                Parameters = { new() { Value = Guid.CreateVersion7() }, new() { Value = product }, new() { Value = App.Tenant } },
+                Parameters =
+                {
+                    new() { Value = Guid.CreateVersion7() },
+                    new() { Value = product },
+                    new() { Value = App.Tenant },
+                },
             };
             await open.ExecuteNonQueryAsync(cancellationToken);
         }
@@ -52,10 +57,16 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         using var anonymous = Fixture.ClientAs();
 
         var read = await reader.GetAsync($"/inventory/v2/stock-items/{product}", cancellationToken);
-        var refused = await anonymous.GetAsync($"/inventory/v2/stock-items/{product}", cancellationToken);
+        var refused = await anonymous.GetAsync(
+            $"/inventory/v2/stock-items/{product}",
+            cancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, read.StatusCode);
-        Assert.Equal($$"""{"productId":"{{product}}","quantityOnHand":0}""", await read.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Equal(
+            $$"""{"productId":"{{product}}","quantityOnHand":0}""",
+            await read.Content.ReadAsStringAsync(cancellationToken)
+        );
         Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
     }
 
@@ -66,7 +77,10 @@ public sealed class HostTests(App app) : HostTest<App>(app)
     public async Task The_host_answers_alive_through_the_service_defaults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await using var deployed = Fixture.ComposeHost(Environments.Production, Fixture.ConnectionString);
+        await using var deployed = Fixture.ComposeHost(
+            Environments.Production,
+            Fixture.ConnectionString
+        );
         await HostFixture.StartHostAsync(deployed, cancellationToken);
         using var client = deployed.GetTestClient();
 
@@ -88,14 +102,29 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         var options = Fixture.Host.Services.GetRequiredService<WolverineOptions>();
 
         var queues = await Fixture.BrokerListAsync("list_queues", "name", "consumers");
-        var bindings = await Fixture.BrokerListAsync("list_bindings", "source_name", "destination_name");
+        var bindings = await Fixture.BrokerListAsync(
+            "list_bindings",
+            "source_name",
+            "destination_name"
+        );
 
         Assert.Equal("modular-monolith", options.ServiceName);
-        Assert.Contains(queues, queue => queue.GetProperty("name").GetString() == "modular-monolith" && queue.GetProperty("consumers").GetInt32() > 0);
+        Assert.Contains(
+            queues,
+            queue =>
+                queue.GetProperty("name").GetString() == "modular-monolith"
+                && queue.GetProperty("consumers").GetInt32() > 0
+        );
         Assert.Equal(
-            ["catalog.product-created.v1", "catalog.product-created.v2", "catalog.product-snapshot.v1"],
+            [
+                "catalog.product-created.v1",
+                "catalog.product-created.v2",
+                "catalog.product-snapshot.v1",
+            ],
             bindings
-                .Where(binding => binding.GetProperty("destination_name").GetString() == "modular-monolith")
+                .Where(binding =>
+                    binding.GetProperty("destination_name").GetString() == "modular-monolith"
+                )
                 .Select(binding => binding.GetProperty("source_name").GetString())
                 .Where(exchange => exchange is not "")
                 .Order(StringComparer.Ordinal)
@@ -113,7 +142,9 @@ public sealed class App : HostFixture, IAsyncLifetime
 {
     private const string Issuer = "https://issuer.test";
     private const string Audience = "app";
-    private static readonly SymmetricSecurityKey SigningKey = new(RandomNumberGenerator.GetBytes(32));
+    private static readonly SymmetricSecurityKey SigningKey = new(
+        RandomNumberGenerator.GetBytes(32)
+    );
 
     private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4.3.6").Build();
 
@@ -136,7 +167,8 @@ public sealed class App : HostFixture, IAsyncLifetime
         }
     }
 
-    protected override IHost CreateHost(string connectionString) => ComposeHost(Environments.Development, connectionString);
+    protected override IHost CreateHost(string connectionString) =>
+        ComposeHost(Environments.Development, connectionString);
 
     /// <summary>
     /// The application in <paramref name="environment"/> on <paramref name="connectionString"/> and the fixture's broker,
@@ -144,18 +176,16 @@ public sealed class App : HostFixture, IAsyncLifetime
     /// </summary>
     public WebApplication ComposeHost(string environment, string connectionString)
     {
-        var builder = AppHost.CreateBuilder(
-            [
-                "--environment",
-                environment,
-                $"--ConnectionStrings:app={connectionString}",
-                $"--ConnectionStrings:broker={_broker.GetConnectionString()}",
-                $"--Authentication:Schemes:Bearer:ValidIssuer={Issuer}",
-                $"--Authentication:Schemes:Bearer:ValidAudiences:0={Audience}",
-                $"--Authentication:Schemes:Bearer:SigningKeys:0:Issuer={Issuer}",
-                $"--Authentication:Schemes:Bearer:SigningKeys:0:Value={Convert.ToBase64String(SigningKey.Key)}",
-            ]
-        );
+        var builder = AppHost.CreateBuilder([
+            "--environment",
+            environment,
+            $"--ConnectionStrings:app={connectionString}",
+            $"--ConnectionStrings:broker={_broker.GetConnectionString()}",
+            $"--Authentication:Schemes:Bearer:ValidIssuer={Issuer}",
+            $"--Authentication:Schemes:Bearer:ValidAudiences:0={Audience}",
+            $"--Authentication:Schemes:Bearer:SigningKeys:0:Issuer={Issuer}",
+            $"--Authentication:Schemes:Bearer:SigningKeys:0:Value={Convert.ToBase64String(SigningKey.Key)}",
+        ]);
         builder.WebHost.UseTestServer();
         return AppHost.Build(builder);
     }
@@ -174,12 +204,22 @@ public sealed class App : HostFixture, IAsyncLifetime
                 {
                     Issuer = Issuer,
                     Audience = Audience,
-                    Claims = new Dictionary<string, object> { ["sub"] = person, ["tenant"] = Tenant },
+                    Claims = new Dictionary<string, object>
+                    {
+                        ["sub"] = person,
+                        ["tenant"] = Tenant,
+                    },
                     Expires = DateTime.UtcNow.AddMinutes(5),
-                    SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha256),
+                    SigningCredentials = new SigningCredentials(
+                        SigningKey,
+                        SecurityAlgorithms.HmacSha256
+                    ),
                 }
             );
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                token
+            );
         }
 
         return client;
@@ -188,7 +228,10 @@ public sealed class App : HostFixture, IAsyncLifetime
     /// <summary>The rows <c>rabbitmqctl</c> lists of <paramref name="items"/> on the broker, each with <paramref name="columns"/>.</summary>
     public async Task<JsonElement[]> BrokerListAsync(string items, params string[] columns)
     {
-        var listed = await _broker.ExecAsync(["rabbitmqctl", "--quiet", items, .. columns, "--formatter", "json"], TestContext.Current.CancellationToken);
+        var listed = await _broker.ExecAsync(
+            ["rabbitmqctl", "--quiet", items, .. columns, "--formatter", "json"],
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(0, listed.ExitCode);
         return JsonSerializer.Deserialize<JsonElement[]>(listed.Stdout)!;
     }

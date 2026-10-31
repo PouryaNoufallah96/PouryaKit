@@ -17,7 +17,8 @@ internal static class SagaStepStatements
     // Wolverine's own delete, which matches the identity alone. A concurrent step's change or delete holds the row until
     // its transaction ends: committed, the version no longer matches or no row is left, and nothing is deleted; rolled
     // back, the row is deleted.
-    public static string Complete(string table) => $"delete from {table} where id = {{0}} and version = {{1}}";
+    public static string Complete(string table) =>
+        $"delete from {table} where id = {{0}} and version = {{1}}";
 
     // Creates the claims table in the store's schema {0}, a quoted identifier, under the advisory lock {1} Wolverine takes
     // to migrate the store, held to the transaction's end, so instances that start at once create it once. Claims are

@@ -14,7 +14,10 @@ public class ErrorTests
 
     [Theory]
     [MemberData(nameof(Factories))]
-    public void Each_error_carries_its_semantic_kind(Func<string, string, Error> create, ErrorKind kind)
+    public void Each_error_carries_its_semantic_kind(
+        Func<string, string, Error> create,
+        ErrorKind kind
+    )
     {
         var error = create("Product.Code", "A message.");
 
@@ -27,10 +30,17 @@ public class ErrorTests
     [Fact]
     public void A_validation_error_can_name_its_target_and_differs_from_one_without()
     {
-        var withTarget = Error.Validation("Product.NameRequired", "A product needs a name.", "Name");
+        var withTarget = Error.Validation(
+            "Product.NameRequired",
+            "A product needs a name.",
+            "Name"
+        );
 
         Assert.Equal("Name", withTarget.Target);
-        Assert.NotEqual(Error.Validation("Product.NameRequired", "A product needs a name."), withTarget);
+        Assert.NotEqual(
+            Error.Validation("Product.NameRequired", "A product needs a name."),
+            withTarget
+        );
     }
 
     [Fact]

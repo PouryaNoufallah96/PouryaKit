@@ -24,8 +24,7 @@ internal sealed class SagaStepStorage<TId, TSaga>(
     string table,
     SagaStep step,
     bool alreadyApplied
-) : ISagaStorage<TId, TSaga>,
-        ISagaStepStorage
+) : ISagaStorage<TId, TSaga>, ISagaStepStorage
     where TSaga : Saga
 {
     private bool _startsSaga;
@@ -41,7 +40,10 @@ internal sealed class SagaStepStorage<TId, TSaga>(
     public async Task<TSaga?> LoadAsync(TId id, CancellationToken cancellationToken)
     {
         var saga = await inner.LoadAsync(id, cancellationToken);
-        return saga is not null || _startsSaga || step.Delivery.Envelope!.Message is not ISagaInput input
+        return
+            saga is not null
+            || _startsSaga
+            || step.Delivery.Envelope!.Message is not ISagaInput input
             ? saga
             : throw new SagaInputRefusedException(
                 step.Saga.Name,
@@ -79,12 +81,21 @@ internal sealed class SagaStepStorage<TId, TSaga>(
     {
         var saga = (PouryaKitSaga)(Saga)state;
         await using var delete = new NpgsqlCommand(
-            string.Format(CultureInfo.InvariantCulture, SagaStepStatements.Complete(table), "$1", "$2"),
+            string.Format(
+                CultureInfo.InvariantCulture,
+                SagaStepStatements.Complete(table),
+                "$1",
+                "$2"
+            ),
             transaction.Connection,
             transaction
         )
         {
-            Parameters = { new() { Value = saga.Id }, new() { Value = saga.Version } },
+            Parameters =
+            {
+                new() { Value = saga.Id },
+                new() { Value = saga.Version },
+            },
         };
         if (await delete.ExecuteNonQueryAsync(cancellationToken) != 1)
         {
@@ -98,7 +109,13 @@ internal sealed class SagaStepStorage<TId, TSaga>(
     // Kit's headers, so the step fails and its transaction rolls back.
     public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
-        if (step.Delivery.Outstanding.FirstOrDefault(envelope => envelope.Message is not TimeoutMessage && !envelope.Headers.ContainsKey(IntegrationEventHeaders.DomainEventId)) is { } returned)
+        if (
+            step.Delivery.Outstanding.FirstOrDefault(envelope =>
+                envelope.Message is not TimeoutMessage
+                && !envelope.Headers.ContainsKey(IntegrationEventHeaders.DomainEventId)
+            ) is
+            { } returned
+        )
         {
             throw new InvalidOperationException(
                 $"A step of the Saga {step.Saga.Name} returned {returned.Message!.GetType().FullName}, which Wolverine would send without the Kit's headers. A step returns only its saga and its timeouts; it emits an Integration Event with PublishAsync."
@@ -120,12 +137,19 @@ internal sealed class SagaStepStorage<TId, TSaga>(
         }
 
         Dictionary<string, int> ordinals = [];
-        foreach (var scheduled in step.Delivery.Outstanding.Where(envelope => envelope.Message is TimeoutMessage))
+        foreach (
+            var scheduled in step.Delivery.Outstanding.Where(envelope =>
+                envelope.Message is TimeoutMessage
+            )
+        )
         {
             var wireName = scheduled.Message!.GetType().ToMessageTypeName();
             var ordinal = ordinals.GetValueOrDefault(wireName);
             ordinals[wireName] = ordinal + 1;
-            state.Timeouts.TryAdd(scheduled.Id, SagaStorage.TimeoutId(scheduling.StepId, wireName, ordinal));
+            state.Timeouts.TryAdd(
+                scheduled.Id,
+                SagaStorage.TimeoutId(scheduling.StepId, wireName, ordinal)
+            );
         }
     }
 }

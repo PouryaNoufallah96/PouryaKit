@@ -17,7 +17,14 @@ internal sealed class PostEntryEndpoint : IEndpoint
                 OperationContext context,
                 IGatewayProcessor<LedgerModule> ledger,
                 CancellationToken cancellationToken
-            ) => (await ledger.SendAsync(new PostEntryCommand(accountId, body.Amount), context, cancellationToken)).ToHttpResult()
+            ) =>
+                (
+                    await ledger.SendAsync(
+                        new PostEntryCommand(accountId, body.Amount),
+                        context,
+                        cancellationToken
+                    )
+                ).ToHttpResult()
         );
 }
 

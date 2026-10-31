@@ -30,7 +30,12 @@ internal sealed class ComposedFeatures
 
     public static ComposedFeatures In(IServiceCollection services)
     {
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(ComposedFeatures)) is { } existing)
+        if (
+            services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(ComposedFeatures)
+            ) is
+            { } existing
+        )
         {
             return (ComposedFeatures)existing.ImplementationInstance!;
         }
@@ -77,7 +82,10 @@ internal sealed class ComposedFeatures
     // A null module is the application's own services.
     public void Add(Type? module, IEnumerable<Assembly> assemblies)
     {
-        var recorded = module is null ? Application : ModuleAssemblies.TryGetValue(module, out var known) ? known : ModuleAssemblies[module] = [];
+        var recorded =
+            module is null ? Application
+            : ModuleAssemblies.TryGetValue(module, out var known) ? known
+            : ModuleAssemblies[module] = [];
         foreach (var assembly in assemblies)
         {
             if (!recorded.Contains(assembly))

@@ -7,5 +7,6 @@ public static class AppHostOptions
     /// Headless: no dashboard, a tracing and logging UI the Kit does not use. A developer who wants it locally sets
     /// <c>DisableDashboard</c> to false in their copy.
     /// </summary>
-    public static DistributedApplicationOptions Create(string[] args) => new() { Args = args, DisableDashboard = true };
+    public static DistributedApplicationOptions Create(string[] args) =>
+        new() { Args = args, DisableDashboard = true };
 }

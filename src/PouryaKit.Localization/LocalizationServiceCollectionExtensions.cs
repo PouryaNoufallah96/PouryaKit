@@ -37,9 +37,14 @@ public static class LocalizationServiceCollectionExtensions
             IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
             services.AddLocalization();
             services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IConfigureOptions<RequestLocalizationOptions>, HeaderRequestCulture>()
+                ServiceDescriptor.Singleton<
+                    IConfigureOptions<RequestLocalizationOptions>,
+                    HeaderRequestCulture
+                >()
             );
-            services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, HeaderRequestCulture>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Transient<IStartupFilter, HeaderRequestCulture>()
+            );
             return services;
         }
     }

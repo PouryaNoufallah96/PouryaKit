@@ -44,7 +44,10 @@ public static class IdempotencyTable
                     command = table.Column<string>(type: "text", nullable: false),
                     request_id = table.Column<string>(type: "text", nullable: false),
                     response = table.Column<string>(type: "text", nullable: true),
-                    reserved_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    reserved_at = table.Column<DateTimeOffset>(
+                        type: "timestamp with time zone",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                     table.PrimaryKey(
@@ -59,11 +62,17 @@ public static class IdempotencyTable
                         }
                     )
             );
-            migrationBuilder.CreateIndex(name: $"ix_{Name}_reserved_at", schema: schema, table: Name, column: "reserved_at");
+            migrationBuilder.CreateIndex(
+                name: $"ix_{Name}_reserved_at",
+                schema: schema,
+                table: Name,
+                column: "reserved_at"
+            );
         }
 
         /// <summary>Drops the idempotency key table from <paramref name="schema"/>, the Module's own.</summary>
-        public void DropIdempotencyTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
+        public void DropIdempotencyTable(string schema) =>
+            migrationBuilder.DropTable(name: Name, schema: schema);
     }
 
     // The table in the DbContext's Module schema. The name comes from the model, never from input.

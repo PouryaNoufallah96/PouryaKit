@@ -41,7 +41,10 @@ internal sealed class SagaStep(SagaDeclaration saga, MessageContext delivery, Sa
             );
         }
 
-        if (!subscriptions.Publications.TryGetValue(type, out var publication) || publication.Module != Saga.Module)
+        if (
+            !subscriptions.Publications.TryGetValue(type, out var publication)
+            || publication.Module != Saga.Module
+        )
         {
             throw new InvalidOperationException(
                 $"The Saga {Saga.Name} emitted {type.FullName}, which {Saga.Module?.Name ?? "the application"} does not declare that it publishes. Declare it, with its wire name, in the Composition Root with Publish<{type.Name}>(wireName)."
@@ -58,9 +61,10 @@ internal sealed class SagaStep(SagaDeclaration saga, MessageContext delivery, Sa
 
         var step = Input!.Value;
         // A step that starts the saga runs before the Kit stores it, so its tenant and correlation are its input's.
-        var (tenant, correlation) = state.Tenant is null && Delivery.Envelope!.Message is ISagaInput starting
-            ? (starting.Tenant, starting.Correlation)
-            : (state.Tenant, state.Correlation);
+        var (tenant, correlation) =
+            state.Tenant is null && Delivery.Envelope!.Message is ISagaInput starting
+                ? (starting.Tenant, starting.Correlation)
+                : (state.Tenant, state.Correlation);
         // The step continues its input's trace: Wolverine writes the current activity as the parent, else the Kit writes the
         // input's own parent; the trace state is the input's, which Wolverine's spans do not carry.
         var envelope = Delivery.Envelope!;
@@ -69,8 +73,10 @@ internal sealed class SagaStep(SagaDeclaration saga, MessageContext delivery, Sa
             integrationEvent,
             (Actor.System(Saga.SystemActor), tenant, correlation, step.StepId),
             SagaStorage.EmissionId(step.StepId, publication.WireName),
-            Activity.Current?.TraceStateString ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceState),
-            envelope.ParentId ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent)
+            Activity.Current?.TraceStateString
+                ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceState),
+            envelope.ParentId
+                ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent)
         );
     }
 }

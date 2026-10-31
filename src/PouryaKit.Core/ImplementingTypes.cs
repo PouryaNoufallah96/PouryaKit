@@ -37,7 +37,9 @@ public static class ImplementingTypes
             .. assemblies
                 .Distinct()
                 .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false })
+                .Where(type =>
+                    type is { IsClass: true, IsAbstract: false, IsGenericTypeDefinition: false }
+                )
                 .Where(type => Describes(contract, type))
                 .OrderBy(type => type.FullName, StringComparer.Ordinal),
         ];
@@ -63,7 +65,10 @@ public static class ImplementingTypes
     /// </remarks>
     /// <exception cref="ArgumentException"><paramref name="contract"/> is a generic parameter, or a generic type that is
     /// neither closed nor a generic definition.</exception>
-    public static IReadOnlyList<Type> Candidates(Type contract, params IEnumerable<Assembly> assemblies)
+    public static IReadOnlyList<Type> Candidates(
+        Type contract,
+        params IEnumerable<Assembly> assemblies
+    )
     {
         ThrowIfNotAContract(contract, assemblies);
         return
@@ -81,9 +86,15 @@ public static class ImplementingTypes
     {
         ArgumentNullException.ThrowIfNull(contract);
         ArgumentNullException.ThrowIfNull(assemblies);
-        if (contract.IsGenericParameter || (contract.ContainsGenericParameters && !contract.IsGenericTypeDefinition))
+        if (
+            contract.IsGenericParameter
+            || (contract.ContainsGenericParameters && !contract.IsGenericTypeDefinition)
+        )
         {
-            throw new ArgumentException($"{contract} is neither a closed type nor a generic definition.", nameof(contract));
+            throw new ArgumentException(
+                $"{contract} is neither a closed type nor a generic definition.",
+                nameof(contract)
+            );
         }
     }
 
@@ -92,8 +103,15 @@ public static class ImplementingTypes
 
     private static bool Closes(Type type, Type definition) =>
         definition.IsInterface
-            ? type.GetInterfaces().Any(implemented => implemented.IsGenericType && implemented.GetGenericTypeDefinition() == definition)
-            : BaseTypes(type).Any(baseType => baseType.IsGenericType && baseType.GetGenericTypeDefinition() == definition);
+            ? type.GetInterfaces()
+                .Any(implemented =>
+                    implemented.IsGenericType
+                    && implemented.GetGenericTypeDefinition() == definition
+                )
+            : BaseTypes(type)
+                .Any(baseType =>
+                    baseType.IsGenericType && baseType.GetGenericTypeDefinition() == definition
+                );
 
     private static IEnumerable<Type> BaseTypes(Type type)
     {

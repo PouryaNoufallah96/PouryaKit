@@ -8,7 +8,10 @@ namespace PouryaKit.Messaging.Wolverine;
 /// rollback-only, so the delivery is retried as if it had thrown, then set aside as a dead letter. Nothing the attempt
 /// changed was committed. Its message names each Error, so a dead letter tells why.
 /// </summary>
-public sealed class DelayedCommandFailedException(string delayedCommand, ImmutableArray<Error> errors)
+public sealed class DelayedCommandFailedException(
+    string delayedCommand,
+    ImmutableArray<Error> errors
+)
     : Exception(
         $"The delayed command {delayedCommand} failed with {string.Join(", ", errors.Select(error => $"{error.Code} ({error.Message})"))}; the delivery is retried, then set aside as a dead letter."
     )

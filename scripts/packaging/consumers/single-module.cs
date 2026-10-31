@@ -16,6 +16,7 @@ builder.Services.AddPouryaKitCqrs(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitValidation(typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitDapper("app", typeof(NotesDbContext).Assembly);
 builder.Services.AddPouryaKitWeb();
+
 // The packed Cqrs's Host entry: the validated container and the composition checks, run when the Host is built.
 builder.AddPouryaKitCompositionChecks();
 
@@ -23,9 +24,11 @@ using var app = builder.Build();
 await using var scope = app.Services.CreateAsyncScope();
 scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("package-consumer")));
 _ = scope.ServiceProvider.GetRequiredService<IDispatcher>();
+
 // The packed Domain's one JSON representation: a typed ID written as its bare value.
 _ = JsonSerializer.Serialize(TypedId.New<NoteId>(), new JsonSerializerOptions().UsePouryaKitJson());
 
-internal sealed class NotesDbContext(DbContextOptions<NotesDbContext> options) : PouryaKitDbContext(options);
+internal sealed class NotesDbContext(DbContextOptions<NotesDbContext> options)
+    : PouryaKitDbContext(options);
 
 internal sealed record NoteId(Guid Value) : TypedId<Guid>(Value);

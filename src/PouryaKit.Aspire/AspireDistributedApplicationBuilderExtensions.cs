@@ -26,29 +26,48 @@ public static class AspireDistributedApplicationBuilderExtensions
         /// Adds the PostgreSQL server named <paramref name="name"/>, on the pinned image with its data in a named volume; a
         /// Host's database is one <c>AddDatabase</c> of it, referenced under the Host's connection name.
         /// </summary>
-        public IResourceBuilder<PostgresServerResource> AddPouryaKitPostgres([ResourceName] string name) =>
-            builder.AddPostgres(name).WithImageRegistry(Registry).WithImage("library/postgres", PostgresTag).WithDataVolume();
+        public IResourceBuilder<PostgresServerResource> AddPouryaKitPostgres(
+            [ResourceName] string name
+        ) =>
+            builder
+                .AddPostgres(name)
+                .WithImageRegistry(Registry)
+                .WithImage("library/postgres", PostgresTag)
+                .WithDataVolume();
 
         /// <summary>
         /// Adds the Redis server named <paramref name="name"/>, on the pinned image with its data in a named volume: the
         /// distributed cache behind HybridCache, for a Host that registers one.
         /// </summary>
         public IResourceBuilder<RedisResource> AddPouryaKitRedis([ResourceName] string name) =>
-            builder.AddRedis(name).WithImageRegistry(Registry).WithImage("library/redis", RedisTag).WithDataVolume();
+            builder
+                .AddRedis(name)
+                .WithImageRegistry(Registry)
+                .WithImage("library/redis", RedisTag)
+                .WithDataVolume();
 
         /// <summary>
         /// Adds the RabbitMQ broker named <paramref name="name"/>, on the pinned image with its data in a named volume, for a
         /// Host that sends or receives Integration Events and Snapshots over RabbitMQ.
         /// </summary>
-        public IResourceBuilder<RabbitMQServerResource> AddPouryaKitRabbitMq([ResourceName] string name) =>
-            builder.AddRabbitMQ(name).WithImageRegistry(Registry).WithImage("library/rabbitmq", RabbitMqTag).WithDataVolume();
+        public IResourceBuilder<RabbitMQServerResource> AddPouryaKitRabbitMq(
+            [ResourceName] string name
+        ) =>
+            builder
+                .AddRabbitMQ(name)
+                .WithImageRegistry(Registry)
+                .WithImage("library/rabbitmq", RabbitMqTag)
+                .WithDataVolume();
 
         /// <summary>
         /// Adds the Ollama server named <paramref name="name"/>, on the pinned image with its models in a named volume, healthy
         /// once it serves <paramref name="model"/>, which it pulls into the volume when it first starts; for a Host whose agent
         /// runs locally, given the endpoint as <c>PouryaKit:AI:Endpoint</c> with <c>/v1</c>, its OpenAI-compatible API.
         /// </summary>
-        public IResourceBuilder<ContainerResource> AddPouryaKitOllama([ResourceName] string name, string model)
+        public IResourceBuilder<ContainerResource> AddPouryaKitOllama(
+            [ResourceName] string name,
+            string model
+        )
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(model);
             var ollama = builder

@@ -13,7 +13,8 @@ internal sealed class StoredDeliveries(
 )
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(25);
-    private readonly string _quotedSchema = $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
+    private readonly string _quotedSchema =
+        $"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
 
     /// <summary>The tables the message store creates for itself, as it names them.</summary>
     public IReadOnlyList<(string Schema, string Name)> StoreTables => storeTables;
@@ -28,7 +29,9 @@ internal sealed class StoredDeliveries(
             ).Select(row => (Guid)row[0]),
         ];
 
-    public async Task<List<(Guid Id, Delivery Delivery)>> AllAsync(CancellationToken cancellationToken) =>
+    public async Task<List<(Guid Id, Delivery Delivery)>> AllAsync(
+        CancellationToken cancellationToken
+    ) =>
         [
             .. (
                 await RowsAsync(
@@ -40,7 +43,12 @@ internal sealed class StoredDeliveries(
                     """,
                     cancellationToken
                 )
-            ).Select(row => ((Guid)row[0], new Delivery(SubscriptionAt((string)row[1]), (string)row[2], (bool)row[3]))),
+            ).Select(row =>
+                (
+                    (Guid)row[0],
+                    new Delivery(SubscriptionAt((string)row[1]), (string)row[2], (bool)row[3])
+                )
+            ),
         ];
 
     /// <summary>
@@ -103,12 +111,13 @@ internal sealed class StoredDeliveries(
     }
 
     private async Task<long> PendingAsync(CancellationToken cancellationToken) =>
-        (long)(
-            await RowsAsync(
-                $"select (select count(*) from {_quotedSchema}.wolverine_incoming_envelopes where status <> 'Handled' and not (status = 'Scheduled' and attempts = 0 and execution_time > now())) + (select count(*) from {_quotedSchema}.wolverine_outgoing_envelopes) + (select count(*) from {_quotedSchema}.wolverine_dead_letters where replayable)",
-                cancellationToken
-            )
-        )[0][0];
+        (long)
+            (
+                await RowsAsync(
+                    $"select (select count(*) from {_quotedSchema}.wolverine_incoming_envelopes where status <> 'Handled' and not (status = 'Scheduled' and attempts = 0 and execution_time > now())) + (select count(*) from {_quotedSchema}.wolverine_outgoing_envelopes) + (select count(*) from {_quotedSchema}.wolverine_dead_letters where replayable)",
+                    cancellationToken
+                )
+            )[0][0];
 
     private async Task<List<object[]>> RowsAsync(string sql, CancellationToken cancellationToken)
     {

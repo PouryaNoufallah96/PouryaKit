@@ -8,4 +8,12 @@ System.Type[] types = [typeof(OperationTelemetry)];
 // becomes the observing one, under the source a Host's exporter listens to.
 var services = new ServiceCollection().AddPouryaKitCqrs().AddPouryaKitObservability();
 var dispatcher = services.Single(descriptor => descriptor.ServiceType == typeof(IDispatcher));
-Console.WriteLine(types.Length + (dispatcher.ImplementationFactory is not null && OperationTelemetry.SourceName == "PouryaKit" ? 1 : 0));
+Console.WriteLine(
+    types.Length
+        + (
+            dispatcher.ImplementationFactory is not null
+            && OperationTelemetry.SourceName == "PouryaKit"
+                ? 1
+                : 0
+        )
+);

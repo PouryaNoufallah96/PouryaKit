@@ -30,7 +30,9 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// Outbox writes the Notifications (<see cref="IOutbox"/>), and fails to start unless every
         /// subscription's queue, as Wolverine built it, is a durable application queue.
         /// </summary>
-        public IServiceCollection AddPouryaKitNotificationHandlers(params Assembly[] featureAssemblies) =>
+        public IServiceCollection AddPouryaKitNotificationHandlers(
+            params Assembly[] featureAssemblies
+        ) =>
             DeclareNotificationHandlers(
                 services,
                 IModuleServices.FeatureAssembliesOf(services, featureAssemblies),
@@ -43,11 +45,22 @@ public static class NotificationHandlerServiceCollectionExtensions
         /// those in <paramref name="featureAssemblies"/>, or in the assembly of the Module's definition when it names
         /// none. Throws, besides, when called on the builder of another Module.
         /// </summary>
-        public IServiceCollection AddPouryaKitNotificationHandlers(Type module, params Assembly[] featureAssemblies) =>
-            DeclareNotificationHandlers(services, IModuleServices.FeatureAssembliesOf(services, featureAssemblies, module), module);
+        public IServiceCollection AddPouryaKitNotificationHandlers(
+            Type module,
+            params Assembly[] featureAssemblies
+        ) =>
+            DeclareNotificationHandlers(
+                services,
+                IModuleServices.FeatureAssembliesOf(services, featureAssemblies, module),
+                module
+            );
     }
 
-    private static IServiceCollection DeclareNotificationHandlers(IServiceCollection services, Assembly[] assemblies, Type? module)
+    private static IServiceCollection DeclareNotificationHandlers(
+        IServiceCollection services,
+        Assembly[] assemblies,
+        Type? module
+    )
     {
         List<string> problems = [];
         List<Subscription> subscriptions = [];
@@ -60,10 +73,18 @@ public static class NotificationHandlerServiceCollectionExtensions
         foreach (var type in candidates)
         {
             var handled = type.GetInterfaces()
-                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(INotificationHandler<>))
+                .Where(i =>
+                    i.IsGenericType
+                    && i.GetGenericTypeDefinition() == typeof(INotificationHandler<>)
+                )
                 .Select(i => i.GenericTypeArguments[0])
                 .ToList();
-            if (type.IsGenericTypeDefinition || handled.Count > 1 || handled[0].IsAbstract || handled[0].IsGenericType)
+            if (
+                type.IsGenericTypeDefinition
+                || handled.Count > 1
+                || handled[0].IsAbstract
+                || handled[0].IsGenericType
+            )
             {
                 problems.Add(
                     $"{type.FullName} is a Notification Handler of {string.Join(", ", handled.Select(e => e.Name))}; a Notification Handler is a non-generic class that handles one concrete, non-generic Domain Event type."
@@ -72,7 +93,12 @@ public static class NotificationHandlerServiceCollectionExtensions
             }
 
             subscriptions.Add(
-                Subscription.OfNotificationHandler(MessageNames.SubscriptionNameOf(type, handled[0]), handled[0], type, module)
+                Subscription.OfNotificationHandler(
+                    MessageNames.SubscriptionNameOf(type, handled[0]),
+                    handled[0],
+                    type,
+                    module
+                )
             );
         }
 
@@ -92,7 +118,9 @@ public static class NotificationHandlerServiceCollectionExtensions
         }
 
         DurableQueuesCheck.AddTo(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>()
+        );
         return services;
     }
 }

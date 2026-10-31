@@ -24,7 +24,8 @@ public static class ResultGrpcExtensions
     /// <summary>The binary trailer that carries a failed Result's Errors as a JSON array of code, message and target.</summary>
     public const string ErrorsTrailer = "pouryakit-errors-bin";
 
-    private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
+    private static readonly JsonSerializerOptions Json =
+        new JsonSerializerOptions().UsePouryaKitJson();
 
     extension(Result result)
     {
@@ -62,7 +63,13 @@ public static class ResultGrpcExtensions
             new Status(StatusOf(deciding.Kind), deciding.Message),
             new Metadata
             {
-                { ErrorsTrailer, JsonSerializer.SerializeToUtf8Bytes(errors.Select(ResultHttpExtensions.ProblemError.Of).ToList(), Json) },
+                {
+                    ErrorsTrailer,
+                    JsonSerializer.SerializeToUtf8Bytes(
+                        errors.Select(ResultHttpExtensions.ProblemError.Of).ToList(),
+                        Json
+                    )
+                },
             }
         );
     }

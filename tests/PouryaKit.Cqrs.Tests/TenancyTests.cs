@@ -17,12 +17,19 @@ public sealed class TenancyTests
             .AddScoped<OperationTrace>()
             .AddScoped<IUnitOfWork, UnitOfWorkStandIn>()
             .AddScoped(typeof(ILogger<>), typeof(TraceLogger<>))
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+            .BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }
+            );
         using var scope = host.CreateScope();
 
-        var result = await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new ArchiveThingCommand(), TestContext.Current.CancellationToken);
+        var result = await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(new ArchiveThingCommand(), TestContext.Current.CancellationToken);
 
         Assert.Equal(TenantErrors.Required.Code, Assert.Single(result.Errors).Code);
-        Assert.DoesNotContain("handle ArchiveThingCommand", scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps);
+        Assert.DoesNotContain(
+            "handle ArchiveThingCommand",
+            scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps
+        );
     }
 }

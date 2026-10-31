@@ -19,7 +19,9 @@ public sealed class TrustedRestoreTests
     {
         Assert.Equal(
             Opened,
-            Cqrs.GetCustomAttributes<InternalsVisibleToAttribute>().Select(opened => opened.AssemblyName).Order(StringComparer.Ordinal)
+            Cqrs.GetCustomAttributes<InternalsVisibleToAttribute>()
+                .Select(opened => opened.AssemblyName)
+                .Order(StringComparer.Ordinal)
         );
     }
 
@@ -31,7 +33,11 @@ public sealed class TrustedRestoreTests
             where Opened.Contains(package.GetName().Name)
             from call in Il.CallsIn(package)
             where call.Callee.DeclaringType?.Assembly == Cqrs && IsInternal(call.Callee)
-            select (Package: package.GetName().Name, Callee: $"{call.Callee.DeclaringType!.Name}.{call.Callee.Name}", call.Owner)
+            select (
+                Package: package.GetName().Name,
+                Callee: $"{call.Callee.DeclaringType!.Name}.{call.Callee.Name}",
+                call.Owner
+            )
         ).ToList();
 
         Assert.Empty(

@@ -21,9 +21,19 @@ namespace PouryaKit.Persistence.EFCore;
 public sealed class PageExpressions<TAggregate>
     where TAggregate : class
 {
-    private readonly ImmutableDictionary<string, Func<IQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>> _orderBy;
-    private readonly Func<IOrderedQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>? _thenBy;
-    private readonly ImmutableDictionary<(string, FilterOperator), Func<object, Expression<Func<TAggregate, bool>>>> _filters;
+    private readonly ImmutableDictionary<
+        string,
+        Func<IQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>
+    > _orderBy;
+    private readonly Func<
+        IOrderedQueryable<TAggregate>,
+        bool,
+        IOrderedQueryable<TAggregate>
+    >? _thenBy;
+    private readonly ImmutableDictionary<
+        (string, FilterOperator),
+        Func<object, Expression<Func<TAggregate, bool>>>
+    > _filters;
 
     /// <summary>
     /// The expressions of a Page read <paramref name="declaration"/> allows, with no sort key or filter mapped yet.
@@ -38,9 +48,15 @@ public sealed class PageExpressions<TAggregate>
 
     private PageExpressions(
         PageExpressions<TAggregate> from,
-        ImmutableDictionary<string, Func<IQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>> orderBy,
+        ImmutableDictionary<
+            string,
+            Func<IQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>
+        > orderBy,
         Func<IOrderedQueryable<TAggregate>, bool, IOrderedQueryable<TAggregate>>? thenBy,
-        ImmutableDictionary<(string, FilterOperator), Func<object, Expression<Func<TAggregate, bool>>>> filters
+        ImmutableDictionary<
+            (string, FilterOperator),
+            Func<object, Expression<Func<TAggregate, bool>>>
+        > filters
     )
     {
         Declaration = from.Declaration;
@@ -53,22 +69,32 @@ public sealed class PageExpressions<TAggregate>
     public PageDeclaration Declaration { get; }
 
     /// <summary>A copy that orders by <paramref name="key"/> when the request sorts by <paramref name="sortKey"/>.</summary>
-    public PageExpressions<TAggregate> OrderBy<TKey>(string sortKey, Expression<Func<TAggregate, TKey>> key)
+    public PageExpressions<TAggregate> OrderBy<TKey>(
+        string sortKey,
+        Expression<Func<TAggregate, TKey>> key
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sortKey);
         ArgumentNullException.ThrowIfNull(key);
         if (!Declaration.Sorts.Contains(sortKey, StringComparer.Ordinal))
         {
-            throw new ArgumentException($"{sortKey} is not a sort key the declaration declares.", nameof(sortKey));
+            throw new ArgumentException(
+                $"{sortKey} is not a sort key the declaration declares.",
+                nameof(sortKey)
+            );
         }
 
         return _orderBy.ContainsKey(sortKey)
-            ? throw new ArgumentException($"The sort key {sortKey} is already mapped.", nameof(sortKey))
+            ? throw new ArgumentException(
+                $"The sort key {sortKey} is already mapped.",
+                nameof(sortKey)
+            )
             : new PageExpressions<TAggregate>(
                 this,
                 _orderBy.Add(
                     sortKey,
-                    (query, descending) => descending ? query.OrderByDescending(key) : query.OrderBy(key)
+                    (query, descending) =>
+                        descending ? query.OrderByDescending(key) : query.OrderBy(key)
                 ),
                 _thenBy,
                 _filters
@@ -107,16 +133,25 @@ public sealed class PageExpressions<TAggregate>
         var declared = Declaration.Filters.FirstOrDefault(filter => filter.Name == field);
         if (declared is null || !declared.Operators.Contains(filterOperator))
         {
-            throw new ArgumentException($"The declaration does not declare {field} with {filterOperator.Name}.", nameof(field));
+            throw new ArgumentException(
+                $"The declaration does not declare {field} with {filterOperator.Name}.",
+                nameof(field)
+            );
         }
 
         if (declared.ValueType != typeof(TValue))
         {
-            throw new ArgumentException($"The filter field {field} takes {declared.ValueType.Name} values, not {typeof(TValue).Name}.", nameof(predicate));
+            throw new ArgumentException(
+                $"The filter field {field} takes {declared.ValueType.Name} values, not {typeof(TValue).Name}.",
+                nameof(predicate)
+            );
         }
 
         return _filters.ContainsKey((field, filterOperator))
-            ? throw new ArgumentException($"The filter {field} {filterOperator.Name} is already mapped.", nameof(field))
+            ? throw new ArgumentException(
+                $"The filter {field} {filterOperator.Name} is already mapped.",
+                nameof(field)
+            )
             : new PageExpressions<TAggregate>(
                 this,
                 _orderBy,
@@ -137,8 +172,14 @@ public sealed class PageExpressions<TAggregate>
             );
         }
 
-        var filters = Declaration.Filters.SelectMany(field => field.Operators.Select(op => (field.Name, op))).ToList();
-        if (_thenBy is null || _orderBy.Count != Declaration.Sorts.Count || _filters.Count != filters.Count)
+        var filters = Declaration
+            .Filters.SelectMany(field => field.Operators.Select(op => (field.Name, op)))
+            .ToList();
+        if (
+            _thenBy is null
+            || _orderBy.Count != Declaration.Sorts.Count
+            || _filters.Count != filters.Count
+        )
         {
             throw new InvalidOperationException(
                 "The Page expressions miss part of their declaration: map every declared sort key with OrderBy, every declared filter field and operator with Filter, and name a unique ThenBy key."
@@ -150,7 +191,9 @@ public sealed class PageExpressions<TAggregate>
     {
         foreach (var filter in request.Filters ?? [])
         {
-            query = query.Where(_filters[(filter.Field, filter.Operator)](Declaration.ValueOf(filter)));
+            query = query.Where(
+                _filters[(filter.Field, filter.Operator)](Declaration.ValueOf(filter))
+            );
         }
 
         return query;

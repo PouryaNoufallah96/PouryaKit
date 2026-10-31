@@ -27,8 +27,14 @@ public sealed class StrictWireReadingTests(BrokerFixture broker)
     private static readonly string HostQueue = $"rabbitmq://queue/{InventoryHost.ServiceName}";
 
     [Theory]
-    [InlineData("without the name", "JSON deserialization for type 'ModularMonolith.Tests.ShapeV1' was missing required properties including: 'name'.")]
-    [InlineData("with a null name", "The constructor parameter 'Name' on type 'ModularMonolith.Tests.ShapeV1' doesn't allow null values.")]
+    [InlineData(
+        "without the name",
+        "JSON deserialization for type 'ModularMonolith.Tests.ShapeV1' was missing required properties including: 'name'."
+    )]
+    [InlineData(
+        "with a null name",
+        "The constructor parameter 'Name' on type 'ModularMonolith.Tests.ShapeV1' doesn't allow null values."
+    )]
     public async Task A_body_without_a_member_its_contract_requires_or_with_null_for_one_is_dead_lettered_at_the_host_queue_with_the_error_and_never_handled(
         string body,
         string error
@@ -41,11 +47,19 @@ public sealed class StrictWireReadingTests(BrokerFixture broker)
         (Action<WebApplicationBuilder> Declare, Func<IHost, Task> Publish) publisher = body switch
         {
             "without the name" => (
-                builder => builder.Services.Publish<ShapeWithoutNameV1>(ShapeV1.WireName, typeof(CatalogModule)),
+                builder =>
+                    builder.Services.Publish<ShapeWithoutNameV1>(
+                        ShapeV1.WireName,
+                        typeof(CatalogModule)
+                    ),
                 catalog => PublishAsync(catalog, new ShapeWithoutNameV1(id, product), id)
             ),
             _ => (
-                builder => builder.Services.Publish<ShapeWithNullableNameV1>(ShapeV1.WireName, typeof(CatalogModule)),
+                builder =>
+                    builder.Services.Publish<ShapeWithNullableNameV1>(
+                        ShapeV1.WireName,
+                        typeof(CatalogModule)
+                    ),
                 catalog => PublishAsync(catalog, new ShapeWithNullableNameV1(id, product, null), id)
             ),
         };
@@ -65,7 +79,10 @@ public sealed class StrictWireReadingTests(BrokerFixture broker)
         await using var catalog = await environment.StartCatalogHostAsync(builder =>
             builder.Services.Publish<ShapeWithNameTwiceV1>(ShapeV1.WireName, typeof(CatalogModule))
         );
-        var sent = new ShapeWithNameTwiceV1(Guid.CreateVersion7(), Guid.CreateVersion7(), "Lamp") { Again = new() { ["Name"] = "Shade" } };
+        var sent = new ShapeWithNameTwiceV1(Guid.CreateVersion7(), Guid.CreateVersion7(), "Lamp")
+        {
+            Again = new() { ["Name"] = "Shade" },
+        };
 
         await PublishAsync(catalog, sent, sent.Id);
 
@@ -84,7 +101,12 @@ public sealed class StrictWireReadingTests(BrokerFixture broker)
         await using var catalog = await environment.StartCatalogHostAsync(builder =>
             builder.Services.Publish<ShapeWithColourV1>(ShapeV1.WireName, typeof(CatalogModule))
         );
-        var sent = new ShapeWithColourV1(Guid.CreateVersion7(), Guid.CreateVersion7(), "Lamp", "red");
+        var sent = new ShapeWithColourV1(
+            Guid.CreateVersion7(),
+            Guid.CreateVersion7(),
+            "Lamp",
+            "red"
+        );
 
         await PublishAsync(catalog, sent, sent.Id);
 
@@ -93,14 +115,25 @@ public sealed class StrictWireReadingTests(BrokerFixture broker)
             $"exists (select from inventory.pouryakit_receipts where subscription = '{Subscription}' and message_id = '{sent.Id}')",
             "Inventory.Host never applied the body with a member its contract lacks."
         );
-        Assert.Equal(new ShapeV1(sent.Id, sent.ProductId, "Lamp"), Assert.Single(ShapeIntegrationEventHandler.Received, received => received.Id == sent.Id));
-        Assert.Empty(await Sql.RowsAsync(environment.Inventory, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Equal(
+            new ShapeV1(sent.Id, sent.ProductId, "Lamp"),
+            Assert.Single(ShapeIntegrationEventHandler.Received, received => received.Id == sent.Id)
+        );
+        Assert.Empty(
+            await Sql.RowsAsync(
+                environment.Inventory,
+                "select id from wolverine.wolverine_dead_letters"
+            )
+        );
     }
 
     private static void ReceivesShapes(WebApplicationBuilder builder)
     {
         builder.Services.Receive<ShapeV1>(ShapeV1.WireName);
-        builder.Services.Subscribe<ShapeV1, ShapeIntegrationEventHandler>(Subscription, typeof(InventoryModule));
+        builder.Services.Subscribe<ShapeV1, ShapeIntegrationEventHandler>(
+            Subscription,
+            typeof(InventoryModule)
+        );
     }
 
     // Straight through Wolverine, with the headers the Kit's Outbox writes, as a publishing Module's would be.
@@ -108,25 +141,42 @@ public sealed class StrictWireReadingTests(BrokerFixture broker)
         where TContract : class
     {
         await using var scope = catalog.Services.CreateAsyncScope();
-        var options = new DeliveryOptions().WithOperationContext(new OperationContext(GatewayTestExtensions.TestActor));
+        var options = new DeliveryOptions().WithOperationContext(
+            new OperationContext(GatewayTestExtensions.TestActor)
+        );
         options.Headers[IntegrationEventHeaders.DomainEventId] = id.ToString();
-        await scope.ServiceProvider.GetRequiredService<IMessageBus>().PublishAsync(contract, options);
+        await scope
+            .ServiceProvider.GetRequiredService<IMessageBus>()
+            .PublishAsync(contract, options);
     }
 
-    private static async Task AssertDeadLetteredAsync(BrokerEnvironment environment, Guid id, string error)
+    private static async Task AssertDeadLetteredAsync(
+        BrokerEnvironment environment,
+        Guid id,
+        string error
+    )
     {
         await ArrivedAsync(environment);
 
         Assert.DoesNotContain(ShapeIntegrationEventHandler.Received, received => received.Id == id);
         var deadLetter = Assert.Single(
-            await Sql.RowsAsync(environment.Inventory, "select received_at, message_type, exception_type, exception_message from wolverine.wolverine_dead_letters")
+            await Sql.RowsAsync(
+                environment.Inventory,
+                "select received_at, message_type, exception_type, exception_message from wolverine.wolverine_dead_letters"
+            )
         );
-        Assert.Equal([HostQueue, ShapeV1.WireName, "System.Text.Json.JsonException"], deadLetter[..3]);
+        Assert.Equal(
+            [HostQueue, ShapeV1.WireName, "System.Text.Json.JsonException"],
+            deadLetter[..3]
+        );
         Assert.StartsWith(error, (string)deadLetter[3], StringComparison.Ordinal);
         // No subscription received a copy, whatever its handler would have done with it.
         Assert.Equal(
             0L,
-            await BrokerEnvironment.ScalarAsync<long>(environment.Inventory, $"select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Subscription}/'")
+            await BrokerEnvironment.ScalarAsync<long>(
+                environment.Inventory,
+                $"select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Subscription}/'"
+            )
         );
     }
 

@@ -38,19 +38,59 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("lighting, beyond the last page")]
     [InlineData("name contains")]
     [InlineData("name equals")]
-    public async Task Dapper_and_ef_core_read_the_same_page_of_the_filtered_sorted_selection_with_its_total(string @case)
+    public async Task Dapper_and_ef_core_read_the_same_page_of_the_filtered_sorted_selection_with_its_total(
+        string @case
+    )
     {
         var (lighting, _) = await SeedAsync();
         var (request, names, total) = @case switch
         {
-            "by created" => (new PageRequest { Sort = "created", Size = 5 }, Products.Select(product => product.Name).ToArray(), 5),
-            "by name, second page" => (new PageRequest { Sort = "name", Number = 2, Size = 2 }, ["Floor lamp", "Lamp shade"], 5),
-            "by name descending" => (new PageRequest { Sort = "name", Direction = SortDirection.Descending, Size = 2 }, ["Oak desk", "Lamp shade"], 5),
-            "lighting, newest first" => (Lighting(lighting, number: 1), ["Lamp shade", "Floor lamp"], 3),
-            "lighting, newest first, last page" => (Lighting(lighting, number: 2), ["Desk lamp"], 3),
+            "by created" => (
+                new PageRequest { Sort = "created", Size = 5 },
+                Products.Select(product => product.Name).ToArray(),
+                5
+            ),
+            "by name, second page" => (
+                new PageRequest
+                {
+                    Sort = "name",
+                    Number = 2,
+                    Size = 2,
+                },
+                ["Floor lamp", "Lamp shade"],
+                5
+            ),
+            "by name descending" => (
+                new PageRequest
+                {
+                    Sort = "name",
+                    Direction = SortDirection.Descending,
+                    Size = 2,
+                },
+                ["Oak desk", "Lamp shade"],
+                5
+            ),
+            "lighting, newest first" => (
+                Lighting(lighting, number: 1),
+                ["Lamp shade", "Floor lamp"],
+                3
+            ),
+            "lighting, newest first, last page" => (
+                Lighting(lighting, number: 2),
+                ["Desk lamp"],
+                3
+            ),
             "lighting, beyond the last page" => (Lighting(lighting, number: 3), [], 3),
-            "name contains" => (new PageRequest { Filters = [new("name", FilterOperator.Contains, "lamp")] }, ["Desk lamp", "Floor lamp"], 2),
-            "name equals" => (new PageRequest { Filters = [new("name", FilterOperator.Equal, "Oak desk")] }, ["Oak desk"], 1),
+            "name contains" => (
+                new PageRequest { Filters = [new("name", FilterOperator.Contains, "lamp")] },
+                ["Desk lamp", "Floor lamp"],
+                2
+            ),
+            "name equals" => (
+                new PageRequest { Filters = [new("name", FilterOperator.Equal, "Oak desk")] },
+                ["Oak desk"],
+                1
+            ),
             _ => throw new ArgumentOutOfRangeException(nameof(@case)),
         };
 
@@ -60,7 +100,10 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         foreach (var page in new[] { dapper, ef })
         {
             Assert.Equal(names, page.Value.Items.Select(item => item.Name));
-            Assert.Equal((request.Number, request.Size, (long)total), (page.Value.Number, page.Value.Size, page.Value.Total));
+            Assert.Equal(
+                (request.Number, request.Size, (long)total),
+                (page.Value.Number, page.Value.Size, page.Value.Total)
+            );
         }
     }
 
@@ -153,9 +196,14 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
                 cancellationToken: TestContext.Current.CancellationToken
             )
         );
-        var ef = await Assert.ThrowsAsync<InvalidOperationException>(() => PageThroughEfAsync(request));
+        var ef = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            PageThroughEfAsync(request)
+        );
 
-        Assert.Equal((PageErrorCodes.SortUnknown, "Sort"), (Assert.Single(listed.Errors).Code, listed.Errors[0].Target));
+        Assert.Equal(
+            (PageErrorCodes.SortUnknown, "Sort"),
+            (Assert.Single(listed.Errors).Code, listed.Errors[0].Target)
+        );
         Assert.Contains(PageErrorCodes.SortUnknown, dapper.Message);
         Assert.Contains(PageErrorCodes.SortUnknown, ef.Message);
         Assert.Equal(5L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
@@ -165,7 +213,9 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_time_filter_with_any_offset_selects_from_the_same_instant_through_dapper_and_ef_core()
     {
         await SeedAsync();
-        var created = await Fixture.ScalarAsync<DateTime>("select created_at from catalog.products where name = 'Floor lamp'");
+        var created = await Fixture.ScalarAsync<DateTime>(
+            "select created_at from catalog.products where name = 'Floor lamp'"
+        );
         // The same instant as the third product's creation, written in Tehran's offset rather than UTC.
         var since = new DateTimeOffset(created, TimeSpan.Zero).ToOffset(TimeSpan.FromHours(3.5));
         var request = new PageRequest
@@ -179,7 +229,10 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
 
         foreach (var page in new[] { dapper, ef })
         {
-            Assert.Equal(["Floor lamp", "Armchair", "Lamp shade"], page.Value.Items.Select(item => item.Name));
+            Assert.Equal(
+                ["Floor lamp", "Armchair", "Lamp shade"],
+                page.Value.Items.Select(item => item.Name)
+            );
             Assert.Equal(3, page.Value.Total);
         }
     }
@@ -188,10 +241,16 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData(0, null)]
     [InlineData(null, 0)]
     [InlineData(null, 2)]
-    public async Task An_ef_core_page_refuses_a_specification_that_sets_its_own_skip_or_take(int? skip, int? take)
+    public async Task An_ef_core_page_refuses_a_specification_that_sets_its_own_skip_or_take(
+        int? skip,
+        int? take
+    )
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+            typeof(CatalogModule)
+        );
         var pages = new ProductPages(scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
 
         var thrown = await Assert.ThrowsAsync<ArgumentException>(() =>
@@ -223,22 +282,40 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     public void A_page_sql_whose_filter_has_a_value_type_it_has_no_database_type_for_is_refused_when_built()
     {
         var field = (FilterField)RuntimeHelpers.GetUninitializedObject(typeof(FilterField));
-        foreach (var (property, value) in new (string, object)[]
+        foreach (
+            var (property, value) in new (string, object)[]
+            {
+                (nameof(FilterField.Name), "day"),
+                (nameof(FilterField.ValueType), typeof(DateOnly)),
+                (
+                    nameof(FilterField.Operators),
+                    (IReadOnlyList<FilterOperator>)[FilterOperator.Equal]
+                ),
+            }
+        )
         {
-            (nameof(FilterField.Name), "day"),
-            (nameof(FilterField.ValueType), typeof(DateOnly)),
-            (nameof(FilterField.Operators), (IReadOnlyList<FilterOperator>)[FilterOperator.Equal]),
-        })
-        {
-            typeof(FilterField).GetField($"<{property}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(field, value);
+            typeof(FilterField)
+                .GetField(
+                    $"<{property}>k__BackingField",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                )!
+                .SetValue(field, value);
         }
 
         var thrown = Assert.Throws<ArgumentException>(() =>
-            new PageSql(new PageDeclaration(["day"], [field]), "select d.day from days d where @day_eq is null", "select count(*) from days d where @day_eq is null")
+            new PageSql(
+                new PageDeclaration(["day"], [field]),
+                "select d.day from days d where @day_eq is null",
+                "select count(*) from days d where @day_eq is null"
+            )
         );
 
         Assert.Equal("declaration", thrown.ParamName);
-        Assert.StartsWith("The filter field day has values of DateOnly, which a Dapper Page read has no database type for.", thrown.Message, StringComparison.Ordinal);
+        Assert.StartsWith(
+            "The filter field day has values of DateOnly, which a Dapper Page read has no database type for.",
+            thrown.Message,
+            StringComparison.Ordinal
+        );
     }
 
     [Fact]
@@ -282,7 +359,9 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
             problem
                 .GetProperty("errors")
                 .EnumerateArray()
-                .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString()))
+                .Select(error =>
+                    (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())
+                )
                 .Order()
         );
     }
@@ -293,13 +372,25 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("size=1.5", "The size query parameter is a whole number.")]
     [InlineData("page=1&page=2", "The page query parameter is given once.")]
     [InlineData("direction=up", "The direction query parameter is asc or desc.")]
-    [InlineData("filter[name][like]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
-    [InlineData("filter[name]=lamp", "A filter query parameter is filter[field][operator], with an operator such as eq or contains.")]
-    public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(string query, string detail)
+    [InlineData(
+        "filter[name][like]=lamp",
+        "A filter query parameter is filter[field][operator], with an operator such as eq or contains."
+    )]
+    [InlineData(
+        "filter[name]=lamp",
+        "A filter query parameter is filter[field][operator], with an operator such as eq or contains."
+    )]
+    public async Task A_page_query_string_that_cannot_be_read_answers_400_as_a_problem_response(
+        string query,
+        string detail
+    )
     {
         using var client = Fixture.Client("ada", AppFixture.TestTenant);
 
-        var response = await client.GetAsync($"/catalog/products?{query}", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            $"/catalog/products?{query}",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal(detail, problem.GetProperty("detail").GetString());
@@ -319,10 +410,14 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        using var page = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        using var page = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
         Assert.Equal(
             ["Desk lamp", "Floor lamp", "Lamp shade"],
-            page.RootElement.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("name").GetString())
+            page.RootElement.GetProperty("items")
+                .EnumerateArray()
+                .Select(item => item.GetProperty("name").GetString())
         );
         Assert.Equal(3, page.RootElement.GetProperty("total").GetInt64());
     }
@@ -342,8 +437,14 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
         var catalog = Fixture.Gateway<CatalogModule>();
         var lighting = Guid.CreateVersion7();
         var furniture = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(lighting, "Lighting"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateCategoryCommand(furniture, "Furniture"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(lighting, "Lighting"),
+            TestContext.Current.CancellationToken
+        );
+        await catalog.SendAsync(
+            new CreateCategoryCommand(furniture, "Furniture"),
+            TestContext.Current.CancellationToken
+        );
         Dictionary<string, Guid> ids = [];
         foreach (var (name, isLighting) in Products)
         {
@@ -351,7 +452,11 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
             Assert.True(
                 (
                     await catalog.SendAsync(
-                        new CreateProductCommand(ids[name], isLighting ? lighting : furniture, name),
+                        new CreateProductCommand(
+                            ids[name],
+                            isLighting ? lighting : furniture,
+                            name
+                        ),
                         TestContext.Current.CancellationToken
                     )
                 ).IsSuccess
@@ -362,16 +467,24 @@ public sealed class PagingTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     private Task<Result<Page<ProductListItemDto>>> ListAsync(PageRequest request) =>
-        Fixture.Gateway<CatalogModule>().QueryAsync(new ListProductsQuery(request), TestContext.Current.CancellationToken);
+        Fixture
+            .Gateway<CatalogModule>()
+            .QueryAsync(new ListProductsQuery(request), TestContext.Current.CancellationToken);
 
     // The probe is test code, so no Gateway runs it; the test begins its scope as a Catalog Operation, as
     // RepositoryTests does.
     private async Task<Result<Page<ProductListItemDto>>> PageThroughEfAsync(PageRequest request)
     {
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+            typeof(CatalogModule)
+        );
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .QueryAsync(new PageProductsThroughEfQuery(request), TestContext.Current.CancellationToken);
+            .QueryAsync(
+                new PageProductsThroughEfQuery(request),
+                TestContext.Current.CancellationToken
+            );
     }
 }

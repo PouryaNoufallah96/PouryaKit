@@ -15,5 +15,9 @@ public interface IStreamOutbox
     /// order handled, through <paramref name="session"/>, which is open over the Unit of Work's transaction, once per
     /// commit, after the Streams' events are appended and before the save; the save then commits and sends them.
     /// </summary>
-    Task WriteAsync(IDocumentSession session, IReadOnlyList<object> messages, CancellationToken cancellationToken);
+    Task WriteAsync(
+        IDocumentSession session,
+        IReadOnlyList<object> messages,
+        CancellationToken cancellationToken
+    );
 }

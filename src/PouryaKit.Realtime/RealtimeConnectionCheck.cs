@@ -26,7 +26,15 @@ internal sealed class RealtimeConnectionCheck(RealtimeConnection realtime) : ICo
         if (string.IsNullOrWhiteSpace(listened))
         {
             // A DbContext stored over the same name already has DbContextConnectionsCheck's line.
-            if (!stored.Any(connection => string.Equals(connection.Name, realtime.Name, StringComparison.OrdinalIgnoreCase)))
+            if (
+                !stored.Any(connection =>
+                    string.Equals(
+                        connection.Name,
+                        realtime.Name,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+            )
             {
                 yield return $"AddPouryaKitRealtime listens over the connection string {realtime.Name}, which the Host's configuration does not set (ConnectionStrings:{realtime.Name}), so the Host would not start. Set ConnectionStrings:{realtime.Name}, or name a connection the Host configures.";
             }
@@ -39,7 +47,10 @@ internal sealed class RealtimeConnectionCheck(RealtimeConnection realtime) : ICo
         foreach (var connection in stored)
         {
             // A missing or blank named one is DbContextConnectionsCheck's line.
-            if (connection.Name is { } name && string.IsNullOrWhiteSpace(configuration.GetConnectionString(name)))
+            if (
+                connection.Name is { } name
+                && string.IsNullOrWhiteSpace(configuration.GetConnectionString(name))
+            )
             {
                 continue;
             }
@@ -49,12 +60,16 @@ internal sealed class RealtimeConnectionCheck(RealtimeConnection realtime) : ICo
             var context = (DbContext)scope.ServiceProvider.GetRequiredService(connection.DbContext);
             if (!SameSettings(listened, context.Database.GetDbConnection().ConnectionString ?? ""))
             {
-                var registered = connection.Name is { } named ? $"stored over the connection string {named}" : "which the application registered itself";
+                var registered = connection.Name is { } named
+                    ? $"stored over the connection string {named}"
+                    : "which the application registered itself";
                 yield return $"EF Core connects {connection.DbContext.Name}, {registered}, with other settings than the connection string {realtime.Name} that AddPouryaKitRealtime listens over, so what its Notification Handlers push may be written in another database than the listener's, and PostgreSQL hands a notification only to the listeners of its own database. Use one connection string for Realtime and every Module's DbContext.";
             }
         }
     }
 
     private static bool SameSettings(string listened, string stored) =>
-        new NpgsqlConnectionStringBuilder(listened) { Password = null }.EquivalentTo(new NpgsqlConnectionStringBuilder(stored) { Password = null });
+        new NpgsqlConnectionStringBuilder(listened) { Password = null }.EquivalentTo(
+            new NpgsqlConnectionStringBuilder(stored) { Password = null }
+        );
 }

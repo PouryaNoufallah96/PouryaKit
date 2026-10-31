@@ -24,9 +24,13 @@ internal static class CommitProbe
     /// <summary>Wraps the Host's Outbox so its flush passes through the probe.</summary>
     public static void Install(IServiceCollection services)
     {
-        var outbox = services.Single(descriptor => descriptor.ServiceType == typeof(IUnitOfWorkOutbox));
+        var outbox = services.Single(descriptor =>
+            descriptor.ServiceType == typeof(IUnitOfWorkOutbox)
+        );
         services.Remove(outbox);
-        services.AddScoped<IUnitOfWorkOutbox>(provider => new ProbedOutbox((IUnitOfWorkOutbox)outbox.ImplementationFactory!(provider)));
+        services.AddScoped<IUnitOfWorkOutbox>(provider => new ProbedOutbox(
+            (IUnitOfWorkOutbox)outbox.ImplementationFactory!(provider)
+        ));
     }
 
     private sealed class Binding : IDisposable

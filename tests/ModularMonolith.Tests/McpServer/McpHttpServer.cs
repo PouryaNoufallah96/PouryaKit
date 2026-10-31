@@ -21,7 +21,8 @@ public sealed class McpHttpServer : IAsyncDisposable
     private readonly Lock _lock = new();
     private readonly HashSet<string> _sessions = [];
 
-    private McpHttpServer(WebApplication server, McpCalls calls) => (_server, Calls) = (server, calls);
+    private McpHttpServer(WebApplication server, McpCalls calls) =>
+        (_server, Calls) = (server, calls);
 
     /// <summary>The server's MCP endpoint.</summary>
     public Uri Endpoint => new($"{_server.Urls.Single()}/mcp");
@@ -51,7 +52,10 @@ public sealed class McpHttpServer : IAsyncDisposable
         builder.Services.AddSingleton(calls);
         // A server that keeps a session for each client, which the 2026-07-28 revision dropped from Streamable HTTP: the
         // client falls back to the initialize handshake, so it holds a session for its disposal to end.
-        builder.Services.AddMcpServer().WithHttpTransport(http => http.SessionMode = HttpServerSessionMode.Stateful).WithTools([typeof(HttpTools)]);
+        builder
+            .Services.AddMcpServer()
+            .WithHttpTransport(http => http.SessionMode = HttpServerSessionMode.Stateful)
+            .WithTools([typeof(HttpTools)]);
         var app = builder.Build();
         var server = new McpHttpServer(app, calls);
         app.Use(server.RecordAsync);
@@ -69,7 +73,11 @@ public sealed class McpHttpServer : IAsyncDisposable
         using var client = new HttpClient();
         using var ping = new HttpRequestMessage(HttpMethod.Post, Endpoint)
         {
-            Content = new StringContent("""{"jsonrpc":"2.0","id":"probe","method":"ping"}""", Encoding.UTF8, "application/json"),
+            Content = new StringContent(
+                """{"jsonrpc":"2.0","id":"probe","method":"ping"}""",
+                Encoding.UTF8,
+                "application/json"
+            ),
         };
         ping.Headers.Add(SessionHeader, session);
         ping.Headers.Accept.ParseAdd("application/json");
@@ -79,7 +87,9 @@ public sealed class McpHttpServer : IAsyncDisposable
         {
             HttpStatusCode.OK => true,
             HttpStatusCode.NotFound => false,
-            var status => throw new InvalidOperationException($"The server answered a ping in session {session} with {(int)status}."),
+            var status => throw new InvalidOperationException(
+                $"The server answered a ping in session {session} with {(int)status}."
+            ),
         };
     }
 

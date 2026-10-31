@@ -15,7 +15,8 @@ internal sealed record PagedLamps(PageRequest Page)
 
 internal sealed class PagedLampsValidator : AbstractValidator<PagedLamps>
 {
-    public PagedLampsValidator() => RuleFor(lamps => lamps.Page).NotNull().AllowedBy(PagedLamps.Paging);
+    public PagedLampsValidator() =>
+        RuleFor(lamps => lamps.Page).NotNull().AllowedBy(PagedLamps.Paging);
 }
 
 public sealed class PageRuleTests
@@ -35,19 +36,30 @@ public sealed class PageRuleTests
 
         var expected = PagedLamps.Paging.Validate(page).Errors;
         Assert.Equal(
-            [PageErrorCodes.SizeOutOfRange, PageErrorCodes.NumberOutOfRange, PageErrorCodes.SortUnknown, PageErrorCodes.FilterValueInvalid],
+            [
+                PageErrorCodes.SizeOutOfRange,
+                PageErrorCodes.NumberOutOfRange,
+                PageErrorCodes.SortUnknown,
+                PageErrorCodes.FilterValueInvalid,
+            ],
             expected.Select(error => error.Code)
         );
         Assert.Equal(
             expected.Select(error => (error.Target, error.Message, error.Code)),
-            failures.Select(failure => ((string?)failure.PropertyName, failure.ErrorMessage, failure.ErrorCode))
+            failures.Select(failure =>
+                ((string?)failure.PropertyName, failure.ErrorMessage, failure.ErrorCode)
+            )
         );
     }
 
     [Fact]
     public void A_request_inside_the_declaration_has_no_failure()
     {
-        var page = new PageRequest { Sort = "name", Filters = [new PageFilter("watts", FilterOperator.Equal, "40")] };
+        var page = new PageRequest
+        {
+            Sort = "name",
+            Filters = [new PageFilter("watts", FilterOperator.Equal, "40")],
+        };
 
         Assert.Empty(new PagedLampsValidator().Validate(new PagedLamps(page)).Errors);
     }
@@ -55,7 +67,9 @@ public sealed class PageRuleTests
     [Fact]
     public void A_null_request_fails_only_the_validators_own_not_null_rule()
     {
-        var failure = Assert.Single(new PagedLampsValidator().Validate(new PagedLamps(null!)).Errors);
+        var failure = Assert.Single(
+            new PagedLampsValidator().Validate(new PagedLamps(null!)).Errors
+        );
 
         Assert.Equal(("Page", "NotNullValidator"), (failure.PropertyName, failure.ErrorCode));
     }

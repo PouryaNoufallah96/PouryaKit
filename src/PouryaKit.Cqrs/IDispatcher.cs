@@ -18,13 +18,19 @@ public interface IDispatcher
     /// Runs <paramref name="command"/> through the pipeline in the scope's Operation and returns its Result, which
     /// holds the response on success.
     /// </summary>
-    Task<Result<TResponse>> SendAsync<TResponse>(Command<TResponse> command, CancellationToken cancellationToken = default)
+    Task<Result<TResponse>> SendAsync<TResponse>(
+        Command<TResponse> command,
+        CancellationToken cancellationToken = default
+    )
         where TResponse : notnull;
 
     /// <summary>
     /// Runs <paramref name="query"/> through the pipeline in the scope's Operation and returns its Result, which holds
     /// the answer on success.
     /// </summary>
-    Task<Result<TResponse>> QueryAsync<TResponse>(Query<TResponse> query, CancellationToken cancellationToken = default)
+    Task<Result<TResponse>> QueryAsync<TResponse>(
+        Query<TResponse> query,
+        CancellationToken cancellationToken = default
+    )
         where TResponse : notnull;
 }

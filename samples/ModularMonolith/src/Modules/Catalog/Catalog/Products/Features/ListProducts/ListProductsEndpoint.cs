@@ -18,6 +18,13 @@ internal sealed class ListProductsEndpoint : IEndpoint
                 OperationContext context,
                 IGatewayProcessor<CatalogModule> catalog,
                 CancellationToken cancellationToken
-            ) => (await catalog.QueryAsync(new ListProductsQuery(page.Request), context, cancellationToken)).ToHttpResult()
+            ) =>
+                (
+                    await catalog.QueryAsync(
+                        new ListProductsQuery(page.Request),
+                        context,
+                        cancellationToken
+                    )
+                ).ToHttpResult()
         );
 }

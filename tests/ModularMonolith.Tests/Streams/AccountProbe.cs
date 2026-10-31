@@ -7,7 +7,10 @@ namespace ModularMonolith.Tests.Streams;
 internal static class AccountProbe
 {
     private static readonly ConcurrentDictionary<Guid, Gate> Gates = new();
-    private static readonly ConcurrentDictionary<Guid, (TimeSpan Time, TaskCompletionSource Reached)> Holds = new();
+    private static readonly ConcurrentDictionary<
+        Guid,
+        (TimeSpan Time, TaskCompletionSource Reached)
+    > Holds = new();
     private static readonly ConcurrentDictionary<Guid, bool> Failures = new();
     private static readonly ConcurrentDictionary<Guid, int> Runs = new();
 
@@ -54,7 +57,9 @@ internal static class AccountProbe
 
 internal sealed class Gate
 {
-    public TaskCompletionSource Reached { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource Reached { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public TaskCompletionSource Opened { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource Opened { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 }

@@ -18,25 +18,47 @@ public sealed class SalesReports : IReportRequestAuthorizer, IReportLayouts
 
     public const string Month = "month";
 
-    public Task<bool> MayRequestAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
+    public Task<bool> MayRequestAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(request);
         return Task.FromResult(
-            context.Actor.Kind == ActorKind.Person && context.Tenant is not null && request.Kind == Kind && MonthOf(request) is not null
+            context.Actor.Kind == ActorKind.Person
+                && context.Tenant is not null
+                && request.Kind == Kind
+                && MonthOf(request) is not null
         );
     }
 
-    public Task<Result<ReportLayout>> LayOutAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
+    public Task<Result<ReportLayout>> LayOutAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(request);
-        var month = MonthOf(request) ?? throw new InvalidOperationException($"The {Kind} report was requested without a month.");
+        var month =
+            MonthOf(request)
+            ?? throw new InvalidOperationException(
+                $"The {Kind} report was requested without a month."
+            );
         Result<ReportLayout> layout = new ReportLayout(
             "Monthly sales",
             new ReportTable(
-                [new("Product"), new("Quantity", ReportAlignment.Right), new("Amount", ReportAlignment.Right)],
-                [["Tea", "12", "30.00"], ["Coffee", "7", "24.50"]]
+                [
+                    new("Product"),
+                    new("Quantity", ReportAlignment.Right),
+                    new("Amount", ReportAlignment.Right),
+                ],
+                [
+                    ["Tea", "12", "30.00"],
+                    ["Coffee", "7", "24.50"],
+                ]
             )
         )
         {
@@ -55,7 +77,13 @@ public sealed class SalesReports : IReportRequestAuthorizer, IReportLayouts
     private static DateOnly? MonthOf(ReportRequest request) =>
         request.Parameters.Count == 1
         && request.Parameters.TryGetValue(Month, out var month)
-        && DateOnly.TryParseExact(month, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+        && DateOnly.TryParseExact(
+            month,
+            "yyyy-MM",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out var parsed
+        )
             ? parsed
             : null;
 }

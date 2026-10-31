@@ -11,13 +11,22 @@ internal sealed class UnregisteredNotificationHandlersCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        var subscribed = services.GetService<Subscriptions>()?.All.Where(subscription => subscription.IsNotification).Select(subscription => subscription.Handler).ToHashSet() ?? [];
+        var subscribed =
+            services
+                .GetService<Subscriptions>()
+                ?.All.Where(subscription => subscription.IsNotification)
+                .Select(subscription => subscription.Handler)
+                .ToHashSet()
+            ?? [];
         foreach (var module in composition.Modules.Append<Type?>(null))
         {
             List<Type> unsubscribed =
             [
                 .. ImplementingTypes
-                    .Candidates(typeof(INotificationHandler<>), composition.FeatureAssembliesOf(module))
+                    .Candidates(
+                        typeof(INotificationHandler<>),
+                        composition.FeatureAssembliesOf(module)
+                    )
                     .Where(handler => !handler.IsAbstract && !subscribed.Contains(handler)),
             ];
             if (unsubscribed.Count > 0)

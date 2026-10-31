@@ -12,11 +12,16 @@ namespace ModularMonolith.Host;
 /// caller whose Operation this is. Any other Actor, a named system Actor included, holds none, so independent work never
 /// runs a protected command by default; a trusted continuation of an authorized Operation is not asked again.
 /// </summary>
-public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<PouryaKitWebOptions> web) : IActorPermissions
+public sealed class CallerPermissions(IHttpContextAccessor http, IOptions<PouryaKitWebOptions> web)
+    : IActorPermissions
 {
     public const string ClaimType = "permission";
 
-    public Task<bool> HasPermissionAsync(OperationContext context, string permission, CancellationToken cancellationToken)
+    public Task<bool> HasPermissionAsync(
+        OperationContext context,
+        string permission,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(context);
         var caller = http.HttpContext?.User;

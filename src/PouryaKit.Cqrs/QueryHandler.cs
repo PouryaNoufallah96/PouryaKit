@@ -10,5 +10,8 @@ public abstract class QueryHandler<TQuery, TResponse>
     /// <summary>
     /// Reads what <paramref name="query"/> asks and returns its Result, which holds the answer on success.
     /// </summary>
-    public abstract Task<Result<TResponse>> Handle(TQuery query, CancellationToken cancellationToken);
+    public abstract Task<Result<TResponse>> Handle(
+        TQuery query,
+        CancellationToken cancellationToken
+    );
 }

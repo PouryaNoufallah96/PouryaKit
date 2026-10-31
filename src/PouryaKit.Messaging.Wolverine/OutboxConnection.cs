@@ -9,4 +9,8 @@ namespace PouryaKit.Messaging.Wolverine;
 /// schema it keeps the message store's tables in, whatever configured them; <see cref="Writer"/> names the store in the
 /// check's messages. Applications never register one.
 /// </summary>
-public sealed record OutboxConnection(string Writer, Func<IServiceProvider, string> ConnectionString, Func<IServiceProvider, string?> Schema);
+public sealed record OutboxConnection(
+    string Writer,
+    Func<IServiceProvider, string> ConnectionString,
+    Func<IServiceProvider, string?> Schema
+);

@@ -20,18 +20,25 @@ internal sealed class RenderReportCommandHandler(
     OperationContext context
 ) : CommandHandler<RenderReportCommand>
 {
-    public override async Task<Result> Handle(RenderReportCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        RenderReportCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var id = new ReportJobId(command.JobId);
         var key = ReportJob.FileKeyOf(id, command.Attempt);
         var job = await jobs.FindAsync(id, cancellationToken);
         if (job is null || !job.IsClaimedBy(command.Attempt))
         {
-            return job?.FileKey == key ? Result.Success() : await files.DeleteAsync(key, cancellationToken);
+            return job?.FileKey == key
+                ? Result.Success()
+                : await files.DeleteAsync(key, cancellationToken);
         }
 
         var layout = await layouts.LayOutAsync(context, job.ToRequest(), cancellationToken);
-        Result<RenderedReport> rendered = layout.IsSuccess ? renderer.Render(layout.Value, job.Format) : layout.Errors;
+        Result<RenderedReport> rendered = layout.IsSuccess
+            ? renderer.Render(layout.Value, job.Format)
+            : layout.Errors;
         if (rendered.IsFailure)
         {
             job.Fail(command.Attempt, rendered.Errors[0]);

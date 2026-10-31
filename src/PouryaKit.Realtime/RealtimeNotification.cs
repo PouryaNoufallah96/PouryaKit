@@ -18,7 +18,9 @@ internal sealed record RealtimeNotification(string Channel, string Tenant, objec
     {
         try
         {
-            return JsonSerializer.Deserialize<RealtimeNotification>(payload, json) is { Channel: not null, Tenant: not null, Body: JsonElement } read
+            return
+                JsonSerializer.Deserialize<RealtimeNotification>(payload, json)
+                    is { Channel: not null, Tenant: not null, Body: JsonElement } read
                 ? read
                 : null;
         }

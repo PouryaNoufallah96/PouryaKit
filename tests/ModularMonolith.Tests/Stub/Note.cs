@@ -37,5 +37,6 @@ internal sealed class NoteConfiguration : IEntityTypeConfiguration<Note>
 
 internal sealed class NotesWithText : Specification<Note>
 {
-    public NotesWithText(string text) => Query.Where(note => note.Text == text).OrderBy(note => note.Id);
+    public NotesWithText(string text) =>
+        Query.Where(note => note.Text == text).OrderBy(note => note.Id);
 }

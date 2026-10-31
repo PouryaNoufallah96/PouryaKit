@@ -16,10 +16,19 @@ internal sealed class RequestReportCommandHandler(
     IOptions<ReportOptions> options
 ) : CommandHandler<RequestReportCommand, Guid>
 {
-    public override async Task<Result<Guid>> Handle(RequestReportCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<Guid>> Handle(
+        RequestReportCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var now = time.GetUtcNow();
-        var job = ReportJob.Request(new ReportJobId(Guid.CreateVersion7()), command.ToRequest(), context, now, options.Value.Retention);
+        var job = ReportJob.Request(
+            new ReportJobId(Guid.CreateVersion7()),
+            command.ToRequest(),
+            context,
+            now,
+            options.Value.Retention
+        );
         await jobs.AddAsync(job, cancellationToken);
         later.Schedule(new ClaimReportJobCommand(job.Id.Value, Attempt: 1), now);
         return job.Id.Value;

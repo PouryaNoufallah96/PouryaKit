@@ -17,11 +17,16 @@ public static class StreamHosts
     /// composed and not built: its message store is the Marten registration's, and it delivers at test speed. With
     /// <paramref name="martenFirst"/>, the Marten store is registered before the Module.
     /// </summary>
-    public static HostApplicationBuilder MartenOnly(string connectionString, bool martenFirst = false)
+    public static HostApplicationBuilder MartenOnly(
+        string connectionString,
+        bool martenFirst = false
+    )
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", Environments.Development, $"--ConnectionStrings:app={connectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            Environments.Development,
+            $"--ConnectionStrings:app={connectionString}",
+        ]);
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         if (martenFirst)
         {

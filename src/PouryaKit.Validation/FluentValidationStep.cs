@@ -8,11 +8,15 @@ namespace PouryaKit.Validation;
 
 // Runs every validator of the operation and returns all of their failures as one validation Result; it never throws
 // for invalid input.
-internal sealed class FluentValidationStep<TOperation>(IEnumerable<IValidator<TOperation>> validators)
-    : IValidationStep<TOperation>
+internal sealed class FluentValidationStep<TOperation>(
+    IEnumerable<IValidator<TOperation>> validators
+) : IValidationStep<TOperation>
     where TOperation : notnull
 {
-    public async Task<Result> ValidateAsync(TOperation operation, CancellationToken cancellationToken)
+    public async Task<Result> ValidateAsync(
+        TOperation operation,
+        CancellationToken cancellationToken
+    )
     {
         var errors = ImmutableArray.CreateBuilder<Error>();
         foreach (var validator in validators)
@@ -26,7 +30,9 @@ internal sealed class FluentValidationStep<TOperation>(IEnumerable<IValidator<TO
 
     private static Error ToError(ValidationFailure failure)
     {
-        var code = string.IsNullOrWhiteSpace(failure.ErrorCode) ? ValidationErrorCodes.Failed : failure.ErrorCode;
+        var code = string.IsNullOrWhiteSpace(failure.ErrorCode)
+            ? ValidationErrorCodes.Failed
+            : failure.ErrorCode;
         var message = failure.ErrorMessage ?? "";
         return string.IsNullOrWhiteSpace(failure.PropertyName)
             ? Error.Validation(code, message)

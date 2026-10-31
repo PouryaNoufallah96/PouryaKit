@@ -17,14 +17,18 @@ namespace PouryaKit.Messaging.Wolverine;
 // store fails the start once every hosted service has started, and the Host rethrows it without stopping them, so the
 // Host is stopped first; a stop that fails is kept beside the failure, which comes first. A cancelled start is its
 // caller's to end.
-internal sealed class RecurringCommandStart(DelayedCommandDeclarations declarations, IServiceProvider services)
-    : IHostedLifecycleService
+internal sealed class RecurringCommandStart(
+    DelayedCommandDeclarations declarations,
+    IServiceProvider services
+) : IHostedLifecycleService
 {
     public async Task StartedAsync(CancellationToken cancellationToken)
     {
         try
         {
-            foreach (var declared in declarations.All.Where(declared => declared.Recurring is not null))
+            foreach (
+                var declared in declarations.All.Where(declared => declared.Recurring is not null)
+            )
             {
                 await StoreFirstUnlessWaitingAsync(services, declared, cancellationToken);
             }
@@ -45,22 +49,41 @@ internal sealed class RecurringCommandStart(DelayedCommandDeclarations declarati
     }
 
     // Stores the first occurrence after now of declared unless one waits in the message store.
-    internal static async Task StoreFirstUnlessWaitingAsync(IServiceProvider services, DelayedCommand declared, CancellationToken cancellationToken)
+    internal static async Task StoreFirstUnlessWaitingAsync(
+        IServiceProvider services,
+        DelayedCommand declared,
+        CancellationToken cancellationToken
+    )
     {
         var scheduled = services.GetRequiredService<IWolverineRuntime>().Storage.ScheduledMessages;
         // Waiting to come due, or to be retried, on this declaration's queue: one stored under a name since retired is
         // set aside when due, so it does not hold back the chain of the new name. A page size of 0 reads all.
         var waiting = await scheduled.QueryAsync(
-            new ScheduledMessageQuery { MessageType = declared.Command.ToMessageTypeName(), PageSize = 0 },
+            new ScheduledMessageQuery
+            {
+                MessageType = declared.Command.ToMessageTypeName(),
+                PageSize = 0,
+            },
             cancellationToken
         );
-        if (waiting.Messages.Any(message => string.Equals(message.Destination, $"local://{declared.Name}/", StringComparison.OrdinalIgnoreCase)))
+        if (
+            waiting.Messages.Any(message =>
+                string.Equals(
+                    message.Destination,
+                    $"local://{declared.Name}/",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+        )
         {
             return;
         }
 
         await using var scope = services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System(declared.Recurring!.SystemActor)), declared.Module);
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(Actor.System(declared.Recurring!.SystemActor)),
+            declared.Module
+        );
         var result = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
             .SendAsync(new StartRecurringCommand(declared), cancellationToken);
@@ -71,7 +94,12 @@ internal sealed class RecurringCommandStart(DelayedCommandDeclarations declarati
     }
 
     // Adds the occurrence due at at to what the scope's Unit of Work writes to the Outbox.
-    internal static void Store(IServiceProvider scope, DelayedCommand declared, Command occurrence, DateTimeOffset at)
+    internal static void Store(
+        IServiceProvider scope,
+        DelayedCommand declared,
+        Command occurrence,
+        DateTimeOffset at
+    )
     {
         if (occurrence.GetType() != declared.Command)
         {
@@ -103,13 +131,21 @@ internal sealed class RecurringCommandStart(DelayedCommandDeclarations declarati
 // one the message store compares it with, so also after an occurrence set aside, which came due on that clock.
 internal sealed record StartRecurringCommand(DelayedCommand Declared) : Command;
 
-internal sealed class StartRecurringCommandHandler(IServiceProvider scope, IOptionsMonitor<PouryaKitRecurringCommandOptions> options)
-    : CommandHandler<StartRecurringCommand>
+internal sealed class StartRecurringCommandHandler(
+    IServiceProvider scope,
+    IOptionsMonitor<PouryaKitRecurringCommandOptions> options
+) : CommandHandler<StartRecurringCommand>
 {
-    public override Task<Result> Handle(StartRecurringCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        StartRecurringCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var declared = command.Declared;
-        var first = Recurrence.After(TimeProvider.System.GetUtcNow(), options.Get(declared.Name).Every);
+        var first = Recurrence.After(
+            TimeProvider.System.GetUtcNow(),
+            options.Get(declared.Name).Every
+        );
         RecurringCommandStart.Store(scope, declared, declared.Recurring!.Occurrence(first), first);
         return Task.FromResult(Result.Success());
     }

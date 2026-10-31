@@ -1,5 +1,5 @@
-using System.IO.Compression;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Xml.Linq;
 
@@ -14,7 +14,8 @@ public sealed class PackageArtifactTests
 
     private static XDocument Nuspec()
     {
-        var nuspec = XDocument.Parse($"""
+        var nuspec = XDocument.Parse(
+            $"""
             <package><metadata><id>{Id}</id><version>{Version}</version>
               <description />
               <tags />
@@ -24,17 +25,29 @@ public sealed class PackageArtifactTests
               <repository type="git" url="{PackageArtifacts.RepositoryUrl}" commit="{Commit}" />
               <dependencies><group><dependency id="PouryaKit.Domain" version="{Version}" /></group></dependencies>
             </metadata></package>
-            """);
+            """
+        );
         var project = XDocument.Load(Path.Combine(Repository.Root, "src", Id, $"{Id}.csproj"));
-        nuspec.Descendants("description").Single().Value = project.Descendants("PackageDescription").Single().Value;
-        nuspec.Descendants("tags").Single().Value = $"pouryakit dotnet modular-monolith {project.Descendants("PackageTags").Single().Value.Replace(';', ' ')}";
+        nuspec.Descendants("description").Single().Value = project
+            .Descendants("PackageDescription")
+            .Single()
+            .Value;
+        nuspec.Descendants("tags").Single().Value =
+            $"pouryakit dotnet modular-monolith {project.Descendants("PackageTags").Single().Value.Replace(';', ' ')}";
         return nuspec;
     }
 
     private static ZipArchive Package(Stream stream)
     {
         var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);
-        foreach (var (entry, file) in new[] { ("LICENSE", "LICENSE"), ("README.md", $"src/{Id}/README.md"), ("icon.png", "src/icon.png") })
+        foreach (
+            var (entry, file) in new[]
+            {
+                ("LICENSE", "LICENSE"),
+                ("README.md", $"src/{Id}/README.md"),
+                ("icon.png", "src/icon.png"),
+            }
+        )
         {
             using var writer = archive.CreateEntry(entry).Open();
             writer.Write(File.ReadAllBytes(Path.Combine(Repository.Root, file)));
@@ -53,11 +66,20 @@ public sealed class PackageArtifactTests
         using var stream = new MemoryStream();
         using var archive = Package(stream);
         Assert.Empty(PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence));
-        if (defect == "LICENSE") archive.GetEntry(defect)!.Delete();
-        else if (defect == "version") nuspec.Descendants("version").Single().Value = "0.9.0-preview.1";
-        else nuspec.Descendants(defect).Single().SetAttributeValue(defect == "repository" ? "commit" : "version", "wrong");
+        if (defect == "LICENSE")
+            archive.GetEntry(defect)!.Delete();
+        else if (defect == "version")
+            nuspec.Descendants("version").Single().Value = "0.9.0-preview.1";
+        else
+            nuspec
+                .Descendants(defect)
+                .Single()
+                .SetAttributeValue(defect == "repository" ? "commit" : "version", "wrong");
 
-        Assert.Equal([$"{Id} {expected}."], PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence));
+        Assert.Equal(
+            [$"{Id} {expected}."],
+            PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence)
+        );
     }
 
     [Theory]
@@ -65,19 +87,44 @@ public sealed class PackageArtifactTests
     [InlineData("readme file", "PouryaKit.Cqrs does not carry its own README.")]
     [InlineData("icon entry", "PouryaKit.Cqrs does not carry the shared icon.")]
     [InlineData("icon file", "PouryaKit.Cqrs does not carry the shared icon.")]
-    [InlineData("unset description", "PouryaKit.Cqrs's description is not its project's own PackageDescription.")]
-    [InlineData("missing shared tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
-    [InlineData("missing own tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
-    [InlineData("shared tags only", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
-    [InlineData("replaced tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
-    [InlineData("extra tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
-    [InlineData("repeated tag", "PouryaKit.Cqrs's tags are not the shared ones and its own, each once.")]
-    public void A_package_page_that_is_not_the_packages_own_is_rejected(string defect, string expected)
+    [InlineData(
+        "unset description",
+        "PouryaKit.Cqrs's description is not its project's own PackageDescription."
+    )]
+    [InlineData(
+        "missing shared tag",
+        "PouryaKit.Cqrs's tags are not the shared ones and its own, each once."
+    )]
+    [InlineData(
+        "missing own tag",
+        "PouryaKit.Cqrs's tags are not the shared ones and its own, each once."
+    )]
+    [InlineData(
+        "shared tags only",
+        "PouryaKit.Cqrs's tags are not the shared ones and its own, each once."
+    )]
+    [InlineData(
+        "replaced tag",
+        "PouryaKit.Cqrs's tags are not the shared ones and its own, each once."
+    )]
+    [InlineData(
+        "extra tag",
+        "PouryaKit.Cqrs's tags are not the shared ones and its own, each once."
+    )]
+    [InlineData(
+        "repeated tag",
+        "PouryaKit.Cqrs's tags are not the shared ones and its own, each once."
+    )]
+    public void A_package_page_that_is_not_the_packages_own_is_rejected(
+        string defect,
+        string expected
+    )
     {
         var nuspec = Nuspec();
         using var stream = new MemoryStream();
         using var archive = Package(stream);
-        void Set(string element, string value) => nuspec.Descendants(element).Single().Value = value;
+        void Set(string element, string value) =>
+            nuspec.Descendants(element).Single().Value = value;
         void Corrupt(string entry)
         {
             var bytes = archive.GetEntry(entry)!;
@@ -87,20 +134,51 @@ public sealed class PackageArtifactTests
         }
         switch (defect)
         {
-            case "readme entry": Set("readme", "docs/README.md"); break;
-            case "readme file": Corrupt("README.md"); break;
-            case "icon entry": Set("icon", "docs/icon.png"); break;
-            case "icon file": Corrupt("icon.png"); break;
-            case "unset description": Set("description", "Package Description"); break;
-            case "missing shared tag": Set("tags", "pouryakit dotnet cqrs commands queries dispatcher"); break;
-            case "missing own tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries"); break;
-            case "shared tags only": Set("tags", "pouryakit dotnet modular-monolith"); break;
-            case "replaced tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries mediator"); break;
-            case "extra tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries dispatcher mediator"); break;
-            case "repeated tag": Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries dispatcher cqrs"); break;
+            case "readme entry":
+                Set("readme", "docs/README.md");
+                break;
+            case "readme file":
+                Corrupt("README.md");
+                break;
+            case "icon entry":
+                Set("icon", "docs/icon.png");
+                break;
+            case "icon file":
+                Corrupt("icon.png");
+                break;
+            case "unset description":
+                Set("description", "Package Description");
+                break;
+            case "missing shared tag":
+                Set("tags", "pouryakit dotnet cqrs commands queries dispatcher");
+                break;
+            case "missing own tag":
+                Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries");
+                break;
+            case "shared tags only":
+                Set("tags", "pouryakit dotnet modular-monolith");
+                break;
+            case "replaced tag":
+                Set("tags", "pouryakit dotnet modular-monolith cqrs commands queries mediator");
+                break;
+            case "extra tag":
+                Set(
+                    "tags",
+                    "pouryakit dotnet modular-monolith cqrs commands queries dispatcher mediator"
+                );
+                break;
+            case "repeated tag":
+                Set(
+                    "tags",
+                    "pouryakit dotnet modular-monolith cqrs commands queries dispatcher cqrs"
+                );
+                break;
         }
 
-        Assert.Equal([expected], PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence));
+        Assert.Equal(
+            [expected],
+            PackageArtifacts.MetadataViolations(nuspec, archive, Id, Evidence)
+        );
     }
 
     // A stray nupkg keeps its message, and the inventory's after it, instead of stopping the run on a missing file.
@@ -110,63 +188,134 @@ public sealed class PackageArtifactTests
         using var stream = new MemoryStream();
         using var archive = Package(stream);
 
-        Assert.Equal(["PouryaKit.Nothing is no package of src/."], PackageArtifacts.MetadataViolations(Nuspec(), archive, "PouryaKit.Nothing", Evidence));
+        Assert.Equal(
+            ["PouryaKit.Nothing is no package of src/."],
+            PackageArtifacts.MetadataViolations(Nuspec(), archive, "PouryaKit.Nothing", Evidence)
+        );
     }
 
     [Theory]
-    [InlineData("Commands and queries.", null, "PouryaKit.Cqrs's description is not its project's own PackageDescription.")]
-    [InlineData("PouryaKit.Cqrs: commands and queries.", "PouryaKit.Cqrs: commands and queries.", "PouryaKit.Cqrs's description starts with its ID.")]
-    [InlineData("pouryakit.cqrs: commands and queries.", "pouryakit.cqrs: commands and queries.", "PouryaKit.Cqrs's description starts with its ID.")]
-    public void A_description_is_the_projects_own_and_does_not_start_with_the_id(string description, string? own, string expected) =>
-        Assert.Equal([expected], PackageArtifacts.DescriptionViolations(Id, description, own));
+    [InlineData(
+        "Commands and queries.",
+        null,
+        "PouryaKit.Cqrs's description is not its project's own PackageDescription."
+    )]
+    [InlineData(
+        "PouryaKit.Cqrs: commands and queries.",
+        "PouryaKit.Cqrs: commands and queries.",
+        "PouryaKit.Cqrs's description starts with its ID."
+    )]
+    [InlineData(
+        "pouryakit.cqrs: commands and queries.",
+        "pouryakit.cqrs: commands and queries.",
+        "PouryaKit.Cqrs's description starts with its ID."
+    )]
+    public void A_description_is_the_projects_own_and_does_not_start_with_the_id(
+        string description,
+        string? own,
+        string expected
+    ) => Assert.Equal([expected], PackageArtifacts.DescriptionViolations(Id, description, own));
 
     [Fact]
     public void Embedded_source_link_identifies_the_commit_and_rejects_a_different_commit()
     {
         using var stream = new MemoryStream();
         using var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);
-        var assembly = Path.Combine(Repository.Root, "src", "PouryaKit.Domain", "bin",
-            Directory.GetParent(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!.Name, "net10.0", "PouryaKit.Domain.dll");
+        var assembly = Path.Combine(
+            Repository.Root,
+            "src",
+            "PouryaKit.Domain",
+            "bin",
+            Directory
+                .GetParent(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!
+                .Name,
+            "net10.0",
+            "PouryaKit.Domain.dll"
+        );
         using (var writer = archive.CreateEntry("lib/net10.0/PouryaKit.Domain.dll").Open())
-        using (var input = File.OpenRead(assembly)) input.CopyTo(writer);
-        var sourceLink = Directory.GetFiles(Path.Combine(Repository.Root, "src", "PouryaKit.Domain", "obj"), "*.sourcelink.json", SearchOption.AllDirectories)
-            .First(file => file.Contains($"/{Directory.GetParent(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!.Name}/", StringComparison.Ordinal));
+        using (var input = File.OpenRead(assembly))
+            input.CopyTo(writer);
+        var sourceLink = Directory
+            .GetFiles(
+                Path.Combine(Repository.Root, "src", "PouryaKit.Domain", "obj"),
+                "*.sourcelink.json",
+                SearchOption.AllDirectories
+            )
+            .First(file =>
+                file.Contains(
+                    $"/{Directory.GetParent(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!.Name}/",
+                    StringComparison.Ordinal
+                )
+            );
         using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(sourceLink));
-        var actual = json.RootElement.GetProperty("documents").EnumerateObject().Single().Value.GetString()!.Split('/')[5];
+        var actual = json
+            .RootElement.GetProperty("documents")
+            .EnumerateObject()
+            .Single()
+            .Value.GetString()!
+            .Split('/')[5];
 
         Assert.Empty(PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", actual));
-        Assert.Equal(["PouryaKit.Domain's SourceLink map does not identify the source commit."],
-            PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", new string('0', 40)));
+        Assert.Equal(
+            ["PouryaKit.Domain's SourceLink map does not identify the source commit."],
+            PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", new string('0', 40))
+        );
     }
 
     [Fact]
     public async Task An_embedded_source_link_map_with_the_right_commit_but_wrong_source_path_is_rejected()
     {
-        var folder = Path.Combine(Path.GetTempPath(), $"pouryakit-bad-sourcelink-{Guid.NewGuid():N}");
+        var folder = Path.Combine(
+            Path.GetTempPath(),
+            $"pouryakit-bad-sourcelink-{Guid.NewGuid():N}"
+        );
         try
         {
             var source = Path.Combine(folder, "src", "PouryaKit.Domain");
             Directory.CreateDirectory(source);
-            File.Copy(Path.Combine(Repository.Root, "global.json"), Path.Combine(folder, "global.json"));
+            File.Copy(
+                Path.Combine(Repository.Root, "global.json"),
+                Path.Combine(folder, "global.json")
+            );
             var project = Path.Combine(source, "PouryaKit.Domain.csproj");
-            await File.WriteAllTextAsync(project, """
+            await File.WriteAllTextAsync(
+                project,
+                """
                 <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>
                   <TargetFramework>net10.0</TargetFramework><DebugType>embedded</DebugType>
                   <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries><EnableSourceLink>false</EnableSourceLink>
                   <SourceLink>$(MSBuildProjectDirectory)/bad-map.json</SourceLink>
                 </PropertyGroup></Project>
-                """, TestContext.Current.CancellationToken);
-            await File.WriteAllTextAsync(Path.Combine(source, "Domain.cs"), "public class Domain { public int Value => 1; }",
-                TestContext.Current.CancellationToken);
-            await File.WriteAllTextAsync(Path.Combine(source, "bad-map.json"), JsonSerializer.Serialize(new
+                """,
+                TestContext.Current.CancellationToken
+            );
+            await File.WriteAllTextAsync(
+                Path.Combine(source, "Domain.cs"),
+                "public class Domain { public int Value => 1; }",
+                TestContext.Current.CancellationToken
+            );
+            await File.WriteAllTextAsync(
+                Path.Combine(source, "bad-map.json"),
+                JsonSerializer.Serialize(
+                    new
+                    {
+                        documents = new Dictionary<string, string>
+                        {
+                            ["*"] =
+                                $"https://raw.githubusercontent.com/PouryaNoufallah96/PouryaKit/{Commit}/does-not-exist/*",
+                        },
+                    }
+                ),
+                TestContext.Current.CancellationToken
+            );
+            var start = new ProcessStartInfo("dotnet")
             {
-                documents = new Dictionary<string, string>
-                {
-                    ["*"] = $"https://raw.githubusercontent.com/PouryaNoufallah96/PouryaKit/{Commit}/does-not-exist/*",
-                },
-            }), TestContext.Current.CancellationToken);
-            var start = new ProcessStartInfo("dotnet") { WorkingDirectory = folder, RedirectStandardOutput = true, RedirectStandardError = true };
-            foreach (var argument in new[] { "build", project, "-c", "Release", "-v:q" }) start.ArgumentList.Add(argument);
+                WorkingDirectory = folder,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            foreach (var argument in new[] { "build", project, "-c", "Release", "-v:q" })
+                start.ArgumentList.Add(argument);
             using var build = Process.Start(start)!;
             var stdout = build.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
             var stderr = build.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
@@ -176,11 +325,22 @@ public sealed class PackageArtifactTests
             using var stream = new MemoryStream();
             using var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);
             using (var target = archive.CreateEntry("lib/net10.0/PouryaKit.Domain.dll").Open())
-            using (var input = File.OpenRead(Path.Combine(source, "bin", "Release", "net10.0", "PouryaKit.Domain.dll"))) input.CopyTo(target);
-            Assert.Contains(PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", Commit),
-                violation => violation.Contains("wrong repository-relative path", StringComparison.Ordinal));
+            using (
+                var input = File.OpenRead(
+                    Path.Combine(source, "bin", "Release", "net10.0", "PouryaKit.Domain.dll")
+                )
+            )
+                input.CopyTo(target);
+            Assert.Contains(
+                PackageArtifacts.SourceLinkViolations(archive, "PouryaKit.Domain", Commit),
+                violation =>
+                    violation.Contains("wrong repository-relative path", StringComparison.Ordinal)
+            );
         }
-        finally { Directory.Delete(folder, recursive: true); }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     [Fact]
@@ -188,19 +348,56 @@ public sealed class PackageArtifactTests
     {
         const string source = "/_/src/PouryaKit.Domain/Result.cs";
         var expected = $"https://raw.githubusercontent.com/PouryaNoufallah96/PouryaKit/{Commit}/";
-        foreach (var mappings in new KeyValuePair<string, string>[][]
-        {
-            [KeyValuePair.Create("/_/*", expected + "*")],
-            [KeyValuePair.Create(source.ToUpperInvariant(), expected + "src/PouryaKit.Domain/Result.cs")],
-            [KeyValuePair.Create("/_/*", expected + "wrong/*"), KeyValuePair.Create("/_/src/PouryaKit.Domain/*", expected + "src/PouryaKit.Domain/*")],
-            [KeyValuePair.Create("/_/*", expected + "wrong/*"), KeyValuePair.Create(source, expected + "src/PouryaKit.Domain/Result.cs")],
-        })
-            Assert.Empty(PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source], mappings, expected));
-        Assert.Contains(PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source],
-            [KeyValuePair.Create("/_/*", expected + "wrong/*")], expected),
-            violation => violation.Contains("wrong repository-relative path", StringComparison.Ordinal));
-        Assert.Equal(["PouryaKit.Domain's SourceLink map has invalid wildcard syntax."],
-            PackageArtifacts.SourceLinkDocumentViolations("PouryaKit.Domain", [source], [KeyValuePair.Create("/_/*", expected + "constant")], expected));
+        foreach (
+            var mappings in new KeyValuePair<string, string>[][]
+            {
+                [KeyValuePair.Create("/_/*", expected + "*")],
+                [
+                    KeyValuePair.Create(
+                        source.ToUpperInvariant(),
+                        expected + "src/PouryaKit.Domain/Result.cs"
+                    ),
+                ],
+                [
+                    KeyValuePair.Create("/_/*", expected + "wrong/*"),
+                    KeyValuePair.Create(
+                        "/_/src/PouryaKit.Domain/*",
+                        expected + "src/PouryaKit.Domain/*"
+                    ),
+                ],
+                [
+                    KeyValuePair.Create("/_/*", expected + "wrong/*"),
+                    KeyValuePair.Create(source, expected + "src/PouryaKit.Domain/Result.cs"),
+                ],
+            }
+        )
+            Assert.Empty(
+                PackageArtifacts.SourceLinkDocumentViolations(
+                    "PouryaKit.Domain",
+                    [source],
+                    mappings,
+                    expected
+                )
+            );
+        Assert.Contains(
+            PackageArtifacts.SourceLinkDocumentViolations(
+                "PouryaKit.Domain",
+                [source],
+                [KeyValuePair.Create("/_/*", expected + "wrong/*")],
+                expected
+            ),
+            violation =>
+                violation.Contains("wrong repository-relative path", StringComparison.Ordinal)
+        );
+        Assert.Equal(
+            ["PouryaKit.Domain's SourceLink map has invalid wildcard syntax."],
+            PackageArtifacts.SourceLinkDocumentViolations(
+                "PouryaKit.Domain",
+                [source],
+                [KeyValuePair.Create("/_/*", expected + "constant")],
+                expected
+            )
+        );
     }
 
     // A generated solution's test project references its Host, which takes EF Core's design package with
@@ -213,37 +410,79 @@ public sealed class PackageArtifactTests
         try
         {
             var packages = Path.Combine(folder, "packages") + Path.DirectorySeparatorChar;
-            Directory.CreateDirectory(Path.Combine(packages, "wolverinefx.entityframeworkcore", "6.46.0"));
+            Directory.CreateDirectory(
+                Path.Combine(packages, "wolverinefx.entityframeworkcore", "6.46.0")
+            );
             File.WriteAllText(
-                Path.Combine(packages, "wolverinefx.entityframeworkcore", "6.46.0", "wolverinefx.entityframeworkcore.nuspec"),
+                Path.Combine(
+                    packages,
+                    "wolverinefx.entityframeworkcore",
+                    "6.46.0",
+                    "wolverinefx.entityframeworkcore.nuspec"
+                ),
                 """<package><metadata><id>WolverineFx.EntityFrameworkCore</id><license type="expression">MIT</license></metadata></package>"""
             );
             var assets = Path.Combine(folder, "project.assets.json");
-            File.WriteAllText(assets, JsonSerializer.Serialize(new
-            {
-                targets = new Dictionary<string, object>
-                {
-                    ["net10.0"] = new Dictionary<string, object>
+            File.WriteAllText(
+                assets,
+                JsonSerializer.Serialize(
+                    new
                     {
-                        ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new { type = "package", dependencies = new Dictionary<string, string> { ["WolverineFx.EntityFrameworkCore"] = "6.46.0" } },
-                        ["WolverineFx.EntityFrameworkCore/6.46.0"] = new { type = "package", dependencies = new Dictionary<string, string> { ["Microsoft.EntityFrameworkCore.Design"] = "10.0.4" } },
-                    },
-                },
-                libraries = new Dictionary<string, object>
-                {
-                    ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new { type = "package", path = "pouryakit.messaging.wolverine.efcore/1.0.0", files = new[] { "pouryakit.messaging.wolverine.efcore.nuspec" } },
-                    ["WolverineFx.EntityFrameworkCore/6.46.0"] = new { type = "package", path = "wolverinefx.entityframeworkcore/6.46.0", files = new[] { "wolverinefx.entityframeworkcore.nuspec" } },
-                },
-                packageFolders = new Dictionary<string, object> { [packages] = new { } },
-            }));
+                        targets = new Dictionary<string, object>
+                        {
+                            ["net10.0"] = new Dictionary<string, object>
+                            {
+                                ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new
+                                {
+                                    type = "package",
+                                    dependencies = new Dictionary<string, string>
+                                    {
+                                        ["WolverineFx.EntityFrameworkCore"] = "6.46.0",
+                                    },
+                                },
+                                ["WolverineFx.EntityFrameworkCore/6.46.0"] = new
+                                {
+                                    type = "package",
+                                    dependencies = new Dictionary<string, string>
+                                    {
+                                        ["Microsoft.EntityFrameworkCore.Design"] = "10.0.4",
+                                    },
+                                },
+                            },
+                        },
+                        libraries = new Dictionary<string, object>
+                        {
+                            ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new
+                            {
+                                type = "package",
+                                path = "pouryakit.messaging.wolverine.efcore/1.0.0",
+                                files = new[] { "pouryakit.messaging.wolverine.efcore.nuspec" },
+                            },
+                            ["WolverineFx.EntityFrameworkCore/6.46.0"] = new
+                            {
+                                type = "package",
+                                path = "wolverinefx.entityframeworkcore/6.46.0",
+                                files = new[] { "wolverinefx.entityframeworkcore.nuspec" },
+                            },
+                        },
+                        packageFolders = new Dictionary<string, object> { [packages] = new { } },
+                    }
+                )
+            );
             var shipped = XDocument.Parse(
                 """<package><metadata><id>PouryaKit.Messaging.Wolverine.EFCore</id><dependencies><group targetFramework="net10.0"><dependency id="WolverineFx.EntityFrameworkCore" version="6.46.0" /></group></dependencies></metadata></package>"""
             );
 
             var restored = RestoredPackage.InConsumer(shipped, assets);
 
-            Assert.Equal([new PackageLicence("WolverineFx.EntityFrameworkCore", "6.46.0", "MIT")], restored.Packages);
+            Assert.Equal(
+                [new PackageLicence("WolverineFx.EntityFrameworkCore", "6.46.0", "MIT")],
+                restored.Packages
+            );
         }
-        finally { Directory.Delete(folder, recursive: true); }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 }

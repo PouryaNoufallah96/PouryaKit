@@ -7,11 +7,21 @@ namespace Catalog.Products.Features.GetProduct;
 
 // Registered scoped, so it is resolved in the asking Operation's scope and receives that Operation's context. It runs
 // in another Module's scope, so it uses nothing of Catalog's but its Gateway.
-internal sealed class CatalogProducts(IGatewayProcessor<CatalogModule> catalog, OperationContext asking) : ICatalogProducts
+internal sealed class CatalogProducts(
+    IGatewayProcessor<CatalogModule> catalog,
+    OperationContext asking
+) : ICatalogProducts
 {
-    public async Task<ProductSummary?> FindProductAsync(Guid productId, CancellationToken cancellationToken = default)
+    public async Task<ProductSummary?> FindProductAsync(
+        Guid productId,
+        CancellationToken cancellationToken = default
+    )
     {
-        var found = await catalog.QueryAsync(new GetProductQuery(productId), asking.Continue(), cancellationToken);
+        var found = await catalog.QueryAsync(
+            new GetProductQuery(productId),
+            asking.Continue(),
+            cancellationToken
+        );
         if (found.IsSuccess)
         {
             return new ProductSummary(found.Value.Id, found.Value.Name);

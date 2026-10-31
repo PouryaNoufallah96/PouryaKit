@@ -138,8 +138,13 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var strategies = scope
             .ServiceProvider.GetServices<DbContextOptions>()
-            .Select(options => (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType))
-            .ToDictionary(dbContext => dbContext.GetType(), dbContext => dbContext.Database.CreateExecutionStrategy());
+            .Select(options =>
+                (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType)
+            )
+            .ToDictionary(
+                dbContext => dbContext.GetType(),
+                dbContext => dbContext.Database.CreateExecutionStrategy()
+            );
 
         // The report Module's DbContext is internal to its package.
         Assert.Equal(
@@ -147,7 +152,10 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
                 typeof(BillingDbContext),
                 typeof(CatalogDbContext),
                 typeof(InventoryDbContext),
-                typeof(ReportModule).Assembly.GetType("PouryaKit.Reporting.Module.ReportDbContext", throwOnError: true),
+                typeof(ReportModule).Assembly.GetType(
+                    "PouryaKit.Reporting.Module.ReportDbContext",
+                    throwOnError: true
+                ),
                 typeof(StubDbContext),
             ],
             strategies.Keys.OrderBy(type => type.Name)
@@ -160,13 +168,19 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"),
+                TestContext.Current.CancellationToken
+            );
         var written = await Fixture.ScalarAsync<long>("select version from catalog.categories");
         await Fixture.RowsAsync("update catalog.categories set version = 7");
 
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
         // A category is tenant-scoped, so the read runs in the test tenant's Operation.
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+            typeof(CatalogModule)
+        );
         var read = await scope
             .ServiceProvider.GetRequiredService<CatalogDbContext>()
             .Set<Category>()
@@ -183,14 +197,24 @@ public sealed class PersistenceTests(AppFixture app) : HostTest<AppFixture>(app)
         var gateway = Fixture.Gateway<StubModule>();
         foreach (var text in new[] { "a", "b", "a" })
         {
-            Assert.True((await gateway.SendAsync(new WriteNoteCommand(text), TestContext.Current.CancellationToken)).IsSuccess);
+            Assert.True(
+                (
+                    await gateway.SendAsync(
+                        new WriteNoteCommand(text),
+                        TestContext.Current.CancellationToken
+                    )
+                ).IsSuccess
+            );
         }
 
         var ids = (await Fixture.RowsAsync("select id, text from stub.notes order by id"))
             .Select(row => ((long)row[0], (string)row[1]))
             .ToList();
         var found = (
-            await gateway.QueryAsync(new FindNotesQuery(ids[1].Item1, "a"), TestContext.Current.CancellationToken)
+            await gateway.QueryAsync(
+                new FindNotesQuery(ids[1].Item1, "a"),
+                TestContext.Current.CancellationToken
+            )
         ).Value;
 
         Assert.All(ids, id => Assert.True(id.Item1 > 0));

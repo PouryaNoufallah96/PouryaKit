@@ -12,9 +12,15 @@ namespace Ledger.Accounts.Features.PostEntry;
 // Kit's concurrency conflict, and nothing is appended.
 internal sealed class PostEntryCommandHandler(IStreams streams) : CommandHandler<PostEntryCommand>
 {
-    public override async Task<Result> Handle(PostEntryCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        PostEntryCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        if (await streams.LoadAsync<Account>(new AccountId(command.AccountId), cancellationToken) is not { } account)
+        if (
+            await streams.LoadAsync<Account>(new AccountId(command.AccountId), cancellationToken)
+            is not { } account
+        )
         {
             return AccountErrors.NotFound;
         }

@@ -31,10 +31,19 @@ public sealed class QueryCacheTests
             Trace(outside)
         );
         Assert.Contains("handle GetThingQuery", Trace(inside));
-        Assert.DoesNotContain(Trace(inside), step => step.StartsWith("cache", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            Trace(inside),
+            step => step.StartsWith("cache", StringComparison.Ordinal)
+        );
         // Before its Unit of Work starts, the outermost command's authorizer may still have changed what the query reads.
-        Assert.Equal(["handle GetThingQuery", "uow:begin"], Trace(beforeIt).Where(step => step is "handle GetThingQuery" or "uow:begin"));
-        Assert.DoesNotContain(Trace(beforeIt), step => step.StartsWith("cache", StringComparison.Ordinal));
+        Assert.Equal(
+            ["handle GetThingQuery", "uow:begin"],
+            Trace(beforeIt).Where(step => step is "handle GetThingQuery" or "uow:begin")
+        );
+        Assert.DoesNotContain(
+            Trace(beforeIt),
+            step => step.StartsWith("cache", StringComparison.Ordinal)
+        );
     }
 
     [Fact]
@@ -48,11 +57,18 @@ public sealed class QueryCacheTests
         await ThingsGateway.RunOuter(Dispatcher(rolledBack), NestedOutcome.HandlerFails);
 
         Assert.Equal(
-            ["uow:commit", "evict RunOuterCommand RunNestedCommand", "log:Succeeded RunOuterCommand"],
+            [
+                "uow:commit",
+                "evict RunOuterCommand RunNestedCommand",
+                "log:Succeeded RunOuterCommand",
+            ],
             Trace(committed).TakeLast(3)
         );
         Assert.Contains("uow:rollback", Trace(rolledBack));
-        Assert.DoesNotContain(Trace(rolledBack), step => step.StartsWith("evict", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            Trace(rolledBack),
+            step => step.StartsWith("evict", StringComparison.Ordinal)
+        );
     }
 
     private static IServiceScope Begun(ServiceProvider host)
@@ -62,7 +78,8 @@ public sealed class QueryCacheTests
         return scope;
     }
 
-    private static IDispatcher Dispatcher(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IDispatcher>();
+    private static IDispatcher Dispatcher(IServiceScope scope) =>
+        scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
     private static IReadOnlyList<string> Trace(IServiceScope scope) =>
         scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps;

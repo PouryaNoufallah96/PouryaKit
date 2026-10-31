@@ -5,7 +5,8 @@ internal sealed class PublishedIntegrationEvents : IIntegrationEventOutbox
 {
     private readonly List<(Guid DomainEventId, object IntegrationEvent)> _published = [];
 
-    public void Add(Guid domainEventId, object integrationEvent) => _published.Add((domainEventId, integrationEvent));
+    public void Add(Guid domainEventId, object integrationEvent) =>
+        _published.Add((domainEventId, integrationEvent));
 
     public List<(Guid DomainEventId, object IntegrationEvent)> Take()
     {

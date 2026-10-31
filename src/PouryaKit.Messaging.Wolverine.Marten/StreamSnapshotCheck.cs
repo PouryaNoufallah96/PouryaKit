@@ -11,7 +11,8 @@ namespace PouryaKit.Messaging.Wolverine.Marten;
 // SnapshotKeyTenancyCheck reads them, from a scope of the check's own with no Operation begun.
 internal sealed class StreamSnapshotCheck(IReadOnlySet<Type?> streamModules) : ICompositionCheck
 {
-    private const string Fix = "Remove the PublishSnapshot declaration, and publish what the Stream's events tell other Modules as Notifications or Integration Events.";
+    private const string Fix =
+        "Remove the PublishSnapshot declaration, and publish what the Stream's events tell other Modules as Notifications or Integration Events.";
 
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {

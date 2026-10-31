@@ -56,12 +56,25 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     {
         var stub = Fixture.Gateway<StubModule>();
 
-        var own = await stub.SendAsync(new CreateBinderCommand(_north, "North", [], "north"), For("north"), TestContext.Current.CancellationToken);
-        var foreign = await stub.SendAsync(new CreateBinderCommand(_south, "South", [], "south"), For("north"), TestContext.Current.CancellationToken);
+        var own = await stub.SendAsync(
+            new CreateBinderCommand(_north, "North", [], "north"),
+            For("north"),
+            TestContext.Current.CancellationToken
+        );
+        var foreign = await stub.SendAsync(
+            new CreateBinderCommand(_south, "South", [], "south"),
+            For("north"),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.True(own.IsSuccess);
         Assert.Equal(TenantErrors.Mismatch, Assert.Single(foreign.Errors));
-        Assert.Equal([["north"]], await Fixture.RowsAsync("select tenant from stub.binders"));
+        Assert.Equal(
+            [
+                ["north"],
+            ],
+            await Fixture.RowsAsync("select tenant from stub.binders")
+        );
     }
 
     // A product given another tenant than the one it was loaded under: one of south's that a north Operation takes for
@@ -72,7 +85,10 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     [InlineData("south", true)]
     [InlineData("north", false)]
     [InlineData("north", true)]
-    public async Task A_product_whose_tenant_an_operation_changed_fails_forbidden_whether_then_renamed_or_removed(string owner, bool remove)
+    public async Task A_product_whose_tenant_an_operation_changed_fails_forbidden_whether_then_renamed_or_removed(
+        string owner,
+        bool remove
+    )
     {
         var product = await CreateProductAsync(owner);
 
@@ -82,13 +98,24 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
             scope.ServiceProvider.BeginOperation(For("north"), typeof(CatalogModule));
             reassigned = await scope
                 .ServiceProvider.GetRequiredService<IDispatcher>()
-                .SendAsync(new ReassignProductCommand(product, owner == "north" ? "south" : "north", remove), TestContext.Current.CancellationToken);
+                .SendAsync(
+                    new ReassignProductCommand(
+                        product,
+                        owner == "north" ? "south" : "north",
+                        remove
+                    ),
+                    TestContext.Current.CancellationToken
+                );
         }
 
         Assert.Equal(TenantErrors.Mismatch, Assert.Single(reassigned.Errors));
         Assert.Equal(
-            [[owner, "Lamp", false, 1L]],
-            await Fixture.RowsAsync($"select tenant, name, is_deleted, version from catalog.products where id = '{product}'")
+            [
+                [owner, "Lamp", false, 1L],
+            ],
+            await Fixture.RowsAsync(
+                $"select tenant, name, is_deleted, version from catalog.products where id = '{product}'"
+            )
         );
     }
 
@@ -99,7 +126,9 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     [InlineData(ForgedWrite.Attach)]
     [InlineData(ForgedWrite.Update)]
     [InlineData(ForgedWrite.Remove)]
-    public async Task A_category_attached_rather_than_loaded_fails_forbidden_and_saves_nothing(ForgedWrite write)
+    public async Task A_category_attached_rather_than_loaded_fails_forbidden_and_saves_nothing(
+        ForgedWrite write
+    )
     {
         var own = await CreateCategoryAsync("north");
         var south = await CreateCategoryAsync("south");
@@ -108,7 +137,10 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         var forgedSouth = await ForgeAsync(south, write);
 
         Assert.Equal(
-            [["north", "Lamps", 0, 1L], ["south", "Lamps", 0, 1L]],
+            [
+                ["north", "Lamps", 0, 1L],
+                ["south", "Lamps", 0, 1L],
+            ],
             await Fixture.RowsAsync(
                 $"select tenant, name, product_count, version from catalog.categories where id in ('{own}', '{south}') order by tenant"
             )
@@ -123,15 +155,24 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_part_attached_under_the_operations_own_aggregate_fails_forbidden_and_saves_nothing(bool remove)
+    public async Task A_part_attached_under_the_operations_own_aggregate_fails_forbidden_and_saves_nothing(
+        bool remove
+    )
     {
         await CreateBindersAsync();
         var southBefore = await SouthRowsAsync();
-        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+        var southSheet = (Guid)
+            Assert.Single(
+                await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'")
+            )[0];
 
         var forged = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new ForgeSheetCommand(_north, southSheet, remove), For("north"), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new ForgeSheetCommand(_north, southSheet, remove),
+                For("north"),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(southBefore, await SouthRowsAsync());
         Assert.Equal(TenantErrors.NotLoaded, Assert.Single(forged.Errors));
@@ -152,11 +193,18 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     {
         await CreateBindersAsync();
         var southBefore = await SouthRowsAsync();
-        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+        var southSheet = (Guid)
+            Assert.Single(
+                await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'")
+            )[0];
 
         var reattached = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new ReattachSheetCommand(_north, southSheet, release, remove), For("north"), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new ReattachSheetCommand(_north, southSheet, release, remove),
+                For("north"),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(southBefore, await SouthRowsAsync());
         Assert.Equal(TenantErrors.NotLoaded, Assert.Single(reattached.Errors));
@@ -177,11 +225,18 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     {
         await CreateBindersAsync();
         var southBefore = await SouthRowsAsync();
-        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+        var southSheet = (Guid)
+            Assert.Single(
+                await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'")
+            )[0];
 
         var forged = await Fixture
             .Gateway<StubModule>()
-            .SendAsync(new ForgeSheetHolderCommand(_north, southSheet, forgery, remove), For("north"), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new ForgeSheetHolderCommand(_north, southSheet, forgery, remove),
+                For("north"),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.Equal(southBefore, await SouthRowsAsync());
         Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(forged.Errors));
@@ -193,17 +248,43 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     public async Task A_part_queried_through_its_own_set_is_read_only_by_its_aggregates_tenant_unless_the_filter_is_set_aside()
     {
         await CreateBindersAsync();
-        var southSheet = (Guid)Assert.Single(await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'"))[0];
+        var southSheet = (Guid)
+            Assert.Single(
+                await Fixture.RowsAsync($"select id from stub.sheets where binder_id = '{_south}'")
+            )[0];
         var stub = Fixture.Gateway<StubModule>();
 
-        var northById = await stub.QueryAsync(new ReadSheetsQuery(southSheet, false), For("north"), TestContext.Current.CancellationToken);
-        var northList = await stub.QueryAsync(new ReadSheetsQuery(null, false), For("north"), TestContext.Current.CancellationToken);
-        var southById = await stub.QueryAsync(new ReadSheetsQuery(southSheet, false), For("south"), TestContext.Current.CancellationToken);
-        var southList = await stub.QueryAsync(new ReadSheetsQuery(null, false), For("south"), TestContext.Current.CancellationToken);
-        var crossing = await stub.QueryAsync(new ReadSheetsQuery(southSheet, true), For("north"), TestContext.Current.CancellationToken);
+        var northById = await stub.QueryAsync(
+            new ReadSheetsQuery(southSheet, false),
+            For("north"),
+            TestContext.Current.CancellationToken
+        );
+        var northList = await stub.QueryAsync(
+            new ReadSheetsQuery(null, false),
+            For("north"),
+            TestContext.Current.CancellationToken
+        );
+        var southById = await stub.QueryAsync(
+            new ReadSheetsQuery(southSheet, false),
+            For("south"),
+            TestContext.Current.CancellationToken
+        );
+        var southList = await stub.QueryAsync(
+            new ReadSheetsQuery(null, false),
+            For("south"),
+            TestContext.Current.CancellationToken
+        );
+        var crossing = await stub.QueryAsync(
+            new ReadSheetsQuery(southSheet, true),
+            For("north"),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Empty(northById.Value);
-        Assert.Equal(new[] { $"north {_north}", $"north {_otherNorth}" }.Order(), northList.Value.Order());
+        Assert.Equal(
+            new[] { $"north {_north}", $"north {_otherNorth}" }.Order(),
+            northList.Value.Order()
+        );
         Assert.Equal([$"south {_south}"], southById.Value);
         Assert.Equal([$"south {_south}"], southList.Value);
         Assert.Equal([$"south {_south}"], crossing.Value);
@@ -218,9 +299,21 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         var stub = Fixture.Gateway<StubModule>();
         var named = new ReadBindersQuery([_north, _otherNorth, _south]);
 
-        var north = await stub.QueryAsync(named, For("north"), TestContext.Current.CancellationToken);
-        var south = await stub.QueryAsync(named, For("south"), TestContext.Current.CancellationToken);
-        var tenantless = await stub.QueryAsync(named, new OperationContext(GatewayTestExtensions.TestActor), TestContext.Current.CancellationToken);
+        var north = await stub.QueryAsync(
+            named,
+            For("north"),
+            TestContext.Current.CancellationToken
+        );
+        var south = await stub.QueryAsync(
+            named,
+            For("south"),
+            TestContext.Current.CancellationToken
+        );
+        var tenantless = await stub.QueryAsync(
+            named,
+            new OperationContext(GatewayTestExtensions.TestActor),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(new[] { _north, _otherNorth }.Order(), north.Value.Order());
         Assert.Equal([_south], south.Value);
@@ -240,18 +333,27 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         await using var none = Fixture.Host.Services.CreateAsyncScope();
 
         var south = await LeaseReadsAsync(resolvedFirst);
-        var tenantless = await LeaseReadsAsync(none.ServiceProvider.GetRequiredService<IReadConnectionFactory>());
+        var tenantless = await LeaseReadsAsync(
+            none.ServiceProvider.GetRequiredService<IReadConnectionFactory>()
+        );
 
         Assert.Equal("south", south.Setting);
         Assert.Equal([_south], south.Binders);
         Assert.Equal("", tenantless.Setting);
         Assert.Empty(tenantless.Binders);
 
-        async Task<(string Setting, Guid[] Binders)> LeaseReadsAsync(IReadConnectionFactory connections)
+        async Task<(string Setting, Guid[] Binders)> LeaseReadsAsync(
+            IReadConnectionFactory connections
+        )
         {
-            await using var connection = await connections.OpenAsync(TestContext.Current.CancellationToken);
+            await using var connection = await connections.OpenAsync(
+                TestContext.Current.CancellationToken
+            );
             var setting = await connection.ExecuteScalarAsync<string>(
-                new CommandDefinition("select current_setting('pouryakit.tenant')", cancellationToken: TestContext.Current.CancellationToken)
+                new CommandDefinition(
+                    "select current_setting('pouryakit.tenant')",
+                    cancellationToken: TestContext.Current.CancellationToken
+                )
             );
             var binders = await connection.QueryAsync<Guid>(
                 new CommandDefinition(
@@ -264,21 +366,41 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         }
     }
 
-    private static OperationContext For(string tenant) => new(GatewayTestExtensions.TestActor, tenant);
+    private static OperationContext For(string tenant) =>
+        new(GatewayTestExtensions.TestActor, tenant);
 
     private async Task CreateBindersAsync()
     {
         var stub = Fixture.Gateway<StubModule>();
-        foreach (var (binder, tenant) in new[] { (_north, "north"), (_otherNorth, "north"), (_south, "south") })
+        foreach (
+            var (binder, tenant) in new[]
+            {
+                (_north, "north"),
+                (_otherNorth, "north"),
+                (_south, "south"),
+            }
+        )
         {
             Assert.True(
-                (await stub.SendAsync(new CreateBinderCommand(binder, tenant, [$"{tenant} {binder}"]), For(tenant), TestContext.Current.CancellationToken)).IsSuccess
+                (
+                    await stub.SendAsync(
+                        new CreateBinderCommand(binder, tenant, [$"{tenant} {binder}"]),
+                        For(tenant),
+                        TestContext.Current.CancellationToken
+                    )
+                ).IsSuccess
             );
         }
     }
 
     private Task<Result> ChangeAsync(Guid binder, Guid other, BinderChange change) =>
-        Fixture.Gateway<StubModule>().SendAsync(new ChangeBinderCommand(binder, other, change), For("north"), TestContext.Current.CancellationToken);
+        Fixture
+            .Gateway<StubModule>()
+            .SendAsync(
+                new ChangeBinderCommand(binder, other, change),
+                For("north"),
+                TestContext.Current.CancellationToken
+            );
 
     // South's binder and every sheet held by a south binder, or once held by one.
     private Task<List<object[]>> SouthRowsAsync() =>
@@ -293,7 +415,15 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
     {
         var category = Guid.CreateVersion7();
         Assert.True(
-            (await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), For(tenant), TestContext.Current.CancellationToken)).IsSuccess
+            (
+                await Fixture
+                    .Gateway<CatalogModule>()
+                    .SendAsync(
+                        new CreateCategoryCommand(category, "Lamps"),
+                        For(tenant),
+                        TestContext.Current.CancellationToken
+                    )
+            ).IsSuccess
         );
         return category;
     }
@@ -305,7 +435,10 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         scope.ServiceProvider.BeginOperation(For("north"), typeof(CatalogModule));
         return await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new ForgeCategoryCommand(category, 1, write), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new ForgeCategoryCommand(category, 1, write),
+                TestContext.Current.CancellationToken
+            );
     }
 
     private async Task<Guid> CreateProductAsync(string tenant)
@@ -313,8 +446,24 @@ public sealed class TenantOwnershipTests(AppFixture app) : HostTest<AppFixture>(
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        Assert.True((await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), For(tenant), TestContext.Current.CancellationToken)).IsSuccess);
-        Assert.True((await catalog.SendAsync(new CreateProductCommand(product, category, "Lamp"), For(tenant), TestContext.Current.CancellationToken)).IsSuccess);
+        Assert.True(
+            (
+                await catalog.SendAsync(
+                    new CreateCategoryCommand(category, "Lamps"),
+                    For(tenant),
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
+        Assert.True(
+            (
+                await catalog.SendAsync(
+                    new CreateProductCommand(product, category, "Lamp"),
+                    For(tenant),
+                    TestContext.Current.CancellationToken
+                )
+            ).IsSuccess
+        );
         return product;
     }
 }

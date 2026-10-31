@@ -10,7 +10,10 @@ namespace Catalog.Products.Features.RemoveProducts;
 internal sealed class RemoveProductsCommandHandler(IRepository<Product, ProductId> products)
     : CommandHandler<RemoveProductsCommand, int>
 {
-    public override async Task<Result<int>> Handle(RemoveProductsCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<int>> Handle(
+        RemoveProductsCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var named = await products.ListAsync(new ProductsNamed(command.Names), cancellationToken);
         foreach (var product in named)

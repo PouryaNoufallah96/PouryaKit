@@ -41,7 +41,7 @@ Then start PostgreSQL, apply the migrations and run it: [Your first Host](https:
 - The Proving Sample's business code.
 - A Composition Root and endpoint adapters for each composition.
 - A smoke test in every generated solution.
-- The SDK, the test runner and `dotnet-ef` pinned as the Kit pins them.
+- The SDK, the test runner, `dotnet-ef` and `csharpier` pinned as the Kit pins them.
 
 > [!WARNING]
 > The generated Host applies no migration at startup and does not start without its bearer settings. [Your first Host](https://pouryakit.vercel.app/docs/get-started/first-host) walks through both.

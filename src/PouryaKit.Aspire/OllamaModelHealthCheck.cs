@@ -23,16 +23,27 @@ internal sealed class OllamaModelHealthCheck(
     /// <summary>How long a pull, the whole model's download, may take.</summary>
     public static readonly TimeSpan PullWithin = TimeSpan.FromMinutes(30);
 
-    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken)
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken
+    )
     {
         using var client = clients.CreateClient();
         // Each request's own deadline bounds it instead.
         client.Timeout = Timeout.InfiniteTimeSpan;
         client.BaseAddress = new Uri(endpoint.Url);
-        using var shown = await PostWithinAsync(client, "/api/show", new { model }, showWithin, cancellationToken);
+        using var shown = await PostWithinAsync(
+            client,
+            "/api/show",
+            new { model },
+            showWithin,
+            cancellationToken
+        );
         if (shown is null)
         {
-            return HealthCheckResult.Unhealthy($"Ollama did not say within {showWithin} whether it has the model {model}.");
+            return HealthCheckResult.Unhealthy(
+                $"Ollama did not say within {showWithin} whether it has the model {model}."
+            );
         }
 
         if (shown.IsSuccessStatusCode)
@@ -42,13 +53,23 @@ internal sealed class OllamaModelHealthCheck(
 
         if (shown.StatusCode != HttpStatusCode.NotFound)
         {
-            return HealthCheckResult.Unhealthy($"Ollama answered {(int)shown.StatusCode} for the model {model}.");
+            return HealthCheckResult.Unhealthy(
+                $"Ollama answered {(int)shown.StatusCode} for the model {model}."
+            );
         }
 
-        using var pulled = await PostWithinAsync(client, "/api/pull", new { model, stream = false }, pullWithin, cancellationToken);
+        using var pulled = await PostWithinAsync(
+            client,
+            "/api/pull",
+            new { model, stream = false },
+            pullWithin,
+            cancellationToken
+        );
         return pulled switch
         {
-            null => HealthCheckResult.Unhealthy($"Ollama did not pull the model {model} within {pullWithin}."),
+            null => HealthCheckResult.Unhealthy(
+                $"Ollama did not pull the model {model} within {pullWithin}."
+            ),
             { IsSuccessStatusCode: true } => HealthCheckResult.Healthy(),
             _ => HealthCheckResult.Unhealthy(
                 $"Ollama could not pull the model {model}: {await pulled.Content.ReadAsStringAsync(cancellationToken)}"

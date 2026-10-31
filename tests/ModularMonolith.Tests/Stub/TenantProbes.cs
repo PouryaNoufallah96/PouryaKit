@@ -30,16 +30,21 @@ internal static class TenantProbes
         services
             .Receive<TenantProbeV1>("tests.tenant-probe.v1")
             .ReceiveSnapshot<TenantProbeSnapshotV1>("tests.tenant-probe-snapshot.v1")
-            .Subscribe<TenantProbeV1, TallyTenantProbeIntegrationEventHandler<TenantProbeV1>>(Subscription, typeof(Catalog.CatalogModule))
-            .Subscribe<TenantProbeSnapshotV1, TallyTenantProbeIntegrationEventHandler<TenantProbeSnapshotV1>>(
-                SnapshotSubscription,
+            .Subscribe<TenantProbeV1, TallyTenantProbeIntegrationEventHandler<TenantProbeV1>>(
+                Subscription,
                 typeof(Catalog.CatalogModule)
-            );
+            )
+            .Subscribe<
+                TenantProbeSnapshotV1,
+                TallyTenantProbeIntegrationEventHandler<TenantProbeSnapshotV1>
+            >(SnapshotSubscription, typeof(Catalog.CatalogModule));
 }
 
 // Writes with plain SQL only, in the Unit of Work of the Module it runs in, the marker and the tenant it ran for.
-internal sealed class TallyTenantProbeIntegrationEventHandler<TProbe>(IUnitOfWorkConnection unitOfWork, OperationContext context)
-    : IIntegrationEventHandler<TProbe>
+internal sealed class TallyTenantProbeIntegrationEventHandler<TProbe>(
+    IUnitOfWorkConnection unitOfWork,
+    OperationContext context
+) : IIntegrationEventHandler<TProbe>
     where TProbe : class, ITenantProbe
 {
     public async Task<Result> Handle(TProbe probe, CancellationToken cancellationToken)

@@ -14,33 +14,40 @@ namespace Catalog.Products.Features.CreateProduct;
 internal sealed class CreateProductEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder routes) =>
-        routes.MapPost(
-            "/products",
-            async (
-                CreateProductBody body,
-                IDispatcher dispatcher,
-                HttpContext httpContext,
-                LinkGenerator links,
-                CancellationToken cancellationToken
-            ) =>
-                (
-                    await dispatcher.SendAsync(new CreateProductCommand(body.ProductId, body.CategoryId, body.Name), cancellationToken)
-                ).ToHttpResult(id =>
-                    TypedResults.Created(
-                        links.GetPathByName(
-                            httpContext,
-                            GetProductEndpoint.Name,
-                            new
-                            {
-                                productId = id,
-                                version = httpContext.RequestedApiVersion?.ToString("VVV", CultureInfo.InvariantCulture),
-                            }
-                        ),
-                        new { id }
+        routes
+            .MapPost(
+                "/products",
+                async (
+                    CreateProductBody body,
+                    IDispatcher dispatcher,
+                    HttpContext httpContext,
+                    LinkGenerator links,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await dispatcher.SendAsync(
+                            new CreateProductCommand(body.ProductId, body.CategoryId, body.Name),
+                            cancellationToken
+                        )
+                    ).ToHttpResult(id =>
+                        TypedResults.Created(
+                            links.GetPathByName(
+                                httpContext,
+                                GetProductEndpoint.Name,
+                                new
+                                {
+                                    productId = id,
+                                    version = httpContext.RequestedApiVersion?.ToString(
+                                        "VVV",
+                                        CultureInfo.InvariantCulture
+                                    ),
+                                }
+                            ),
+                            new { id }
+                        )
                     )
-                )
-        )
-        .RequireIdempotencyKey();
+            )
+            .RequireIdempotencyKey();
 }
 
 internal sealed record CreateProductBody(Guid ProductId, Guid CategoryId, string Name);

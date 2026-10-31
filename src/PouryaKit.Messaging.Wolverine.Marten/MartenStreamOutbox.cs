@@ -11,12 +11,23 @@ namespace PouryaKit.Messaging.Wolverine.Marten;
 // the transaction of the Streams' events, and sent by the listener the outbox adds to the session, after Marten's commit.
 // A Stream has no Snapshots: what it publishes are the Notifications and Integration Events of its events, and a Snapshot
 // declared for one fails the Host when it is built (StreamSnapshotCheck).
-internal sealed class MartenStreamOutbox(IWolverineRuntime runtime, OutboxWriter writer) : IStreamOutbox, IOutbox
+internal sealed class MartenStreamOutbox(IWolverineRuntime runtime, OutboxWriter writer)
+    : IStreamOutbox,
+        IOutbox
 {
-    public Task WriteAsync(IDocumentSession session, IReadOnlyList<object> messages, CancellationToken cancellationToken)
+    public Task WriteAsync(
+        IDocumentSession session,
+        IReadOnlyList<object> messages,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(messages);
-        return writer.WriteAsync(() => new MartenOutbox(runtime, session), messages, [], cancellationToken);
+        return writer.WriteAsync(
+            () => new MartenOutbox(runtime, session),
+            messages,
+            [],
+            cancellationToken
+        );
     }
 }

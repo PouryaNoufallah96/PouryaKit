@@ -57,9 +57,13 @@ public static class VectorCollectionTable
                     tenant = table.Column<string>(type: "text", nullable: false),
                     key = table.Column<string>(type: "text", nullable: false),
                     content = table.Column<string>(type: "text", nullable: false),
-                    embedding = table.Column<float[]>(type: $"vector({dimensions})", nullable: false),
+                    embedding = table.Column<float[]>(
+                        type: $"vector({dimensions})",
+                        nullable: false
+                    ),
                 },
-                constraints: table => table.PrimaryKey($"pk_{name}", row => new { row.tenant, row.key })
+                constraints: table =>
+                    table.PrimaryKey($"pk_{name}", row => new { row.tenant, row.key })
             );
         }
 

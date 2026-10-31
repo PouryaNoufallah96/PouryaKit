@@ -19,7 +19,16 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
     public async Task An_uploaded_file_downloads_with_its_content_and_content_type()
     {
         var key = Key();
-        Assert.True((await fixture.Storage.UploadAsync(key, new MemoryStream(Report), "application/pdf", Cancel)).IsSuccess);
+        Assert.True(
+            (
+                await fixture.Storage.UploadAsync(
+                    key,
+                    new MemoryStream(Report),
+                    "application/pdf",
+                    Cancel
+                )
+            ).IsSuccess
+        );
 
         await using var file = (await fixture.Storage.DownloadAsync(key, Cancel)).Value;
 
@@ -74,11 +83,18 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
         await fixture.Storage.UploadAsync(key, new MemoryStream(Report), "application/pdf", Cancel);
 
         var link = await fixture.Storage.GetPresignedUrlAsync(key, TimeSpan.FromMinutes(5), Cancel);
-        var expiring = await fixture.Storage.GetPresignedUrlAsync(key, TimeSpan.FromSeconds(1), Cancel);
+        var expiring = await fixture.Storage.GetPresignedUrlAsync(
+            key,
+            TimeSpan.FromSeconds(1),
+            Cancel
+        );
 
         using var http = new HttpClient();
         using var response = await http.GetAsync(link.Value, Cancel);
-        Assert.True(response.IsSuccessStatusCode, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Cancel)}");
+        Assert.True(
+            response.IsSuccessStatusCode,
+            $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Cancel)}"
+        );
         Assert.Equal(Report, await response.Content.ReadAsByteArrayAsync(Cancel));
         await Task.Delay(TimeSpan.FromSeconds(3), Cancel);
         using var expired = await http.GetAsync(expiring.Value, Cancel);
@@ -91,30 +107,47 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
         using var cancelled = new CancellationTokenSource();
         await cancelled.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromMinutes(5), cancelled.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromMinutes(5), cancelled.Token)
+        );
     }
 
     [Theory]
     [InlineData(604_801)]
     [InlineData(0)]
     [InlineData(-1)]
-    public async Task A_presigned_url_whose_lifetime_is_not_positive_or_over_seven_days_is_refused_with_its_error(int seconds)
+    public async Task A_presigned_url_whose_lifetime_is_not_positive_or_over_seven_days_is_refused_with_its_error(
+        int seconds
+    )
     {
-        var refused = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromSeconds(seconds), Cancel);
+        var refused = await fixture.Storage.GetPresignedUrlAsync(
+            Key(),
+            TimeSpan.FromSeconds(seconds),
+            Cancel
+        );
 
-        Assert.Equal(StorageErrors.LinkLifetimeOutOfRange(TimeSpan.FromDays(7)), Assert.Single(refused.Errors));
+        Assert.Equal(
+            StorageErrors.LinkLifetimeOutOfRange(TimeSpan.FromDays(7)),
+            Assert.Single(refused.Errors)
+        );
     }
 
     [Fact]
     public async Task A_presigned_url_of_seven_days_is_signed()
     {
-        Assert.True((await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromDays(7), Cancel)).IsSuccess);
+        Assert.True(
+            (
+                await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromDays(7), Cancel)
+            ).IsSuccess
+        );
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData(" ")]
-    public async Task A_host_bound_to_the_service_url_and_account_key_stores_a_file_and_signs_its_link(string? connectionString)
+    public async Task A_host_bound_to_the_service_url_and_account_key_stores_a_file_and_signs_its_link(
+        string? connectionString
+    )
     {
         using var host = AzuriteFixture.ComposeHost(
             new()
@@ -139,8 +172,12 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
 
     [Theory]
     [InlineData("not a connection string")]
-    [InlineData("BlobEndpoint=https://acme.blob.core.windows.net;SharedAccessSignature=sv=2025-11-05&sig=abc")]
-    public async Task A_host_with_invalid_storage_options_fails_to_start_naming_each_problem(string connectionString)
+    [InlineData(
+        "BlobEndpoint=https://acme.blob.core.windows.net;SharedAccessSignature=sv=2025-11-05&sig=abc"
+    )]
+    public async Task A_host_with_invalid_storage_options_fails_to_start_naming_each_problem(
+        string connectionString
+    )
     {
         using var host = AzuriteFixture.ComposeHost(
             new()
@@ -151,7 +188,9 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
             }
         );
 
-        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
+        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(Cancel)
+        );
 
         Assert.Equal(
             [
@@ -179,18 +218,27 @@ public sealed class AzureBlobStorageTests(AzuriteFixture fixture) : IClassFixtur
             }
         );
 
-        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
+        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(Cancel)
+        );
 
-        Assert.Equal(["PouryaKitAzureBlobStorageOptions.AccountKey is not a base64 account key."], failure.Failures);
+        Assert.Equal(
+            ["PouryaKitAzureBlobStorageOptions.AccountKey is not a base64 account key."],
+            failure.Failures
+        );
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void A_host_that_registers_both_providers_fails_when_it_is_built_naming_both(bool s3First)
+    public void A_host_that_registers_both_providers_fails_when_it_is_built_naming_both(
+        bool s3First
+    )
     {
-        const string S3 = "the factory PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions.Create";
-        const string AzureBlob = "the factory PouryaKit.Storage.AzureBlob.AzureBlobStorageServiceCollectionExtensions.Create";
+        const string S3 =
+            "the factory PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions.Create";
+        const string AzureBlob =
+            "the factory PouryaKit.Storage.AzureBlob.AzureBlobStorageServiceCollectionExtensions.Create";
         var builder = Host.CreateApplicationBuilder();
         builder.AddPouryaKitCompositionChecks();
         if (s3First)

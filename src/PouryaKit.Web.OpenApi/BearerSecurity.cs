@@ -10,11 +10,14 @@ namespace PouryaKit.Web.OpenApi;
 // the scheme is one the policy names, or else the Host's default authenticate scheme. Only a JWT bearer scheme has an
 // OpenAPI form here, HTTP bearer under the scheme's own name; any other scheme is left out of the document, so an
 // operation protected by a cookie, an API key or another handler carries no requirement.
-internal sealed class BearerSecurity(IAuthorizationPolicyProvider policies, IAuthenticationSchemeProvider schemes)
-    : IOpenApiOperationTransformer
+internal sealed class BearerSecurity(
+    IAuthorizationPolicyProvider policies,
+    IAuthenticationSchemeProvider schemes
+) : IOpenApiOperationTransformer
 {
     // Matched by name: JwtBearer is a NuGet package of the Host's, not part of the shared framework this one references.
-    private const string JwtBearerHandler = "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler";
+    private const string JwtBearerHandler =
+        "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler";
 
     public async Task TransformAsync(
         OpenApiOperation operation,
@@ -40,18 +43,23 @@ internal sealed class BearerSecurity(IAuthorizationPolicyProvider policies, IAut
 
         IEnumerable<string> names =
             policy.AuthenticationSchemes.Count > 0 ? policy.AuthenticationSchemes
-            : await schemes.GetDefaultAuthenticateSchemeAsync() is { } defaultScheme ? [defaultScheme.Name]
+            : await schemes.GetDefaultAuthenticateSchemeAsync() is { } defaultScheme
+                ? [defaultScheme.Name]
             : [];
         foreach (var name in names.Distinct())
         {
-            if (await schemes.GetSchemeAsync(name) is not { } scheme || !IsJwtBearer(scheme.HandlerType))
+            if (
+                await schemes.GetSchemeAsync(name) is not { } scheme
+                || !IsJwtBearer(scheme.HandlerType)
+            )
             {
                 continue;
             }
 
             var document = context.Document!;
             document.Components ??= new OpenApiComponents();
-            document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+            document.Components.SecuritySchemes ??=
+                new Dictionary<string, IOpenApiSecurityScheme>();
             document.Components.SecuritySchemes[name] = new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.Http,
@@ -59,7 +67,12 @@ internal sealed class BearerSecurity(IAuthorizationPolicyProvider policies, IAut
             };
             // One requirement per scheme: the policy is met by any of them.
             operation.Security ??= [];
-            operation.Security.Add(new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(name, document)] = [] });
+            operation.Security.Add(
+                new OpenApiSecurityRequirement
+                {
+                    [new OpenApiSecuritySchemeReference(name, document)] = [],
+                }
+            );
         }
     }
 

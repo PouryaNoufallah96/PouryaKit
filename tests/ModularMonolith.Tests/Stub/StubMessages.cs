@@ -15,10 +15,13 @@ internal sealed class StubMessages;
 
 internal sealed record GreetQuery : Query<string>;
 
-internal sealed class GreetQueryHandler(IStringLocalizer<StubMessages> messages) : QueryHandler<GreetQuery, string>
+internal sealed class GreetQueryHandler(IStringLocalizer<StubMessages> messages)
+    : QueryHandler<GreetQuery, string>
 {
-    public override Task<Result<string>> Handle(GreetQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<string>>(messages["Greeting"].Value);
+    public override Task<Result<string>> Handle(
+        GreetQuery query,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result<string>>(messages["Greeting"].Value);
 }
 #endregion
 
@@ -32,10 +35,13 @@ internal sealed record GreetCachedQuery : Query<string>, ICacheableQuery
     public IReadOnlyCollection<string> CacheTags => ["greeting"];
 }
 
-internal sealed class GreetCachedQueryHandler(IStringLocalizer<StubMessages> messages) : QueryHandler<GreetCachedQuery, string>
+internal sealed class GreetCachedQueryHandler(IStringLocalizer<StubMessages> messages)
+    : QueryHandler<GreetCachedQuery, string>
 {
-    public override Task<Result<string>> Handle(GreetCachedQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<string>>(messages["Greeting"].Value);
+    public override Task<Result<string>> Handle(
+        GreetCachedQuery query,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result<string>>(messages["Greeting"].Value);
 }
 
 internal sealed class GreetingEndpoint : IEndpoint
@@ -44,13 +50,23 @@ internal sealed class GreetingEndpoint : IEndpoint
     {
         routes.MapGet(
             "/greeting",
-            async (OperationContext context, IGatewayProcessor<StubModule> stub, CancellationToken cancellationToken) =>
+            async (
+                OperationContext context,
+                IGatewayProcessor<StubModule> stub,
+                CancellationToken cancellationToken
+            ) =>
                 (await stub.QueryAsync(new GreetQuery(), context, cancellationToken)).ToHttpResult()
         );
         routes.MapGet(
             "/greeting/cached",
-            async (OperationContext context, IGatewayProcessor<StubModule> stub, CancellationToken cancellationToken) =>
-                (await stub.QueryAsync(new GreetCachedQuery(), context, cancellationToken)).ToHttpResult()
+            async (
+                OperationContext context,
+                IGatewayProcessor<StubModule> stub,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await stub.QueryAsync(new GreetCachedQuery(), context, cancellationToken)
+                ).ToHttpResult()
         );
     }
 }

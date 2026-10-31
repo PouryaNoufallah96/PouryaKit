@@ -12,14 +12,21 @@ namespace ModularMonolith.Tests.Stub;
 // failing beside one that succeeds, and two that change the Stub's own data, the second only to fail afterwards.
 
 // Writes a note raising each of Raised, in order, then fails if asked to, after the note is in the Unit of Work.
-internal sealed record WriteNoteRaisingCommand(string Text, DomainEvent[] Raised, bool Fail = false) : Command;
+internal sealed record WriteNoteRaisingCommand(string Text, DomainEvent[] Raised, bool Fail = false)
+    : Command;
 
 internal sealed class WriteNoteRaisingCommandHandler(IRepository<Note, NoteId> notes)
     : CommandHandler<WriteNoteRaisingCommand>
 {
-    public static readonly Error Refused = Error.Conflict("Note.RefusedAfterRaising", "The note was refused after it raised.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.RefusedAfterRaising",
+        "The note was refused after it raised."
+    );
 
-    public override async Task<Result> Handle(WriteNoteRaisingCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        WriteNoteRaisingCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var note = Note.Write(command.Text);
         foreach (var domainEvent in command.Raised)
@@ -37,12 +44,19 @@ internal sealed class DeliveryLog
 {
     private readonly ConcurrentQueue<Delivered> _entries = [];
 
-    public IReadOnlyList<Delivered> For(string text) => [.. _entries.Where(entry => entry.Text == text)];
+    public IReadOnlyList<Delivered> For(string text) =>
+        [.. _entries.Where(entry => entry.Text == text)];
 
     public void Add(Delivered delivered) => _entries.Enqueue(delivered);
 }
 
-internal sealed record Delivered(string Handler, string Text, OperationContext Context, Operation Operation, bool NoteCommitted);
+internal sealed record Delivered(
+    string Handler,
+    string Text,
+    OperationContext Context,
+    Operation Operation,
+    bool NoteCommitted
+);
 
 internal sealed record NotePostedDomainEvent(string Text) : DomainEvent;
 
@@ -53,7 +67,10 @@ internal sealed class RecordPostedNoteNotificationHandler(
     IReadConnectionFactory database
 ) : INotificationHandler<NotePostedDomainEvent>
 {
-    public async Task<Result> Handle(NotePostedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NotePostedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         // A connection of its own sees only committed rows.
         await using var connection = await database.OpenAsync(cancellationToken);
@@ -64,31 +81,70 @@ internal sealed class RecordPostedNoteNotificationHandler(
                 cancellationToken: cancellationToken
             )
         );
-        log.Add(new Delivered(nameof(RecordPostedNoteNotificationHandler), domainEvent.Text, context, operation, committed == 1));
+        log.Add(
+            new Delivered(
+                nameof(RecordPostedNoteNotificationHandler),
+                domainEvent.Text,
+                context,
+                operation,
+                committed == 1
+            )
+        );
         return Result.Success();
     }
 }
 
 internal sealed record NoteContestedDomainEvent(string Text) : DomainEvent;
 
-internal sealed class AcceptContestedNoteNotificationHandler(DeliveryLog log, OperationContext context, Operation operation)
-    : INotificationHandler<NoteContestedDomainEvent>
+internal sealed class AcceptContestedNoteNotificationHandler(
+    DeliveryLog log,
+    OperationContext context,
+    Operation operation
+) : INotificationHandler<NoteContestedDomainEvent>
 {
-    public Task<Result> Handle(NoteContestedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteContestedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        log.Add(new Delivered(nameof(AcceptContestedNoteNotificationHandler), domainEvent.Text, context, operation, true));
+        log.Add(
+            new Delivered(
+                nameof(AcceptContestedNoteNotificationHandler),
+                domainEvent.Text,
+                context,
+                operation,
+                true
+            )
+        );
         return Task.FromResult(Result.Success());
     }
 }
 
-internal sealed class RejectContestedNoteNotificationHandler(DeliveryLog log, OperationContext context, Operation operation)
-    : INotificationHandler<NoteContestedDomainEvent>
+internal sealed class RejectContestedNoteNotificationHandler(
+    DeliveryLog log,
+    OperationContext context,
+    Operation operation
+) : INotificationHandler<NoteContestedDomainEvent>
 {
-    public static readonly Error Rejected = Error.Conflict("Note.Contested", "The contested note is rejected, every time.");
+    public static readonly Error Rejected = Error.Conflict(
+        "Note.Contested",
+        "The contested note is rejected, every time."
+    );
 
-    public Task<Result> Handle(NoteContestedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteContestedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        log.Add(new Delivered(nameof(RejectContestedNoteNotificationHandler), domainEvent.Text, context, operation, true));
+        log.Add(
+            new Delivered(
+                nameof(RejectContestedNoteNotificationHandler),
+                domainEvent.Text,
+                context,
+                operation,
+                true
+            )
+        );
         return Task.FromResult<Result>(Rejected);
     }
 }
@@ -101,7 +157,10 @@ internal sealed class CopyFiledNoteNotificationHandler(IRepository<Note, NoteId>
 {
     public static string CopyOf(string text) => $"copy of {text}";
 
-    public async Task<Result> Handle(NoteFiledForCopyDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteFiledForCopyDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         await notes.AddAsync(Note.Write(CopyOf(domainEvent.Text)), cancellationToken);
         return Result.Success();
@@ -113,11 +172,20 @@ internal sealed record NoteFiledForBrokenCopyDomainEvent(string Text) : DomainEv
 internal sealed class CopyThenRefuseNotificationHandler(IRepository<Note, NoteId> notes)
     : INotificationHandler<NoteFiledForBrokenCopyDomainEvent>
 {
-    public static readonly Error Refused = Error.Conflict("Note.CopyRefused", "The copy was refused after it was written.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.CopyRefused",
+        "The copy was refused after it was written."
+    );
 
-    public async Task<Result> Handle(NoteFiledForBrokenCopyDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteFiledForBrokenCopyDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        await notes.AddAsync(Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)), cancellationToken);
+        await notes.AddAsync(
+            Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)),
+            cancellationToken
+        );
         return Refused;
     }
 }
@@ -131,9 +199,15 @@ internal sealed class CasedCopyNotificationHandler(IRepository<Note, NoteId> not
 {
     public const string Name = "stub.Cased-Copy";
 
-    public async Task<Result> Handle(NoteFiledForCasedCopyDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteFiledForCasedCopyDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        await notes.AddAsync(Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)), cancellationToken);
+        await notes.AddAsync(
+            Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
@@ -147,11 +221,17 @@ internal sealed class CascadeLateNotificationHandler(IRepository<Note, NoteId> n
 {
     public static readonly TimeSpan Delay = TimeSpan.FromMilliseconds(200);
 
-    public async Task<Result> Handle(NoteCascadingDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteCascadingDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         await Task.Delay(Delay, cancellationToken);
         var cascaded = $"cascaded from {domainEvent.Text}";
-        await notes.AddAsync(Note.Write(cascaded).Raising(new NoteFiledForCopyDomainEvent(cascaded)), cancellationToken);
+        await notes.AddAsync(
+            Note.Write(cascaded).Raising(new NoteFiledForCopyDomainEvent(cascaded)),
+            cancellationToken
+        );
         return Result.Success();
     }
 }

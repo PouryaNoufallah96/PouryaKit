@@ -18,19 +18,37 @@ public static class S3StorageServiceCollectionExtensions
         /// each registration's type when it registers another, before or after this call, a second call included, and
         /// naming the contract when it removes this one.
         /// </summary>
-        public IServiceCollection AddPouryaKitS3Storage(Action<PouryaKitS3StorageOptions>? configure = null)
+        public IServiceCollection AddPouryaKitS3Storage(
+            Action<PouryaKitS3StorageOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             var options = services
                 .AddOptions<PouryaKitS3StorageOptions>()
-                .Validate(s3 => !string.IsNullOrWhiteSpace(s3.Bucket), "PouryaKitS3StorageOptions.Bucket names no bucket to store files in.")
-                .Validate(s3 => !string.IsNullOrWhiteSpace(s3.Region), "PouryaKitS3StorageOptions.Region names no region to reach or sign for.")
                 .Validate(
-                    s3 => s3.ServiceUrl is null || (s3.ServiceUrl.IsAbsoluteUri && (s3.ServiceUrl.Scheme == Uri.UriSchemeHttp || s3.ServiceUrl.Scheme == Uri.UriSchemeHttps)),
+                    s3 => !string.IsNullOrWhiteSpace(s3.Bucket),
+                    "PouryaKitS3StorageOptions.Bucket names no bucket to store files in."
+                )
+                .Validate(
+                    s3 => !string.IsNullOrWhiteSpace(s3.Region),
+                    "PouryaKitS3StorageOptions.Region names no region to reach or sign for."
+                )
+                .Validate(
+                    s3 =>
+                        s3.ServiceUrl is null
+                        || (
+                            s3.ServiceUrl.IsAbsoluteUri
+                            && (
+                                s3.ServiceUrl.Scheme == Uri.UriSchemeHttp
+                                || s3.ServiceUrl.Scheme == Uri.UriSchemeHttps
+                            )
+                        ),
                     "PouryaKitS3StorageOptions.ServiceUrl is not an absolute HTTP or HTTPS address; leave it null for AWS itself."
                 )
                 .Validate(
-                    s3 => string.IsNullOrWhiteSpace(s3.AccessKey) == string.IsNullOrWhiteSpace(s3.SecretKey),
+                    s3 =>
+                        string.IsNullOrWhiteSpace(s3.AccessKey)
+                        == string.IsNullOrWhiteSpace(s3.SecretKey),
                     "PouryaKitS3StorageOptions.AccessKey and SecretKey are set together, or neither to use the AWS SDK's default credentials."
                 )
                 .ValidateOnStart();
@@ -44,5 +62,6 @@ public static class S3StorageServiceCollectionExtensions
     }
 
     // A named method, which the one-provider check names.
-    private static S3FileStorage Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitS3StorageOptions>>().Value);
+    private static S3FileStorage Create(IServiceProvider provider) =>
+        new(provider.GetRequiredService<IOptions<PouryaKitS3StorageOptions>>().Value);
 }

@@ -20,7 +20,10 @@ public static class IdempotencyServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             services.AddOptions<PouryaKitIdempotencyOptions>().ValidateOnStart();
             services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IValidateOptions<PouryaKitIdempotencyOptions>, IdempotencyOptionsValidation>()
+                ServiceDescriptor.Singleton<
+                    IValidateOptions<PouryaKitIdempotencyOptions>,
+                    IdempotencyOptionsValidation
+                >()
             );
             return services;
         }
@@ -31,20 +34,28 @@ internal sealed class IdempotencyOptionsValidation : IValidateOptions<PouryaKitI
 {
     // What PeriodicTimer accepts, and a retention whose cutoff stays far from DateTimeOffset.MinValue.
     private static readonly TimeSpan MinCleanupInterval = TimeSpan.FromMilliseconds(1);
-    private static readonly TimeSpan MaxCleanupInterval = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+    private static readonly TimeSpan MaxCleanupInterval = TimeSpan.FromMilliseconds(
+        uint.MaxValue - 1
+    );
     private static readonly TimeSpan MaxRetention = TimeSpan.FromDays(36500);
 
     public ValidateOptionsResult Validate(string? name, PouryaKitIdempotencyOptions options)
     {
         List<string> failures = [];
-        if ((options.Retention <= TimeSpan.Zero || options.Retention > MaxRetention) && options.Retention != Timeout.InfiniteTimeSpan)
+        if (
+            (options.Retention <= TimeSpan.Zero || options.Retention > MaxRetention)
+            && options.Retention != Timeout.InfiniteTimeSpan
+        )
         {
             failures.Add(
                 $"The idempotency key Retention is {options.Retention}; it must be positive and at most {MaxRetention}, or Timeout.InfiniteTimeSpan to keep every key."
             );
         }
 
-        if (options.CleanupInterval < MinCleanupInterval || options.CleanupInterval > MaxCleanupInterval)
+        if (
+            options.CleanupInterval < MinCleanupInterval
+            || options.CleanupInterval > MaxCleanupInterval
+        )
         {
             failures.Add(
                 $"The idempotency key CleanupInterval is {options.CleanupInterval}; it must be from {MinCleanupInterval} to {MaxCleanupInterval}."
@@ -53,9 +64,13 @@ internal sealed class IdempotencyOptionsValidation : IValidateOptions<PouryaKitI
 
         if (options.BatchSize < 1)
         {
-            failures.Add($"The idempotency key BatchSize is {options.BatchSize}; it must be at least 1.");
+            failures.Add(
+                $"The idempotency key BatchSize is {options.BatchSize}; it must be at least 1."
+            );
         }
 
-        return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+        return failures.Count == 0
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(failures);
     }
 }

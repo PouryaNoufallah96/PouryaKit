@@ -17,7 +17,8 @@ namespace PouryaKit.Messaging.Wolverine;
 // rather than run under another name's Receipts. Each attempt runs in a scope of its own, in its Module: a delayed
 // command's begun as a continuation of the Operation that scheduled it, a recurring command's as a new Operation of its
 // declared system Actor, since no Operation caused it.
-internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations declarations) : MessageHandler
+internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations declarations)
+    : MessageHandler
 {
     public override async Task HandleAsync(MessageContext context, CancellationToken cancellation)
     {
@@ -34,7 +35,11 @@ internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations 
         var occurrence = OccurrenceOf(envelope);
         if ((occurrence is not null) != (declared.Recurring is not null))
         {
-            throw new UnknownDelayedCommandException(name, command.GetType(), storedAsOccurrence: occurrence is not null);
+            throw new UnknownDelayedCommandException(
+                name,
+                command.GetType(),
+                storedAsOccurrence: occurrence is not null
+            );
         }
 
         try
@@ -51,7 +56,11 @@ internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations 
             // to store is logged beside it, and nothing then waits until a replay or a Host start stores the next one.
             try
             {
-                await RecurringCommandStart.StoreFirstUnlessWaitingAsync(context.Runtime.Services, declared, context.Runtime.Cancellation);
+                await RecurringCommandStart.StoreFirstUnlessWaitingAsync(
+                    context.Runtime.Services,
+                    declared,
+                    context.Runtime.Cancellation
+                );
             }
             catch (Exception storeFailure)
             {
@@ -72,7 +81,12 @@ internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations 
         Level = LogLevel.Error,
         Message = "Storing the next occurrence of the recurring command {Name} failed (the first inner exception) as its occurrence {MessageId} was set aside as a dead letter with its own failure (the second); nothing waits until a replay of that dead letter or a Host start stores the next occurrence after now"
     )]
-    private static partial void LogNextOccurrenceNotStored(ILogger logger, Exception exception, string name, Guid messageId);
+    private static partial void LogNextOccurrenceNotStored(
+        ILogger logger,
+        Exception exception,
+        string name,
+        Guid messageId
+    );
 
     private static async Task RunAsync(
         MessageContext context,
@@ -92,7 +106,10 @@ internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations 
         scope.ServiceProvider.BeginOperation(operationContext, declared.Module, traceParent);
         var result = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new RunDelayedCommand(declared, command, envelope.Id, occurrence), cancellation);
+            .SendAsync(
+                new RunDelayedCommand(declared, command, envelope.Id, occurrence),
+                cancellation
+            );
         if (result.IsFailure)
         {
             throw new DelayedCommandFailedException(declared.Name, result.Errors);
@@ -102,19 +119,31 @@ internal sealed partial class DelayedCommandDelivery(DelayedCommandDeclarations 
     // Wolverine counts the attempt before it runs this handler and, when it throws, takes the slot of that number in the
     // Kit's retry policy: one stored retry per delay, then the error queue, which every later attempt goes to as well.
     private static bool IsSetAside(MessageContext context) =>
-        context.Envelope!.Attempts > context.Runtime.Services.GetRequiredService<IOptions<PouryaKitMessagingOptions>>().Value.RetryDelays.Length;
+        context.Envelope!.Attempts
+        > context
+            .Runtime.Services.GetRequiredService<IOptions<PouryaKitMessagingOptions>>()
+            .Value.RetryDelays.Length;
 
     private static DateTimeOffset? OccurrenceOf(Envelope envelope) =>
-        envelope.Headers.TryGetValue(DelayedCommandHeaders.Occurrence, out var occurrence) && occurrence is not null
-            ? DateTimeOffset.Parse(occurrence, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+        envelope.Headers.TryGetValue(DelayedCommandHeaders.Occurrence, out var occurrence)
+        && occurrence is not null
+            ? DateTimeOffset.Parse(
+                occurrence,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind
+            )
             : null;
 }
 
 // One delivery attempt of a delayed command, as the Operation of the scope the delivery opened: the command runs nested
 // in it, so it joins the Unit of Work that records the Receipt, and goes through the whole pipeline, its authorizers
 // and validator included. A recurring command's attempt carries the occurrence it runs.
-internal sealed record RunDelayedCommand(DelayedCommand Declared, Command Command, Guid MessageId, DateTimeOffset? Occurrence = null)
-    : Command;
+internal sealed record RunDelayedCommand(
+    DelayedCommand Declared,
+    Command Command,
+    Guid MessageId,
+    DateTimeOffset? Occurrence = null
+) : Command;
 
 internal sealed class RunDelayedCommandHandler(
     IDispatcher dispatcher,
@@ -123,13 +152,21 @@ internal sealed class RunDelayedCommandHandler(
     IReceipts? receipts = null
 ) : CommandHandler<RunDelayedCommand>
 {
-    public override async Task<Result> Handle(RunDelayedCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        RunDelayedCommand command,
+        CancellationToken cancellationToken
+    )
     {
         Activity.Current?.SetTag(DeliverHandler.SubscriptionTag, command.Declared.Name);
         // Recorded before the command runs, in the same transaction, as a subscription's Receipt is. A delayed command's
         // Receipt is its message's; a recurring command's is its occurrence's, whichever stored delivery carries it.
-        var receipt = command.Occurrence is { } occurrence ? ReceiptOf(occurrence) : command.MessageId;
-        if (receipts is not null && !await receipts.RecordAsync(command.Declared.Name, receipt, cancellationToken))
+        var receipt = command.Occurrence is { } occurrence
+            ? ReceiptOf(occurrence)
+            : command.MessageId;
+        if (
+            receipts is not null
+            && !await receipts.RecordAsync(command.Declared.Name, receipt, cancellationToken)
+        )
         {
             // A recurring occurrence already applied stores no next one: the delivery that applied it did.
             return Result.Success();
@@ -140,7 +177,10 @@ internal sealed class RunDelayedCommandHandler(
             // The store fires on the system clock, so the next occurrence is compared with it, not with the Operation's
             // clock. One that is already past is skipped, never made up.
             var every = recurringOptions.Get(command.Declared.Name).Every;
-            var next = Recurrence.After(Max(command.Occurrence!.Value, TimeProvider.System.GetUtcNow()), every);
+            var next = Recurrence.After(
+                Max(command.Occurrence!.Value, TimeProvider.System.GetUtcNow()),
+                every
+            );
             RecurringCommandStart.Store(scope, command.Declared, recurring.Occurrence(next), next);
         }
 
@@ -155,5 +195,6 @@ internal sealed class RunDelayedCommandHandler(
         return new Guid(bytes, bigEndian: true);
     }
 
-    private static DateTimeOffset Max(DateTimeOffset left, DateTimeOffset right) => left > right ? left : right;
+    private static DateTimeOffset Max(DateTimeOffset left, DateTimeOffset right) =>
+        left > right ? left : right;
 }

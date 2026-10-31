@@ -11,11 +11,15 @@ System.Type[] types = [typeof(PouryaKitOpenApiOptions)];
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddPouryaKitWeb();
 builder.Services.AddPouryaKitOpenApi(openApi =>
-    openApi.Sunsets["1.0"] = new ApiVersionSunset { Date = new DateTimeOffset(2027, 6, 30, 0, 0, 0, TimeSpan.Zero) }
+    openApi.Sunsets["1.0"] = new ApiVersionSunset
+    {
+        Date = new DateTimeOffset(2027, 6, 30, 0, 0, 0, TimeSpan.Zero),
+    }
 );
 builder.Services.AddPouryaKitApiVersions(
     "/notes",
-    versions => versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))
+    versions =>
+        versions.HasDeprecatedApiVersion(new ApiVersion(1, 0)).HasApiVersion(new ApiVersion(2, 0))
 );
 using var app = builder.Build();
 app.MapPouryaKitOpenApi().AllowAnonymous();

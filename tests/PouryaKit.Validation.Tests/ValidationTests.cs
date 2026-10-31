@@ -21,9 +21,13 @@ internal sealed class RegisterProductQuantityValidator : AbstractValidator<Regis
         RuleFor(x => x.Quantity).GreaterThan(0).WithErrorCode("Product.QuantityPositive");
 }
 
-internal sealed class RegisterProductHandler(HandledCommands handled) : CommandHandler<RegisterProductCommand, Guid>
+internal sealed class RegisterProductHandler(HandledCommands handled)
+    : CommandHandler<RegisterProductCommand, Guid>
 {
-    public override Task<Result<Guid>> Handle(RegisterProductCommand command, CancellationToken cancellationToken)
+    public override Task<Result<Guid>> Handle(
+        RegisterProductCommand command,
+        CancellationToken cancellationToken
+    )
     {
         handled.Count++;
         return Task.FromResult<Result<Guid>>(Guid.CreateVersion7());
@@ -37,19 +41,26 @@ internal sealed class LabelProductValidator : AbstractValidator<LabelProductComm
 {
     public LabelProductValidator() =>
         RuleFor(x => x.Label)
-            .Custom((label, context) =>
-            {
-                if (label.Length == 0)
+            .Custom(
+                (label, context) =>
                 {
-                    context.AddFailure(nameof(LabelProductCommand.Label), "A product needs a label.");
+                    if (label.Length == 0)
+                    {
+                        context.AddFailure(
+                            nameof(LabelProductCommand.Label),
+                            "A product needs a label."
+                        );
+                    }
                 }
-            });
+            );
 }
 
 internal sealed class LabelProductHandler : CommandHandler<LabelProductCommand>
 {
-    public override Task<Result> Handle(LabelProductCommand command, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success());
+    public override Task<Result> Handle(
+        LabelProductCommand command,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }
 
 internal sealed record ArchiveProductCommand(Guid ProductId) : Command;
@@ -59,14 +70,21 @@ internal sealed class ArchiveProductValidator : AbstractValidator<ArchiveProduct
 {
     public ArchiveProductValidator(IDispatcher dispatcher) =>
         RuleFor(x => x.ProductId)
-            .MustAsync(async (id, ct) =>
-                (await dispatcher.SendAsync(new RegisterProductCommand("Lamp", 1), ct)).IsSuccess
+            .MustAsync(
+                async (id, ct) =>
+                    (
+                        await dispatcher.SendAsync(new RegisterProductCommand("Lamp", 1), ct)
+                    ).IsSuccess
             );
 }
 
-internal sealed class ArchiveProductHandler(HandledCommands handled) : CommandHandler<ArchiveProductCommand>
+internal sealed class ArchiveProductHandler(HandledCommands handled)
+    : CommandHandler<ArchiveProductCommand>
 {
-    public override Task<Result> Handle(ArchiveProductCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        ArchiveProductCommand command,
+        CancellationToken cancellationToken
+    )
     {
         handled.Count++;
         return Task.FromResult(Result.Success());
@@ -76,10 +94,13 @@ internal sealed class ArchiveProductHandler(HandledCommands handled) : CommandHa
 internal sealed record ArchiveCatalogCommand : Command;
 
 // Sends ArchiveProductCommand as a nested command, so its validator runs inside the active Unit of Work.
-internal sealed class ArchiveCatalogHandler(IDispatcher dispatcher) : CommandHandler<ArchiveCatalogCommand>
+internal sealed class ArchiveCatalogHandler(IDispatcher dispatcher)
+    : CommandHandler<ArchiveCatalogCommand>
 {
-    public override Task<Result> Handle(ArchiveCatalogCommand command, CancellationToken cancellationToken) =>
-        dispatcher.SendAsync(new ArchiveProductCommand(Guid.CreateVersion7()), cancellationToken);
+    public override Task<Result> Handle(
+        ArchiveCatalogCommand command,
+        CancellationToken cancellationToken
+    ) => dispatcher.SendAsync(new ArchiveProductCommand(Guid.CreateVersion7()), cancellationToken);
 }
 
 internal sealed class HandledCommands
@@ -89,8 +110,10 @@ internal sealed class HandledCommands
 
 internal sealed class PassThroughUnitOfWork : IUnitOfWork
 {
-    public Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken) =>
-        command(cancellationToken);
+    public Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    ) => command(cancellationToken);
 }
 
 public sealed class ValidationTests
@@ -119,10 +142,14 @@ public sealed class ValidationTests
         await using var host = BuildHost();
         using var scope = host.CreateScope();
 
-        var result = await Dispatcher(scope).SendAsync(new LabelProductCommand(""), TestContext.Current.CancellationToken);
+        var result = await Dispatcher(scope)
+            .SendAsync(new LabelProductCommand(""), TestContext.Current.CancellationToken);
 
         var error = Assert.Single(result.Errors);
-        Assert.Equal(("Validation.Failed", "Label", ErrorKind.Validation), (error.Code, error.Target, error.Kind));
+        Assert.Equal(
+            ("Validation.Failed", "Label", ErrorKind.Validation),
+            (error.Code, error.Target, error.Kind)
+        );
     }
 
     [Fact]
@@ -132,7 +159,10 @@ public sealed class ValidationTests
         using var scope = host.CreateScope();
 
         var result = await Dispatcher(scope)
-            .SendAsync(new RegisterProductCommand("Lamp", 3), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new RegisterProductCommand("Lamp", 3),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
@@ -145,7 +175,11 @@ public sealed class ValidationTests
         using var scope = host.CreateScope();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            Dispatcher(scope).SendAsync(new ArchiveProductCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken)
+            Dispatcher(scope)
+                .SendAsync(
+                    new ArchiveProductCommand(Guid.CreateVersion7()),
+                    TestContext.Current.CancellationToken
+                )
         );
 
         Assert.Equal(0, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
@@ -158,7 +192,8 @@ public sealed class ValidationTests
         using var scope = host.CreateScope();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            Dispatcher(scope).SendAsync(new ArchiveCatalogCommand(), TestContext.Current.CancellationToken)
+            Dispatcher(scope)
+                .SendAsync(new ArchiveCatalogCommand(), TestContext.Current.CancellationToken)
         );
 
         Assert.Equal(0, scope.ServiceProvider.GetRequiredService<HandledCommands>().Count);
@@ -171,7 +206,10 @@ public sealed class ValidationTests
             .AddScoped<HandledCommands>()
             .AddScoped<IUnitOfWork, PassThroughUnitOfWork>()
             .AddSingleton(typeof(ILogger<>), typeof(NullLogger<>))
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+            .BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }
+            );
 
-    private static IDispatcher Dispatcher(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IDispatcher>();
+    private static IDispatcher Dispatcher(IServiceScope scope) =>
+        scope.ServiceProvider.GetRequiredService<IDispatcher>();
 }

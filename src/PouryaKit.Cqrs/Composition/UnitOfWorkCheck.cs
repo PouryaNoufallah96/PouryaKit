@@ -14,19 +14,36 @@ internal sealed class UnitOfWorkCheck : ICompositionCheck
 {
     public IEnumerable<string> Check(HostComposition composition, IServiceProvider services)
     {
-        HashSet<Assembly> features = [.. composition.FeatureAssembliesOf(null), .. composition.Modules.SelectMany(composition.FeatureAssembliesOf)];
-        var unkeyed = composition.Registrations.Where(descriptor => !descriptor.IsKeyedService).ToList();
+        HashSet<Assembly> features =
+        [
+            .. composition.FeatureAssembliesOf(null),
+            .. composition.Modules.SelectMany(composition.FeatureAssembliesOf),
+        ];
+        var unkeyed = composition
+            .Registrations.Where(descriptor => !descriptor.IsKeyedService)
+            .ToList();
         var command = unkeyed
-            .Select(descriptor => (Operation: OperationTypes.HandledBy(descriptor.ServiceType), Handler: descriptor.ImplementationType))
+            .Select(descriptor =>
+                (
+                    Operation: OperationTypes.HandledBy(descriptor.ServiceType),
+                    Handler: descriptor.ImplementationType
+                )
+            )
             .FirstOrDefault(handled =>
                 handled.Operation is not null
                 && OperationTypes.IsCommand(handled.Operation)
-                && (features.Contains(handled.Operation.Assembly) || (handled.Handler is not null && features.Contains(handled.Handler.Assembly)))
+                && (
+                    features.Contains(handled.Operation.Assembly)
+                    || (handled.Handler is not null && features.Contains(handled.Handler.Assembly))
+                )
             )
             .Operation;
-        return command is null || unkeyed.Any(descriptor => descriptor.ServiceType == typeof(IUnitOfWork))
+        return
+            command is null
+            || unkeyed.Any(descriptor => descriptor.ServiceType == typeof(IUnitOfWork))
             ? []
-            : [
+            :
+            [
                 $"The Host handles the command {command.FullName} but registers no Unit of Work, so the command would fail when it runs. Register the Unit of Work of a persistence package, for example with UsePouryaKitPostgres.",
             ];
     }

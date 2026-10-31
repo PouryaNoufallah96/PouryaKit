@@ -82,7 +82,8 @@ internal sealed class Book : Entity<BookId>
 
 internal sealed class CaseConfiguration : IEntityTypeConfiguration<Case>
 {
-    public void Configure(EntityTypeBuilder<Case> builder) => builder.ToTable("cases").UseTphMappingStrategy();
+    public void Configure(EntityTypeBuilder<Case> builder) =>
+        builder.ToTable("cases").UseTphMappingStrategy();
 }
 
 internal sealed class PencilCaseConfiguration : IEntityTypeConfiguration<PencilCase>
@@ -115,9 +116,13 @@ internal sealed class BookConfiguration : IEntityTypeConfiguration<Book>
 
 internal sealed record CreateCasesCommand(Guid PencilCaseId, Guid BookCaseId) : Command;
 
-internal sealed class CreateCasesCommandHandler(IRepository<Case, CaseId> cases) : CommandHandler<CreateCasesCommand>
+internal sealed class CreateCasesCommandHandler(IRepository<Case, CaseId> cases)
+    : CommandHandler<CreateCasesCommand>
 {
-    public override async Task<Result> Handle(CreateCasesCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        CreateCasesCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await cases.AddAsync(new PencilCase(new CaseId(command.PencilCaseId)), cancellationToken);
         await cases.AddAsync(new BookCase(new CaseId(command.BookCaseId)), cancellationToken);
@@ -128,12 +133,19 @@ internal sealed class CreateCasesCommandHandler(IRepository<Case, CaseId> cases)
 // Changes one child of each case in one Operation.
 internal sealed record TouchCasesCommand(Guid PencilCaseId, Guid BookCaseId) : Command;
 
-internal sealed class TouchCasesCommandHandler(IRepository<PencilCase, CaseId> pencilCases, IRepository<BookCase, CaseId> bookCases)
-    : CommandHandler<TouchCasesCommand>
+internal sealed class TouchCasesCommandHandler(
+    IRepository<PencilCase, CaseId> pencilCases,
+    IRepository<BookCase, CaseId> bookCases
+) : CommandHandler<TouchCasesCommand>
 {
-    public override async Task<Result> Handle(TouchCasesCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        TouchCasesCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        (await pencilCases.FindAsync(new CaseId(command.PencilCaseId), cancellationToken))!.Sharpen();
+        (
+            await pencilCases.FindAsync(new CaseId(command.PencilCaseId), cancellationToken)
+        )!.Sharpen();
         (await bookCases.FindAsync(new CaseId(command.BookCaseId), cancellationToken))!.Retitle();
         return Result.Success();
     }

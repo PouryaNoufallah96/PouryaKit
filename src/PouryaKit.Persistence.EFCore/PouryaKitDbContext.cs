@@ -51,7 +51,9 @@ public abstract class PouryaKitDbContext : DbContext
         : base(options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _applicationServices = options.FindExtension<CoreOptionsExtension>()?.ApplicationServiceProvider;
+        _applicationServices = options
+            .FindExtension<CoreOptionsExtension>()
+            ?.ApplicationServiceProvider;
         // A removed soft-deletable aggregate is kept, so nothing it owns may be deleted with it before the Unit of Work
         // turns the removal into a mark; the Unit of Work cascades a removal that stays one when it prepares the save.
         ChangeTracker.CascadeDeleteTiming = CascadeTiming.OnSaveChanges;
@@ -100,7 +102,12 @@ public abstract class PouryaKitDbContext : DbContext
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         // The persistence package puts the history table in the Module's schema, so the two cannot drift apart.
-        if (RelationalOptionsExtension.Extract(this.GetService<IDbContextOptions>()).MigrationsHistoryTableSchema is { } schema)
+        if (
+            RelationalOptionsExtension
+                .Extract(this.GetService<IDbContextOptions>())
+                .MigrationsHistoryTableSchema is
+            { } schema
+        )
         {
             modelBuilder.HasDefaultSchema(schema);
         }

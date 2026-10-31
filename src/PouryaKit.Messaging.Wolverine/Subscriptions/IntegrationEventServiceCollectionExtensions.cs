@@ -31,7 +31,12 @@ public static class IntegrationEventServiceCollectionExtensions
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName)
             where TIntegrationEvent : class =>
-            DeclarePublication(services, typeof(TIntegrationEvent), wireName, IModuleServices.ModuleOf(services));
+            DeclarePublication(
+                services,
+                typeof(TIntegrationEvent),
+                wireName,
+                IModuleServices.ModuleOf(services)
+            );
 
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, publishes
@@ -41,7 +46,12 @@ public static class IntegrationEventServiceCollectionExtensions
         /// </summary>
         public IServiceCollection Publish<TIntegrationEvent>(string wireName, Type module)
             where TIntegrationEvent : class =>
-            DeclarePublication(services, typeof(TIntegrationEvent), wireName, IModuleServices.ModuleOf(services, module));
+            DeclarePublication(
+                services,
+                typeof(TIntegrationEvent),
+                wireName,
+                IModuleServices.ModuleOf(services, module)
+            );
 
         /// <summary>
         /// Declares that another Host publishes <typeparamref name="TIntegrationEvent"/> under <paramref name="wireName"/>,
@@ -57,7 +67,9 @@ public static class IntegrationEventServiceCollectionExtensions
             where TIntegrationEvent : class
         {
             ArgumentNullException.ThrowIfNull(services);
-            Subscriptions.In(services).Receive(typeof(TIntegrationEvent), wireName, isSnapshot: false);
+            Subscriptions
+                .In(services)
+                .Receive(typeof(TIntegrationEvent), wireName, isSnapshot: false);
             DurableQueuesCheck.AddTo(services);
             return services;
         }
@@ -80,7 +92,11 @@ public static class IntegrationEventServiceCollectionExtensions
         public IServiceCollection Subscribe<TIntegrationEvent, THandler>(string subscriptionName)
             where TIntegrationEvent : class
             where THandler : class, IIntegrationEventHandler<TIntegrationEvent> =>
-            DeclareSubscription<TIntegrationEvent, THandler>(services, subscriptionName, IModuleServices.ModuleOf(services));
+            DeclareSubscription<TIntegrationEvent, THandler>(
+                services,
+                subscriptionName,
+                IModuleServices.ModuleOf(services)
+            );
 
         /// <summary>
         /// Subscribes, in the Host's composition, the Integration Event Handler <typeparamref name="THandler"/> of
@@ -88,17 +104,31 @@ public static class IntegrationEventServiceCollectionExtensions
         /// <c>Subscribe</c> on that Module's builder does: its deliveries run
         /// in <paramref name="module"/>. Throws, besides, when called on the builder of another Module.
         /// </summary>
-        public IServiceCollection Subscribe<TIntegrationEvent, THandler>(string subscriptionName, Type module)
+        public IServiceCollection Subscribe<TIntegrationEvent, THandler>(
+            string subscriptionName,
+            Type module
+        )
             where TIntegrationEvent : class
             where THandler : class, IIntegrationEventHandler<TIntegrationEvent> =>
-            DeclareSubscription<TIntegrationEvent, THandler>(services, subscriptionName, IModuleServices.ModuleOf(services, module));
+            DeclareSubscription<TIntegrationEvent, THandler>(
+                services,
+                subscriptionName,
+                IModuleServices.ModuleOf(services, module)
+            );
     }
 
-    private static IServiceCollection DeclarePublication(IServiceCollection services, Type integrationEvent, string wireName, Type? module)
+    private static IServiceCollection DeclarePublication(
+        IServiceCollection services,
+        Type integrationEvent,
+        string wireName,
+        Type? module
+    )
     {
         Subscriptions.In(services).Publish(integrationEvent, wireName, module);
         DurableQueuesCheck.AddTo(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>()
+        );
         return services;
     }
 
@@ -120,18 +150,29 @@ public static class IntegrationEventServiceCollectionExtensions
 
         if (typeof(THandler).IsAbstract)
         {
-            problems.Add($"{typeof(THandler).FullName} is abstract, so the subscription {subscriptionName} has no handler to run.");
+            problems.Add(
+                $"{typeof(THandler).FullName} is abstract, so the subscription {subscriptionName} has no handler to run."
+            );
         }
 
         Subscriptions
             .In(services)
             .Add(
-                [Subscription.OfIntegrationEventHandler(subscriptionName, typeof(TIntegrationEvent), typeof(THandler), module)],
+                [
+                    Subscription.OfIntegrationEventHandler(
+                        subscriptionName,
+                        typeof(TIntegrationEvent),
+                        typeof(THandler),
+                        module
+                    ),
+                ],
                 problems
             );
         services.TryAddScoped<THandler>();
         DurableQueuesCheck.AddTo(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>()
+        );
         return services;
     }
 }

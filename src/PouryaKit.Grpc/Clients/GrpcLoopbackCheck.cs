@@ -26,21 +26,33 @@ namespace PouryaKit.Grpc;
 /// on every address, as Kestrel binds every host that is neither <c>localhost</c> nor an IP address. Another host on
 /// the same port, such as a peer container on the 8080 every ASP.NET Core image listens on, is another Host.
 /// </summary>
-internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, IHostedLifecycleService
+internal sealed class GrpcLoopbackCheck(IServiceProvider root)
+    : IStartupCheck,
+        IHostedLifecycleService
 {
-    public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) => Refusals(ListeningUrls(services), services);
+    public IEnumerable<string> Check(HostComposition composition, IServiceProvider services) =>
+        Refusals(ListeningUrls(services), services);
 
     public async Task StartedAsync(CancellationToken cancellationToken)
     {
         // Kestrel's server type is internal; its assembly is the one of its public options. Any other server, the test
         // server included, holds only the configured URLs, which the startup check compared.
         var server = root.GetService<IServer>();
-        if (server?.GetType().Assembly != typeof(KestrelServerOptions).Assembly || server.Features.Get<IServerAddressesFeature>() is not { } bound)
+        if (
+            server?.GetType().Assembly != typeof(KestrelServerOptions).Assembly
+            || server.Features.Get<IServerAddressesFeature>() is not { } bound
+        )
         {
             return;
         }
 
-        List<string> refused = [.. Refusals(bound.Addresses, root).Select(refusal => $"{refusal} The server had already bound it, so the Host listened, and stopped, before its start failed.")];
+        List<string> refused =
+        [
+            .. Refusals(bound.Addresses, root)
+                .Select(refusal =>
+                    $"{refusal} The server had already bound it, so the Host listened, and stopped, before its start failed."
+                ),
+        ];
         if (refused.Count > 0)
         {
             // The Host rethrows this without stopping what started, and StopApplication alone stops nothing for a caller
@@ -52,7 +64,10 @@ internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, 
             }
             catch (Exception stop)
             {
-                throw new InvalidOperationException(string.Join(Environment.NewLine, refused), stop);
+                throw new InvalidOperationException(
+                    string.Join(Environment.NewLine, refused),
+                    stop
+                );
             }
 
             throw new InvalidOperationException(string.Join(Environment.NewLine, refused));
@@ -70,12 +85,18 @@ internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, 
     public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     // One line for each client addressed at one of the listening URLs.
-    internal static IEnumerable<string> Refusals(IEnumerable<string> listening, IServiceProvider services)
+    internal static IEnumerable<string> Refusals(
+        IEnumerable<string> listening,
+        IServiceProvider services
+    )
     {
         var options = services.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>();
         foreach (var client in services.GetServices<GrpcClient>())
         {
-            if (options.Get(client.Name).Address is { } address && listening.FirstOrDefault(url => Matches(address, url)) is { } own)
+            if (
+                options.Get(client.Name).Address is { } address
+                && listening.FirstOrDefault(url => Matches(address, url)) is { } own
+            )
             {
                 yield return $"The gRPC client {client.Name} is addressed at {address}, one of this Host's own listening URLs ({own}). A call between Modules of one Host goes through the Gateway, never a loopback; address the client at another Host.";
             }
@@ -88,17 +109,45 @@ internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, 
         var bound = services.GetService<IServer>()?.Features.Get<IServerAddressesFeature>();
         var (addresses, preferHostingUrls) = bound is { Addresses.Count: > 0 }
             ? ([.. bound.Addresses], bound.PreferHostingUrls)
-            : (HostingUrls(configuration), configuration["preferHostingUrls"] is "1" || string.Equals(configuration["preferHostingUrls"], "true", StringComparison.OrdinalIgnoreCase));
-        List<string> endpoints = [.. configuration.GetSection("Kestrel:Endpoints").GetChildren().Select(endpoint => endpoint["Url"]).OfType<string>()];
-        return endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0) ? addresses : endpoints;
+            : (
+                HostingUrls(configuration),
+                configuration["preferHostingUrls"] is "1"
+                    || string.Equals(
+                        configuration["preferHostingUrls"],
+                        "true",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+            );
+        List<string> endpoints =
+        [
+            .. configuration
+                .GetSection("Kestrel:Endpoints")
+                .GetChildren()
+                .Select(endpoint => endpoint["Url"])
+                .OfType<string>(),
+        ];
+        return endpoints.Count == 0 || (preferHostingUrls && addresses.Count > 0)
+            ? addresses
+            : endpoints;
     }
 
     private static List<string> HostingUrls(IConfiguration configuration) =>
         configuration["urls"] is { Length: > 0 } urls
             ? Split(urls)
-            : [.. from scheme in new[] { "http", "https" } from port in Split(configuration[$"{scheme}_ports"]) select $"{scheme}://*:{port}"];
+            :
+            [
+                .. from scheme in new[] { "http", "https" }
+                from port in Split(configuration[$"{scheme}_ports"])
+                select $"{scheme}://*:{port}",
+            ];
 
-    private static List<string> Split(string? value) => [.. (value ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+    private static List<string> Split(string? value) =>
+        [
+            .. (value ?? "").Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+            ),
+        ];
 
     private static bool Matches(Uri address, string url)
     {
@@ -115,8 +164,15 @@ internal sealed class GrpcLoopbackCheck(IServiceProvider root) : IStartupCheck, 
         return string.Equals(address.Scheme, listening.Scheme, StringComparison.OrdinalIgnoreCase)
             && address.Port == listening.Port
             && (
-                string.Equals(address.IdnHost, listening.Host.Trim('[', ']'), StringComparison.OrdinalIgnoreCase)
-                || (IsLoopback(address.IdnHost) && (IsEveryAddress(listening.Host) || IsLoopback(listening.Host)))
+                string.Equals(
+                    address.IdnHost,
+                    listening.Host.Trim('[', ']'),
+                    StringComparison.OrdinalIgnoreCase
+                )
+                || (
+                    IsLoopback(address.IdnHost)
+                    && (IsEveryAddress(listening.Host) || IsLoopback(listening.Host))
+                )
             );
     }
 

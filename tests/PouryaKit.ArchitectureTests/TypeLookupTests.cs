@@ -17,15 +17,29 @@ public sealed class TypeLookupTests
         nameof(Assembly.GetModules),
     ];
 
-    private static readonly HashSet<string> ModuleListings = [nameof(Module.GetTypes), nameof(Module.FindTypes)];
+    private static readonly HashSet<string> ModuleListings =
+    [
+        nameof(Module.GetTypes),
+        nameof(Module.FindTypes),
+    ];
 
     [Fact]
     public void Only_core_lists_the_types_of_an_assembly()
     {
-        Assert.Empty(Sample.KitPackages.Where(package => package.GetName().Name != "PouryaKit.Core").SelectMany(TypeListings));
+        Assert.Empty(
+            Sample
+                .KitPackages.Where(package => package.GetName().Name != "PouryaKit.Core")
+                .SelectMany(TypeListings)
+        );
         // Core itself is where the types are listed, and the rule sees it.
-        var core = Assert.Single(Sample.KitPackages, package => package.GetName().Name == "PouryaKit.Core");
-        Assert.Equal(["PouryaKit.Core.ImplementingTypes calls Assembly.GetTypes."], TypeListings(core));
+        var core = Assert.Single(
+            Sample.KitPackages,
+            package => package.GetName().Name == "PouryaKit.Core"
+        );
+        Assert.Equal(
+            ["PouryaKit.Core.ImplementingTypes calls Assembly.GetTypes."],
+            TypeListings(core)
+        );
     }
 
     [Fact]
@@ -51,10 +65,18 @@ public sealed class TypeLookupTests
             .Where(call =>
                 call.Callee.DeclaringType is { } declaring
                 && (
-                    (declaring.IsAssignableTo(typeof(Assembly)) && AssemblyListings.Contains(call.Callee.Name))
-                    || (declaring.IsAssignableTo(typeof(Module)) && ModuleListings.Contains(call.Callee.Name))
+                    (
+                        declaring.IsAssignableTo(typeof(Assembly))
+                        && AssemblyListings.Contains(call.Callee.Name)
+                    )
+                    || (
+                        declaring.IsAssignableTo(typeof(Module))
+                        && ModuleListings.Contains(call.Callee.Name)
+                    )
                 )
             )
-            .Select(call => $"{call.Owner.FullName} calls {call.Callee.DeclaringType!.Name}.{call.Callee.Name}.")
+            .Select(call =>
+                $"{call.Owner.FullName} calls {call.Callee.DeclaringType!.Name}.{call.Callee.Name}."
+            )
             .Distinct();
 }

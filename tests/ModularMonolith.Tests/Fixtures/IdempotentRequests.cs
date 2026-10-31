@@ -10,9 +10,17 @@ internal static class IdempotentRequests
     extension(HttpClient client)
     {
         /// <summary>POSTs <paramref name="value"/> as JSON with <paramref name="key"/>, a new one unless repeating a request.</summary>
-        public async Task<HttpResponseMessage> PostAsJsonAsync<T>(string uri, T value, string key, CancellationToken cancellationToken)
+        public async Task<HttpResponseMessage> PostAsJsonAsync<T>(
+            string uri,
+            T value,
+            string key,
+            CancellationToken cancellationToken
+        )
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, uri) { Content = JsonContent.Create(value) };
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri)
+            {
+                Content = JsonContent.Create(value),
+            };
             request.Headers.Add(Header, key);
             return await client.SendAsync(request, cancellationToken);
         }

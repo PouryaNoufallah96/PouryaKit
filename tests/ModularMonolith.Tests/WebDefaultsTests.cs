@@ -36,13 +36,23 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = AppFixture.ClientOf(host);
 
-        var preflight = await anonymous.SendAsync(Preflight(AllowedOrigin), TestContext.Current.CancellationToken);
-        var served = await anonymous.SendAsync(Get(AllowedOrigin), TestContext.Current.CancellationToken);
+        var preflight = await anonymous.SendAsync(
+            Preflight(AllowedOrigin),
+            TestContext.Current.CancellationToken
+        );
+        var served = await anonymous.SendAsync(
+            Get(AllowedOrigin),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.NoContent, preflight.StatusCode);
         Assert.Equal(AllowedOrigin, Header(preflight, "Access-Control-Allow-Origin"));
         Assert.Equal("GET,POST", Header(preflight, "Access-Control-Allow-Methods"));
-        Assert.Equal("Content-Type", Header(preflight, "Access-Control-Allow-Headers"), ignoreCase: true);
+        Assert.Equal(
+            "Content-Type",
+            Header(preflight, "Access-Control-Allow-Headers"),
+            ignoreCase: true
+        );
         Assert.Equal("true", Header(preflight, "Access-Control-Allow-Credentials"));
         Assert.Equal("600", Header(preflight, "Access-Control-Max-Age"));
         Assert.Equal(HttpStatusCode.OK, served.StatusCode);
@@ -76,7 +86,10 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("RateLimit:PermitLimit", "0")]
     [InlineData("RateLimit:Window", "00:00:00")]
     [InlineData("RateLimit:QueueLimit", "-1")]
-    public async Task A_host_whose_web_defaults_are_misconfigured_fails_when_it_starts(string key, string value)
+    public async Task A_host_whose_web_defaults_are_misconfigured_fails_when_it_starts(
+        string key,
+        string value
+    )
     {
         Dictionary<string, string> rateLimit = new()
         {
@@ -86,13 +99,18 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
             ["RateLimit:QueueLimit"] = "0",
         };
         rateLimit[key] = value;
-        await using var host = Compose([.. rateLimit.Select(setting => (setting.Key, setting.Value))]);
+        await using var host = Compose([
+            .. rateLimit.Select(setting => (setting.Key, setting.Value)),
+        ]);
 
         var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
             host.StartAsync(TestContext.Current.CancellationToken)
         );
 
-        Assert.Contains(key.StartsWith("Cors", StringComparison.Ordinal) ? $"'{value}'" : key.Split(':')[1], thrown.Message);
+        Assert.Contains(
+            key.StartsWith("Cors", StringComparison.Ordinal) ? $"'{value}'" : key.Split(':')[1],
+            thrown.Message
+        );
     }
 
     [Fact]
@@ -105,9 +123,18 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         using var unconfigured = Fixture.Client("ada", AppFixture.TestTenant);
         unconfigured.BaseAddress = new Uri("https://localhost/");
 
-        var plain = await https.GetAsync("/catalog/products", TestContext.Current.CancellationToken);
-        var compressed = await https.SendAsync(Gzip("/catalog/products"), TestContext.Current.CancellationToken);
-        var uncompressed = await unconfigured.SendAsync(Gzip("/catalog/products"), TestContext.Current.CancellationToken);
+        var plain = await https.GetAsync(
+            "/catalog/products",
+            TestContext.Current.CancellationToken
+        );
+        var compressed = await https.SendAsync(
+            Gzip("/catalog/products"),
+            TestContext.Current.CancellationToken
+        );
+        var uncompressed = await unconfigured.SendAsync(
+            Gzip("/catalog/products"),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Empty(plain.Content.Headers.ContentEncoding);
         Assert.Equal("gzip", Assert.Single(compressed.Content.Headers.ContentEncoding));
@@ -129,16 +156,24 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Each_actor_has_its_own_partition_which_spoofed_host_and_forwarded_for_headers_cannot_move_and_its_exhaustion_answers_429_as_a_problem_response()
     {
-        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await using var host = Compose(
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
         host.MapGet("/limited", () => "served");
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var ada = AppFixture.ClientOf(host, "ada");
         using var bob = AppFixture.ClientOf(host, "bob");
 
         var first = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
-        var spoofed = await ada.SendAsync(Spoofed("/limited", "203.0.113.7"), TestContext.Current.CancellationToken);
+        var spoofed = await ada.SendAsync(
+            Spoofed("/limited", "203.0.113.7"),
+            TestContext.Current.CancellationToken
+        );
         var again = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
-        var other = await bob.SendAsync(Spoofed("/limited", "203.0.113.7"), TestContext.Current.CancellationToken);
+        var other = await bob.SendAsync(
+            Spoofed("/limited", "203.0.113.7"),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         var problem = await ProblemAsync(spoofed, HttpStatusCode.TooManyRequests);
@@ -152,16 +187,30 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task Anonymous_callers_share_the_partition_of_the_actor_their_endpoint_names_whatever_host_and_forwarded_for_headers_they_send()
     {
-        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await using var host = Compose(
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = AppFixture.ClientOf(host);
         using var ada = AppFixture.ClientOf(host, "ada");
 
         // The public endpoint's visitors run as stub.visitor, the kiosk's as stub.kiosk.
-        var first = await anonymous.SendAsync(Spoofed("/stub/public/context", "198.51.100.1"), TestContext.Current.CancellationToken);
-        var second = await anonymous.SendAsync(Spoofed("/stub/public/context", "198.51.100.2"), TestContext.Current.CancellationToken);
-        var otherActor = await anonymous.GetAsync("/stub/kiosk/context", TestContext.Current.CancellationToken);
-        var person = await ada.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
+        var first = await anonymous.SendAsync(
+            Spoofed("/stub/public/context", "198.51.100.1"),
+            TestContext.Current.CancellationToken
+        );
+        var second = await anonymous.SendAsync(
+            Spoofed("/stub/public/context", "198.51.100.2"),
+            TestContext.Current.CancellationToken
+        );
+        var otherActor = await anonymous.GetAsync(
+            "/stub/kiosk/context",
+            TestContext.Current.CancellationToken
+        );
+        var person = await ada.GetAsync(
+            "/stub/public/context",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         await ProblemAsync(second, HttpStatusCode.TooManyRequests);
@@ -172,17 +221,31 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_trusted_peers_call_shares_the_partition_of_the_actor_it_continues_and_an_untrusted_callers_context_headers_move_nothing()
     {
-        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await using var host = Compose(
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var ada = AppFixture.ClientOf(host, "ada");
         using var peer = AppFixture.ClientOf(host, AppFixture.TrustedPeer);
         using var mallory = AppFixture.ClientOf(host, "mallory");
 
         var direct = await ada.GetAsync("/stub/context", TestContext.Current.CancellationToken);
-        var continuingAda = await peer.SendAsync(Continuing("ada"), TestContext.Current.CancellationToken);
-        var continuingBob = await peer.SendAsync(Continuing("bob"), TestContext.Current.CancellationToken);
-        var untrusted = await mallory.GetAsync("/stub/context", TestContext.Current.CancellationToken);
-        var untrustedWithHeaders = await mallory.SendAsync(Continuing("carol"), TestContext.Current.CancellationToken);
+        var continuingAda = await peer.SendAsync(
+            Continuing("ada"),
+            TestContext.Current.CancellationToken
+        );
+        var continuingBob = await peer.SendAsync(
+            Continuing("bob"),
+            TestContext.Current.CancellationToken
+        );
+        var untrusted = await mallory.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
+        var untrustedWithHeaders = await mallory.SendAsync(
+            Continuing("carol"),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, direct.StatusCode);
         await ProblemAsync(continuingAda, HttpStatusCode.TooManyRequests);
@@ -197,14 +260,25 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_person_named_as_a_public_endpoints_actor_has_a_partition_apart_from_its_anonymous_callers()
     {
-        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await using var host = Compose(
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = AppFixture.ClientOf(host);
         using var namesake = AppFixture.ClientOf(host, ReadOperationContextEndpoint.Visitor.Id);
 
-        var visitor = await anonymous.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
-        var person = await namesake.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
-        var anotherVisitor = await anonymous.GetAsync("/stub/public/context", TestContext.Current.CancellationToken);
+        var visitor = await anonymous.GetAsync(
+            "/stub/public/context",
+            TestContext.Current.CancellationToken
+        );
+        var person = await namesake.GetAsync(
+            "/stub/public/context",
+            TestContext.Current.CancellationToken
+        );
+        var anotherVisitor = await anonymous.GetAsync(
+            "/stub/public/context",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.OK, visitor.StatusCode);
         Assert.Equal(HttpStatusCode.OK, person.StatusCode);
@@ -216,13 +290,24 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task A_trusted_peers_unreadable_context_headers_count_in_the_partition_no_actor_resolves_for_and_answer_400()
     {
-        await using var host = Compose(RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0));
+        await using var host = Compose(
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var peer = AppFixture.ClientOf(host, AppFixture.TrustedPeer);
 
-        var unreadable = await peer.SendAsync(Continuing("ada", correlationId: "not-a-guid"), TestContext.Current.CancellationToken);
-        var unreadableAgain = await peer.SendAsync(Continuing("ada", correlationId: "not-a-guid"), TestContext.Current.CancellationToken);
-        var continuingAda = await peer.SendAsync(Continuing("ada"), TestContext.Current.CancellationToken);
+        var unreadable = await peer.SendAsync(
+            Continuing("ada", correlationId: "not-a-guid"),
+            TestContext.Current.CancellationToken
+        );
+        var unreadableAgain = await peer.SendAsync(
+            Continuing("ada", correlationId: "not-a-guid"),
+            TestContext.Current.CancellationToken
+        );
+        var continuingAda = await peer.SendAsync(
+            Continuing("ada"),
+            TestContext.Current.CancellationToken
+        );
         var direct = await peer.GetAsync("/stub/context", TestContext.Current.CancellationToken);
 
         await ProblemAsync(unreadable, HttpStatusCode.BadRequest);
@@ -235,12 +320,20 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_request_beyond_the_limit_waits_in_a_queue_of_its_own_size_until_the_next_window_and_one_beyond_the_queue_answers_429()
     {
         // Two permits and a queue of one: the queue's size is not the permit limit.
-        await using var host = Compose(RateLimit(permitLimit: 2, window: "00:00:03", queueLimit: 1));
+        await using var host = Compose(
+            RateLimit(permitLimit: 2, window: "00:00:03", queueLimit: 1)
+        );
         host.MapGet("/limited", () => "served");
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var ada = AppFixture.ClientOf(host, "ada");
-        Assert.Equal(HttpStatusCode.OK, (await ada.GetAsync("/limited", TestContext.Current.CancellationToken)).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await ada.GetAsync("/limited", TestContext.Current.CancellationToken)).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (await ada.GetAsync("/limited", TestContext.Current.CancellationToken)).StatusCode
+        );
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (await ada.GetAsync("/limited", TestContext.Current.CancellationToken)).StatusCode
+        );
 
         Task<HttpResponseMessage>[] beyond =
         [
@@ -269,14 +362,21 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var ada = AppFixture.ClientOf(host, "ada");
 
-        var context = await ada.GetFromJsonAsync<SeenContext>("/stub/context", TestContext.Current.CancellationToken);
+        var context = await ada.GetFromJsonAsync<SeenContext>(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(("ada", 1), (context!.Actor.Id, reads.Count));
     }
 
-    private WebApplication Compose(params (string Key, string Value)[] settings) => Compose(_ => { }, settings);
+    private WebApplication Compose(params (string Key, string Value)[] settings) =>
+        Compose(_ => { }, settings);
 
-    private WebApplication Compose(Action<WebApplicationBuilder> configure, params (string Key, string Value)[] settings) =>
+    private WebApplication Compose(
+        Action<WebApplicationBuilder> configure,
+        params (string Key, string Value)[] settings
+    ) =>
         AppFixture.ComposeHost(
             "Production",
             Fixture.ConnectionString,
@@ -284,7 +384,9 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
             builder =>
             {
                 builder.Configuration.AddInMemoryCollection(
-                    settings.Select(setting => KeyValuePair.Create($"PouryaKit:Web:{setting.Key}", (string?)setting.Value))
+                    settings.Select(setting =>
+                        KeyValuePair.Create($"PouryaKit:Web:{setting.Key}", (string?)setting.Value)
+                    )
                 );
                 configure(builder);
             }
@@ -329,7 +431,10 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         var request = new HttpRequestMessage(HttpMethod.Get, "/stub/context");
         request.Headers.Add(OperationContextHeaders.ActorId, actorId);
         request.Headers.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
-        request.Headers.Add(OperationContextHeaders.CorrelationId, correlationId ?? Guid.CreateVersion7().ToString());
+        request.Headers.Add(
+            OperationContextHeaders.CorrelationId,
+            correlationId ?? Guid.CreateVersion7().ToString()
+        );
         request.Headers.Add(OperationContextHeaders.CausationId, Guid.CreateVersion7().ToString());
         return request;
     }
@@ -348,12 +453,21 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static async Task AssertNoCorsPermissionAsync(HttpClient client, string origin)
     {
-        var preflight = await client.SendAsync(Preflight(origin), TestContext.Current.CancellationToken);
+        var preflight = await client.SendAsync(
+            Preflight(origin),
+            TestContext.Current.CancellationToken
+        );
         var request = await client.SendAsync(Get(origin), TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(preflight.Headers, header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            preflight.Headers,
+            header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
+        );
         Assert.Equal(HttpStatusCode.OK, request.StatusCode);
-        Assert.DoesNotContain(request.Headers, header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            request.Headers,
+            header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     // Hands out each authenticated caller as a principal that counts the reads of its Actor claim, the claim the Kit
@@ -365,7 +479,8 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal) =>
             Task.FromResult<ClaimsPrincipal>(new Counted(principal, this));
 
-        private sealed class Counted(ClaimsPrincipal principal, ActorClaimReads reads) : ClaimsPrincipal(principal)
+        private sealed class Counted(ClaimsPrincipal principal, ActorClaimReads reads)
+            : ClaimsPrincipal(principal)
         {
             public override Claim? FindFirst(string type)
             {

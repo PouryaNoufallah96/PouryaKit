@@ -18,7 +18,10 @@ internal sealed class RealtimeClients
     private static readonly SseItem<string> GapEvent = new("", RealtimeEvents.Gap);
 
     private readonly Lock _lock = new();
-    private readonly Dictionary<(string Tenant, string Channel), List<ChannelWriter<SseItem<string>>>> _listening = [];
+    private readonly Dictionary<
+        (string Tenant, string Channel),
+        List<ChannelWriter<SseItem<string>>>
+    > _listening = [];
     private readonly HashSet<ChannelWriter<SseItem<string>>> _connected = [];
 
     /// <summary>
@@ -31,7 +34,9 @@ internal sealed class RealtimeClients
         [EnumeratorCancellation] CancellationToken cancellationToken
     )
     {
-        var buffer = Channel.CreateBounded<SseItem<string>>(new BoundedChannelOptions(Buffered) { SingleReader = true });
+        var buffer = Channel.CreateBounded<SseItem<string>>(
+            new BoundedChannelOptions(Buffered) { SingleReader = true }
+        );
         Add(tenant, channels, buffer.Writer);
         try
         {
@@ -67,9 +72,14 @@ internal sealed class RealtimeClients
     {
         lock (_lock)
         {
-            if (_listening.TryGetValue((notification.Tenant, notification.Channel), out var clients))
+            if (
+                _listening.TryGetValue((notification.Tenant, notification.Channel), out var clients)
+            )
             {
-                SseItem<string> pushed = new(((JsonElement)notification.Body).GetRawText(), notification.Channel);
+                SseItem<string> pushed = new(
+                    ((JsonElement)notification.Body).GetRawText(),
+                    notification.Channel
+                );
                 foreach (var client in clients)
                 {
                     Write(client, pushed);
@@ -98,26 +108,42 @@ internal sealed class RealtimeClients
         }
     }
 
-    private void Add(string tenant, IReadOnlyCollection<string> channels, ChannelWriter<SseItem<string>> client)
+    private void Add(
+        string tenant,
+        IReadOnlyCollection<string> channels,
+        ChannelWriter<SseItem<string>> client
+    )
     {
         lock (_lock)
         {
             _connected.Add(client);
             foreach (var channel in channels)
             {
-                (_listening.TryGetValue((tenant, channel), out var clients) ? clients : _listening[(tenant, channel)] = []).Add(client);
+                (
+                    _listening.TryGetValue((tenant, channel), out var clients)
+                        ? clients
+                        : _listening[(tenant, channel)] = []
+                ).Add(client);
             }
         }
     }
 
-    private void Remove(string tenant, IReadOnlyCollection<string> channels, ChannelWriter<SseItem<string>> client)
+    private void Remove(
+        string tenant,
+        IReadOnlyCollection<string> channels,
+        ChannelWriter<SseItem<string>> client
+    )
     {
         lock (_lock)
         {
             _connected.Remove(client);
             foreach (var channel in channels)
             {
-                if (_listening.TryGetValue((tenant, channel), out var clients) && clients.Remove(client) && clients.Count == 0)
+                if (
+                    _listening.TryGetValue((tenant, channel), out var clients)
+                    && clients.Remove(client)
+                    && clients.Count == 0
+                )
                 {
                     _listening.Remove((tenant, channel));
                 }

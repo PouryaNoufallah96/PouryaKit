@@ -10,9 +10,12 @@ namespace PouryaKit.Cqrs;
 // HostComposition it registers is missing and the start fails, naming the call (CompositionCheckRunner).
 internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
 {
-    private readonly DefaultServiceProviderFactory _container = new(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+    private readonly DefaultServiceProviderFactory _container = new(
+        new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }
+    );
 
-    public IServiceCollection CreateBuilder(IServiceCollection services) => _container.CreateBuilder(services);
+    public IServiceCollection CreateBuilder(IServiceCollection services) =>
+        _container.CreateBuilder(services);
 
     public IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder)
     {
@@ -22,7 +25,12 @@ internal sealed class ValidatingServiceProviderFactory : IServiceProviderFactory
         List<string> problems;
         try
         {
-            problems = [.. provider.GetServices<ICompositionCheck>().SelectMany(check => check.Check(composition, provider))];
+            problems =
+            [
+                .. provider
+                    .GetServices<ICompositionCheck>()
+                    .SelectMany(check => check.Check(composition, provider)),
+            ];
         }
         catch
         {

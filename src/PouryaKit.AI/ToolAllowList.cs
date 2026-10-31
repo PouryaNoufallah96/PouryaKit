@@ -6,7 +6,8 @@ namespace PouryaKit.AI;
 // reads them: the model is not offered the tool, and a call it asks for anyway is answered as a function that does not
 // exist, so the tool never runs. A declaration that is no function, such as a handoff workflow's handoff_to_ tools, runs
 // nothing here: function invocation hands its call back to the caller, so it passes unnamed.
-internal sealed class ToolAllowList(IChatClient inner, ISet<string> allowed) : DelegatingChatClient(inner)
+internal sealed class ToolAllowList(IChatClient inner, ISet<string> allowed)
+    : DelegatingChatClient(inner)
 {
     public override Task<ChatResponse> GetResponseAsync(
         IEnumerable<ChatMessage> messages,
@@ -32,5 +33,6 @@ internal sealed class ToolAllowList(IChatClient inner, ISet<string> allowed) : D
         return only;
     }
 
-    private bool IsAllowed(AITool tool) => allowed.Contains(tool.Name) || tool is AIFunctionDeclaration and not AIFunction;
+    private bool IsAllowed(AITool tool) =>
+        allowed.Contains(tool.Name) || tool is AIFunctionDeclaration and not AIFunction;
 }

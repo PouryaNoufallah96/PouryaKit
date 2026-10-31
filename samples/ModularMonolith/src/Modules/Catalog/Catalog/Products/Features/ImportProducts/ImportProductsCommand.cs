@@ -8,4 +8,5 @@ namespace Catalog.Products.Features.ImportProducts;
 /// answers what the first import did.
 /// </summary>
 [Idempotent]
-internal sealed record ImportProductsCommand(Guid CategoryId, IReadOnlyList<string> Names) : Command<int>;
+internal sealed record ImportProductsCommand(Guid CategoryId, IReadOnlyList<string> Names)
+    : Command<int>;

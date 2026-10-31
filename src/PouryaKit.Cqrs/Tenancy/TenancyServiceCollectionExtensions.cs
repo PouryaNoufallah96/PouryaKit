@@ -39,7 +39,11 @@ public static class TenancyServiceCollectionExtensions
             }
 
             ComposedFeatures.In(services).TenantScoped.Add(IModuleServices.ModuleOf(services));
-            foreach (var operation in OperationTypes.Dispatchable(ImplementingTypes.Of(typeof(object), assemblies)))
+            foreach (
+                var operation in OperationTypes.Dispatchable(
+                    ImplementingTypes.Of(typeof(object), assemblies)
+                )
+            )
             {
                 services.TryAddEnumerable(
                     ServiceDescriptor.Scoped(

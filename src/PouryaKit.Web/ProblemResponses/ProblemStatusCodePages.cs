@@ -14,7 +14,9 @@ internal sealed class ProblemStatusCodePages : IStartupFilter
         app =>
         {
             app.UseStatusCodePages(context =>
-                TypedResults.Problem(statusCode: context.HttpContext.Response.StatusCode).ExecuteAsync(context.HttpContext)
+                TypedResults
+                    .Problem(statusCode: context.HttpContext.Response.StatusCode)
+                    .ExecuteAsync(context.HttpContext)
             );
             next(app);
         };

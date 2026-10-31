@@ -26,7 +26,8 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     private const string InventorySubscription = "inventory.catalog-products";
     private const string FolderSubscription = "stub.folder-snapshots";
 
-    private IntegrationEventLog Received => Fixture.Host.Services.GetRequiredService<IntegrationEventLog>();
+    private IntegrationEventLog Received =>
+        Fixture.Host.Services.GetRequiredService<IntegrationEventLog>();
 
     [Fact]
     public async Task Inventorys_copy_follows_each_change_of_a_product_with_the_version_catalog_committed()
@@ -39,14 +40,23 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         await ChangeProductAsync(() => RenameProductAsync(product, "Desk lamp"));
         copies.AddRange(await CopyAndProductAsync(product));
 
-        Assert.Equal([["Lamp", 1L, 1L], ["Desk lamp", 2L, 2L]], copies);
+        Assert.Equal(
+            [
+                ["Lamp", 1L, 1L],
+                ["Desk lamp", 2L, 2L],
+            ],
+            copies
+        );
     }
 
     [Fact]
     public async Task One_operation_that_changes_a_folder_three_ways_stores_one_snapshot_with_the_persisted_version()
     {
         var folder = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(folder)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(folder)),
+            TestContext.Current.CancellationToken
+        );
 
         // Renamed by the handler, relabelled by a nested command, and given a page by a Domain Event Handler.
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
@@ -55,16 +65,31 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Single(deliveries, delivery => delivery.Subscription == FolderSubscription);
-        Assert.Equal(new FolderSnapshotV1(folder, "reworked", "red", 3, false, 2L), FolderSnapshots(folder)[^1]);
-        Assert.Equal(2L, await Fixture.ScalarAsync<long>($"select version from stub.folders where id = '{folder}'"));
+        Assert.Equal(
+            new FolderSnapshotV1(folder, "reworked", "red", 3, false, 2L),
+            FolderSnapshots(folder)[^1]
+        );
+        Assert.Equal(
+            2L,
+            await Fixture.ScalarAsync<long>(
+                $"select version from stub.folders where id = '{folder}'"
+            )
+        );
     }
 
     [Fact]
     public async Task One_operation_that_changes_two_folders_stores_one_snapshot_of_each()
     {
-        Guid from = Guid.CreateVersion7(), to = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(from)), TestContext.Current.CancellationToken);
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(to)), TestContext.Current.CancellationToken);
+        Guid from = Guid.CreateVersion7(),
+            to = Guid.CreateVersion7();
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(from)),
+            TestContext.Current.CancellationToken
+        );
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(to)),
+            TestContext.Current.CancellationToken
+        );
 
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
             () => StubAsync(new MovePageCommand(from, to, "first page")),
@@ -73,7 +98,10 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(2, deliveries.Count(delivery => delivery.Subscription == FolderSubscription));
         Assert.Equal(
-            [new FolderSnapshotV1(from, "drafts", "grey", 1, false, 2L), new FolderSnapshotV1(to, "drafts", "grey", 3, false, 2L)],
+            [
+                new FolderSnapshotV1(from, "drafts", "grey", 1, false, 2L),
+                new FolderSnapshotV1(to, "drafts", "grey", 3, false, 2L),
+            ],
             [FolderSnapshots(from)[^1], FolderSnapshots(to)[^1]]
         );
     }
@@ -81,24 +109,37 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     [Theory]
     [InlineData(nameof(FolderEdit.Nothing))]
     [InlineData(nameof(FolderEdit.RelabelThenRefuse))]
-    public async Task An_operation_that_changes_no_aggregate_or_rolls_back_stores_no_snapshot(string edit)
+    public async Task An_operation_that_changes_no_aggregate_or_rolls_back_stores_no_snapshot(
+        string edit
+    )
     {
         var folder = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(folder)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(folder)),
+            TestContext.Current.CancellationToken
+        );
 
         await Fixture.AssertNothingSentAsync(
             () => StubAsync(new EditFolderCommand(folder, Enum.Parse<FolderEdit>(edit))),
             TestContext.Current.CancellationToken
         );
 
-        Assert.Equal([["grey", 1L]], await Fixture.RowsAsync("select label_colour, version from stub.folders"));
+        Assert.Equal(
+            [
+                ["grey", 1L],
+            ],
+            await Fixture.RowsAsync("select label_colour, version from stub.folders")
+        );
     }
 
     [Fact]
     public async Task A_change_made_only_through_a_child_of_an_aggregate_publishes_its_snapshot()
     {
         var folder = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(folder)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(folder)),
+            TestContext.Current.CancellationToken
+        );
 
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
             () => StubAsync(new EditFolderCommand(folder, FolderEdit.RewritePage)),
@@ -106,7 +147,10 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Single(deliveries, delivery => delivery.Subscription == FolderSubscription);
-        Assert.Equal(new FolderSnapshotV1(folder, "drafts", "grey", 2, false, 2L), FolderSnapshots(folder)[^1]);
+        Assert.Equal(
+            new FolderSnapshotV1(folder, "drafts", "grey", 2, false, 2L),
+            FolderSnapshots(folder)[^1]
+        );
     }
 
     [Fact]
@@ -117,13 +161,21 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         await ChangeProductAsync(() => RenameProductAsync(product, "Desk lamp"));
 
         await ChangeProductAsync(async () =>
-            (Result)await Fixture.Gateway<CatalogModule>().SendAsync(new RemoveProductsCommand(["Desk lamp"]), TestContext.Current.CancellationToken)
+            (Result)
+                await Fixture
+                    .Gateway<CatalogModule>()
+                    .SendAsync(
+                        new RemoveProductsCommand(["Desk lamp"]),
+                        TestContext.Current.CancellationToken
+                    )
         );
 
         Assert.Empty(await Fixture.RowsAsync("select * from inventory.catalog_products"));
         // The last version Inventory applied is the Tombstone's, one newer than the renamed product's: what Catalog keeps.
         Assert.Equal(
-            [[3L, 3L, true]],
+            [
+                [3L, 3L, true],
+            ],
             await Fixture.RowsAsync(
                 $"select applied.version, products.version, products.is_deleted from inventory.pouryakit_snapshot_versions applied join catalog.products on products.id::text = applied.aggregate_id where applied.subscription = '{InventorySubscription}'"
             )
@@ -134,17 +186,30 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Removing_an_aggregate_deleted_outright_publishes_its_tombstone_with_a_newer_version()
     {
         var tray = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateTrayCommand(tray)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateTrayCommand(tray)),
+            TestContext.Current.CancellationToken
+        );
 
         await Fixture.WaitForDeliveriesAsync(
-            async () => (Result)await Fixture.Gateway<StubModule>().SendAsync(new EditTrayCommand(tray, TrayEdit.Remove), TestContext.Current.CancellationToken),
+            async () =>
+                (Result)
+                    await Fixture
+                        .Gateway<StubModule>()
+                        .SendAsync(
+                            new EditTrayCommand(tray, TrayEdit.Remove),
+                            TestContext.Current.CancellationToken
+                        ),
             TestContext.Current.CancellationToken
         );
 
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.trays"));
         Assert.Equal(
             [new TraySnapshotV1(tray, 1, false, 1L), new TraySnapshotV1(tray, 1, true, 2L)],
-            Received.All.Select(received => received.IntegrationEvent).OfType<TraySnapshotV1>().Where(snapshot => snapshot.TrayId == tray)
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<TraySnapshotV1>()
+                .Where(snapshot => snapshot.TrayId == tray)
         );
     }
 
@@ -161,7 +226,14 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         }
 
-        Assert.Equal([[product, "Floor lamp", 3L]], await Fixture.RowsAsync("select product_id, name, version from inventory.catalog_products"));
+        Assert.Equal(
+            [
+                [product, "Floor lamp", 3L],
+            ],
+            await Fixture.RowsAsync(
+                "select product_id, name, version from inventory.catalog_products"
+            )
+        );
     }
 
     [Theory(Timeout = 60_000)]
@@ -172,7 +244,8 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         var product = Guid.CreateVersion7();
         var envelopes = await ThreeVersionsAsync(product, remove: false);
         await ForgetCopiesAsync();
-        Guid first = newerFirst ? envelopes[2] : envelopes[1], second = newerFirst ? envelopes[1] : envelopes[2];
+        Guid first = newerFirst ? envelopes[2] : envelopes[1],
+            second = newerFirst ? envelopes[1] : envelopes[2];
 
         // The first holds its newer-than-anything version uncommitted; the second arrives and must decide against it.
         using (var hold = DeliveryProbes.HoldAfterVersion(InventorySubscription))
@@ -184,7 +257,14 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         }
 
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
-        Assert.Equal([[product, "Floor lamp", 3L]], await Fixture.RowsAsync("select product_id, name, version from inventory.catalog_products"));
+        Assert.Equal(
+            [
+                [product, "Floor lamp", 3L],
+            ],
+            await Fixture.RowsAsync(
+                "select product_id, name, version from inventory.catalog_products"
+            )
+        );
     }
 
     [Fact]
@@ -207,7 +287,10 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_snapshot_delivered_again_changes_nothing()
     {
         var folder = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(folder)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(folder)),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Single(
             await Fixture.RowsAsync(
@@ -220,7 +303,9 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         // The redelivery carried the same identity, so its Receipt was the one already recorded.
         Assert.Equal(
             1L,
-            await Fixture.ScalarAsync<long>($"select count(*) from stub.pouryakit_receipts where subscription = '{FolderSubscription}'")
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.pouryakit_receipts where subscription = '{FolderSubscription}'"
+            )
         );
     }
 
@@ -234,7 +319,9 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         using (
             CommitProbe.AfterCommit(async () =>
             {
-                productCommits = await Fixture.RowsAsync($"select pg_xact_commit_timestamp(xmin) from catalog.products where id = '{product}'");
+                productCommits = await Fixture.RowsAsync(
+                    $"select pg_xact_commit_timestamp(xmin) from catalog.products where id = '{product}'"
+                );
                 envelopes = await Fixture.RowsAsync(
                     "select received_at, status, pg_xact_commit_timestamp(xmin) from wolverine.wolverine_incoming_envelopes where message_type = 'catalog.product-snapshot.v1'"
                 );
@@ -247,31 +334,59 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var committedAt = Assert.Single(Assert.Single(productCommits));
         Assert.IsType<DateTime>(committedAt);
-        Assert.Equal([[$"local://{InventorySubscription}/", "Incoming", committedAt]], envelopes);
+        Assert.Equal(
+            [
+                [$"local://{InventorySubscription}/", "Incoming", committedAt],
+            ],
+            envelopes
+        );
     }
 
     [Fact]
     public async Task A_snapshot_mapper_that_changes_its_aggregate_fails_the_operation_and_commits_nothing()
     {
         var folder = Guid.CreateVersion7();
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new CreateFolderCommand(folder)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new CreateFolderCommand(folder)),
+            TestContext.Current.CancellationToken
+        );
 
         var thrown = await Fixture.AssertNothingSentAsync(
             () =>
                 Assert.ThrowsAsync<InvalidOperationException>(() =>
-                    StubAsync(new EditFolderCommand(folder, FolderEdit.Relabel, Colour: FolderSnapshotMapper.ChangesItsFolder))
+                    StubAsync(
+                        new EditFolderCommand(
+                            folder,
+                            FolderEdit.Relabel,
+                            Colour: FolderSnapshotMapper.ChangesItsFolder
+                        )
+                    )
                 ),
             TestContext.Current.CancellationToken
         );
 
         Assert.StartsWith("A Snapshot mapper changed a Folder the Operation saves", thrown.Message);
-        Assert.Equal([["drafts", "grey", 1L]], await Fixture.RowsAsync("select name, label_colour, version from stub.folders"));
+        Assert.Equal(
+            [
+                ["drafts", "grey", 1L],
+            ],
+            await Fixture.RowsAsync("select name, label_colour, version from stub.folders")
+        );
     }
 
     [Theory]
-    [InlineData(ShelfSnapshotMapper.AddsALabel, "A Snapshot mapper changed a Shelf the Operation saves")]
-    [InlineData(ShelfSnapshotMapper.Resizes, "A Snapshot mapper changed a Shelf the Operation saves")]
-    [InlineData(ShelfSnapshotMapper.Announces, "A Snapshot mapper raised a Domain Event on a Shelf")]
+    [InlineData(
+        ShelfSnapshotMapper.AddsALabel,
+        "A Snapshot mapper changed a Shelf the Operation saves"
+    )]
+    [InlineData(
+        ShelfSnapshotMapper.Resizes,
+        "A Snapshot mapper changed a Shelf the Operation saves"
+    )]
+    [InlineData(
+        ShelfSnapshotMapper.Announces,
+        "A Snapshot mapper raised a Domain Event on a Shelf"
+    )]
     public async Task A_snapshot_mapper_that_changes_a_value_in_place_or_a_complex_property_or_raises_a_domain_event_fails_the_operation(
         string mischief,
         string error
@@ -279,7 +394,14 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         // A new shelf, so it is already Added when its mapper runs: its state cannot show the change.
         var thrown = await Fixture.AssertNothingSentAsync(
-            () => Assert.ThrowsAsync<InvalidOperationException>(() => StubAsync(new PutShelvesCommand([["A1", "B1", mischief]]))),
+            () =>
+                Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    StubAsync(
+                        new PutShelvesCommand([
+                            ["A1", "B1", mischief],
+                        ])
+                    )
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -291,41 +413,71 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Composite_keys_whose_parts_join_alike_keep_their_snapshots_apart()
     {
         await Fixture.WaitForDeliveriesAsync(
-            () => StubAsync(new PutShelvesCommand([["a/b", "c"], ["a", "b/c"]])),
+            () =>
+                StubAsync(
+                    new PutShelvesCommand([
+                        ["a/b", "c"],
+                        ["a", "b/c"],
+                    ])
+                ),
             TestContext.Current.CancellationToken
         );
 
         Assert.Equal(
-            [new ShelfSnapshotV1("a", "b/c", 0, false, 1L), new ShelfSnapshotV1("a/b", "c", 0, false, 1L)],
-            Received.All.Select(received => received.IntegrationEvent).OfType<ShelfSnapshotV1>().Where(snapshot => snapshot.Aisle.StartsWith('a')).OrderBy(snapshot => snapshot.Aisle, StringComparer.Ordinal)
+            [
+                new ShelfSnapshotV1("a", "b/c", 0, false, 1L),
+                new ShelfSnapshotV1("a/b", "c", 0, false, 1L),
+            ],
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<ShelfSnapshotV1>()
+                .Where(snapshot => snapshot.Aisle.StartsWith('a'))
+                .OrderBy(snapshot => snapshot.Aisle, StringComparer.Ordinal)
         );
         Assert.Equal(
             2L,
-            await Fixture.ScalarAsync<long>("select count(distinct aggregate_id) from stub.pouryakit_snapshot_versions where subscription = 'stub.shelf-snapshots'")
+            await Fixture.ScalarAsync<long>(
+                "select count(distinct aggregate_id) from stub.pouryakit_snapshot_versions where subscription = 'stub.shelf-snapshots'"
+            )
         );
     }
 
     [Fact]
     public async Task A_snapshot_declared_for_a_shared_base_type_is_published_only_for_its_own_modules_aggregates()
     {
-        Guid product = Guid.CreateVersion7(), leaflet = Guid.CreateVersion7();
+        Guid product = Guid.CreateVersion7(),
+            leaflet = Guid.CreateVersion7();
 
         await ChangeProductAsync(() => CreateProductAsync(product, "Lamp"));
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new PrintLeafletCommand(leaflet, "Lamps")), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new PrintLeafletCommand(leaflet, "Lamps")),
+            TestContext.Current.CancellationToken
+        );
 
         // Catalog's product is keyed by a product ID too, yet publishes only Catalog's own Snapshot.
         Assert.Equal(
             [new ProductKeyedSnapshotV1(nameof(Leaflet), leaflet, false, 1L)],
-            Received.All.Select(received => received.IntegrationEvent).OfType<ProductKeyedSnapshotV1>().Where(snapshot => snapshot.ProductId == product || snapshot.ProductId == leaflet)
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<ProductKeyedSnapshotV1>()
+                .Where(snapshot => snapshot.ProductId == product || snapshot.ProductId == leaflet)
         );
-        Assert.Equal([[product, 1L]], await Fixture.RowsAsync("select product_id, version from inventory.catalog_products"));
+        Assert.Equal(
+            [
+                [product, 1L],
+            ],
+            await Fixture.RowsAsync("select product_id, version from inventory.catalog_products")
+        );
     }
 
     [Fact]
     public async Task A_snapshot_of_an_aggregate_whose_key_the_database_generates_fails_the_operation_that_creates_it()
     {
         var thrown = await Fixture.AssertNothingSentAsync(
-            () => Assert.ThrowsAsync<InvalidOperationException>(() => StubAsync(new StartCounterCommand("visits"))),
+            () =>
+                Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    StubAsync(new StartCounterCommand("visits"))
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -348,13 +500,22 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(
             await CommittedAsync($"select serial from stub.tickets where id = '{ticket}'"),
-            Received.All.Select(received => received.IntegrationEvent).OfType<TicketSnapshotV1>().Where(snapshot => snapshot.TicketId == ticket).Select(snapshot => snapshot.Serial)
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<TicketSnapshotV1>()
+                .Where(snapshot => snapshot.TicketId == ticket)
+                .Select(snapshot => snapshot.Serial)
         );
         Assert.Equal(
             "A Snapshot of Ticket is declared, but Ticket.Serial is generated by the database when it is saved, after the Snapshot is built, so the Snapshot would not carry the value committed. Have the application set Ticket.Serial: map it with no default value SQL, computed column or generated value.",
             Assert.IsType<InvalidOperationException>(thrown).Message
         );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.tickets where id = '{ticket}'"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.tickets where id = '{ticket}'"
+            )
+        );
     }
 
     // The database computes the label of a drawer's knob, a part the drawer owns, from its finish when it is saved:
@@ -364,18 +525,29 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var drawer = Guid.CreateVersion7();
 
-        var thrown = await Record.ExceptionAsync(() => StubAsync(new FitDrawerCommand(drawer, "brass")));
+        var thrown = await Record.ExceptionAsync(() =>
+            StubAsync(new FitDrawerCommand(drawer, "brass"))
+        );
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             await CommittedAsync($"select knob_label from stub.drawers where id = '{drawer}'"),
-            Received.All.Select(received => received.IntegrationEvent).OfType<DrawerSnapshotV1>().Where(snapshot => snapshot.DrawerId == drawer).Select(snapshot => snapshot.KnobLabel)
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<DrawerSnapshotV1>()
+                .Where(snapshot => snapshot.DrawerId == drawer)
+                .Select(snapshot => snapshot.KnobLabel)
         );
         Assert.Equal(
             "A Snapshot of Drawer is declared, but Knob.Label is generated by the database when it is saved, after the Snapshot is built, so the Snapshot would not carry the value committed. Have the application set Knob.Label: map it with no default value SQL, computed column or generated value.",
             Assert.IsType<InvalidOperationException>(thrown).Message
         );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.drawers where id = '{drawer}'"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.drawers where id = '{drawer}'"
+            )
+        );
     }
 
     // A client-side generator sets a badge's code for good when the badge is added, before the Snapshot is built: the
@@ -385,13 +557,21 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var badge = Guid.CreateVersion7();
 
-        await Fixture.WaitForDeliveriesAsync(() => StubAsync(new IssueBadgeCommand(badge)), TestContext.Current.CancellationToken);
+        await Fixture.WaitForDeliveriesAsync(
+            () => StubAsync(new IssueBadgeCommand(badge)),
+            TestContext.Current.CancellationToken
+        );
 
-        var code = await Fixture.ScalarAsync<Guid>($"select code from stub.badges where id = '{badge}'");
+        var code = await Fixture.ScalarAsync<Guid>(
+            $"select code from stub.badges where id = '{badge}'"
+        );
         Assert.NotEqual(Guid.Empty, code);
         Assert.Equal(
             [new BadgeSnapshotV1(badge, code, false, 1L)],
-            Received.All.Select(received => received.IntegrationEvent).OfType<BadgeSnapshotV1>().Where(snapshot => snapshot.BadgeId == badge)
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<BadgeSnapshotV1>()
+                .Where(snapshot => snapshot.BadgeId == badge)
         );
     }
 
@@ -401,9 +581,12 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public void A_snapshot_is_refused_by_the_model_its_dbcontext_uses_when_one_dbcontext_type_has_two_models()
     {
-        IModel plain = LidModel(stamped: false), stamped = LidModel(stamped: true);
-        using LidContext plainFirst = new(plain), stampedSecond = new(stamped);
-        using OtherLidContext stampedFirst = new(stamped), plainSecond = new(plain);
+        IModel plain = LidModel(stamped: false),
+            stamped = LidModel(stamped: true);
+        using LidContext plainFirst = new(plain),
+            stampedSecond = new(stamped);
+        using OtherLidContext stampedFirst = new(stamped),
+            plainSecond = new(plain);
         const string refusal =
             "A Snapshot of Lid is declared, but Lid.Stamp is generated by the database when it is saved, after the Snapshot is built, so the Snapshot would not carry the value committed. Have the application set Lid.Stamp: map it with no default value SQL, computed column or generated value.";
 
@@ -420,9 +603,12 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public void A_snapshot_is_refused_by_the_value_generator_selector_its_dbcontext_uses_when_two_share_a_model()
     {
-        IModel namedFirst = LidModel(stamped: false, coded: true), temporaryFirst = LidModel(stamped: false, coded: true);
-        using LidContext named = new(namedFirst), temporarySecond = new(namedFirst, temporaryCodes: true);
-        using LidContext temporary = new(temporaryFirst, temporaryCodes: true), namedSecond = new(temporaryFirst);
+        IModel namedFirst = LidModel(stamped: false, coded: true),
+            temporaryFirst = LidModel(stamped: false, coded: true);
+        using LidContext named = new(namedFirst),
+            temporarySecond = new(namedFirst, temporaryCodes: true);
+        using LidContext temporary = new(temporaryFirst, temporaryCodes: true),
+            namedSecond = new(temporaryFirst);
         const string refusal =
             "A Snapshot of Lid is declared, but Lid.Code is generated by the database when it is saved, after the Snapshot is built, so the Snapshot would not carry the value committed. Have the application set Lid.Code: map it with no default value SQL, computed column or generated value.";
 
@@ -441,7 +627,8 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public void A_snapshot_is_refused_when_the_database_generates_the_key_of_a_child_in_its_aggregates_graph()
     {
-        using LidContext sealedOnly = new(LidModel(stamped: false)), hinged = new(LidModel(stamped: false, hinged: true));
+        using LidContext sealedOnly = new(LidModel(stamped: false)),
+            hinged = new(LidModel(stamped: false, hinged: true));
 
         Assert.Single(LidSnapshots(sealedOnly));
         Assert.Equal(
@@ -461,13 +648,32 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     }
 
     [Theory(Timeout = 60_000)]
-    [InlineData(ShelfSnapshotMapper.SendsACommand, "A command was sent from a Snapshot mapper, a step that only reads.")]
-    [InlineData(ShelfSnapshotMapper.AddsAShelf, "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write")]
-    [InlineData(ShelfSnapshotMapper.JoinsTheConnection, "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write")]
-    public async Task A_snapshot_mapper_that_sends_a_command_or_writes_is_refused_and_nothing_commits(string mischief, string error)
+    [InlineData(
+        ShelfSnapshotMapper.SendsACommand,
+        "A command was sent from a Snapshot mapper, a step that only reads."
+    )]
+    [InlineData(
+        ShelfSnapshotMapper.AddsAShelf,
+        "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write"
+    )]
+    [InlineData(
+        ShelfSnapshotMapper.JoinsTheConnection,
+        "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write"
+    )]
+    public async Task A_snapshot_mapper_that_sends_a_command_or_writes_is_refused_and_nothing_commits(
+        string mischief,
+        string error
+    )
     {
         var thrown = await Fixture.AssertNothingSentAsync(
-            () => Assert.ThrowsAsync<InvalidOperationException>(() => StubAsync(new PutShelvesCommand([["A1", "B1", mischief]]))),
+            () =>
+                Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    StubAsync(
+                        new PutShelvesCommand([
+                            ["A1", "B1", mischief],
+                        ])
+                    )
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -482,7 +688,12 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_snapshot_mapper_that_swallows_the_refusal_of_its_command_fails_the_operation_after_the_outbox_is_written()
     {
         var result = await Fixture.AssertNothingSentAsync(
-            () => StubAsync(new PutShelvesCommand([["A1", "B1", ShelfSnapshotMapper.SwallowsItsRefusedCommand]])),
+            () =>
+                StubAsync(
+                    new PutShelvesCommand([
+                        ["A1", "B1", ShelfSnapshotMapper.SwallowsItsRefusedCommand],
+                    ])
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -496,21 +707,35 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         var folder = Guid.CreateVersion7();
 
         var thrown = await WithDeclarationAsync(
-            services => services.PublishSnapshot<IDeskItem, DeskItemSnapshotV1, DeskItemSnapshotMapper>("tests.desk-item.v1", typeof(StubModule)),
-            stub => stub.SendAsync(new CreateFolderCommand(folder), TestContext.Current.CancellationToken)
+            services =>
+                services.PublishSnapshot<IDeskItem, DeskItemSnapshotV1, DeskItemSnapshotMapper>(
+                    "tests.desk-item.v1",
+                    typeof(StubModule)
+                ),
+            stub =>
+                stub.SendAsync(
+                    new CreateFolderCommand(folder),
+                    TestContext.Current.CancellationToken
+                )
         );
 
         Assert.Equal(
             $"The Snapshot {typeof(DeskItemSnapshotV1).FullName} is declared for {typeof(IDeskItem).FullName}, which covers aggregates of the separately mapped hierarchies of {typeof(Folder).FullName}, {typeof(Case).FullName}. Their keys are their own, so their Snapshots would share identities and versions, and a receiver would turn one aggregate's away for another's. Declare a Snapshot for each aggregate, or for a type of one mapped hierarchy.",
             thrown.Message
         );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.folders where id = '{folder}'"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.folders where id = '{folder}'"
+            )
+        );
     }
 
     [Fact]
     public async Task A_snapshot_declared_for_a_base_class_of_one_mapped_hierarchy_is_published_for_each_of_its_aggregates()
     {
-        Guid pencilCase = Guid.CreateVersion7(), bookCase = Guid.CreateVersion7();
+        Guid pencilCase = Guid.CreateVersion7(),
+            bookCase = Guid.CreateVersion7();
 
         await Fixture.WaitForDeliveriesAsync(
             () => StubAsync(new CreateCasesCommand(pencilCase, bookCase)),
@@ -518,8 +743,13 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(
-            [new CaseSnapshotV1(bookCase, nameof(BookCase), false, 1L), new CaseSnapshotV1(pencilCase, nameof(PencilCase), false, 1L)],
-            Received.All.Select(received => received.IntegrationEvent).OfType<CaseSnapshotV1>()
+            [
+                new CaseSnapshotV1(bookCase, nameof(BookCase), false, 1L),
+                new CaseSnapshotV1(pencilCase, nameof(PencilCase), false, 1L),
+            ],
+            Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<CaseSnapshotV1>()
                 .Where(snapshot => snapshot.CaseId == pencilCase || snapshot.CaseId == bookCase)
                 .OrderBy(snapshot => snapshot.Kind, StringComparer.Ordinal)
         );
@@ -532,12 +762,28 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var thrown = await WithDeclarationAsync(
             services =>
-                services.PublishSnapshot<Leaflet, LeafletSnapshotV1, LeafletSnapshotMapperThatWritesWhenBuilt>("tests.leaflet.v1", typeof(StubModule)),
-            stub => stub.SendAsync(new PrintLeafletCommand(leaflet, "Lamps"), TestContext.Current.CancellationToken)
+                services.PublishSnapshot<
+                    Leaflet,
+                    LeafletSnapshotV1,
+                    LeafletSnapshotMapperThatWritesWhenBuilt
+                >("tests.leaflet.v1", typeof(StubModule)),
+            stub =>
+                stub.SendAsync(
+                    new PrintLeafletCommand(leaflet, "Lamps"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
-        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.leaflets where id = '{leaflet}'"));
+        Assert.StartsWith(
+            "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write",
+            thrown.Message
+        );
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.leaflets where id = '{leaflet}'"
+            )
+        );
     }
 
     [Fact]
@@ -546,14 +792,22 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         var folder = Guid.CreateVersion7();
 
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
-            () => StubAsync(new WriteNoteRaisingCommand($"note {folder}", [new FolderSnapshotPublishedByHandDomainEvent(folder)])),
+            () =>
+                StubAsync(
+                    new WriteNoteRaisingCommand(
+                        $"note {folder}",
+                        [new FolderSnapshotPublishedByHandDomainEvent(folder)]
+                    )
+                ),
             TestContext.Current.CancellationToken
         );
 
         Assert.True(Assert.Single(deliveries).DeadLettered);
         Assert.Contains(
             $"{typeof(FolderSnapshotV1).FullName} is a Snapshot",
-            await Fixture.ScalarAsync<string>("select exception_message from wolverine.wolverine_dead_letters")
+            await Fixture.ScalarAsync<string>(
+                "select exception_message from wolverine.wolverine_dead_letters"
+            )
         );
         Assert.Empty(FolderSnapshots(folder));
     }
@@ -579,7 +833,12 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         Func<IGatewayProcessor<StubModule>, Task<Result>> operation
     )
     {
-        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, builder => declare(builder.Services));
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs,
+            builder => declare(builder.Services)
+        );
         await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
         try
         {
@@ -604,7 +863,12 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
             await ChangeProductAsync(() => RenameProductAsync(product, "Desk lamp")),
             await ChangeProductAsync(async () =>
                 remove
-                    ? await Fixture.Gateway<CatalogModule>().SendAsync(new RemoveProductsCommand(["Desk lamp"]), TestContext.Current.CancellationToken)
+                    ? await Fixture
+                        .Gateway<CatalogModule>()
+                        .SendAsync(
+                            new RemoveProductsCommand(["Desk lamp"]),
+                            TestContext.Current.CancellationToken
+                        )
                     : await RenameProductAsync(product, "Floor lamp")
             ),
         ];
@@ -615,7 +879,10 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     private async Task<Guid> ChangeProductAsync(Func<Task<Result>> change)
     {
         var before = await InventoryEnvelopesAsync();
-        var (changed, _) = await Fixture.WaitForDeliveriesAsync(change, TestContext.Current.CancellationToken);
+        var (changed, _) = await Fixture.WaitForDeliveriesAsync(
+            change,
+            TestContext.Current.CancellationToken
+        );
         Assert.True(changed.IsSuccess);
         return Assert.Single((await InventoryEnvelopesAsync()).Except(before));
     }
@@ -645,7 +912,9 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private async Task WaitForVersionWaitingAsync()
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         timeout.CancelAfter(TimeSpan.FromSeconds(15));
         while (
             await Fixture.ScalarAsync<long>(
@@ -653,7 +922,10 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
             ) < 1
         )
         {
-            Assert.False(timeout.IsCancellationRequested, "The second delivery never waited on the held delivery's version.");
+            Assert.False(
+                timeout.IsCancellationRequested,
+                "The second delivery never waited on the held delivery's version."
+            );
             await Task.Delay(25, TestContext.Current.CancellationToken);
         }
     }
@@ -666,21 +938,38 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         ];
 
     private List<FolderSnapshotV1> FolderSnapshots(Guid folder) =>
-        [.. Received.All.Select(received => received.IntegrationEvent).OfType<FolderSnapshotV1>().Where(snapshot => snapshot.FolderId == folder)];
+        [
+            .. Received
+                .All.Select(received => received.IntegrationEvent)
+                .OfType<FolderSnapshotV1>()
+                .Where(snapshot => snapshot.FolderId == folder),
+        ];
 
     private async Task<Result> CreateProductAsync(Guid product, string name)
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, $"Lamps {category}"), TestContext.Current.CancellationToken);
-        return await catalog.SendAsync(new CreateProductCommand(product, category, name), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, $"Lamps {category}"),
+            TestContext.Current.CancellationToken
+        );
+        return await catalog.SendAsync(
+            new CreateProductCommand(product, category, name),
+            TestContext.Current.CancellationToken
+        );
     }
 
     private Task<Result> RenameProductAsync(Guid product, string name) =>
-        Fixture.Gateway<CatalogModule>().SendAsync(new RenameProductCommand(product, name), TestContext.Current.CancellationToken);
+        Fixture
+            .Gateway<CatalogModule>()
+            .SendAsync(
+                new RenameProductCommand(product, name),
+                TestContext.Current.CancellationToken
+            );
 
     // The first column of each row the query returns: what the published Snapshots are compared with.
-    private async Task<IEnumerable<string?>> CommittedAsync(string sql) => (await Fixture.RowsAsync(sql)).Select(row => row[0] as string);
+    private async Task<IEnumerable<string?>> CommittedAsync(string sql) =>
+        (await Fixture.RowsAsync(sql)).Select(row => row[0] as string);
 
     private Task<Result> StubAsync(Command command) =>
         Fixture.Gateway<StubModule>().SendAsync(command, TestContext.Current.CancellationToken);
@@ -690,20 +979,30 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     private static IEnumerable LidSnapshots(DbContext context)
     {
         List<EntityEntry> changed = [context.Attach(Lid.Of(Guid.CreateVersion7()))];
-        return (IEnumerable)SnapshotStepBuild.Invoke(null, [context, changed, new LidSnapshotMappers()])!;
+        return (IEnumerable)
+            SnapshotStepBuild.Invoke(null, [context, changed, new LidSnapshotMappers()])!;
     }
 
     private static InvalidOperationException RefusedLidSnapshots(DbContext context) =>
-        Assert.IsType<InvalidOperationException>(Assert.Throws<TargetInvocationException>(() => LidSnapshots(context)).InnerException);
+        Assert.IsType<InvalidOperationException>(
+            Assert.Throws<TargetInvocationException>(() => LidSnapshots(context)).InnerException
+        );
 
     private static MethodInfo SnapshotStepBuild =>
-        typeof(SnapshotVersionTable).Assembly.GetType("PouryaKit.Messaging.Wolverine.EFCore.SnapshotStep")!.GetMethod("Build", BindingFlags.Public | BindingFlags.Static)!;
+        typeof(SnapshotVersionTable)
+            .Assembly.GetType("PouryaKit.Messaging.Wolverine.EFCore.SnapshotStep")!
+            .GetMethod("Build", BindingFlags.Public | BindingFlags.Static)!;
 
     // A model of lids with PostgreSQL's conventions, finalized as EF finalizes the model it builds for a DbContext; the
     // stamped one has the database fill in a lid's stamp when it is saved, the coded one a client-side generator its code,
     // the hinged one maps a lid's hinges, whose keys the database numbers, and the gasketed one owns its gaskets under EF's
     // default key. Every lid holds seals, children whose Guid keys EF sets when a seal is added.
-    private static IModel LidModel(bool stamped, bool coded = false, bool hinged = false, bool gasketed = false)
+    private static IModel LidModel(
+        bool stamped,
+        bool coded = false,
+        bool hinged = false,
+        bool gasketed = false
+    )
     {
         var model = NpgsqlConventionSetBuilder.CreateModelBuilder();
         var lid = model.Entity<Lid>();
@@ -729,7 +1028,9 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
 
         if (coded)
         {
-            lid.Property(entity => entity.Code).ValueGeneratedOnAdd().HasValueGenerator<GuidValueGenerator>();
+            lid.Property(entity => entity.Code)
+                .ValueGeneratedOnAdd()
+                .HasValueGenerator<GuidValueGenerator>();
         }
 
         return model.FinalizeModel();
@@ -774,12 +1075,17 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
         public IReadOnlyList<object> Map(object aggregate, bool removed) => [((Lid)aggregate).Id];
     }
 
-    private class LidContext(IModel model, bool temporaryCodes = false) : DbContext(Options(model, temporaryCodes))
+    private class LidContext(IModel model, bool temporaryCodes = false)
+        : DbContext(Options(model, temporaryCodes))
     {
         private static DbContextOptions Options(IModel model, bool temporaryCodes)
         {
             var options = new DbContextOptionsBuilder().UseNpgsql("Host=localhost").UseModel(model);
-            return (temporaryCodes ? options.ReplaceService<IValueGeneratorSelector, TemporaryCodes>() : options).Options;
+            return (
+                temporaryCodes
+                    ? options.ReplaceService<IValueGeneratorSelector, TemporaryCodes>()
+                    : options
+            ).Options;
         }
     }
 
@@ -788,9 +1094,14 @@ public sealed class SnapshotTests(AppFixture app) : HostTest<AppFixture>(app)
     // A selector that ignores the generator a property's mapping names and returns one of temporary values.
     private sealed class TemporaryCodes : IValueGeneratorSelector
     {
-        public ValueGenerator? Select(IProperty property, ITypeBase typeBase) => new TemporaryGuidValueGenerator();
+        public ValueGenerator? Select(IProperty property, ITypeBase typeBase) =>
+            new TemporaryGuidValueGenerator();
 
-        public bool TrySelect(IProperty property, ITypeBase typeBase, out ValueGenerator? valueGenerator)
+        public bool TrySelect(
+            IProperty property,
+            ITypeBase typeBase,
+            out ValueGenerator? valueGenerator
+        )
         {
             valueGenerator = new TemporaryGuidValueGenerator();
             return true;

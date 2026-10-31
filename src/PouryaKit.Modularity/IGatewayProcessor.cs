@@ -22,7 +22,11 @@ public interface IGatewayProcessor<TModule>
     /// Runs <paramref name="command"/> as one Operation of the Module with <paramref name="context"/> and returns its
     /// Result.
     /// </summary>
-    Task<Result> SendAsync(Command command, OperationContext context, CancellationToken cancellationToken = default);
+    Task<Result> SendAsync(
+        Command command,
+        OperationContext context,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Runs <paramref name="command"/> as one Operation of the Module with <paramref name="context"/> and returns its

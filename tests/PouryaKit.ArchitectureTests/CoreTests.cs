@@ -18,7 +18,10 @@ public sealed class CoreTests
     [Fact]
     public void Core_exposes_its_three_helpers_and_no_other_public_type()
     {
-        var core = Assert.Single(Sample.KitPackages, package => package.GetName().Name == "PouryaKit.Core");
+        var core = Assert.Single(
+            Sample.KitPackages,
+            package => package.GetName().Name == "PouryaKit.Core"
+        );
 
         Assert.Equal(Helpers, PublicTypes(core));
     }
@@ -29,7 +32,9 @@ public sealed class CoreTests
         var grown = typeof(OffendingCore::PouryaKit.Core.TextHelpers).Assembly;
 
         Assert.Equal(
-            ["PouryaKit.Core exposes PouryaKit.Core.TextHelpers, a public type beyond its three helpers."],
+            [
+                "PouryaKit.Core exposes PouryaKit.Core.TextHelpers, a public type beyond its three helpers.",
+            ],
             Violations(grown)
         );
     }
@@ -42,5 +47,8 @@ public sealed class CoreTests
     // A type a consumer can name. An extension block compiles to public nested types with unspeakable names, which are
     // part of the helper that declares the block.
     private static IEnumerable<string> PublicTypes(Assembly core) =>
-        core.GetExportedTypes().Where(type => !type.Name.StartsWith('<')).Select(type => type.FullName!).Order(StringComparer.Ordinal);
+        core.GetExportedTypes()
+            .Where(type => !type.Name.StartsWith('<'))
+            .Select(type => type.FullName!)
+            .Order(StringComparer.Ordinal);
 }

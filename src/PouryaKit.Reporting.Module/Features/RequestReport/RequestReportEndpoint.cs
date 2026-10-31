@@ -25,12 +25,23 @@ internal sealed class RequestReportEndpoint : IEndpoint
             ) =>
                 (
                     await reports.SendAsync(
-                        new RequestReportCommand(body.Kind ?? "", body.Format, body.Parameters ?? []),
+                        new RequestReportCommand(
+                            body.Kind ?? "",
+                            body.Format,
+                            body.Parameters ?? []
+                        ),
                         context,
                         cancellationToken
                     )
                 ).ToHttpResult(id =>
-                    TypedResults.Accepted(links.GetPathByName(httpContext, GetReportJobEndpoint.Name, new { jobId = id }), new { id })
+                    TypedResults.Accepted(
+                        links.GetPathByName(
+                            httpContext,
+                            GetReportJobEndpoint.Name,
+                            new { jobId = id }
+                        ),
+                        new { id }
+                    )
                 )
         );
 }
@@ -39,6 +50,7 @@ internal sealed class RequestReportEndpoint : IEndpoint
 // otherwise read as the enum's first member, Pdf.
 internal sealed record RequestReportBody(
     string? Kind,
-    [property: JsonRequired, JsonConverter(typeof(JsonStringEnumConverter<ReportFormat>))] ReportFormat Format,
+    [property: JsonRequired, JsonConverter(typeof(JsonStringEnumConverter<ReportFormat>))]
+        ReportFormat Format,
     Dictionary<string, string>? Parameters
 );

@@ -18,7 +18,11 @@ public static class OperationContextServiceProviderExtensions
         /// HTTP boundary, or a message delivery. A delivery also passes the <paramref name="traceParent"/> it restored
         /// from the message, the trace context of the Operation that published it (<see cref="Operation.TraceParent"/>).
         /// </summary>
-        public void BeginOperation(OperationContext context, Type? module = null, ActivityContext traceParent = default)
+        public void BeginOperation(
+            OperationContext context,
+            Type? module = null,
+            ActivityContext traceParent = default
+        )
         {
             ArgumentNullException.ThrowIfNull(scope);
             ArgumentNullException.ThrowIfNull(context);

@@ -15,9 +15,13 @@ public sealed class PasswordHashingOptionsTests
     [Fact]
     public void Options_bound_from_a_configuration_section_reach_the_hasher()
     {
-        var builder = Builder(new() { ["PasswordHashing:Iterations"] = "700000", ["PasswordHashing:SaltSize"] = "32" });
+        var builder = Builder(
+            new() { ["PasswordHashing:Iterations"] = "700000", ["PasswordHashing:SaltSize"] = "32" }
+        );
         builder.Services.AddPouryaKitPasswordHashing();
-        builder.Services.Configure<PouryaKitPasswordHashingOptions>(builder.Configuration.GetSection("PasswordHashing"));
+        builder.Services.Configure<PouryaKitPasswordHashingOptions>(
+            builder.Configuration.GetSection("PasswordHashing")
+        );
         using var host = builder.Build();
 
         var fields = host.Services.GetRequiredService<IPasswordHasher>().Hash(Password).Split('$');
@@ -46,13 +50,19 @@ public sealed class PasswordHashingOptionsTests
     [Fact]
     public void Registration_replaces_a_hasher_registered_before_it()
     {
-        var services = new ServiceCollection().AddSingleton<IPasswordHasher, PlainHasher>().AddPouryaKitPasswordHashing();
+        var services = new ServiceCollection()
+            .AddSingleton<IPasswordHasher, PlainHasher>()
+            .AddPouryaKitPasswordHashing();
         using var provider = services.BuildServiceProvider();
 
         var hasher = provider.GetRequiredService<IPasswordHasher>();
 
         Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IPasswordHasher));
-        Assert.StartsWith("pbkdf2$1$sha256$600000$", hasher.Hash(Password), StringComparison.Ordinal);
+        Assert.StartsWith(
+            "pbkdf2$1$sha256$600000$",
+            hasher.Hash(Password),
+            StringComparison.Ordinal
+        );
     }
 
     // The Host builds, since nothing resolves the hasher, and refuses to start.
@@ -75,10 +85,14 @@ public sealed class PasswordHashingOptionsTests
     )
     {
         var builder = Builder([]);
-        builder.Services.AddPouryaKitPasswordHashing(options => Set(options, algorithm, iterations, saltSize, keySize));
+        builder.Services.AddPouryaKitPasswordHashing(options =>
+            Set(options, algorithm, iterations, saltSize, keySize)
+        );
         using var host = builder.Build();
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(typeof(PouryaKitPasswordHashingOptions), thrown.OptionsType);
         Assert.Contains(invalid, Assert.Single(thrown.Failures), StringComparison.Ordinal);
@@ -87,10 +101,17 @@ public sealed class PasswordHashingOptionsTests
     [Theory]
     [InlineData(PasswordHashAlgorithm.Sha256, 10_000_000, 64, 32)]
     [InlineData(PasswordHashAlgorithm.Sha512, 220_000, 16, 64)]
-    public async Task Options_at_their_bounds_let_the_host_start(PasswordHashAlgorithm algorithm, int iterations, int saltSize, int keySize)
+    public async Task Options_at_their_bounds_let_the_host_start(
+        PasswordHashAlgorithm algorithm,
+        int iterations,
+        int saltSize,
+        int keySize
+    )
     {
         var builder = Builder([]);
-        builder.Services.AddPouryaKitPasswordHashing(options => Set(options, algorithm, iterations, saltSize, keySize));
+        builder.Services.AddPouryaKitPasswordHashing(options =>
+            Set(options, algorithm, iterations, saltSize, keySize)
+        );
         using var host = builder.Build();
 
         await host.StartAsync(TestContext.Current.CancellationToken);
@@ -102,12 +123,20 @@ public sealed class PasswordHashingOptionsTests
 
     private static HostApplicationBuilder Builder(Dictionary<string, string?> settings)
     {
-        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+        var builder = Host.CreateApplicationBuilder(
+            new HostApplicationBuilderSettings { DisableDefaults = true }
+        );
         builder.Configuration.AddInMemoryCollection(settings);
         return builder;
     }
 
-    private static void Set(PouryaKitPasswordHashingOptions options, PasswordHashAlgorithm algorithm, int iterations, int saltSize, int keySize)
+    private static void Set(
+        PouryaKitPasswordHashingOptions options,
+        PasswordHashAlgorithm algorithm,
+        int iterations,
+        int saltSize,
+        int keySize
+    )
     {
         options.Algorithm = algorithm;
         options.Iterations = iterations;

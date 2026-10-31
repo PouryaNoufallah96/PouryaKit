@@ -7,7 +7,11 @@ namespace PouryaKit.Cqrs.Tests;
 
 internal static class TestHost
 {
-    private static readonly ServiceProviderOptions Strict = new() { ValidateOnBuild = true, ValidateScopes = true };
+    private static readonly ServiceProviderOptions Strict = new()
+    {
+        ValidateOnBuild = true,
+        ValidateScopes = true,
+    };
 
     /// <summary>The Host wiring for the test Module: one call with its assembly, plus the stand-ins.</summary>
     public static ServiceProvider Build(
@@ -44,13 +48,20 @@ internal static class TestHost
 /// <summary>Records each key it reserves and each response it records, and holds no key a committed Operation recorded.</summary>
 internal sealed class IdempotencyStoreStandIn(OperationTrace trace) : IIdempotencyStore
 {
-    public Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken)
+    public Task<RecordedSuccess?> ReserveAsync(
+        IdempotencyKey key,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add($"reserve {key.Command} {key.RequestId}");
         return Task.FromResult<RecordedSuccess?>(null);
     }
 
-    public Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
+    public Task RecordAsync(
+        IdempotencyKey key,
+        string response,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add($"record {key.Command} {response}");
         return Task.CompletedTask;
@@ -94,7 +105,10 @@ internal sealed class QueryCacheStandIn(OperationTrace trace) : IQueryCache
 /// <summary>Follows the <see cref="IUnitOfWork"/> contract and records whether it committed or rolled back.</summary>
 internal sealed class UnitOfWorkStandIn(Operation operation, OperationTrace trace) : IUnitOfWork
 {
-    public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
+    public async Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("uow:begin");
         var result = await command(cancellationToken);
@@ -107,7 +121,10 @@ internal sealed class UnitOfWorkStandIn(Operation operation, OperationTrace trac
 /// <summary>Breaks the <see cref="IUnitOfWork"/> contract: reports a success that is not the command's Result.</summary>
 internal sealed class SuccessReportingUnitOfWork : IUnitOfWork
 {
-    public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
+    public async Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    )
     {
         await command(cancellationToken);
         return Result.Success();
@@ -120,7 +137,10 @@ internal sealed class SuccessReportingUnitOfWork : IUnitOfWork
 /// </summary>
 internal sealed class NoRecheckUnitOfWork(IDispatcher dispatcher) : IUnitOfWork
 {
-    public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
+    public async Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    )
     {
         var result = await command(cancellationToken);
         _ = await ThingsGateway.RunNested(dispatcher, NestedOutcome.HandlerFails);
@@ -129,7 +149,8 @@ internal sealed class NoRecheckUnitOfWork(IDispatcher dispatcher) : IUnitOfWork
 }
 
 /// <summary>Stands in for the validation package: records the step and fails an invalid operation.</summary>
-internal sealed class ValidationStepStandIn<TOperation>(OperationTrace trace) : IValidationStep<TOperation>
+internal sealed class ValidationStepStandIn<TOperation>(OperationTrace trace)
+    : IValidationStep<TOperation>
     where TOperation : notnull
 {
     public Task<Result> ValidateAsync(TOperation operation, CancellationToken cancellationToken)

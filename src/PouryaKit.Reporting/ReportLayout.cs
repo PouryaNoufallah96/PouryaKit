@@ -39,7 +39,10 @@ public sealed record ReportParagraph(string Text) : ReportText(Text);
 /// </summary>
 /// <param name="Columns">The columns, at least one, in order.</param>
 /// <param name="Rows">The rows, each with exactly one cell per column.</param>
-public sealed record ReportTable(IReadOnlyList<ReportColumn> Columns, IReadOnlyList<IReadOnlyList<string>> Rows);
+public sealed record ReportTable(
+    IReadOnlyList<ReportColumn> Columns,
+    IReadOnlyList<IReadOnlyList<string>> Rows
+);
 
 /// <summary>A column of a report's table.</summary>
 /// <param name="Header">The column's header, the first row of a CSV file and a spreadsheet.</param>

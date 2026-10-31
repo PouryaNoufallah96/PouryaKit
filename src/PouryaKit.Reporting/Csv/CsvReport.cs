@@ -17,13 +17,20 @@ internal static class CsvReport
 
     private static readonly CsvConfiguration Configuration = new(CultureInfo.InvariantCulture)
     {
-        ShouldQuote = args => string.IsNullOrEmpty(args.Field) || ConfigurationFunctions.ShouldQuote(args),
+        ShouldQuote = args =>
+            string.IsNullOrEmpty(args.Field) || ConfigurationFunctions.ShouldQuote(args),
     };
 
     public static byte[] Render(ReportTable table)
     {
         using var content = new MemoryStream();
-        using (var writer = new StreamWriter(content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true), leaveOpen: true))
+        using (
+            var writer = new StreamWriter(
+                content,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: true),
+                leaveOpen: true
+            )
+        )
         using (var csv = new CsvWriter(writer, Configuration))
         {
             foreach (var column in table.Columns)

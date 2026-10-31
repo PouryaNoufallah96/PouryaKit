@@ -29,7 +29,7 @@
         {
           "path": "src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs",
           "line": 7,
-          "end_line": 47,
+          "end_line": 51,
           "label": "issuer and keys: configured or Authority"
         },
         {
@@ -62,8 +62,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 87,
-          "end_line": 87,
+          "line": 138,
+          "end_line": 142,
           "label": "references no Kit package: runs no Operation"
         },
         {
@@ -96,8 +96,8 @@
         },
         {
           "path": "src/PouryaKit.Web/HttpCallerContext.cs",
-          "line": 35,
-          "end_line": 63,
+          "line": 43,
+          "end_line": 87,
           "label": "the Operation Context from the caller"
         }
       ]
@@ -118,14 +118,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 84,
-          "end_line": 97,
+          "line": 96,
+          "end_line": 109,
           "label": "composes the Modules; Inventory w/o broker"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 131,
-          "end_line": 138,
+          "line": 149,
+          "end_line": 156,
           "label": "message and Marten stores; RabbitMQ if a broker"
         },
         {
@@ -152,8 +152,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
-          "line": 10,
-          "end_line": 33,
+          "line": 14,
+          "end_line": 40,
           "label": "fanout exchange per wire name; one queue"
         },
         {
@@ -187,13 +187,13 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/InventoryHost.cs",
           "line": 40,
-          "end_line": 82,
+          "end_line": 85,
           "label": "Inventory alone, receives over RabbitMQ"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 161,
-          "end_line": 172,
+          "line": 166,
+          "end_line": 180,
           "label": "/alive always; /health in Development"
         },
         {
@@ -221,19 +221,19 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
           "line": 91,
-          "end_line": 113,
+          "end_line": 118,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 131,
-          "end_line": 148,
+          "line": 136,
+          "end_line": 153,
           "label": "Serilog's OTLP sink when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 98,
-          "end_line": 100,
+          "line": 110,
+          "end_line": 112,
           "label": "the Kit exports nothing"
         }
       ]
@@ -260,8 +260,8 @@
         },
         {
           "path": "src/PouryaKit.Web/HttpCallerContext.cs",
-          "line": 52,
-          "end_line": 59,
+          "line": 66,
+          "end_line": 78,
           "label": "only a trusted peer continues"
         },
         {
@@ -300,7 +300,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/MessageStoreDatabaseCheck.cs",
           "line": 10,
-          "end_line": 26,
+          "end_line": 30,
           "label": "store and DbContexts on one database"
         }
       ]
@@ -321,14 +321,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 101,
-          "end_line": 107,
+          "line": 113,
+          "end_line": 119,
           "label": "only when ConnectionStrings:cache is set"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 151,
-          "end_line": 152,
+          "line": 272,
+          "end_line": 277,
           "label": "no Kit package references Redis"
         }
       ]
@@ -349,8 +349,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 109,
-          "end_line": 112,
+          "line": 121,
+          "end_line": 126,
           "label": "MailKit, options from PouryaKit:Email"
         },
         {
@@ -362,7 +362,7 @@
         {
           "path": "src/PouryaKit.Email.MailKit/MailKitEmailSender.cs",
           "line": 26,
-          "end_line": 36,
+          "end_line": 41,
           "label": "a connection per send"
         }
       ]
@@ -394,8 +394,8 @@
         },
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs",
-          "line": 52,
-          "end_line": 65,
+          "line": 53,
+          "end_line": 66,
           "label": "one database per Host in the tests"
         }
       ]
@@ -450,8 +450,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 17,
-          "end_line": 129,
+          "line": 21,
+          "end_line": 222,
           "label": "their allowed references"
         }
       ]
@@ -472,8 +472,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 121,
-          "end_line": 124,
+          "line": 137,
+          "end_line": 142,
           "label": "one chat client, options from PouryaKit:AI"
         },
         {
@@ -500,8 +500,8 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolithHost.cs",
-          "line": 113,
-          "end_line": 115,
+          "line": 127,
+          "end_line": 131,
           "label": "S3, options from PouryaKit:Storage:S3"
         },
         {
@@ -512,8 +512,8 @@
         },
         {
           "path": "src/PouryaKit.Reporting.Module/Features/RenderReport/RenderReportCommandHandler.cs",
-          "line": 41,
-          "end_line": 52,
+          "line": 48,
+          "end_line": 59,
           "label": "each attempt stores its file"
         }
       ]

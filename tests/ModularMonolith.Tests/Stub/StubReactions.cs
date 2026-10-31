@@ -22,7 +22,10 @@ internal sealed record WriteReactingNoteCommand(Reaction Reaction) : Command;
 internal sealed class WriteReactingNoteCommandHandler(IRepository<Note, NoteId> notes)
     : CommandHandler<WriteReactingNoteCommand>
 {
-    public override async Task<Result> Handle(WriteReactingNoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        WriteReactingNoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         DomainEvent raised = command.Reaction switch
         {
@@ -51,9 +54,13 @@ internal sealed record NoteFiledDomainEvent : DomainEvent;
 // A chain exactly as deep as the drain allows: link n is written in round n and raises link n + 1.
 internal sealed record NoteLinkedDomainEvent(int Link) : DomainEvent;
 
-internal sealed class LinkNoteReaction(IRepository<Note, NoteId> notes) : IDomainEventHandler<NoteLinkedDomainEvent>
+internal sealed class LinkNoteReaction(IRepository<Note, NoteId> notes)
+    : IDomainEventHandler<NoteLinkedDomainEvent>
 {
-    public async Task<Result> Handle(NoteLinkedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteLinkedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         var note = Note.Write($"link {domainEvent.Link}");
         if (domainEvent.Link < DomainEventDrain.MaxDepth)
@@ -70,22 +77,36 @@ internal sealed record NotePingedDomainEvent : DomainEvent;
 
 internal sealed record NotePongedDomainEvent : DomainEvent;
 
-internal sealed class PingReaction(IRepository<Note, NoteId> notes) : IDomainEventHandler<NotePingedDomainEvent>
+internal sealed class PingReaction(IRepository<Note, NoteId> notes)
+    : IDomainEventHandler<NotePingedDomainEvent>
 {
-    public async Task<Result> Handle(NotePingedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NotePingedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        await notes.AddAsync(Note.Write("pong").Raising(new NotePongedDomainEvent()), cancellationToken);
+        await notes.AddAsync(
+            Note.Write("pong").Raising(new NotePongedDomainEvent()),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
 
-internal sealed class PongReaction(IRepository<Note, NoteId> notes) : IDomainEventHandler<NotePongedDomainEvent>
+internal sealed class PongReaction(IRepository<Note, NoteId> notes)
+    : IDomainEventHandler<NotePongedDomainEvent>
 {
-    public async Task<Result> Handle(NotePongedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NotePongedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         // A real wait: without the depth limit the cycle would run until the test's timeout cancels it.
         await Task.Delay(TimeSpan.FromMilliseconds(1), cancellationToken);
-        await notes.AddAsync(Note.Write("ping").Raising(new NotePingedDomainEvent()), cancellationToken);
+        await notes.AddAsync(
+            Note.Write("ping").Raising(new NotePingedDomainEvent()),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
@@ -95,9 +116,13 @@ internal sealed record NoteRefusedDomainEvent : DomainEvent;
 
 // Writes straight to the database inside the Operation's transaction, like WriteNoteThenFailCommandHandler, so only a
 // rollback can remove its row.
-internal sealed class RefusalFirstReaction(StubDbContext dbContext) : IDomainEventHandler<NoteRefusedDomainEvent>
+internal sealed class RefusalFirstReaction(StubDbContext dbContext)
+    : IDomainEventHandler<NoteRefusedDomainEvent>
 {
-    public async Task<Result> Handle(NoteRefusedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteRefusedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         await dbContext.Database.ExecuteSqlAsync(
             $"insert into stub.notes (text, version) values ('first reaction', 0)",
@@ -109,25 +134,39 @@ internal sealed class RefusalFirstReaction(StubDbContext dbContext) : IDomainEve
 
 internal sealed class RefusalSecondReaction : IDomainEventHandler<NoteRefusedDomainEvent>
 {
-    public static readonly Error Refused = Error.Conflict("Note.Refused", "The second reaction refused the note.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.Refused",
+        "The second reaction refused the note."
+    );
 
-    public Task<Result> Handle(NoteRefusedDomainEvent domainEvent, CancellationToken cancellationToken) =>
-        Task.FromResult<Result>(Refused);
+    public Task<Result> Handle(
+        NoteRefusedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result>(Refused);
 }
 
 internal sealed class RefusalThirdReaction : IDomainEventHandler<NoteRefusedDomainEvent>
 {
-    public Task<Result> Handle(NoteRefusedDomainEvent domainEvent, CancellationToken cancellationToken) =>
-        throw new InvalidOperationException("A reaction ran after an earlier one refused.");
+    public Task<Result> Handle(
+        NoteRefusedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    ) => throw new InvalidOperationException("A reaction ran after an earlier one refused.");
 }
 
 internal sealed record NoteForwardedDomainEvent : DomainEvent;
 
-internal sealed class ForwardingReaction(IDispatcher dispatcher) : IDomainEventHandler<NoteForwardedDomainEvent>
+internal sealed class ForwardingReaction(IDispatcher dispatcher)
+    : IDomainEventHandler<NoteForwardedDomainEvent>
 {
-    public async Task<Result> Handle(NoteForwardedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteForwardedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        _ = await dispatcher.SendAsync(new WriteNoteThenFailCommand("nested", Ending.Fail), cancellationToken); // ignored on purpose
+        _ = await dispatcher.SendAsync(
+            new WriteNoteThenFailCommand("nested", Ending.Fail),
+            cancellationToken
+        ); // ignored on purpose
         return Result.Success();
     }
 }
@@ -138,8 +177,10 @@ internal sealed record NoteSharedDomainEvent : DomainEvent;
 
 internal sealed record WriteSharedNoteCommand : Command<ReactionLog>;
 
-internal sealed class WriteSharedNoteCommandHandler(IRepository<Note, NoteId> notes, ReactionLog log)
-    : CommandHandler<WriteSharedNoteCommand, ReactionLog>
+internal sealed class WriteSharedNoteCommandHandler(
+    IRepository<Note, NoteId> notes,
+    ReactionLog log
+) : CommandHandler<WriteSharedNoteCommand, ReactionLog>
 {
     // The log is the Operation's own; returning it lets the test read what the drain did after the handler returned.
     public override async Task<Result<ReactionLog>> Handle(
@@ -147,7 +188,10 @@ internal sealed class WriteSharedNoteCommandHandler(IRepository<Note, NoteId> no
         CancellationToken cancellationToken
     )
     {
-        await notes.AddAsync(Note.Write("shared").Raising(new NoteSharedDomainEvent()), cancellationToken);
+        await notes.AddAsync(
+            Note.Write("shared").Raising(new NoteSharedDomainEvent()),
+            cancellationToken
+        );
         return log;
     }
 }
@@ -177,9 +221,13 @@ internal sealed class ReactionLog
     }
 }
 
-internal abstract class SharedNoteReaction(ReactionLog log) : IDomainEventHandler<NoteSharedDomainEvent>
+internal abstract class SharedNoteReaction(ReactionLog log)
+    : IDomainEventHandler<NoteSharedDomainEvent>
 {
-    public async Task<Result> Handle(NoteSharedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteSharedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         log.Add($"{GetType().Name} started");
         await Task.Yield();

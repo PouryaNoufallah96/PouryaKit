@@ -15,8 +15,10 @@ namespace PouryaKit.Persistence.Postgres;
 // connection drops before its commit is rolled back by the server; that is PostgreSQL's documented behaviour, not shown
 // by a Kit test. The increment is relative, never a value read first: a value read before the wait would give out the
 // other transaction's number again.
-internal sealed class PostgresNumberSequences(IUnitOfWorkConnection unitOfWorkConnection, IUnitOfWork unitOfWork)
-    : INumberSequences
+internal sealed class PostgresNumberSequences(
+    IUnitOfWorkConnection unitOfWorkConnection,
+    IUnitOfWork unitOfWork
+) : INumberSequences
 {
     public async Task<Result<long>> NextAsync(string scopeKey, CancellationToken cancellationToken)
     {
@@ -25,15 +27,22 @@ internal sealed class PostgresNumberSequences(IUnitOfWorkConnection unitOfWorkCo
         var (connection, transaction) = unitOfWorkConnection.Join();
         var dbContext = EfUnitOfWorkDbContext.Of(unitOfWork)!;
         var table = NumberSequenceTable.In(dbContext);
-        await using var batch = new NpgsqlBatch((NpgsqlConnection)connection, (NpgsqlTransaction)transaction)
+        await using var batch = new NpgsqlBatch(
+            (NpgsqlConnection)connection,
+            (NpgsqlTransaction)transaction
+        )
         {
             BatchCommands =
             {
-                new($"insert into {table} (scope_key, last_value) values ($1, 0) on conflict do nothing")
+                new(
+                    $"insert into {table} (scope_key, last_value) values ($1, 0) on conflict do nothing"
+                )
                 {
                     Parameters = { new() { Value = scopeKey } },
                 },
-                new($"update {table} set last_value = last_value + 1 where scope_key = $1 returning last_value")
+                new(
+                    $"update {table} set last_value = last_value + 1 where scope_key = $1 returning last_value"
+                )
                 {
                     Parameters = { new() { Value = scopeKey } },
                 },
@@ -43,11 +52,13 @@ internal sealed class PostgresNumberSequences(IUnitOfWorkConnection unitOfWorkCo
         {
             return (long)(await batch.ExecuteScalarAsync(cancellationToken))!;
         }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.DeadlockDetected)
+        catch (PostgresException exception)
+            when (exception.SqlState == PostgresErrorCodes.DeadlockDetected)
         {
             return UnitOfWorkErrors.ConcurrencyConflict;
         }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
+        catch (PostgresException exception)
+            when (exception.SqlState == PostgresErrorCodes.UndefinedTable)
         {
             throw new InvalidOperationException(
                 $"{dbContext.GetType().Name} has no {table} table to keep its number sequences in. Add a migration to the Module that calls CreateNumberSequenceTable with its schema.",

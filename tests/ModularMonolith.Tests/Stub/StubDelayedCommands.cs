@@ -15,7 +15,8 @@ public enum SchedulingFailure
 
 // Writes a note, schedules a delayed note for one second later, then fails as asked: with a failed Result, by ignoring
 // a nested command that failed, or by scheduling a command the Stub never declared.
-internal sealed record ScheduleNoteThenFailCommand(string Text, SchedulingFailure Failure) : Command;
+internal sealed record ScheduleNoteThenFailCommand(string Text, SchedulingFailure Failure)
+    : Command;
 
 internal sealed class ScheduleNoteThenFailCommandHandler(
     IRepository<Note, NoteId> notes,
@@ -24,9 +25,15 @@ internal sealed class ScheduleNoteThenFailCommandHandler(
     TimeProvider time
 ) : CommandHandler<ScheduleNoteThenFailCommand>
 {
-    public static readonly Error Refused = Error.Conflict("Note.SchedulingRefused", "The note was refused after it scheduled another.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.SchedulingRefused",
+        "The note was refused after it scheduled another."
+    );
 
-    public override async Task<Result> Handle(ScheduleNoteThenFailCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ScheduleNoteThenFailCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await notes.AddAsync(Note.Write(command.Text), cancellationToken);
         later.Schedule(
@@ -40,7 +47,10 @@ internal sealed class ScheduleNoteThenFailCommandHandler(
             return Refused;
         }
 
-        _ = await dispatcher.SendAsync(new NestedNoteCommand(command.Text, NestedFailure.Handler), cancellationToken); // ignored on purpose
+        _ = await dispatcher.SendAsync(
+            new NestedNoteCommand(command.Text, NestedFailure.Handler),
+            cancellationToken
+        ); // ignored on purpose
         return Result.Success();
     }
 }
@@ -50,21 +60,33 @@ internal sealed class ScheduleNoteThenFailCommandHandler(
 // stub.stale-note, as a delayed command due later than that Host's InboxStaleTime.
 internal sealed record ScheduleKindChangedNoteCommand(string Text) : Command;
 
-internal sealed class ScheduleKindChangedNoteCommandHandler(IDelayedCommands later, TimeProvider time)
-    : CommandHandler<ScheduleKindChangedNoteCommand>
+internal sealed class ScheduleKindChangedNoteCommandHandler(
+    IDelayedCommands later,
+    TimeProvider time
+) : CommandHandler<ScheduleKindChangedNoteCommand>
 {
-    public override Task<Result> Handle(ScheduleKindChangedNoteCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        ScheduleKindChangedNoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        later.Schedule(new WriteKindChangedNoteCommand(command.Text), time.GetUtcNow().AddSeconds(2));
+        later.Schedule(
+            new WriteKindChangedNoteCommand(command.Text),
+            time.GetUtcNow().AddSeconds(2)
+        );
         return Task.FromResult(Result.Success());
     }
 }
 
 internal sealed record WriteKindChangedNoteCommand(string Text) : Command;
 
-internal sealed class WriteKindChangedNoteCommandHandler(IRepository<Note, NoteId> notes) : CommandHandler<WriteKindChangedNoteCommand>
+internal sealed class WriteKindChangedNoteCommandHandler(IRepository<Note, NoteId> notes)
+    : CommandHandler<WriteKindChangedNoteCommand>
 {
-    public override async Task<Result> Handle(WriteKindChangedNoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        WriteKindChangedNoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await notes.AddAsync(Note.Write(command.Text), cancellationToken);
         return Result.Success();
@@ -74,10 +96,16 @@ internal sealed class WriteKindChangedNoteCommandHandler(IRepository<Note, NoteI
 // Writes its note when it runs and, given a Then, schedules a note of that text for an hour later, from its own run.
 internal sealed record WriteDelayedNoteCommand(string Text, string? Then = null) : Command;
 
-internal sealed class WriteDelayedNoteCommandHandler(IRepository<Note, NoteId> notes, IDelayedCommands later, TimeProvider time)
-    : CommandHandler<WriteDelayedNoteCommand>
+internal sealed class WriteDelayedNoteCommandHandler(
+    IRepository<Note, NoteId> notes,
+    IDelayedCommands later,
+    TimeProvider time
+) : CommandHandler<WriteDelayedNoteCommand>
 {
-    public override async Task<Result> Handle(WriteDelayedNoteCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        WriteDelayedNoteCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await notes.AddAsync(Note.Write(command.Text), cancellationToken);
         if (command.Then is { } then)
@@ -93,11 +121,18 @@ internal sealed class WriteDelayedNoteCommandHandler(IRepository<Note, NoteId> n
 // ahead, and its Notification Handler in its delivery, at once, a note whose own run schedules one more.
 internal sealed record NoteToFollowUpDomainEvent(string Text) : DomainEvent;
 
-internal sealed class ScheduleFollowUpReaction(IDelayedCommands later, TimeProvider time) : IDomainEventHandler<NoteToFollowUpDomainEvent>
+internal sealed class ScheduleFollowUpReaction(IDelayedCommands later, TimeProvider time)
+    : IDomainEventHandler<NoteToFollowUpDomainEvent>
 {
-    public Task<Result> Handle(NoteToFollowUpDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteToFollowUpDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        later.Schedule(new WriteDelayedNoteCommand(TextOf(domainEvent.Text)), time.GetUtcNow().AddHours(1));
+        later.Schedule(
+            new WriteDelayedNoteCommand(TextOf(domainEvent.Text)),
+            time.GetUtcNow().AddHours(1)
+        );
         return Task.FromResult(Result.Success());
     }
 
@@ -107,9 +142,18 @@ internal sealed class ScheduleFollowUpReaction(IDelayedCommands later, TimeProvi
 internal sealed class ScheduleFollowUpNotificationHandler(IDelayedCommands later, TimeProvider time)
     : INotificationHandler<NoteToFollowUpDomainEvent>
 {
-    public Task<Result> Handle(NoteToFollowUpDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteToFollowUpDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        later.Schedule(new WriteDelayedNoteCommand(TextOf(domainEvent.Text), Then: RunTextOf(domainEvent.Text)), time.GetUtcNow());
+        later.Schedule(
+            new WriteDelayedNoteCommand(
+                TextOf(domainEvent.Text),
+                Then: RunTextOf(domainEvent.Text)
+            ),
+            time.GetUtcNow()
+        );
         return Task.FromResult(Result.Success());
     }
 

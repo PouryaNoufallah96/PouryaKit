@@ -22,7 +22,12 @@ internal sealed class ProductConversation : AggregateRoot<ProductConversationId>
         ArgumentNullException.ThrowIfNull(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
-        return new ProductConversation { Id = id, Key = key, Tenant = tenant };
+        return new ProductConversation
+        {
+            Id = id,
+            Key = key,
+            Tenant = tenant,
+        };
     }
 
     public void Keep(string session) => Session = session;

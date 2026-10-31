@@ -50,20 +50,27 @@ internal sealed class TestAuthentication(
         }
 
         List<Claim> claims =
-            caller == WithoutActorClaim ? [new Claim(ClaimTypes.Name, caller)] : [new Claim(ClaimTypes.NameIdentifier, caller)];
+            caller == WithoutActorClaim
+                ? [new Claim(ClaimTypes.Name, caller)]
+                : [new Claim(ClaimTypes.NameIdentifier, caller)];
         if (Request.Headers[TenantHeader].ToString() is { Length: > 0 } tenant)
         {
             claims.Add(new Claim(PouryaKitClaimTypes.Tenant, tenant == BlankTenant ? "" : tenant));
         }
 
         claims.AddRange(
-            Request.Headers[PermissionsHeader]
+            Request
+                .Headers[PermissionsHeader]
                 .ToString()
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(permission => new Claim(CallerPermissions.ClaimType, permission))
         );
 
         var identity = new ClaimsIdentity(claims, SchemeName);
-        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
+        return Task.FromResult(
+            AuthenticateResult.Success(
+                new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)
+            )
+        );
     }
 }

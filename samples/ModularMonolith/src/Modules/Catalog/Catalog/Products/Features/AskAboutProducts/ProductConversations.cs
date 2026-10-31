@@ -14,8 +14,10 @@ namespace Catalog.Products.Features.AskAboutProducts;
 // of two turns of one conversation at once the second to commit fails with UnitOfWorkErrors.ConcurrencyConflict, from
 // the aggregate's version or, for two first turns, from the unique index on the key, which CatalogModule maps, and keeps
 // nothing; read again before the write, the other turn's committed row would be overwritten.
-internal sealed class ProductConversations(IRepository<ProductConversation, ProductConversationId> conversations, OperationContext context)
-    : IAgentSessionStore
+internal sealed class ProductConversations(
+    IRepository<ProductConversation, ProductConversationId> conversations,
+    OperationContext context
+) : IAgentSessionStore
 {
     private readonly Dictionary<string, ProductConversation?> _read = [];
 
@@ -24,16 +26,29 @@ internal sealed class ProductConversations(IRepository<ProductConversation, Prod
         $"{Uri.EscapeDataString(context.Tenant!)}/{context.Actor.Kind}/{Uri.EscapeDataString(context.Actor.Id)}";
 
     public async Task<JsonElement?> FindAsync(string key, CancellationToken cancellationToken) =>
-        (await ConversationAsync(key, cancellationToken))?.Session is { } session ? JsonElement.Parse(session) : null;
+        (await ConversationAsync(key, cancellationToken))?.Session is { } session
+            ? JsonElement.Parse(session)
+            : null;
 
-    public async Task SaveAsync(string key, JsonElement session, CancellationToken cancellationToken) =>
-        (await OfAsync(key, cancellationToken)).Keep(session.GetRawText());
+    public async Task SaveAsync(
+        string key,
+        JsonElement session,
+        CancellationToken cancellationToken
+    ) => (await OfAsync(key, cancellationToken)).Keep(session.GetRawText());
 
-    public async Task<IReadOnlyList<string>> RecallAsync(string key, CancellationToken cancellationToken) =>
-        (await ConversationAsync(key, cancellationToken))?.Memory is { } memory ? JsonSerializer.Deserialize<string[]>(memory)! : [];
+    public async Task<IReadOnlyList<string>> RecallAsync(
+        string key,
+        CancellationToken cancellationToken
+    ) =>
+        (await ConversationAsync(key, cancellationToken))?.Memory is { } memory
+            ? JsonSerializer.Deserialize<string[]>(memory)!
+            : [];
 
-    public async Task RememberAsync(string key, IReadOnlyList<string> memory, CancellationToken cancellationToken) =>
-        (await OfAsync(key, cancellationToken)).Remember(JsonSerializer.Serialize(memory));
+    public async Task RememberAsync(
+        string key,
+        IReadOnlyList<string> memory,
+        CancellationToken cancellationToken
+    ) => (await OfAsync(key, cancellationToken)).Remember(JsonSerializer.Serialize(memory));
 
     private async Task<ProductConversation> OfAsync(string key, CancellationToken cancellationToken)
     {
@@ -42,16 +57,26 @@ internal sealed class ProductConversations(IRepository<ProductConversation, Prod
             return conversation;
         }
 
-        var started = ProductConversation.Start(TypedId.New<ProductConversationId>(), key, context.Tenant!);
+        var started = ProductConversation.Start(
+            TypedId.New<ProductConversationId>(),
+            key,
+            context.Tenant!
+        );
         await conversations.AddAsync(started, cancellationToken);
         return _read[key] = started;
     }
 
-    private async Task<ProductConversation?> ConversationAsync(string key, CancellationToken cancellationToken)
+    private async Task<ProductConversation?> ConversationAsync(
+        string key,
+        CancellationToken cancellationToken
+    )
     {
         if (!_read.TryGetValue(key, out var conversation))
         {
-            _read[key] = conversation = await conversations.FindAsync(new ProductConversationKeyed(key), cancellationToken);
+            _read[key] = conversation = await conversations.FindAsync(
+                new ProductConversationKeyed(key),
+                cancellationToken
+            );
         }
 
         return conversation;

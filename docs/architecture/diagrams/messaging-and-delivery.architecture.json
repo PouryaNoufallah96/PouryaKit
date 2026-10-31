@@ -28,7 +28,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 21,
+          "line": 25,
           "label": "its row"
         }
       ]
@@ -49,7 +49,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 20,
+          "line": 24,
           "label": "its row"
         }
       ]
@@ -70,8 +70,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 25,
-          "end_line": 35,
+          "line": 32,
+          "end_line": 42,
           "label": "its row"
         }
       ]
@@ -92,7 +92,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 51,
+          "line": 70,
           "label": "references Domain only"
         },
         {
@@ -125,19 +125,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 52,
+          "line": 71,
+          "end_line": 74,
           "label": "references Core, Cqrs, Messaging"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
-          "line": 40,
-          "end_line": 47,
+          "line": 44,
+          "end_line": 53,
           "label": "each delivery an Operation, own scope"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
           "line": 49,
-          "end_line": 136,
+          "end_line": 152,
           "label": "the store-neutral Outbox write"
         }
       ]
@@ -158,8 +159,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 39,
-          "end_line": 42,
+          "line": 49,
+          "end_line": 56,
           "label": "its row"
         }
       ]
@@ -180,20 +181,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 53,
-          "end_line": 56,
+          "line": 75,
+          "end_line": 78,
           "label": "references Wolverine and Persistence.EFCore"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
           "line": 11,
-          "end_line": 23,
+          "end_line": 22,
           "label": "the EF Outbox, written through OutboxWriter"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineEfCoreHostApplicationBuilderExtensions.cs",
           "line": 20,
-          "end_line": 40,
+          "end_line": 44,
           "label": "PostgreSQL store, keyed EF Receipts"
         }
       ]
@@ -214,13 +215,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 57,
+          "line": 79,
+          "end_line": 82,
           "label": "references Wolverine"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
-          "line": 10,
-          "end_line": 33,
+          "line": 14,
+          "end_line": 40,
           "label": "routes publications; one queue"
         },
         {
@@ -247,14 +249,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 73,
-          "end_line": 76,
+          "line": 106,
+          "end_line": 119,
           "label": "its row"
         },
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 319,
-          "end_line": 330,
+          "line": 359,
+          "end_line": 378,
           "label": "reads the stored deliveries"
         }
       ]
@@ -287,8 +289,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 145,
-          "end_line": 148,
+          "line": 246,
+          "end_line": 263,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
@@ -309,8 +311,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
-          "line": 12,
-          "end_line": 32,
+          "line": 16,
+          "end_line": 39,
           "label": "fanout exchanges; the service name queue"
         },
         {
@@ -337,19 +339,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 93,
+          "line": 160,
+          "end_line": 164,
           "label": "references Web, Persistence.EFCore, Npgsql"
         },
         {
           "path": "src/PouryaKit.Realtime/RealtimePublisher.cs",
-          "line": 61,
-          "end_line": 67,
+          "line": 76,
+          "end_line": 86,
           "label": "pg_notify on the delivery's transaction"
         },
         {
           "path": "src/PouryaKit.Realtime/RealtimeListener.cs",
-          "line": 89,
-          "end_line": 108,
+          "line": 97,
+          "end_line": 122,
           "label": "one LISTEN connection per instance"
         }
       ]
@@ -369,8 +372,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 61,
-          "end_line": 65,
+          "line": 89,
+          "end_line": 93,
           "label": "its row"
         }
       ]
@@ -391,7 +394,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 108,
+          "line": 192,
+          "end_line": 195,
           "label": "references Cqrs, Persistence, Marten, Npgsql"
         },
         {
@@ -402,8 +406,8 @@
         },
         {
           "path": "src/PouryaKit.Persistence.Marten/MartenUnitOfWork.cs",
-          "line": 96,
-          "end_line": 134,
+          "line": 104,
+          "end_line": 151,
           "label": "append, Outbox, save, own commit"
         }
       ]
@@ -424,7 +428,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 38,
+          "line": 48,
           "label": "its row"
         }
       ]
@@ -445,19 +449,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 109,
+          "line": 196,
+          "end_line": 199,
           "label": "references Wolverine and Persistence.Marten"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Marten/MartenStreamOutbox.cs",
           "line": 9,
-          "end_line": 22,
+          "end_line": 33,
           "label": "the Marten outbox, through OutboxWriter"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs",
           "line": 39,
-          "end_line": 91,
+          "end_line": 119,
           "label": "one store, keyed Marten Receipts"
         }
       ]
@@ -478,19 +483,20 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 128,
+          "line": 218,
+          "end_line": 221,
           "label": "references Wolverine, WolverineFx.Postgresql"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs",
           "line": 14,
-          "end_line": 34,
+          "end_line": 44,
           "label": "an event to the saga's own queue"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs",
-          "line": 30,
-          "end_line": 79,
+          "line": 33,
+          "end_line": 104,
           "label": "a step claimed in its own transaction"
         }
       ]

@@ -18,12 +18,18 @@ public sealed class ClockTests
         await using var mondayHost = Host(monday, bothRunning);
         await using var tuesdayHost = Host(tuesday, bothRunning);
 
-        var raised = await Task.WhenAll(Stamp(mondayHost, cancellationToken), Stamp(tuesdayHost, cancellationToken));
+        var raised = await Task.WhenAll(
+            Stamp(mondayHost, cancellationToken),
+            Stamp(tuesdayHost, cancellationToken)
+        );
 
         Assert.Equal([monday, tuesday], raised.Select(domainEvent => domainEvent.OccurredOn));
     }
 
-    private static async Task<StampedDomainEvent> Stamp(ServiceProvider host, CancellationToken cancellationToken)
+    private static async Task<StampedDomainEvent> Stamp(
+        ServiceProvider host,
+        CancellationToken cancellationToken
+    )
     {
         await using var scope = host.CreateAsyncScope();
         var stamped = await scope
@@ -41,7 +47,9 @@ public sealed class ClockTests
             .AddScoped<CommandHandler<StampCommand, StampedDomainEvent>, StampCommandHandler>()
             .AddScoped<IUnitOfWork, PassThroughUnitOfWork>()
             .AddSingleton(typeof(ILogger<>), typeof(NullLogger<>))
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+            .BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }
+            );
 }
 
 internal sealed record StampedDomainEvent : DomainEvent;
@@ -49,9 +57,13 @@ internal sealed record StampedDomainEvent : DomainEvent;
 internal sealed record StampCommand : Command<StampedDomainEvent>;
 
 // Raises its event only once both Operations are running, so their two clock bindings are live at the same time.
-internal sealed class StampCommandHandler(Rendezvous bothRunning) : CommandHandler<StampCommand, StampedDomainEvent>
+internal sealed class StampCommandHandler(Rendezvous bothRunning)
+    : CommandHandler<StampCommand, StampedDomainEvent>
 {
-    public override async Task<Result<StampedDomainEvent>> Handle(StampCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<StampedDomainEvent>> Handle(
+        StampCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await bothRunning.ArriveAsync().WaitAsync(cancellationToken);
         return new StampedDomainEvent();
@@ -60,7 +72,9 @@ internal sealed class StampCommandHandler(Rendezvous bothRunning) : CommandHandl
 
 internal sealed class Rendezvous(int parties)
 {
-    private readonly TaskCompletionSource _all = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _all = new(
+        TaskCreationOptions.RunContinuationsAsynchronously
+    );
     private int _arrived;
 
     public Task ArriveAsync()
@@ -81,6 +95,8 @@ internal sealed class FixedTime(DateTimeOffset now) : TimeProvider
 
 internal sealed class PassThroughUnitOfWork : IUnitOfWork
 {
-    public Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken) =>
-        command(cancellationToken);
+    public Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    ) => command(cancellationToken);
 }

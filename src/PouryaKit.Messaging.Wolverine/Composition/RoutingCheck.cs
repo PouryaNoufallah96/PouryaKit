@@ -18,7 +18,9 @@ internal sealed class RoutingCheck : ICompositionCheck
         List<string> problems =
         [
             .. subscriptions
-                .All.Where(subscription => !subscription.IsNotification && !wireNames.ContainsKey(subscription.Message))
+                .All.Where(subscription =>
+                    !subscription.IsNotification && !wireNames.ContainsKey(subscription.Message)
+                )
                 .Select(subscription =>
                     $"{subscription.Handler.FullName} subscribes to {subscription.Message.FullName} under {subscription.Name}, but no Module of this Host publishes it, so it has no wire name. Declare Publish<{subscription.Message.Name}>(wireName), or PublishSnapshot for a Snapshot, in the publishing Module's Composition Root; when another Host publishes it, declare Receive<{subscription.Message.Name}>(wireName), or ReceiveSnapshot for a Snapshot, in this Host's composition."
                 ),
@@ -30,11 +32,15 @@ internal sealed class RoutingCheck : ICompositionCheck
             .. subscriptions.RoutingCollisions(),
             .. services
                 .GetRequiredService<DelayedCommandDeclarations>()
-                .All.Where(declared => subscriptions.All.Any(subscription => subscription.Name == declared.Name))
+                .All.Where(declared =>
+                    subscriptions.All.Any(subscription => subscription.Name == declared.Name)
+                )
                 .Select(declared =>
                     $"The delayed command {declared.Command.FullName} and a subscription have the name {declared.Name}, ignoring case; each needs a queue of its own."
                 ),
         ];
-        return problems.Count > 0 ? problems : WireNaming.Declare(wireNames, subscriptions.ReceivedTypes);
+        return problems.Count > 0
+            ? problems
+            : WireNaming.Declare(wireNames, subscriptions.ReceivedTypes);
     }
 }

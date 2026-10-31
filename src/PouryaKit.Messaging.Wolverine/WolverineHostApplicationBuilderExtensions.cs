@@ -57,7 +57,9 @@ public static class WolverineHostApplicationBuilderExtensions
         /// Call it once: a second call throws Wolverine's <see cref="InvalidOperationException"/>, since <c>UseWolverine</c> runs
         /// once per service collection.
         /// </summary>
-        public IHostApplicationBuilder UsePouryaKitWolverine(Action<WolverineOptions>? configure = null)
+        public IHostApplicationBuilder UsePouryaKitWolverine(
+            Action<WolverineOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(builder);
 
@@ -75,22 +77,41 @@ public static class WolverineHostApplicationBuilderExtensions
                     "PouryaKitMessagingOptions.RetryDelays is empty; set at least one delay, where a zero delay retries at once."
                 )
                 .Validate(
-                    messaging => messaging.RetryDelays is null || messaging.RetryDelays.All(delay => delay >= TimeSpan.Zero),
+                    messaging =>
+                        messaging.RetryDelays is null
+                        || messaging.RetryDelays.All(delay => delay >= TimeSpan.Zero),
                     "PouryaKitMessagingOptions.RetryDelays holds a negative delay; set each delay to zero or longer."
                 )
                 .ValidateOnStart();
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, UnregisteredNotificationHandlersCheck>());
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>());
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<
+                    ICompositionCheck,
+                    UnregisteredNotificationHandlersCheck
+                >()
+            );
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>()
+            );
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, SubscriptionUnitOfWorkCheck>()
+            );
             builder.Services.TryAddScoped<CommandHandler<Deliver>, DeliverHandler>();
             builder.Services.TryAddScoped<NotificationDelivery>();
-            builder.Services.TryAddScoped<INotificationDelivery>(scope => scope.GetRequiredService<NotificationDelivery>());
+            builder.Services.TryAddScoped<INotificationDelivery>(scope =>
+                scope.GetRequiredService<NotificationDelivery>()
+            );
             builder.Services.TryAddScoped<IIntegrationEventPublisher, IntegrationEventPublisher>();
             builder.Services.TryAddScoped<ISnapshotMappers, SnapshotMappers>();
             DelayedCommandDeclarations.In(builder.Services);
             builder.Services.TryAddScoped<IDelayedCommands, DelayedCommands>();
-            builder.Services.TryAddScoped<CommandHandler<RunDelayedCommand>, RunDelayedCommandHandler>();
-            builder.Services.TryAddScoped<CommandHandler<StartRecurringCommand>, StartRecurringCommandHandler>();
+            builder.Services.TryAddScoped<
+                CommandHandler<RunDelayedCommand>,
+                RunDelayedCommandHandler
+            >();
+            builder.Services.TryAddScoped<
+                CommandHandler<StartRecurringCommand>,
+                StartRecurringCommandHandler
+            >();
             builder.Services.AddSingleton<IWolverineExtension, PouryaKitWolverineExtension>();
             builder.Services.AddSingleton<IWolverineExtension, DelayedCommandExtension>();
             builder.Services.CritterStackDefaults(critterStack =>

@@ -15,7 +15,11 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
     )
     {
         ArgumentNullException.ThrowIfNull(command);
-        return RunAsync(command, context, dispatcher => dispatcher.SendAsync(command, cancellationToken));
+        return RunAsync(
+            command,
+            context,
+            dispatcher => dispatcher.SendAsync(command, cancellationToken)
+        );
     }
 
     public Task<Result<TResponse>> SendAsync<TResponse>(
@@ -26,7 +30,11 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(command);
-        return RunAsync(command, context, dispatcher => dispatcher.SendAsync(command, cancellationToken));
+        return RunAsync(
+            command,
+            context,
+            dispatcher => dispatcher.SendAsync(command, cancellationToken)
+        );
     }
 
     public Task<Result<TResponse>> QueryAsync<TResponse>(
@@ -37,7 +45,11 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(query);
-        return RunAsync(query, context, dispatcher => dispatcher.QueryAsync(query, cancellationToken));
+        return RunAsync(
+            query,
+            context,
+            dispatcher => dispatcher.QueryAsync(query, cancellationToken)
+        );
     }
 
     // A usage error throws here, before the caller gets a task; only the Operation itself runs in the task.
@@ -52,7 +64,10 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         return RunInScopeAsync(context, run);
     }
 
-    private async Task<TResult> RunInScopeAsync<TResult>(OperationContext context, Func<IDispatcher, Task<TResult>> run)
+    private async Task<TResult> RunInScopeAsync<TResult>(
+        OperationContext context,
+        Func<IDispatcher, Task<TResult>> run
+    )
     {
         await using var scope = scopes.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(context, typeof(TModule));

@@ -25,6 +25,10 @@ public interface IRealtimePublisher
     /// or where the Operation only reads; and on a blank Channel, one holding a
     /// line break, or one named as the Kit's own events (<see cref="RealtimeEvents"/>).
     /// </summary>
-    Task<Result> PublishAsync<TEvent>(string channel, TEvent realtimeEvent, CancellationToken cancellationToken)
+    Task<Result> PublishAsync<TEvent>(
+        string channel,
+        TEvent realtimeEvent,
+        CancellationToken cancellationToken
+    )
         where TEvent : class;
 }

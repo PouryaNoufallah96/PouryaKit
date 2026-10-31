@@ -24,7 +24,12 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
     private readonly int _saltSize;
     private readonly int _keySize;
 
-    private Pbkdf2PasswordHasher(Pbkdf2Algorithm algorithm, int iterations, int saltSize, int keySize)
+    private Pbkdf2PasswordHasher(
+        Pbkdf2Algorithm algorithm,
+        int iterations,
+        int saltSize,
+        int keySize
+    )
     {
         _algorithm = algorithm;
         _iterations = iterations;
@@ -34,14 +39,25 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
 
     // From options Validation accepted: IOptions<T>.Value runs it before the value reaches here.
     public static Pbkdf2PasswordHasher Create(PouryaKitPasswordHashingOptions options) =>
-        new(Pbkdf2Algorithm.Of(options.Algorithm)!, options.Iterations, options.SaltSize, options.KeySize);
+        new(
+            Pbkdf2Algorithm.Of(options.Algorithm)!,
+            options.Iterations,
+            options.SaltSize,
+            options.KeySize
+        );
 
     public string Hash(string password)
     {
         ArgumentNullException.ThrowIfNull(password);
 
         var salt = RandomNumberGenerator.GetBytes(_saltSize);
-        var key = Rfc2898DeriveBytes.Pbkdf2(password, salt, _iterations, _algorithm.HashName, _keySize);
+        var key = Rfc2898DeriveBytes.Pbkdf2(
+            password,
+            salt,
+            _iterations,
+            _algorithm.HashName,
+            _keySize
+        );
         return string.Create(
             CultureInfo.InvariantCulture,
             $"{Prefix}${Version}${_algorithm.Name}${_iterations}${Convert.ToBase64String(salt)}${Convert.ToBase64String(key)}"
@@ -58,7 +74,13 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
         byte[] derived;
         try
         {
-            derived = Rfc2898DeriveBytes.Pbkdf2(password, stored.Salt, stored.Iterations, stored.Algorithm.HashName, stored.Key.Length);
+            derived = Rfc2898DeriveBytes.Pbkdf2(
+                password,
+                stored.Salt,
+                stored.Iterations,
+                stored.Algorithm.HashName,
+                stored.Key.Length
+            );
         }
         catch (EncoderFallbackException)
         {
@@ -73,7 +95,8 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
             return PasswordVerification.Failed;
         }
 
-        return stored.Algorithm != _algorithm
+        return
+            stored.Algorithm != _algorithm
             || stored.Iterations < _iterations
             || stored.Salt.Length < _saltSize
             || stored.Key.Length < _keySize
@@ -85,7 +108,8 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
     {
         stored = default;
         if (
-            encodedHash?.Split('$') is not [Prefix, Version, var name, var iterationsText, var saltText, var keyText]
+            encodedHash?.Split('$')
+                is not [Prefix, Version, var name, var iterationsText, var saltText, var keyText]
             || Pbkdf2Algorithm.Named(name) is not { } algorithm
             || !TryParseIterations(iterationsText, out var iterations)
             || !TryDecodeBase64(saltText, MinSaltSize, MaxSaltSize, out var salt)
@@ -119,7 +143,11 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
         if (
             !Convert.TryFromBase64String(text, buffer, out var written)
             || written < minLength
-            || !string.Equals(Convert.ToBase64String(buffer[..written]), text, StringComparison.Ordinal)
+            || !string.Equals(
+                Convert.ToBase64String(buffer[..written]),
+                text,
+                StringComparison.Ordinal
+            )
         )
         {
             return false;
@@ -129,13 +157,33 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
         return true;
     }
 
-    private readonly record struct StoredHash(Pbkdf2Algorithm Algorithm, int Iterations, byte[] Salt, byte[] Key);
+    private readonly record struct StoredHash(
+        Pbkdf2Algorithm Algorithm,
+        int Iterations,
+        byte[] Salt,
+        byte[] Key
+    );
 
-    private sealed record Pbkdf2Algorithm(string Name, HashAlgorithmName HashName, int OutputSize, int MinIterations)
+    private sealed record Pbkdf2Algorithm(
+        string Name,
+        HashAlgorithmName HashName,
+        int OutputSize,
+        int MinIterations
+    )
     {
         // Minimum iterations from the OWASP Password Storage Cheat Sheet's PBKDF2 section (checked 2026-10-07).
-        private static readonly Pbkdf2Algorithm Sha256 = new("sha256", HashAlgorithmName.SHA256, 32, 600_000);
-        private static readonly Pbkdf2Algorithm Sha512 = new("sha512", HashAlgorithmName.SHA512, 64, 220_000);
+        private static readonly Pbkdf2Algorithm Sha256 = new(
+            "sha256",
+            HashAlgorithmName.SHA256,
+            32,
+            600_000
+        );
+        private static readonly Pbkdf2Algorithm Sha512 = new(
+            "sha512",
+            HashAlgorithmName.SHA512,
+            64,
+            220_000
+        );
 
         public static Pbkdf2Algorithm? Of(PasswordHashAlgorithm algorithm) =>
             algorithm switch
@@ -163,11 +211,16 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
             List<string> problems = [];
             if (algorithm is null)
             {
-                problems.Add($"Algorithm {options.Algorithm} is not one of {string.Join(", ", Enum.GetNames<PasswordHashAlgorithm>())}.");
+                problems.Add(
+                    $"Algorithm {options.Algorithm} is not one of {string.Join(", ", Enum.GetNames<PasswordHashAlgorithm>())}."
+                );
             }
             else
             {
-                if (options.Iterations < algorithm.MinIterations || options.Iterations > MaxIterations)
+                if (
+                    options.Iterations < algorithm.MinIterations
+                    || options.Iterations > MaxIterations
+                )
                 {
                     problems.Add(
                         $"Iterations {options.Iterations} is outside {algorithm.MinIterations:N0} to {MaxIterations:N0} for {options.Algorithm}."
@@ -176,16 +229,22 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher
 
                 if (options.KeySize < MinKeySize || options.KeySize > algorithm.OutputSize)
                 {
-                    problems.Add($"KeySize {options.KeySize} is outside {MinKeySize} to {algorithm.OutputSize} bytes for {options.Algorithm}.");
+                    problems.Add(
+                        $"KeySize {options.KeySize} is outside {MinKeySize} to {algorithm.OutputSize} bytes for {options.Algorithm}."
+                    );
                 }
             }
 
             if (options.SaltSize < MinSaltSize || options.SaltSize > MaxSaltSize)
             {
-                problems.Add($"SaltSize {options.SaltSize} is outside {MinSaltSize} to {MaxSaltSize} bytes.");
+                problems.Add(
+                    $"SaltSize {options.SaltSize} is outside {MinSaltSize} to {MaxSaltSize} bytes."
+                );
             }
 
-            return problems.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(problems);
+            return problems.Count == 0
+                ? ValidateOptionsResult.Success
+                : ValidateOptionsResult.Fail(problems);
         }
     }
 }

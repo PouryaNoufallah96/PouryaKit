@@ -9,7 +9,9 @@ using PouryaKit.Security.JwtBearer;
 System.Type[] types = [typeof(PouryaKitJwtBearerOptions)];
 
 // The packed bearer scheme, registered and configured as a Host would, issuer, audience and key set in code.
-var services = new ServiceCollection().AddLogging().AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+var services = new ServiceCollection()
+    .AddLogging()
+    .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
 services.AddPouryaKitJwtBearer(claims => claims.TenantClaim = "tenant");
 services.Configure<JwtBearerOptions>(
     JwtBearerDefaults.AuthenticationScheme,
@@ -21,5 +23,11 @@ services.Configure<JwtBearerOptions>(
     }
 );
 using var provider = services.BuildServiceProvider();
-var bearer = provider.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>().Get(JwtBearerDefaults.AuthenticationScheme);
-Console.WriteLine(types.Length + (bearer.MapInboundClaims ? 0 : 1) + (PouryaKitClaimTypes.Tenant.Length > 0 ? 1 : 0));
+var bearer = provider
+    .GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+    .Get(JwtBearerDefaults.AuthenticationScheme);
+Console.WriteLine(
+    types.Length
+        + (bearer.MapInboundClaims ? 0 : 1)
+        + (PouryaKitClaimTypes.Tenant.Length > 0 ? 1 : 0)
+);

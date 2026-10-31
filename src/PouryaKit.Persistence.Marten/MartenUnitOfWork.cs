@@ -36,9 +36,15 @@ internal sealed partial class MartenUnitOfWork(
     private bool _committed;
 
     // Outside a command, a session of the Operation's tenant for reads; in one, the session over the transaction.
-    private IDocumentSession Session => _session ??= Tenant() is { } tenant ? store.LightweightSession(tenant) : store.LightweightSession();
+    private IDocumentSession Session =>
+        _session ??= Tenant() is { } tenant
+            ? store.LightweightSession(tenant)
+            : store.LightweightSession();
 
-    public async Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken)
+    public async Task<Result> RunAsync(
+        Func<CancellationToken, Task<Result>> command,
+        CancellationToken cancellationToken
+    )
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -78,7 +84,9 @@ internal sealed partial class MartenUnitOfWork(
     {
         var tenant = Tenant();
         await DisposeAsync();
-        _connection = await ((PostgresqlDatabase)store.Storage.Database).DataSource.OpenConnectionAsync(cancellationToken);
+        _connection = await (
+            (PostgresqlDatabase)store.Storage.Database
+        ).DataSource.OpenConnectionAsync(cancellationToken);
         _transaction = await _connection.BeginTransactionAsync(cancellationToken);
         var options = SessionOptions.ForTransaction(_transaction, shouldAutoCommit: true);
         if (tenant is not null)
@@ -94,7 +102,10 @@ internal sealed partial class MartenUnitOfWork(
     }
 
     // Null when committed; the Error when a concurrent change to a Stream refused the append.
-    private async Task<Error?> SaveAsync(IReadOnlyList<DomainEvent> handled, CancellationToken cancellationToken)
+    private async Task<Error?> SaveAsync(
+        IReadOnlyList<DomainEvent> handled,
+        CancellationToken cancellationToken
+    )
     {
         var session = _session!;
         try
@@ -111,7 +122,13 @@ internal sealed partial class MartenUnitOfWork(
 
             await session.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception exception) when (!_committed && exception is ConcurrencyException or MartenStreamCollision or JasperFxStreamCollision)
+        catch (Exception exception)
+            when (!_committed
+                && exception
+                    is ConcurrencyException
+                        or MartenStreamCollision
+                        or JasperFxStreamCollision
+            )
         {
             return UnitOfWorkErrors.ConcurrencyConflict;
         }
@@ -136,7 +153,11 @@ internal sealed partial class MartenUnitOfWork(
     // Marten calls its session's listeners after its commit only, so only when it had work to save.
     private sealed class Committed(MartenUnitOfWork unitOfWork) : DocumentSessionListenerBase
     {
-        public override Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token)
+        public override Task AfterCommitAsync(
+            IDocumentSession session,
+            IChangeSet commit,
+            CancellationToken token
+        )
         {
             unitOfWork._committed = true;
             return Task.CompletedTask;
@@ -164,17 +185,25 @@ internal sealed partial class MartenUnitOfWork(
             )
             : tenant;
 
-    public async Task<TStream?> LoadAsync<TStream>(TypedId<Guid> id, CancellationToken cancellationToken)
+    public async Task<TStream?> LoadAsync<TStream>(
+        TypedId<Guid> id,
+        CancellationToken cancellationToken
+    )
         where TStream : StreamAggregate
     {
         ArgumentNullException.ThrowIfNull(id);
         if (_tracked.FirstOrDefault(tracked => tracked.Id == id.Value) is { } known)
         {
             return known.Stream as TStream
-                ?? throw new InvalidOperationException($"The stream {id.Value} is a {known.Stream.GetType().Name}, not a {typeof(TStream).Name}.");
+                ?? throw new InvalidOperationException(
+                    $"The stream {id.Value} is a {known.Stream.GetType().Name}, not a {typeof(TStream).Name}."
+                );
         }
 
-        var stream = await Session.Events.AggregateStreamAsync<TStream>(id.Value, token: cancellationToken);
+        var stream = await Session.Events.AggregateStreamAsync<TStream>(
+            id.Value,
+            token: cancellationToken
+        );
         if (stream is not null)
         {
             _tracked.Add(Tracked.Of(stream, stream.Version));
@@ -200,23 +229,33 @@ internal sealed partial class MartenUnitOfWork(
     // What a step that only reads could change that the commit would append: a Stream started, an event raised on a
     // tracked Stream, the identity of a tracked Stream, or an operation queued on the session. Any other change to a Stream
     // raises no event, so it is never appended.
-    IDisposable IReadingStateGuard.OnlyReading(string step) => new ReadingState(this, step, Snapshot());
+    IDisposable IReadingStateGuard.OnlyReading(string step) =>
+        new ReadingState(this, step, Snapshot());
 
     private (int Started, int Raised, int Queued, bool SameIdentities) Snapshot() =>
         (
             _tracked.Count(tracked => tracked.ExpectedVersion == 0),
             _tracked.Sum(tracked => tracked.Stream.DomainEvents.Count + tracked.Pending.Count),
-            _session is null ? 0 : _session.PendingChanges.Operations().Count() + _session.PendingChanges.Streams().Count,
+            _session is null
+                ? 0
+                : _session.PendingChanges.Operations().Count()
+                    + _session.PendingChanges.Streams().Count,
             _tracked.All(tracked => tracked.Stream.Id == tracked.Id)
         );
 
-    private sealed class ReadingState(MartenUnitOfWork unitOfWork, string step, (int, int, int, bool) before) : IDisposable
+    private sealed class ReadingState(
+        MartenUnitOfWork unitOfWork,
+        string step,
+        (int, int, int, bool) before
+    ) : IDisposable
     {
         public void Dispose()
         {
             if (unitOfWork.Snapshot() != before)
             {
-                throw new InvalidOperationException($"{char.ToUpperInvariant(step[0])}{step[1..]} changed a Stream, which only a command may change.");
+                throw new InvalidOperationException(
+                    $"{char.ToUpperInvariant(step[0])}{step[1..]} changed a Stream, which only a command may change."
+                );
             }
         }
     }
@@ -227,10 +266,17 @@ internal sealed partial class MartenUnitOfWork(
     {
         if (!operation.IsUnitOfWorkActive || _transaction is null)
         {
-            throw new InvalidOperationException("No Marten Unit of Work is active, so there is no transaction to write in.");
+            throw new InvalidOperationException(
+                "No Marten Unit of Work is active, so there is no transaction to write in."
+            );
         }
 
-        return Statements.Command(statement($"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{table}"), values, _connection!, _transaction);
+        return Statements.Command(
+            statement($"\"{schema.Replace("\"", "\"\"", StringComparison.Ordinal)}\".{table}"),
+            values,
+            _connection!,
+            _transaction
+        );
     }
 
     public async ValueTask DisposeAsync()
@@ -270,7 +316,13 @@ internal sealed partial class MartenUnitOfWork(
     private static partial void LogNotSent(ILogger logger, Exception exception);
 
     // Id is the stream's identity as the Unit of Work began tracking it, which the append uses.
-    private sealed record Tracked(StreamAggregate Stream, Guid Id, long ExpectedVersion, List<DomainEvent> Pending, Func<IDocumentSession, Tracked, CancellationToken, Task> Append)
+    private sealed record Tracked(
+        StreamAggregate Stream,
+        Guid Id,
+        long ExpectedVersion,
+        List<DomainEvent> Pending,
+        Func<IDocumentSession, Tracked, CancellationToken, Task> Append
+    )
     {
         public static Tracked Of<TStream>(TStream stream, long expectedVersion)
             where TStream : StreamAggregate =>
@@ -283,22 +335,36 @@ internal sealed partial class MartenUnitOfWork(
                 {
                     // At the version the Operation read, 0 for a new stream: one that moved since, or exists already, throws
                     // here or at the save. Never Append(id, expectedVersion, ...), which Marten's default Quick mode refuses.
-                    var writing = await session.Events.FetchForWriting<TStream>(tracked.Id, tracked.ExpectedVersion, cancellationToken);
+                    var writing = await session.Events.FetchForWriting<TStream>(
+                        tracked.Id,
+                        tracked.ExpectedVersion,
+                        cancellationToken
+                    );
                     writing.AppendMany(tracked.Pending);
                 }
             );
 
-        public Task AppendAsync(IDocumentSession session, CancellationToken cancellationToken) => Append(session, this, cancellationToken);
+        public Task AppendAsync(IDocumentSession session, CancellationToken cancellationToken) =>
+            Append(session, this, cancellationToken);
     }
 }
 
 // Npgsql's positional parameters for a Kit statement written with composite-format items, as EF Core binds them.
 internal static class Statements
 {
-    public static NpgsqlCommand Command(string sql, object[] values, NpgsqlConnection? connection = null, NpgsqlTransaction? transaction = null)
+    public static NpgsqlCommand Command(
+        string sql,
+        object[] values,
+        NpgsqlConnection? connection = null,
+        NpgsqlTransaction? transaction = null
+    )
     {
         var command = new NpgsqlCommand(
-            string.Format(CultureInfo.InvariantCulture, sql, [.. values.Select((_, index) => (object)$"${index + 1}")]),
+            string.Format(
+                CultureInfo.InvariantCulture,
+                sql,
+                [.. values.Select((_, index) => (object)$"${index + 1}")]
+            ),
             connection,
             transaction
         );

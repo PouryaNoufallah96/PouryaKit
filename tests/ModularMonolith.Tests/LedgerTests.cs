@@ -43,9 +43,16 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var account = Guid.CreateVersion7();
 
-        var (opened, _) = await Fixture.WaitForDeliveriesAsync(() => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token), Token);
-        Assert.True((await Ledger.SendAsync(new PostEntryCommand(account, 10m), Context(), Token)).IsSuccess);
-        Assert.True((await Ledger.SendAsync(new PostEntryCommand(account, -3m), Context(), Token)).IsSuccess);
+        var (opened, _) = await Fixture.WaitForDeliveriesAsync(
+            () => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token),
+            Token
+        );
+        Assert.True(
+            (await Ledger.SendAsync(new PostEntryCommand(account, 10m), Context(), Token)).IsSuccess
+        );
+        Assert.True(
+            (await Ledger.SendAsync(new PostEntryCommand(account, -3m), Context(), Token)).IsSuccess
+        );
         var read = await Ledger.QueryAsync(new GetAccountQuery(account), Context(), Token);
 
         Assert.Equal(account, opened.Value);
@@ -57,9 +64,18 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
                 ["entry_posted_domain_event", AppFixture.TestTenant],
                 ["entry_posted_domain_event", AppFixture.TestTenant],
             ],
-            await Fixture.RowsAsync($"select type, tenant_id from events.mt_events where stream_id = '{account}' order by version")
+            await Fixture.RowsAsync(
+                $"select type, tenant_id from events.mt_events where stream_id = '{account}' order by version"
+            )
         );
-        Assert.Equal(AccountErrors.NotFound, Assert.Single((await Ledger.QueryAsync(new GetAccountQuery(account), Context("other"), Token)).Errors));
+        Assert.Equal(
+            AccountErrors.NotFound,
+            Assert.Single(
+                (
+                    await Ledger.QueryAsync(new GetAccountQuery(account), Context("other"), Token)
+                ).Errors
+            )
+        );
     }
 
     [Fact]
@@ -68,24 +84,46 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         var account = Guid.CreateVersion7();
         var client = Fixture.Client("ada", AppFixture.TestTenant);
 
-        var opened = await client.PostAsJsonAsync("/ledger/accounts", new { accountId = account, holder = "Ada" }, Token);
+        var opened = await client.PostAsJsonAsync(
+            "/ledger/accounts",
+            new { accountId = account, holder = "Ada" },
+            Token
+        );
         await Fixture.WaitUntilDeliveredAsync(Token);
-        var posted = await client.PostAsJsonAsync($"/ledger/accounts/{account}/entries", new { amount = 25.5m }, Token);
+        var posted = await client.PostAsJsonAsync(
+            $"/ledger/accounts/{account}/entries",
+            new { amount = 25.5m },
+            Token
+        );
         var read = await client.GetFromJsonAsync<JsonElement>($"/ledger/accounts/{account}", Token);
-        var again = await client.PostAsJsonAsync("/ledger/accounts", new { accountId = account, holder = "Grace" }, Token);
+        var again = await client.PostAsJsonAsync(
+            "/ledger/accounts",
+            new { accountId = account, holder = "Grace" },
+            Token
+        );
 
         Assert.Equal(HttpStatusCode.Created, opened.StatusCode);
         Assert.Equal($"/ledger/accounts/{account}", opened.Headers.Location?.OriginalString);
         Assert.Equal(HttpStatusCode.NoContent, posted.StatusCode);
         Assert.Equal(
             ("Ada", 25.5m, true, 3L),
-            (read.GetProperty("holder").GetString(), read.GetProperty("balance").GetDecimal(), read.GetProperty("isActive").GetBoolean(), read.GetProperty("version").GetInt64())
+            (
+                read.GetProperty("holder").GetString(),
+                read.GetProperty("balance").GetDecimal(),
+                read.GetProperty("isActive").GetBoolean(),
+                read.GetProperty("version").GetInt64()
+            )
         );
         Assert.Equal(
             $$"""[{"code":"{{UnitOfWorkErrors.ConcurrencyConflict.Code}}","message":"{{UnitOfWorkErrors.ConcurrencyConflict.Message}}"}]""",
             (await ProblemAsync(again, HttpStatusCode.Conflict)).GetProperty("errors").GetRawText()
         );
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from events.mt_events where stream_id = '{account}' and type = 'account_opened_domain_event'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from events.mt_events where stream_id = '{account}' and type = 'account_opened_domain_event'"
+            )
+        );
     }
 
     // Without validation an empty id would throw in AccountId, a 500, a blank holder would be stored, and a body without an
@@ -95,14 +133,32 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var client = Fixture.Client("ada", AppFixture.TestTenant);
 
-        var opened = await client.PostAsJsonAsync("/ledger/accounts", new { accountId = Guid.Empty, holder = " " }, Token);
-        var withoutAmount = await client.PostAsJsonAsync($"/ledger/accounts/{Guid.CreateVersion7()}/entries", new { }, Token);
-        var zero = await client.PostAsJsonAsync($"/ledger/accounts/{Guid.Empty}/entries", new { amount = 0m }, Token);
+        var opened = await client.PostAsJsonAsync(
+            "/ledger/accounts",
+            new { accountId = Guid.Empty, holder = " " },
+            Token
+        );
+        var withoutAmount = await client.PostAsJsonAsync(
+            $"/ledger/accounts/{Guid.CreateVersion7()}/entries",
+            new { },
+            Token
+        );
+        var zero = await client.PostAsJsonAsync(
+            $"/ledger/accounts/{Guid.Empty}/entries",
+            new { amount = 0m },
+            Token
+        );
         var read = await client.GetAsync($"/ledger/accounts/{Guid.Empty}", Token);
 
-        Assert.Equal([("NotEmptyValidator", "AccountId"), ("NotEmptyValidator", "Holder")], await ValidationErrorsAsync(opened));
+        Assert.Equal(
+            [("NotEmptyValidator", "AccountId"), ("NotEmptyValidator", "Holder")],
+            await ValidationErrorsAsync(opened)
+        );
         Assert.Equal([("NotEqualValidator", "Amount")], await ValidationErrorsAsync(withoutAmount));
-        Assert.Equal([("NotEmptyValidator", "AccountId"), ("NotEqualValidator", "Amount")], await ValidationErrorsAsync(zero));
+        Assert.Equal(
+            [("NotEmptyValidator", "AccountId"), ("NotEqualValidator", "Amount")],
+            await ValidationErrorsAsync(zero)
+        );
         Assert.Equal([("NotEmptyValidator", "AccountId")], await ValidationErrorsAsync(read));
     }
 
@@ -115,12 +171,19 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         var account = Guid.CreateVersion7();
         List<object[]> committed = [];
         AppFixture.StreamCommits.OnCommit = async () =>
-            committed.AddRange(await Fixture.RowsAsync("select received_at, pg_xact_commit_timestamp(xmin) from wolverine.wolverine_incoming_envelopes"));
+            committed.AddRange(
+                await Fixture.RowsAsync(
+                    "select received_at, pg_xact_commit_timestamp(xmin) from wolverine.wolverine_incoming_envelopes"
+                )
+            );
         Result<Guid> opened;
         IReadOnlyList<Delivery> deliveries;
         try
         {
-            (opened, deliveries) = await Fixture.WaitForDeliveriesAsync(() => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token), Token);
+            (opened, deliveries) = await Fixture.WaitForDeliveriesAsync(
+                () => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token),
+                Token
+            );
         }
         finally
         {
@@ -128,23 +191,44 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         }
 
         Assert.True(opened.IsSuccess);
-        Assert.Contains(new Delivery(BillingSubscription, "ledger.account-opened.v1", DeadLettered: false), deliveries);
-        var (openingCommitted, activationCommitted) = (await CommittedAsync(account, "account_opened_domain_event"), await CommittedAsync(account, "account_activated_domain_event"));
+        Assert.Contains(
+            new Delivery(BillingSubscription, "ledger.account-opened.v1", DeadLettered: false),
+            deliveries
+        );
+        var (openingCommitted, activationCommitted) = (
+            await CommittedAsync(account, "account_opened_domain_event"),
+            await CommittedAsync(account, "account_activated_domain_event")
+        );
         Assert.Equal(
             activationCommitted,
-            await Fixture.ScalarAsync<DateTime>($"select pg_xact_commit_timestamp(xmin) from ledger.pouryakit_receipts where subscription = '{Activation}'")
+            await Fixture.ScalarAsync<DateTime>(
+                $"select pg_xact_commit_timestamp(xmin) from ledger.pouryakit_receipts where subscription = '{Activation}'"
+            )
         );
-        Assert.Contains(committed, row => (string)row[0] == $"local://{Activation}/" && (DateTime)row[1] == openingCommitted);
-        Assert.Contains(committed, row => (string)row[0] == $"local://{BillingSubscription}/" && (DateTime)row[1] == activationCommitted);
+        Assert.Contains(
+            committed,
+            row =>
+                (string)row[0] == $"local://{Activation}/" && (DateTime)row[1] == openingCommitted
+        );
+        Assert.Contains(
+            committed,
+            row =>
+                (string)row[0] == $"local://{BillingSubscription}/"
+                && (DateTime)row[1] == activationCommitted
+        );
         // Billing's quote, the expiry due when it ends and its Receipt, in one commit.
         Assert.Equal(
-            [["Open", "Scheduled", true, true]],
+            [
+                ["Open", "Scheduled", true, true],
+            ],
             await Fixture.RowsAsync(
                 $"""
                 select q.state, e.status, pg_xact_commit_timestamp(q.xmin) = pg_xact_commit_timestamp(r.xmin),
                        pg_xact_commit_timestamp(e.xmin) = pg_xact_commit_timestamp(r.xmin)
                 from billing.quotes q, wolverine.wolverine_incoming_envelopes e, billing.pouryakit_receipts r
-                where q.id = '{WelcomeQuote(account)}' and e.received_at = 'local://billing.expire-quote/' and e.execution_time = q.expires_on
+                where q.id = '{WelcomeQuote(
+                    account
+                )}' and e.received_at = 'local://billing.expire-quote/' and e.execution_time = q.expires_on
                   and r.subscription = '{BillingSubscription}'
                 """
             )
@@ -160,13 +244,35 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
         var (_, deliveries) = await Fixture.WaitForDeliveriesAsync(
             async () =>
             {
-                Assert.True((await Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token)).IsSuccess);
-                return await Ledger.SendAsync(new OpenAccountCommand(account, "Grace"), Context("other"), Token);
+                Assert.True(
+                    (
+                        await Ledger.SendAsync(
+                            new OpenAccountCommand(account, "Ada"),
+                            Context(),
+                            Token
+                        )
+                    ).IsSuccess
+                );
+                return await Ledger.SendAsync(
+                    new OpenAccountCommand(account, "Grace"),
+                    Context("other"),
+                    Token
+                );
             },
             Token
         );
 
-        Assert.Equal(2, deliveries.Count(delivery => delivery == new Delivery(BillingSubscription, "ledger.account-opened.v1", DeadLettered: false)));
+        Assert.Equal(
+            2,
+            deliveries.Count(delivery =>
+                delivery
+                == new Delivery(
+                    BillingSubscription,
+                    "ledger.account-opened.v1",
+                    DeadLettered: false
+                )
+            )
+        );
         Assert.Equal(
             2L,
             await Fixture.ScalarAsync<long>(
@@ -180,33 +286,55 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_failed_receiving_handler_leaves_no_receipt_and_no_effect()
     {
         var account = Guid.CreateVersion7();
-        await Fixture.Gateway<BillingModule>().SendAsync(new OpenQuoteCommand(WelcomeQuote(account), TimeSpan.FromHours(1)), Token);
+        await Fixture
+            .Gateway<BillingModule>()
+            .SendAsync(new OpenQuoteCommand(WelcomeQuote(account), TimeSpan.FromHours(1)), Token);
         await Fixture.WaitUntilDeliveredAsync(Token);
 
-        var (opened, deliveries) = await Fixture.WaitForDeliveriesAsync(() => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token), Token);
+        var (opened, deliveries) = await Fixture.WaitForDeliveriesAsync(
+            () => Ledger.SendAsync(new OpenAccountCommand(account, "Ada"), Context(), Token),
+            Token
+        );
 
         Assert.True(opened.IsSuccess);
-        Assert.Contains(new Delivery(BillingSubscription, "ledger.account-opened.v1", DeadLettered: true), deliveries);
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from billing.pouryakit_receipts where subscription = '{BillingSubscription}'"));
+        Assert.Contains(
+            new Delivery(BillingSubscription, "ledger.account-opened.v1", DeadLettered: true),
+            deliveries
+        );
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from billing.pouryakit_receipts where subscription = '{BillingSubscription}'"
+            )
+        );
         Assert.Equal(
             1L,
-            await Fixture.ScalarAsync<long>("select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://billing.expire-quote/'")
+            await Fixture.ScalarAsync<long>(
+                "select count(*) from wolverine.wolverine_incoming_envelopes where received_at = 'local://billing.expire-quote/'"
+            )
         );
     }
 
-    private static async Task<(string?, string?)[]> ValidationErrorsAsync(HttpResponseMessage response) =>
-    [
-        .. (await ProblemAsync(response, HttpStatusCode.BadRequest))
-            .GetProperty("errors")
-            .EnumerateArray()
-            .Select(error => (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())),
-    ];
+    private static async Task<(string?, string?)[]> ValidationErrorsAsync(
+        HttpResponseMessage response
+    ) =>
+        [
+            .. (await ProblemAsync(response, HttpStatusCode.BadRequest))
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error =>
+                    (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())
+                ),
+        ];
 
     private static Guid WelcomeQuote(Guid account, string tenant = AppFixture.TestTenant) =>
         OpenWelcomeQuoteIntegrationEventHandler.QuoteIdOf(tenant, account).Value;
 
     private Task<DateTime> CommittedAsync(Guid account, string type) =>
-        Fixture.ScalarAsync<DateTime>($"select pg_xact_commit_timestamp(xmin) from events.mt_events where stream_id = '{account}' and type = '{type}'");
+        Fixture.ScalarAsync<DateTime>(
+            $"select pg_xact_commit_timestamp(xmin) from events.mt_events where stream_id = '{account}' and type = '{type}'"
+        );
 
-    private static OperationContext Context(string tenant = AppFixture.TestTenant) => new(GatewayTestExtensions.TestActor, tenant);
+    private static OperationContext Context(string tenant = AppFixture.TestTenant) =>
+        new(GatewayTestExtensions.TestActor, tenant);
 }

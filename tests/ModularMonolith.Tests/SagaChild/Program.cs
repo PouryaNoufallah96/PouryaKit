@@ -28,18 +28,28 @@ if (rest is ["in-step"])
     };
 }
 
-var builder = SagaHost.Compose(["--environment", Environments.Development, $"--ConnectionStrings:app={connectionString}"]);
+var builder = SagaHost.Compose([
+    "--environment",
+    Environments.Development,
+    $"--ConnectionStrings:app={connectionString}",
+]);
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
 builder.Services.UsePouryaKitTestDelivery();
 using var host = builder.Build();
 await host.StartAsync();
 var orders = host.Services.GetRequiredService<IGatewayProcessor<OrdersModule>>();
 var context = new OperationContext(Actor.System("saga.child"), tenant);
-await orders.SendAsync(new PlaceOrderCommand(Guid.Parse(order), Installments: 2, PayWithinSeconds: 3600), context);
+await orders.SendAsync(
+    new PlaceOrderCommand(Guid.Parse(order), Installments: 2, PayWithinSeconds: 3600),
+    context
+);
 await using (var connection = new NpgsqlConnection(connectionString))
 {
     await connection.OpenAsync();
-    await using var started = new NpgsqlCommand("select count(*) from wolverine.shipping_fulfilment_saga where id = $1", connection)
+    await using var started = new NpgsqlCommand(
+        "select count(*) from wolverine.shipping_fulfilment_saga where id = $1",
+        connection
+    )
     {
         Parameters = { new() { Value = SagaStorage.SagaId(tenant, order) } },
     };

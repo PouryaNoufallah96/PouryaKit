@@ -8,7 +8,9 @@ public sealed class DapperWriteTests
 {
     private static readonly HashSet<string> AggregateTables =
     [
-        .. Sample.Models.SelectMany(module => module.Value.SelectMany(model => ModuleRules.AggregateTablesOf(module.Key, model))),
+        .. Sample.Models.SelectMany(module =>
+            module.Value.SelectMany(model => ModuleRules.AggregateTablesOf(module.Key, model))
+        ),
     ];
 
     [Fact]
@@ -30,18 +32,36 @@ public sealed class DapperWriteTests
     [Fact]
     public void No_module_writes_an_aggregate_table_with_sql_and_inventorys_snapshot_copy_is_seen_as_a_write()
     {
-        Assert.Empty(Sample.Modules.SelectMany(module => ModuleRules.WritesToAggregateTables(module, AggregateTables)));
-        var inventory = Assert.Single(Sample.Modules, module => module.GetName().Name == "Inventory");
+        Assert.Empty(
+            Sample.Modules.SelectMany(module =>
+                ModuleRules.WritesToAggregateTables(module, AggregateTables)
+            )
+        );
+        var inventory = Assert.Single(
+            Sample.Modules,
+            module => module.GetName().Name == "Inventory"
+        );
         Assert.Equal(
-            ["inventory.catalog_products", "inventory.catalog_products", "inventory.product_categories", "inventory.stock_counts", "inventory.stock_reconciliations"],
-            Il.LiteralsIn(inventory).SelectMany(literal => ModuleRules.TablesWrittenBy(literal.Text)).Order(StringComparer.Ordinal)
+            [
+                "inventory.catalog_products",
+                "inventory.catalog_products",
+                "inventory.product_categories",
+                "inventory.stock_counts",
+                "inventory.stock_reconciliations",
+            ],
+            Il.LiteralsIn(inventory)
+                .SelectMany(literal => ModuleRules.TablesWrittenBy(literal.Text))
+                .Order(StringComparer.Ordinal)
         );
     }
 
     [Fact]
     public void A_module_that_writes_an_aggregate_table_with_sql_is_rejected_with_or_without_the_schema()
     {
-        var violations = ModuleRules.WritesToAggregateTables(typeof(OffendingModule).Assembly, AggregateTables);
+        var violations = ModuleRules.WritesToAggregateTables(
+            typeof(OffendingModule).Assembly,
+            AggregateTables
+        );
 
         Assert.Equal(
             [
@@ -64,7 +84,9 @@ public sealed class DapperWriteTests
                 "Offending.TenantRebindingQueryHandler writes session state; the lease owns the tenant: \"select set_config('pouryakit.tenant', 'south', false)\".",
                 "Offending.TenantRebindingQueryHandler writes session state; the lease owns the tenant: \"set pouryakit.tenant = 'south'\".",
             ],
-            ModuleRules.WritesSessionState(typeof(OffendingModule).Assembly).Order(StringComparer.Ordinal)
+            ModuleRules
+                .WritesSessionState(typeof(OffendingModule).Assembly)
+                .Order(StringComparer.Ordinal)
         );
     }
 
@@ -73,21 +95,36 @@ public sealed class DapperWriteTests
     [InlineData("select 1; RESET ALL", true)]
     [InlineData("do $$ begin perform set_config('pouryakit.tenant', 'south', true); end $$", true)]
     [InlineData("update catalog.products set name = @Name", false)]
-    [InlineData("select id from catalog.products where tenant = current_setting('pouryakit.tenant') -- ; set x = 1", false)]
+    [InlineData(
+        "select id from catalog.products where tenant = current_setting('pouryakit.tenant') -- ; set x = 1",
+        false
+    )]
     [InlineData("insert into marks (note) values ('set_config')", false)]
     [InlineData("do $$ begin set pouryakit.tenant = 'south'; end $$", true)]
     [InlineData("select E'it\\'s'; set pouryakit.tenant = 'south'", true)]
     [InlineData("select U&\"set\\005Fconfig\"('pouryakit.tenant', 'south', false)", true)]
-    [InlineData("do $$ begin execute 'select set_config(''pouryakit.tenant'', ''south'', false)'; end $$", true)]
-    public void Session_writes_are_found_at_any_statement_boundary_outside_comments_and_strings(string sql, bool writesSessionState)
+    [InlineData(
+        "do $$ begin execute 'select set_config(''pouryakit.tenant'', ''south'', false)'; end $$",
+        true
+    )]
+    public void Session_writes_are_found_at_any_statement_boundary_outside_comments_and_strings(
+        string sql,
+        bool writesSessionState
+    )
     {
         Assert.Equal(writesSessionState, ModuleRules.HoldsSessionWrite(sql));
     }
 
     [Theory]
-    [InlineData("insert into inventory.catalog_products (product_id) values (@Id) on conflict (product_id) do update set name = excluded.name", "inventory.catalog_products")]
+    [InlineData(
+        "insert into inventory.catalog_products (product_id) values (@Id) on conflict (product_id) do update set name = excluded.name",
+        "inventory.catalog_products"
+    )]
     [InlineData("UPDATE \"Catalog\".\"Products\" SET name = @Name", "catalog.products")]
-    [InlineData("merge into stock_items using x on true when matched then update set quantity = 1", "stock_items")]
+    [InlineData(
+        "merge into stock_items using x on true when matched then update set quantity = 1",
+        "stock_items"
+    )]
     [InlineData("select id from catalog.products for update", null)]
     [InlineData("truncate table billing.price_lists", "billing.price_lists")]
     [InlineData("update catalog.\nproducts set name = @Name", "catalog.products")]
@@ -96,7 +133,10 @@ public sealed class DapperWriteTests
     [InlineData("/* a /* b */ ' */ delete from catalog.products --'", "catalog.products")]
     [InlineData("do $$ begin update catalog.products set name = 'x'; end $$", "catalog.products")]
     [InlineData("-- update catalog.products\ninsert into marks (id) values (@Id)", "marks")]
-    [InlineData("insert into marks (note) values ('update catalog.products set name = 1')", "marks")]
+    [InlineData(
+        "insert into marks (note) values ('update catalog.products set name = 1')",
+        "marks"
+    )]
     public void Sql_writes_are_read_by_the_table_they_name(string sql, string? table)
     {
         Assert.Equal(table is null ? [] : [table], ModuleRules.TablesWrittenBy(sql));

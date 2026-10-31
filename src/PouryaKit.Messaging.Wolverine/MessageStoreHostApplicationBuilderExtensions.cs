@@ -64,9 +64,13 @@ public static class MessageStoreHostApplicationBuilderExtensions
                 .ValidateOnStart();
             builder.Services.AddSingleton<IWolverineExtension, MessageStoreExtension>();
             builder.Services.TryAddScoped<PublishedIntegrationEvents>();
-            builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope => scope.GetRequiredService<PublishedIntegrationEvents>());
+            builder.Services.TryAddScoped<IIntegrationEventOutbox>(scope =>
+                scope.GetRequiredService<PublishedIntegrationEvents>()
+            );
             builder.Services.TryAddScoped<ScheduledDelayedCommands>();
-            builder.Services.TryAddScoped<IDelayedCommandOutbox>(scope => scope.GetRequiredService<ScheduledDelayedCommands>());
+            builder.Services.TryAddScoped<IDelayedCommandOutbox>(scope =>
+                scope.GetRequiredService<ScheduledDelayedCommands>()
+            );
             builder.Services.TryAddScoped(scope => new OutboxWriter(
                 scope.GetRequiredService<IWolverineRuntime>(),
                 scope,

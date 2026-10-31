@@ -30,7 +30,8 @@ public static class NumberSequenceTable
             );
 
         /// <summary>Drops the number sequence table from <paramref name="schema"/>, the Module's own.</summary>
-        public void DropNumberSequenceTable(string schema) => migrationBuilder.DropTable(name: Name, schema: schema);
+        public void DropNumberSequenceTable(string schema) =>
+            migrationBuilder.DropTable(name: Name, schema: schema);
     }
 
     // The table in the DbContext's Module schema. The name comes from the model, never from input.

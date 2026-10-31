@@ -32,9 +32,18 @@ public sealed class ObservedDispatcherTests
         Assert.Equal(
             (true, true, true, 0L),
             (
-                ReferenceEquals(CompletedDispatcher.Succeeded, dispatcher.SendAsync(done, cancellationToken)),
-                ReferenceEquals(CompletedDispatcher.Answered, dispatcher.SendAsync(answer, cancellationToken)),
-                ReferenceEquals(CompletedDispatcher.Answered, dispatcher.QueryAsync(ask, cancellationToken)),
+                ReferenceEquals(
+                    CompletedDispatcher.Succeeded,
+                    dispatcher.SendAsync(done, cancellationToken)
+                ),
+                ReferenceEquals(
+                    CompletedDispatcher.Answered,
+                    dispatcher.SendAsync(answer, cancellationToken)
+                ),
+                ReferenceEquals(
+                    CompletedDispatcher.Answered,
+                    dispatcher.QueryAsync(ask, cancellationToken)
+                ),
                 allocated
             )
         );
@@ -60,14 +69,25 @@ public sealed class ObservedDispatcherTests
     {
         public static readonly Task<Result> Succeeded = Task.FromResult(Result.Success());
 
-        public static readonly Task<Result<string>> Answered = Task.FromResult(Result.Success("answer"));
+        public static readonly Task<Result<string>> Answered = Task.FromResult(
+            Result.Success("answer")
+        );
 
-        public Task<Result> SendAsync(Command command, CancellationToken cancellationToken = default) => Succeeded;
+        public Task<Result> SendAsync(
+            Command command,
+            CancellationToken cancellationToken = default
+        ) => Succeeded;
 
-        public Task<Result<TResponse>> SendAsync<TResponse>(Command<TResponse> command, CancellationToken cancellationToken = default)
+        public Task<Result<TResponse>> SendAsync<TResponse>(
+            Command<TResponse> command,
+            CancellationToken cancellationToken = default
+        )
             where TResponse : notnull => (Task<Result<TResponse>>)(object)Answered;
 
-        public Task<Result<TResponse>> QueryAsync<TResponse>(Query<TResponse> query, CancellationToken cancellationToken = default)
+        public Task<Result<TResponse>> QueryAsync<TResponse>(
+            Query<TResponse> query,
+            CancellationToken cancellationToken = default
+        )
             where TResponse : notnull => (Task<Result<TResponse>>)(object)Answered;
     }
 }

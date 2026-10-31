@@ -14,7 +14,12 @@ public interface IFileStorage
     /// Stores <paramref name="content"/>, read from its current position to its end, as the file under
     /// <paramref name="key"/> with <paramref name="contentType"/>, replacing any file stored there.
     /// </summary>
-    Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken);
+    Task<Result> UploadAsync(
+        string key,
+        Stream content,
+        string contentType,
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// The file under <paramref name="key"/>, whose content the caller reads and disposes; <see cref="StorageErrors.FileNotFound"/>
@@ -32,5 +37,9 @@ public interface IFileStorage
     /// <see cref="StorageErrors.LinkLifetimeOutOfRange"/> when <paramref name="lifetime"/> is zero or less, or longer than
     /// the provider signs a link for.
     /// </summary>
-    Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken);
+    Task<Result<Uri>> GetPresignedUrlAsync(
+        string key,
+        TimeSpan lifetime,
+        CancellationToken cancellationToken
+    );
 }

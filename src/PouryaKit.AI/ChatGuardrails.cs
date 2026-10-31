@@ -6,7 +6,8 @@ namespace PouryaKit.AI;
 // Runs the application's guardrails around each call to the model, inside function invocation, so a refused response's
 // tool calls never reach it. The first refusal wins and ends the call as the provider's content filter would. A streamed
 // call is checked whole: its updates reach the caller once the response completed and passed.
-internal sealed class ChatGuardrails(IChatClient inner, IChatGuardrail[] guardrails) : DelegatingChatClient(inner)
+internal sealed class ChatGuardrails(IChatClient inner, IChatGuardrail[] guardrails)
+    : DelegatingChatClient(inner)
 {
     public override async Task<ChatResponse> GetResponseAsync(
         IEnumerable<ChatMessage> messages,
@@ -45,12 +46,19 @@ internal sealed class ChatGuardrails(IChatClient inner, IChatGuardrail[] guardra
         [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
-        foreach (var update in (await GetResponseAsync(messages, options, cancellationToken)).ToChatResponseUpdates())
+        foreach (
+            var update in (
+                await GetResponseAsync(messages, options, cancellationToken)
+            ).ToChatResponseUpdates()
+        )
         {
             yield return update;
         }
     }
 
     private static ChatResponse Refused(string refusal) =>
-        new(new ChatMessage(ChatRole.Assistant, refusal)) { FinishReason = ChatFinishReason.ContentFilter };
+        new(new ChatMessage(ChatRole.Assistant, refusal))
+        {
+            FinishReason = ChatFinishReason.ContentFilter,
+        };
 }

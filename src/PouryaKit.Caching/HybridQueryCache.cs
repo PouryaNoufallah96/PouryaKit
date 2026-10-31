@@ -12,9 +12,11 @@ namespace PouryaKit.Caching;
 // One HybridCache.GetOrCreateAsync per cacheable query, so concurrent misses of one key in this Host share one handler
 // run; another Host runs its own. An entry is the success value as JSON in the Kit's representation, read the same way
 // from this Host's memory and from a distributed cache.
-internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<HybridQueryCache> logger) : IQueryCache
+internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<HybridQueryCache> logger)
+    : IQueryCache
 {
-    private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
+    private static readonly JsonSerializerOptions Json =
+        new JsonSerializerOptions().UsePouryaKitJson();
 
     // HybridCache's tag that evicts every entry.
     private const string WildcardTag = "*";
@@ -84,7 +86,11 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
                         run.running.TryRemove(read, out _);
                     }
                 },
-                new HybridCacheEntryOptions { Expiration = cacheable.CacheDuration, LocalCacheExpiration = cacheable.CacheDuration },
+                new HybridCacheEntryOptions
+                {
+                    Expiration = cacheable.CacheDuration,
+                    LocalCacheExpiration = cacheable.CacheDuration,
+                },
                 tags,
                 CancellationToken.None
             );

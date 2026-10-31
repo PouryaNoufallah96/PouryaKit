@@ -55,7 +55,9 @@ public static class GrpcEndpointRouteBuilderExtensions
     {
         var run =
             endpoint.RequestDelegate
-            ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
+            ?? throw new InvalidOperationException(
+                $"{endpoint.DisplayName} has no request delegate to run."
+            );
         endpoint.RequestDelegate = async httpContext =>
         {
             try
@@ -66,8 +68,12 @@ public static class GrpcEndpointRouteBuilderExtensions
             {
                 httpContext.Response.StatusCode = StatusCodes.Status200OK;
                 httpContext.Response.ContentType = "application/grpc";
-                httpContext.Response.Headers["grpc-status"] = ((int)StatusCode.InvalidArgument).ToString(CultureInfo.InvariantCulture);
-                httpContext.Response.Headers["grpc-message"] = Uri.EscapeDataString(refusal.Message);
+                httpContext.Response.Headers["grpc-status"] = (
+                    (int)StatusCode.InvalidArgument
+                ).ToString(CultureInfo.InvariantCulture);
+                httpContext.Response.Headers["grpc-message"] = Uri.EscapeDataString(
+                    refusal.Message
+                );
             }
         };
     }

@@ -18,18 +18,38 @@ namespace PouryaKit.Messaging.Wolverine.Sagas;
 // policy runs at every start, under static code generation too, and its frames are what codegen write generates.
 internal sealed class SagaStepPolicy(SagaDeclarations sagas) : IHandlerPolicy
 {
-    public void Apply(IReadOnlyList<HandlerChain> chains, GenerationRules rules, IServiceContainer container)
+    public void Apply(
+        IReadOnlyList<HandlerChain> chains,
+        GenerationRules rules,
+        IServiceContainer container
+    )
     {
-        foreach (var chain in chains.OfType<SagaChain>().Where(chain => sagas.Declares(chain.SagaType)))
+        foreach (
+            var chain in chains.OfType<SagaChain>().Where(chain => sagas.Declares(chain.SagaType))
+        )
         {
             chain.Middleware.RemoveAll(frame => frame is EnrollAndFetchSagaStorageFrame);
-            var codegen = new SagaSchemaCodegen(typeof(DatabaseSagaSchema<,>).MakeGenericType(chain.SagaType, typeof(string)), typeof(SagaStorage));
-            chain.Middleware.Insert(0, new EnrollAndFetchSagaStorageFrame(typeof(string), chain.SagaType, codegen));
+            var codegen = new SagaSchemaCodegen(
+                typeof(DatabaseSagaSchema<,>).MakeGenericType(chain.SagaType, typeof(string)),
+                typeof(SagaStorage)
+            );
+            chain.Middleware.Insert(
+                0,
+                new EnrollAndFetchSagaStorageFrame(typeof(string), chain.SagaType, codegen)
+            );
             // An input whose saga is missing starts one, or reaches its NotFound step; any other is the Kit's refusal.
             // Wolverine takes each step name with an Async suffix too.
             var startsSaga = chain.Handlers.Any(handler =>
-                (handler.Method.Name.EndsWith("Async", StringComparison.Ordinal) ? handler.Method.Name[..^5] : handler.Method.Name)
-                    is SagaChain.Start or SagaChain.Starts or SagaChain.StartOrHandle or SagaChain.StartsOrHandles or SagaChain.NotFound
+                (
+                    handler.Method.Name.EndsWith("Async", StringComparison.Ordinal)
+                        ? handler.Method.Name[..^5]
+                        : handler.Method.Name
+                )
+                    is SagaChain.Start
+                        or SagaChain.Starts
+                        or SagaChain.StartOrHandle
+                        or SagaChain.StartsOrHandles
+                        or SagaChain.NotFound
             );
             chain.Middleware.Insert(1, new EnterStepFrame(chain.SagaType, startsSaga));
         }
@@ -43,7 +63,9 @@ internal sealed class SagaStepPolicy(SagaDeclarations sagas) : IHandlerPolicy
 
         public override IEnumerable<Variable> FindVariables(IMethodVariables chain)
         {
-            _storage = chain.FindVariable(typeof(ISagaStorage<,>).MakeGenericType(typeof(string), sagaType));
+            _storage = chain.FindVariable(
+                typeof(ISagaStorage<,>).MakeGenericType(typeof(string), sagaType)
+            );
             yield return _storage;
         }
 

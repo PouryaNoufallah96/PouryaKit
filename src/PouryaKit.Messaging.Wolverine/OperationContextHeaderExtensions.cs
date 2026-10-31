@@ -22,13 +22,25 @@ public static class OperationContextHeaderExtensions
         {
             ArgumentNullException.ThrowIfNull(options);
             ArgumentNullException.ThrowIfNull(context);
-            return WithContextHeaders(options, context.Actor, context.Tenant, context.CorrelationId, context.OperationId);
+            return WithContextHeaders(
+                options,
+                context.Actor,
+                context.Tenant,
+                context.CorrelationId,
+                context.OperationId
+            );
         }
     }
 
     // The Operation Context headers: an Operation's, caused by it, and those of a Saga step's emission, which no Operation
     // causes (PouryaKit.Messaging.Wolverine.Sagas).
-    internal static DeliveryOptions WithContextHeaders(DeliveryOptions options, Actor actor, string? tenant, Guid correlationId, Guid causationId)
+    internal static DeliveryOptions WithContextHeaders(
+        DeliveryOptions options,
+        Actor actor,
+        string? tenant,
+        Guid correlationId,
+        Guid causationId
+    )
     {
         options.Headers[OperationContextHeaders.ActorId] = actor.Id;
         options.Headers[OperationContextHeaders.ActorKind] = actor.Kind.ToString();
@@ -48,7 +60,10 @@ public static class OperationContextHeaderExtensions
     // current at publish: Wolverine's parent-id with the Kit's tracestate, default when the envelope names no parent. A
     // copy fanned out from another Host's message has no parent-id of its own unless Wolverine's span was current at the
     // fan-out; the Kit's traceparent header then names the publishing Operation.
-    internal static (OperationContext Context, ActivityContext TraceParent) ContinuedOperationContext(Envelope envelope)
+    internal static (
+        OperationContext Context,
+        ActivityContext TraceParent
+    ) ContinuedOperationContext(Envelope envelope)
     {
         string Header(string name) =>
             envelope.Headers.TryGetValue(name, out var value) && value is not null
@@ -63,18 +78,28 @@ public static class OperationContextHeaderExtensions
         {
             nameof(ActorKind.Person) => Actor.Person(Header(OperationContextHeaders.ActorId)),
             nameof(ActorKind.System) => Actor.System(Header(OperationContextHeaders.ActorId)),
-            _ => throw new InvalidOperationException($"The message {envelope.Id} has an undefined ActorKind header."),
+            _ => throw new InvalidOperationException(
+                $"The message {envelope.Id} has an undefined ActorKind header."
+            ),
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);
         envelope.Headers.TryGetValue(OperationContextHeaders.TraceState, out var traceState);
-        var parent = envelope.ParentId ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent);
+        var parent =
+            envelope.ParentId
+            ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent);
         ActivityContext.TryParse(parent, traceState, isRemote: true, out var traceParent);
         return (
             OperationContext.RestoreTrusted(
                 actor,
                 tenant,
-                Guid.Parse(Header(OperationContextHeaders.CorrelationId), CultureInfo.InvariantCulture),
-                Guid.Parse(Header(OperationContextHeaders.CausationId), CultureInfo.InvariantCulture)
+                Guid.Parse(
+                    Header(OperationContextHeaders.CorrelationId),
+                    CultureInfo.InvariantCulture
+                ),
+                Guid.Parse(
+                    Header(OperationContextHeaders.CausationId),
+                    CultureInfo.InvariantCulture
+                )
             ),
             traceParent
         );

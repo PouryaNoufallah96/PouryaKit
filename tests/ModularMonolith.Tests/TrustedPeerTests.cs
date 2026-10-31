@@ -88,34 +88,75 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         using var person = WithContextHeaders(Fixture.Client("grace", "acme"));
 
         var refused = await RemoveAsync(person, name);
-        var refusedRows = await Fixture.RowsAsync($"select is_deleted from catalog.products where id = '{lamp}'");
+        var refusedRows = await Fixture.RowsAsync(
+            $"select is_deleted from catalog.products where id = '{lamp}'"
+        );
         var continued = await RemoveAsync(peer, name);
 
         Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
-        using (var problem = JsonDocument.Parse(await refused.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)))
+        using (
+            var problem = JsonDocument.Parse(
+                await refused.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+            )
+        )
         {
             Assert.Equal(
                 [PermissionErrors.Denied.Code],
-                problem.RootElement.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("code").GetString())
+                problem
+                    .RootElement.GetProperty("errors")
+                    .EnumerateArray()
+                    .Select(error => error.GetProperty("code").GetString())
             );
         }
-        Assert.Equal([[false]], refusedRows);
+        Assert.Equal(
+            [
+                [false],
+            ],
+            refusedRows
+        );
         Assert.Equal(HttpStatusCode.OK, continued.StatusCode);
-        Assert.Equal("1", await continued.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            "1",
+            await continued.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
         // Removed as the continued Actor, not as the peer.
         Assert.Equal(
-            [[true, "ada"]],
-            await Fixture.RowsAsync($"select is_deleted, deleted_by from catalog.products where id = '{lamp}'")
+            [
+                [true, "ada"],
+            ],
+            await Fixture.RowsAsync(
+                $"select is_deleted, deleted_by from catalog.products where id = '{lamp}'"
+            )
         );
     }
 
     // The Kit's own reason is the problem's detail: it names the header and the rule it broke.
     [Theory]
-    [InlineData(OperationContextHeaders.CausationId, null, $"The request continues an Operation but has no single {OperationContextHeaders.CausationId} header that is {Rule}.")]
-    [InlineData(OperationContextHeaders.CorrelationId, "not-a-guid", $"The request's {OperationContextHeaders.CorrelationId} header is not a Guid.")]
-    [InlineData(OperationContextHeaders.ActorKind, "Robot", $"The request's {OperationContextHeaders.ActorKind} header is Person or System.")]
-    [InlineData(OperationContextHeaders.ActorId, "ada\u0007", $"The request continues an Operation but has no single {OperationContextHeaders.ActorId} header that is {Rule}.")]
-    [InlineData(OperationContextHeaders.Tenant, "acmé", $"The request continues an Operation but has no single {OperationContextHeaders.Tenant} header that is {Rule}.")]
+    [InlineData(
+        OperationContextHeaders.CausationId,
+        null,
+        $"The request continues an Operation but has no single {OperationContextHeaders.CausationId} header that is {Rule}."
+    )]
+    [InlineData(
+        OperationContextHeaders.CorrelationId,
+        "not-a-guid",
+        $"The request's {OperationContextHeaders.CorrelationId} header is not a Guid."
+    )]
+    [InlineData(
+        OperationContextHeaders.ActorKind,
+        "Robot",
+        $"The request's {OperationContextHeaders.ActorKind} header is Person or System."
+    )]
+    [InlineData(
+        OperationContextHeaders.ActorId,
+        "ada\u0007",
+        $"The request continues an Operation but has no single {OperationContextHeaders.ActorId} header that is {Rule}."
+    )]
+    [InlineData(
+        OperationContextHeaders.Tenant,
+        "acmé",
+        $"The request continues an Operation but has no single {OperationContextHeaders.Tenant} header that is {Rule}."
+    )]
     public async Task A_trusted_peer_whose_context_headers_are_incomplete_or_unreadable_is_refused_with_400(
         string header,
         string? value,
@@ -142,20 +183,38 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), new OperationContext(GatewayTestExtensions.TestActor, "acme"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateProductCommand(product, category, name), new OperationContext(GatewayTestExtensions.TestActor, "acme"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, "Lamps"),
+            new OperationContext(GatewayTestExtensions.TestActor, "acme"),
+            TestContext.Current.CancellationToken
+        );
+        await catalog.SendAsync(
+            new CreateProductCommand(product, category, name),
+            new OperationContext(GatewayTestExtensions.TestActor, "acme"),
+            TestContext.Current.CancellationToken
+        );
         return product;
     }
 
     private static Task<HttpResponseMessage> RemoveAsync(HttpClient client, string name) =>
-        client.PostAsJsonAsync("/stub/catalog-products/removal", new { names = new[] { name } }, TestContext.Current.CancellationToken);
+        client.PostAsJsonAsync(
+            "/stub/catalog-products/removal",
+            new { names = new[] { name } },
+            TestContext.Current.CancellationToken
+        );
 
     private static HttpClient WithContextHeaders(HttpClient client)
     {
         client.DefaultRequestHeaders.Add(OperationContextHeaders.ActorId, "ada");
-        client.DefaultRequestHeaders.Add(OperationContextHeaders.ActorKind, nameof(ActorKind.Person));
+        client.DefaultRequestHeaders.Add(
+            OperationContextHeaders.ActorKind,
+            nameof(ActorKind.Person)
+        );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.Tenant, "acme");
-        client.DefaultRequestHeaders.Add(OperationContextHeaders.CorrelationId, Correlation.ToString());
+        client.DefaultRequestHeaders.Add(
+            OperationContextHeaders.CorrelationId,
+            Correlation.ToString()
+        );
         client.DefaultRequestHeaders.Add(OperationContextHeaders.CausationId, Causation.ToString());
         return client;
     }
@@ -164,6 +223,10 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<SeenContext>(TestContext.Current.CancellationToken))!;
+        return (
+            await response.Content.ReadFromJsonAsync<SeenContext>(
+                TestContext.Current.CancellationToken
+            )
+        )!;
     }
 }

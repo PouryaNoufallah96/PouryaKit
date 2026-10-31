@@ -15,5 +15,9 @@ public interface IReportLayouts
     /// that requested the report, with its Actor and tenant, so asking another Module continues it with
     /// <c>Continue()</c>. A failed Result fails the job with its first Error.
     /// </summary>
-    Task<Result<ReportLayout>> LayOutAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken);
+    Task<Result<ReportLayout>> LayOutAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    );
 }

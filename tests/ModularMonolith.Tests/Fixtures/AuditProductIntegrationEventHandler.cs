@@ -9,9 +9,13 @@ namespace ModularMonolith.Tests.Fixtures;
 
 // The tests' own second subscription of Inventory.Host to ProductCreatedV1, beside Inventory's: it audits the product
 // in Inventory's Unit of Work, and returns a failed Result after writing its audit for a product a test refuses.
-internal sealed class AuditProductIntegrationEventHandler(IUnitOfWorkConnection unitOfWork) : IIntegrationEventHandler<ProductCreatedV1>
+internal sealed class AuditProductIntegrationEventHandler(IUnitOfWorkConnection unitOfWork)
+    : IIntegrationEventHandler<ProductCreatedV1>
 {
-    public static readonly Error Refused = Error.Conflict("Tests.AuditRefused", "The audit was refused after it was written.");
+    public static readonly Error Refused = Error.Conflict(
+        "Tests.AuditRefused",
+        "The audit was refused after it was written."
+    );
 
     private static readonly ConcurrentDictionary<Guid, bool> Refusing = new();
 
@@ -22,7 +26,10 @@ internal sealed class AuditProductIntegrationEventHandler(IUnitOfWorkConnection 
         return new Healing(product);
     }
 
-    public async Task<Result> Handle(ProductCreatedV1 integrationEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        ProductCreatedV1 integrationEvent,
+        CancellationToken cancellationToken
+    )
     {
         var (connection, transaction) = unitOfWork.Join();
         await connection.ExecuteAsync(

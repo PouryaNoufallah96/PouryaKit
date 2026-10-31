@@ -30,29 +30,52 @@ public static class GrpcClientServiceCollectionExtensions
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-            if (services.Any(descriptor => descriptor.ImplementationInstance is GrpcClient(var registered, var client) && registered == name && client == typeof(TClient)))
+            if (
+                services.Any(descriptor =>
+                    descriptor.ImplementationInstance is GrpcClient(var registered, var client)
+                    && registered == name
+                    && client == typeof(TClient)
+                )
+            )
             {
                 return new ClientBuilder(name, services);
             }
 
             services.AddOptions<PouryaKitGrpcClientOptions>(name).ValidateOnStart();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitGrpcClientOptions>, ClientOptionsValidation>());
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>());
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, GrpcLoopbackCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<
+                    IValidateOptions<PouryaKitGrpcClientOptions>,
+                    ClientOptionsValidation
+                >()
+            );
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>()
+            );
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IHostedService, GrpcLoopbackCheck>()
+            );
             services.AddSingleton(new GrpcClient(name, typeof(TClient)));
             return services
                 .AddGrpcClient<TClient>(
                     name,
-                    (provider, client) => client.Address = provider.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>().Get(name).Address
+                    (provider, client) =>
+                        client.Address = provider
+                            .GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>()
+                            .Get(name)
+                            .Address
                 )
-                .AddInterceptor(provider =>
-                    new OperationContextInterceptor(provider.GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>().Get(name).Deadline)
-                );
+                .AddInterceptor(provider => new OperationContextInterceptor(
+                    provider
+                        .GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>()
+                        .Get(name)
+                        .Deadline
+                ));
         }
     }
 
     // The builder of a client already registered; the factory's own AddHttpClient would register its services again.
-    private sealed record ClientBuilder(string Name, IServiceCollection Services) : IHttpClientBuilder;
+    private sealed record ClientBuilder(string Name, IServiceCollection Services)
+        : IHttpClientBuilder;
 
     // The message names the client, so it is a validator of its own rather than a chained Validate.
     private sealed class ClientOptionsValidation : IValidateOptions<PouryaKitGrpcClientOptions>
@@ -62,15 +85,21 @@ public static class GrpcClientServiceCollectionExtensions
             List<string> failures = [];
             if (options.Address is not { IsAbsoluteUri: true, Scheme: "http" or "https" })
             {
-                failures.Add($"PouryaKitGrpcClientOptions.Address of the gRPC client {name} is not an absolute http or https address.");
+                failures.Add(
+                    $"PouryaKitGrpcClientOptions.Address of the gRPC client {name} is not an absolute http or https address."
+                );
             }
 
             if (options.Deadline <= TimeSpan.Zero)
             {
-                failures.Add($"PouryaKitGrpcClientOptions.Deadline of the gRPC client {name} is not positive.");
+                failures.Add(
+                    $"PouryaKitGrpcClientOptions.Deadline of the gRPC client {name} is not positive."
+                );
             }
 
-            return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+            return failures.Count == 0
+                ? ValidateOptionsResult.Success
+                : ValidateOptionsResult.Fail(failures);
         }
     }
 }

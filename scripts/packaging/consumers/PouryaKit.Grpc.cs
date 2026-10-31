@@ -20,7 +20,13 @@ using var provider = services.BuildServiceProvider();
 var client = provider.GetRequiredService<StockClient>();
 Result missing = Error.NotFound("Stock.NotFound", "The item is not stocked.");
 var failure = Assert(() => missing.ToGrpcResponse("unused"));
-Console.WriteLine(client is not null && failure is { StatusCode: StatusCode.NotFound } && failure.Trailers.Get(ResultGrpcExtensions.ErrorsTrailer) is { IsBinary: true } ? 1 : 0);
+Console.WriteLine(
+    client is not null
+    && failure is { StatusCode: StatusCode.NotFound }
+    && failure.Trailers.Get(ResultGrpcExtensions.ErrorsTrailer) is { IsBinary: true }
+        ? 1
+        : 0
+);
 
 static RpcException? Assert(Func<string> answer)
 {
@@ -44,7 +50,8 @@ internal sealed class StockClient : ClientBase<StockClient>
     private StockClient(ClientBaseConfiguration configuration)
         : base(configuration) { }
 
-    protected override StockClient NewInstance(ClientBaseConfiguration configuration) => new(configuration);
+    protected override StockClient NewInstance(ClientBaseConfiguration configuration) =>
+        new(configuration);
 }
 
 internal sealed class StockService;

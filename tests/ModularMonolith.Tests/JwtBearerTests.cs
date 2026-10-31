@@ -28,7 +28,10 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task A_verified_token_reaches_the_operation_as_its_subject_in_its_tenant()
     {
         await using var host = await StartHostAsync();
-        using var client = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada", [ModularMonolithHost.TenantClaim] = "acme" }));
+        using var client = ClientOf(
+            host,
+            TestIssuer.Token(new() { ["sub"] = "ada", [ModularMonolithHost.TenantClaim] = "acme" })
+        );
 
         var seen = await ContextAsync(client);
 
@@ -43,13 +46,18 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var seen = await ContextAsync(client);
 
-        Assert.Equal((new SeenActor("ada", ActorKind.Person), (string?)null), (seen.Actor, seen.Tenant));
+        Assert.Equal(
+            (new SeenActor("ada", ActorKind.Person), (string?)null),
+            (seen.Actor, seen.Tenant)
+        );
     }
 
     [Theory]
     [InlineData("acme")]
     [InlineData(null)]
-    public async Task The_token_s_own_actor_and_tenant_claims_never_stand_in_for_the_configured_ones(string? tenant)
+    public async Task The_token_s_own_actor_and_tenant_claims_never_stand_in_for_the_configured_ones(
+        string? tenant
+    )
     {
         Dictionary<string, object> claims = new()
         {
@@ -79,7 +87,8 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("no audience")]
     public async Task A_token_with_a_flaw_is_refused_with_a_401_problem_response(string flaw)
     {
-        Dictionary<string, object> claims = flaw == "no subject" ? new() { ["name"] = "ada" } : new() { ["sub"] = "ada" };
+        Dictionary<string, object> claims =
+            flaw == "no subject" ? new() { ["name"] = "ada" } : new() { ["sub"] = "ada" };
         var token = TestIssuer.Token(
             claims,
             descriptor =>
@@ -100,7 +109,9 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
                         break;
                     case "an expired lifetime":
                         // Beyond the five minutes of clock skew the handler allows.
-                        descriptor.IssuedAt = descriptor.NotBefore = DateTime.UtcNow.AddMinutes(-30);
+                        descriptor.IssuedAt = descriptor.NotBefore = DateTime.UtcNow.AddMinutes(
+                            -30
+                        );
                         descriptor.Expires = DateTime.UtcNow.AddMinutes(-10);
                         break;
                 }
@@ -109,11 +120,17 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         await using var host = await StartHostAsync();
         using var client = ClientOf(host, token);
 
-        var response = await client.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
 
         var problem = await ProblemAsync(response, HttpStatusCode.Unauthorized);
         Assert.Equal(401, problem.GetProperty("status").GetInt32());
-        Assert.Equal(JwtBearerDefaults.AuthenticationScheme, Assert.Single(response.Headers.WwwAuthenticate).Scheme);
+        Assert.Equal(
+            JwtBearerDefaults.AuthenticationScheme,
+            Assert.Single(response.Headers.WwwAuthenticate).Scheme
+        );
     }
 
     [Fact]
@@ -124,22 +141,59 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         // fixture's Host is waiting for.
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
         await using var host = await StartHostAsync();
-        using var other = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada", [ModularMonolithHost.TenantClaim] = AppFixture.TestTenant, [CallerPermissions.ClaimType] = "catalog.products.other" }));
-        using var holder = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "bob", [ModularMonolithHost.TenantClaim] = AppFixture.TestTenant, [CallerPermissions.ClaimType] = RemoveProductsCommand.Permission }));
+        using var other = ClientOf(
+            host,
+            TestIssuer.Token(
+                new()
+                {
+                    ["sub"] = "ada",
+                    [ModularMonolithHost.TenantClaim] = AppFixture.TestTenant,
+                    [CallerPermissions.ClaimType] = "catalog.products.other",
+                }
+            )
+        );
+        using var holder = ClientOf(
+            host,
+            TestIssuer.Token(
+                new()
+                {
+                    ["sub"] = "bob",
+                    [ModularMonolithHost.TenantClaim] = AppFixture.TestTenant,
+                    [CallerPermissions.ClaimType] = RemoveProductsCommand.Permission,
+                }
+            )
+        );
 
         var refused = await RemoveLampAsync(other);
-        var unchanged = await Fixture.RowsAsync($"select is_deleted, version from catalog.products where id = '{lamp}'");
+        var unchanged = await Fixture.RowsAsync(
+            $"select is_deleted, version from catalog.products where id = '{lamp}'"
+        );
         var removed = await RemoveLampAsync(holder);
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
         var problem = await ProblemAsync(refused, HttpStatusCode.Forbidden);
         Assert.Equal(
             [PermissionErrors.Denied.Code],
-            problem.GetProperty("errors").EnumerateArray().Select(error => error.GetProperty("code").GetString())
+            problem
+                .GetProperty("errors")
+                .EnumerateArray()
+                .Select(error => error.GetProperty("code").GetString())
         );
-        Assert.Equal([[false, 1L]], unchanged);
+        Assert.Equal(
+            [
+                [false, 1L],
+            ],
+            unchanged
+        );
         Assert.Equal(HttpStatusCode.OK, removed.StatusCode);
-        Assert.Equal([[true, "bob"]], await Fixture.RowsAsync($"select is_deleted, deleted_by from catalog.products where id = '{lamp}'"));
+        Assert.Equal(
+            [
+                [true, "bob"],
+            ],
+            await Fixture.RowsAsync(
+                $"select is_deleted, deleted_by from catalog.products where id = '{lamp}'"
+            )
+        );
     }
 
     [Theory]
@@ -151,22 +205,40 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     [InlineData("no signing key", "validate the signature")]
     [InlineData("lifetime validation off", "validate the token's lifetime")]
     [InlineData("inbound claims mapped", "maps inbound claims")]
-    [InlineData(nameof(TokenValidationParameters.AudienceValidator), "TokenValidationParameters.AudienceValidator")]
-    [InlineData(nameof(TokenValidationParameters.IssuerValidator), "TokenValidationParameters.IssuerValidator,")]
+    [InlineData(
+        nameof(TokenValidationParameters.AudienceValidator),
+        "TokenValidationParameters.AudienceValidator"
+    )]
+    [InlineData(
+        nameof(TokenValidationParameters.IssuerValidator),
+        "TokenValidationParameters.IssuerValidator,"
+    )]
     [InlineData(
         nameof(TokenValidationParameters.IssuerValidatorUsingConfiguration),
         "TokenValidationParameters.IssuerValidatorUsingConfiguration"
     )]
-    [InlineData(nameof(TokenValidationParameters.LifetimeValidator), "TokenValidationParameters.LifetimeValidator")]
-    [InlineData(nameof(TokenValidationParameters.SignatureValidator), "TokenValidationParameters.SignatureValidator,")]
+    [InlineData(
+        nameof(TokenValidationParameters.LifetimeValidator),
+        "TokenValidationParameters.LifetimeValidator"
+    )]
+    [InlineData(
+        nameof(TokenValidationParameters.SignatureValidator),
+        "TokenValidationParameters.SignatureValidator,"
+    )]
     [InlineData(
         nameof(TokenValidationParameters.SignatureValidatorUsingConfiguration),
         "TokenValidationParameters.SignatureValidatorUsingConfiguration"
     )]
     [InlineData("events resolved by type", "bypass the Kit's claim normalization")]
-    [InlineData("events replaced after the kit's registration", "bypass the Kit's claim normalization")]
+    [InlineData(
+        "events replaced after the kit's registration",
+        "bypass the Kit's claim normalization"
+    )]
     [InlineData("events subclassed", "bypass the Kit's claim normalization")]
-    public async Task A_host_whose_bearer_scheme_would_weaken_verification_fails_when_it_starts(string weakness, string failure)
+    public async Task A_host_whose_bearer_scheme_would_weaken_verification_fails_when_it_starts(
+        string weakness,
+        string failure
+    )
     {
         await using var host = AppFixture.ComposeHost(
             "Production",
@@ -183,11 +255,16 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
                     return;
                 }
 
-                builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, bearer => Weaken(bearer, weakness));
+                builder.Services.Configure<JwtBearerOptions>(
+                    JwtBearerDefaults.AuthenticationScheme,
+                    bearer => Weaken(bearer, weakness)
+                );
             }
         );
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Contains(failure, Assert.Single(thrown.Failures));
     }
@@ -202,18 +279,25 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
                 {
                     var token = bearer.TokenValidationParameters;
                     (token.IssuerSigningKey, token.IssuerSigningKeys) = (null, []);
-                    token.IssuerSigningKeyResolverUsingConfiguration = (_, _, _, _, _) => [TestIssuer.SigningKey];
+                    token.IssuerSigningKeyResolverUsingConfiguration = (_, _, _, _, _) =>
+                        [TestIssuer.SigningKey];
                 }
             )
         );
         using var trusted = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada" }));
         using var untrusted = ClientOf(
             host,
-            TestIssuer.Token(new() { ["sub"] = "ada" }, descriptor => descriptor.SigningCredentials = TestIssuer.Untrusted())
+            TestIssuer.Token(
+                new() { ["sub"] = "ada" },
+                descriptor => descriptor.SigningCredentials = TestIssuer.Untrusted()
+            )
         );
 
         var seen = await ContextAsync(trusted);
-        var refused = await untrusted.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var refused = await untrusted.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(new SeenActor("ada", ActorKind.Person), seen.Actor);
         Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
@@ -229,7 +313,9 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
                 bearer =>
                     bearer.Events.OnTokenValidated = context =>
                     {
-                        seenActors.Add(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier));
+                        seenActors.Add(
+                            context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
+                        );
                         return Task.CompletedTask;
                     }
             )
@@ -304,7 +390,9 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         public override Task TokenValidated(TokenValidatedContext context) => Task.CompletedTask;
     }
 
-    private async Task<WebApplication> StartHostAsync(Action<WebApplicationBuilder>? configure = null)
+    private async Task<WebApplication> StartHostAsync(
+        Action<WebApplicationBuilder>? configure = null
+    )
     {
         var host = AppFixture.ComposeHost(
             "Production",
@@ -324,15 +412,25 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     private static HttpClient ClientOf(WebApplication host, string token)
     {
         var client = AppFixture.ClientOf(host);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(JwtBearerDefaults.AuthenticationScheme, token);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            JwtBearerDefaults.AuthenticationScheme,
+            token
+        );
         return client;
     }
 
     private static async Task<SeenContext> ContextAsync(HttpClient client)
     {
-        var response = await client.GetAsync("/stub/context", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            "/stub/context",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<SeenContext>(TestContext.Current.CancellationToken))!;
+        return (
+            await response.Content.ReadFromJsonAsync<SeenContext>(
+                TestContext.Current.CancellationToken
+            )
+        )!;
     }
 
     private async Task<Guid> CreateLampAsync()
@@ -340,11 +438,21 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         var catalog = Fixture.Gateway<CatalogModule>();
         var lamps = Guid.CreateVersion7();
         var lamp = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateProductCommand(lamp, lamps, "Lamp"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(lamps, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
+        await catalog.SendAsync(
+            new CreateProductCommand(lamp, lamps, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
         return lamp;
     }
 
     private static Task<HttpResponseMessage> RemoveLampAsync(HttpClient client) =>
-        client.PostAsJsonAsync("/stub/catalog-products/removal", new { names = new[] { "Lamp" } }, TestContext.Current.CancellationToken);
+        client.PostAsJsonAsync(
+            "/stub/catalog-products/removal",
+            new { names = new[] { "Lamp" } },
+            TestContext.Current.CancellationToken
+        );
 }

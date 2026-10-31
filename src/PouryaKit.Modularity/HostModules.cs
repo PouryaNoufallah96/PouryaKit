@@ -14,7 +14,10 @@ internal sealed class HostModules
 
     public static HostModules In(IServiceCollection services)
     {
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(HostModules)) is { } existing)
+        if (
+            services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(HostModules)) is
+            { } existing
+        )
         {
             return (HostModules)existing.ImplementationInstance!;
         }
@@ -72,11 +75,15 @@ internal sealed class HostModules
     // Root registers, so the mistake is named while the Host is composed rather than at the command's first run.
     public void EnsureUnitOfWorkForCommands(Type module, IServiceCollection services)
     {
-        var command = _ownerByOperation.FirstOrDefault(owned => owned.Value == module && OperationTypes.IsCommand(owned.Key)).Key;
+        var command = _ownerByOperation
+            .FirstOrDefault(owned => owned.Value == module && OperationTypes.IsCommand(owned.Key))
+            .Key;
         if (
             command is null
             || services.Any(descriptor =>
-                descriptor.IsKeyedService && descriptor.ServiceType == typeof(IUnitOfWork) && Equals(descriptor.ServiceKey, module)
+                descriptor.IsKeyedService
+                && descriptor.ServiceType == typeof(IUnitOfWork)
+                && Equals(descriptor.ServiceKey, module)
             )
         )
         {

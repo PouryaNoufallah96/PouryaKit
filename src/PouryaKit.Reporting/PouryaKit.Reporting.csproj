@@ -16,8 +16,14 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Roboto 2.138 (Apache-2.0), embedded so a PDF renders without a system font; its licence ships beside it. -->
-    <EmbeddedResource Include="Fonts\Roboto-Regular.ttf" LogicalName="PouryaKit.Reporting.Roboto-Regular.ttf" />
-    <EmbeddedResource Include="Fonts\Roboto-Bold.ttf" LogicalName="PouryaKit.Reporting.Roboto-Bold.ttf" />
+    <EmbeddedResource
+      Include="Fonts\Roboto-Regular.ttf"
+      LogicalName="PouryaKit.Reporting.Roboto-Regular.ttf"
+    />
+    <EmbeddedResource
+      Include="Fonts\Roboto-Bold.ttf"
+      LogicalName="PouryaKit.Reporting.Roboto-Bold.ttf"
+    />
     <None Include="Fonts\LICENSE.txt" Pack="true" PackagePath="fonts/Roboto-LICENSE.txt" />
   </ItemGroup>
 </Project>

@@ -54,7 +54,10 @@ public sealed class PageSql
         ArgumentException.ThrowIfNullOrWhiteSpace(select);
         ArgumentException.ThrowIfNullOrWhiteSpace(count);
         // FilterField keeps its own list of value types: one this table lacks fails when the Feature's SQL is built.
-        if (declaration.Filters.FirstOrDefault(field => !DbTypes.ContainsKey(field.ValueType)) is { } unmapped)
+        if (
+            declaration.Filters.FirstOrDefault(field => !DbTypes.ContainsKey(field.ValueType)) is
+            { } unmapped
+        )
         {
             throw new ArgumentException(
                 $"The filter field {unmapped.Name} has values of {unmapped.ValueType.Name}, which a Dapper Page read has no database type for.",
@@ -65,12 +68,17 @@ public sealed class PageSql
         Select = select.TrimEnd();
         if (Select.EndsWith(';'))
         {
-            throw new ArgumentException("The SELECT of a Page read ends without a semicolon: the page helper appends its ORDER BY and LIMIT to it.", nameof(select));
+            throw new ArgumentException(
+                "The SELECT of a Page read ends without a semicolon: the page helper appends its ORDER BY and LIMIT to it.",
+                nameof(select)
+            );
         }
 
         foreach (var (name, _, _) in Parameters(declaration))
         {
-            foreach (var (text, argument) in new[] { (Select, nameof(select)), (count, nameof(count)) })
+            foreach (
+                var (text, argument) in new[] { (Select, nameof(select)), (count, nameof(count)) }
+            )
             {
                 if (!Regex.IsMatch(text, $"@{Regex.Escape(name)}(?![A-Za-z0-9_])"))
                 {
@@ -117,11 +125,17 @@ public sealed class PageSql
         ArgumentException.ThrowIfNullOrWhiteSpace(column);
         if (!Declaration.Sorts.Contains(sortKey, StringComparer.Ordinal))
         {
-            throw new ArgumentException($"{sortKey} is not a sort key the declaration declares.", nameof(sortKey));
+            throw new ArgumentException(
+                $"{sortKey} is not a sort key the declaration declares.",
+                nameof(sortKey)
+            );
         }
 
         return _orderBy.ContainsKey(sortKey)
-            ? throw new ArgumentException($"The sort key {sortKey} is already mapped.", nameof(sortKey))
+            ? throw new ArgumentException(
+                $"The sort key {sortKey} is already mapped.",
+                nameof(sortKey)
+            )
             : new PageSql(this, _orderBy.Add(sortKey, column), _thenBy);
     }
 
@@ -154,7 +168,9 @@ public sealed class PageSql
         var filters = request.Filters ?? [];
         foreach (var (name, field, filterOperator) in Parameters(Declaration))
         {
-            var filter = filters.FirstOrDefault(given => given.Field == field.Name && given.Operator == filterOperator);
+            var filter = filters.FirstOrDefault(given =>
+                given.Field == field.Name && given.Operator == filterOperator
+            );
             var value = filter is null ? null : Declaration.ValueOf(filter);
             // PostgreSQL types a parameter it sees as null only from the type it is sent with.
             bound.Add(name, value, DbTypes[field.ValueType]);
@@ -165,8 +181,14 @@ public sealed class PageSql
         return bound;
     }
 
-    private static IEnumerable<(string Name, FilterField Field, FilterOperator Operator)> Parameters(PageDeclaration declaration) =>
+    private static IEnumerable<(
+        string Name,
+        FilterField Field,
+        FilterOperator Operator
+    )> Parameters(PageDeclaration declaration) =>
         declaration.Filters.SelectMany(field =>
-            field.Operators.Select(filterOperator => ($"{field.Name}_{filterOperator.Name}", field, filterOperator))
+            field.Operators.Select(filterOperator =>
+                ($"{field.Name}_{filterOperator.Name}", field, filterOperator)
+            )
         );
 }

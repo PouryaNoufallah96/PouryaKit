@@ -4,7 +4,8 @@ namespace PouryaKit.Domain.Tests;
 
 public class DomainEventTests
 {
-    private static readonly JsonSerializerOptions Json = new JsonSerializerOptions().UsePouryaKitJson();
+    private static readonly JsonSerializerOptions Json =
+        new JsonSerializerOptions().UsePouryaKitJson();
 
     [Fact]
     public void A_domain_event_gets_a_time_ordered_identity_and_a_utc_time_once_when_raised()
@@ -24,7 +25,10 @@ public class DomainEventTests
     {
         var raised = new ProductRenamedDomainEvent(TypedId.New<ProductId>(), "Lamp");
 
-        var read = JsonSerializer.Deserialize<ProductRenamedDomainEvent>(JsonSerializer.Serialize(raised, Json), Json)!;
+        var read = JsonSerializer.Deserialize<ProductRenamedDomainEvent>(
+            JsonSerializer.Serialize(raised, Json),
+            Json
+        )!;
 
         Assert.Equal(raised.Id, read.Id);
         Assert.Equal(raised.OccurredOn, read.OccurredOn);

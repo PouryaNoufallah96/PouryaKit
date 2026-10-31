@@ -8,7 +8,10 @@ internal static class IdempotencyKeyTable
 {
     public static Table In(string schema)
     {
-        var table = new Table($"{schema}.{IdempotencyStatements.Table}") { PrimaryKeyName = $"pk_{IdempotencyStatements.Table}" };
+        var table = new Table($"{schema}.{IdempotencyStatements.Table}")
+        {
+            PrimaryKeyName = $"pk_{IdempotencyStatements.Table}",
+        };
         foreach (var key in (string[])["tenant", "actor_kind", "actor_id", "command", "request_id"])
         {
             table.AddColumn(key, "text").AsPrimaryKey();
@@ -16,7 +19,11 @@ internal static class IdempotencyKeyTable
 
         table.AddColumn("response", "text");
         table.AddColumn("reserved_at", "timestamp with time zone").NotNull();
-        table.Indexes.Add(new IndexDefinition($"ix_{IdempotencyStatements.Table}_reserved_at").AgainstColumns("reserved_at"));
+        table.Indexes.Add(
+            new IndexDefinition($"ix_{IdempotencyStatements.Table}_reserved_at").AgainstColumns(
+                "reserved_at"
+            )
+        );
         return table;
     }
 }

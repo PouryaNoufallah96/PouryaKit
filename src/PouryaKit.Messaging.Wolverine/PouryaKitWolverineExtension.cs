@@ -25,6 +25,9 @@ internal sealed class PouryaKitWolverineExtension(
         }
 
         // A stored retry, written back as held by no instance: a restart neither loses nor repeats its wait (ADR 0006).
-        wolverine.OnException<Exception>().ScheduleRetry(options.Value.RetryDelays).Then.MoveToErrorQueue();
+        wolverine
+            .OnException<Exception>()
+            .ScheduleRetry(options.Value.RetryDelays)
+            .Then.MoveToErrorQueue();
     }
 }

@@ -15,7 +15,10 @@ namespace PouryaKit.Persistence.EFCore;
 // state, or TenantErrors.Mismatch or TenantErrors.NotLoaded, which the Unit of Work rolls back.
 internal static class PersistencePreparation
 {
-    public static Result<IReadOnlyList<EntityEntry>> Run(DbContext dbContext, Func<OperationContext> context)
+    public static Result<IReadOnlyList<EntityEntry>> Run(
+        DbContext dbContext,
+        Func<OperationContext> context
+    )
     {
         var entries = dbContext.ChangeTracker.Entries().ToList();
 
@@ -25,21 +28,29 @@ internal static class PersistencePreparation
             .Where(entry => entry.Entity is ITenantScoped)
             .ToDictionary(
                 entry => entry.Entity,
-                entry => (
-                    Loaded: entry.State == EntityState.Added ? null : (string?)entry.Property(nameof(ITenantScoped.Tenant)).OriginalValue,
-                    Current: ((ITenantScoped)entry.Entity).Tenant
-                ),
+                entry =>
+                    (
+                        Loaded: entry.State == EntityState.Added
+                            ? null
+                            : (string?)entry.Property(nameof(ITenantScoped.Tenant)).OriginalValue,
+                        Current: ((ITenantScoped)entry.Entity).Tenant
+                    ),
                 ReferenceEqualityComparer.Instance
             );
 
         // The Operation's one time and Actor, read only when something is stamped: an Operation that stamps nothing
         // needs no Operation Context, and one that does fails as reading a missing context fails.
         (DateTimeOffset At, string By)? stamp = null;
-        (DateTimeOffset At, string By) Stamp() => stamp ??= (DomainClock.Current.GetUtcNow(), context().Actor.Id);
+        (DateTimeOffset At, string By) Stamp() =>
+            stamp ??= (DomainClock.Current.GetUtcNow(), context().Actor.Id);
 
         // The removals the Operation made, orphans included: PouryaKitDbContext deletes an orphan as soon as changes are
         // detected, which listing the entries above did. A soft-deletable one is kept, so nothing cascades from it.
-        foreach (var entry in entries.Where(entry => entry is { State: EntityState.Deleted, Entity: ISoftDeletable }))
+        foreach (
+            var entry in entries.Where(entry =>
+                entry is { State: EntityState.Deleted, Entity: ISoftDeletable }
+            )
+        )
         {
             var (at, by) = Stamp();
             entry.State = EntityState.Unchanged;
@@ -55,20 +66,47 @@ internal static class PersistencePreparation
 
         // Read before any Version moves, so the bump below is the only change it can see.
         var holders = new Holders(entries);
-        var changedEntries = entries.Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted).ToList();
-        var attributed = changedEntries
-            .Select(entry => (Entry: entry, Aggregates: AggregatesOf(entry, holders, new HashSet<object>(ReferenceEqualityComparer.Instance)).ToList()))
+        var changedEntries = entries
+            .Where(entry =>
+                entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted
+            )
             .ToList();
-        var changed = attributed.SelectMany(change => change.Aggregates).DistinctBy(entry => entry.Entity, ReferenceEqualityComparer.Instance).ToList();
+        var attributed = changedEntries
+            .Select(entry =>
+                (
+                    Entry: entry,
+                    Aggregates: AggregatesOf(
+                            entry,
+                            holders,
+                            new HashSet<object>(ReferenceEqualityComparer.Instance)
+                        )
+                        .ToList()
+                )
+            )
+            .ToList();
+        var changed = attributed
+            .SelectMany(change => change.Aggregates)
+            .DistinctBy(entry => entry.Entity, ReferenceEqualityComparer.Instance)
+            .ToList();
 
         // A tenant-scoped entity the Operation changes, or one whose part it changes, moves or deletes, both holders of a
         // moved part included, must be the Operation's tenant's: added for it, or loaded under it and left under it. The
         // Operation's tenant is read only then, as the stamp is: one that changes no such entity needs no context.
-        var scopedChanges = changedEntries.Concat(changed).Where(entry => tenants.ContainsKey(entry.Entity)).Select(entry => tenants[entry.Entity]).ToList();
+        var scopedChanges = changedEntries
+            .Concat(changed)
+            .Where(entry => tenants.ContainsKey(entry.Entity))
+            .Select(entry => tenants[entry.Entity])
+            .ToList();
         if (scopedChanges.Count > 0)
         {
             var tenant = context().Tenant;
-            if (scopedChanges.Any(scoped => scoped.Loaded is null ? scoped.Current != tenant : scoped.Loaded != tenant || scoped.Current != scoped.Loaded))
+            if (
+                scopedChanges.Any(scoped =>
+                    scoped.Loaded is null
+                        ? scoped.Current != tenant
+                        : scoped.Loaded != tenant || scoped.Current != scoped.Loaded
+                )
+            )
             {
                 return TenantErrors.Mismatch;
             }
@@ -78,10 +116,16 @@ internal static class PersistencePreparation
             // or a part, and each such aggregate a change is attributed to, came from a query unless it was added.
             if (
                 attributed
-                    .Where(change => change.Entry.Entity is ITenantScoped || change.Aggregates.Any(aggregate => aggregate.Entity is ITenantScoped))
+                    .Where(change =>
+                        change.Entry.Entity is ITenantScoped
+                        || change.Aggregates.Any(aggregate => aggregate.Entity is ITenantScoped)
+                    )
                     .Select(change => change.Entry)
                     .Concat(changed.Where(aggregate => aggregate.Entity is ITenantScoped))
-                    .Any(entry => entry.State != EntityState.Added && !(dbContext is PouryaKitDbContext kit && kit.WasLoaded(entry.Entity)))
+                    .Any(entry =>
+                        entry.State != EntityState.Added
+                        && !(dbContext is PouryaKitDbContext kit && kit.WasLoaded(entry.Entity))
+                    )
             )
             {
                 return TenantErrors.NotLoaded;
@@ -95,7 +139,11 @@ internal static class PersistencePreparation
             version.CurrentValue = (long)version.OriginalValue! + 1;
         }
 
-        foreach (var entry in entries.Where(entry => entry is { Entity: IAuditable, State: EntityState.Added or EntityState.Modified }))
+        foreach (
+            var entry in entries.Where(entry =>
+                entry is { Entity: IAuditable, State: EntityState.Added or EntityState.Modified }
+            )
+        )
         {
             var (at, by) = Stamp();
             if (entry.State == EntityState.Added)
@@ -119,7 +167,11 @@ internal static class PersistencePreparation
     // the aggregate it left. A holder must be tracked: an aggregate whose part changes without the aggregate being
     // loaded cannot advance its version, so concurrent writers would not conflict, and that throws instead. A child the
     // aggregate reaches by no navigation is not part of it.
-    private static IEnumerable<EntityEntry> AggregatesOf(EntityEntry entry, Holders holders, HashSet<object> seen)
+    private static IEnumerable<EntityEntry> AggregatesOf(
+        EntityEntry entry,
+        Holders holders,
+        HashSet<object> seen
+    )
     {
         if (!seen.Add(entry.Entity))
         {
@@ -134,7 +186,10 @@ internal static class PersistencePreparation
         return entry
             .Metadata.GetForeignKeys()
             .Where(foreignKey => foreignKey.PrincipalToDependent is not null)
-            .SelectMany(foreignKey => KeyValues(entry, foreignKey).Select(values => holders.Find(entry, foreignKey, values)))
+            .SelectMany(foreignKey =>
+                KeyValues(entry, foreignKey)
+                    .Select(values => holders.Find(entry, foreignKey, values))
+            )
             .ToList()
             .SelectMany(holder => AggregatesOf(holder, holders, seen));
     }
@@ -142,12 +197,24 @@ internal static class PersistencePreparation
     // The values of the key now, unless deleted, and when loaded, unless added; a null key names no holder.
     private static IEnumerable<object?[]> KeyValues(EntityEntry entry, IForeignKey foreignKey)
     {
-        object?[]? current = entry.State == EntityState.Deleted
-            ? null
-            : [.. foreignKey.Properties.Select(property => entry.Property(property.Name).CurrentValue)];
-        object?[]? original = entry.State == EntityState.Added
-            ? null
-            : [.. foreignKey.Properties.Select(property => entry.Property(property.Name).OriginalValue)];
+        object?[]? current =
+            entry.State == EntityState.Deleted
+                ? null
+                :
+                [
+                    .. foreignKey.Properties.Select(property =>
+                        entry.Property(property.Name).CurrentValue
+                    ),
+                ];
+        object?[]? original =
+            entry.State == EntityState.Added
+                ? null
+                :
+                [
+                    .. foreignKey.Properties.Select(property =>
+                        entry.Property(property.Name).OriginalValue
+                    ),
+                ];
         return new[] { current, original }
             .OfType<object?[]>()
             .Where(values => !values.Contains(null))
@@ -157,10 +224,12 @@ internal static class PersistencePreparation
     // The tracked entries by the values of each principal key a foreign key names, indexed once per key.
     private sealed class Holders(List<EntityEntry> entries)
     {
-        public static readonly IEqualityComparer<object?[]> Comparer = EqualityComparer<object?[]>.Create(
-            (left, right) => StructuralComparisons.StructuralEqualityComparer.Equals(left, right),
-            values => StructuralComparisons.StructuralEqualityComparer.GetHashCode(values)
-        );
+        public static readonly IEqualityComparer<object?[]> Comparer =
+            EqualityComparer<object?[]>.Create(
+                (left, right) =>
+                    StructuralComparisons.StructuralEqualityComparer.Equals(left, right),
+                values => StructuralComparisons.StructuralEqualityComparer.GetHashCode(values)
+            );
 
         private readonly Dictionary<IKey, Dictionary<object?[], EntityEntry>> _byKey = [];
 
@@ -170,10 +239,18 @@ internal static class PersistencePreparation
             {
                 // Every entry that has the key, whatever its derived type: keys to sibling derived types share it.
                 byValues = new(Comparer);
-                foreach (var entry in entries.Where(entry => foreignKey.PrincipalKey.DeclaringEntityType.IsAssignableFrom(entry.Metadata)))
+                foreach (
+                    var entry in entries.Where(entry =>
+                        foreignKey.PrincipalKey.DeclaringEntityType.IsAssignableFrom(entry.Metadata)
+                    )
+                )
                 {
                     byValues.TryAdd(
-                        [.. foreignKey.PrincipalKey.Properties.Select(property => entry.Property(property.Name).CurrentValue)],
+                        [
+                            .. foreignKey.PrincipalKey.Properties.Select(property =>
+                                entry.Property(property.Name).CurrentValue
+                            ),
+                        ],
                         entry
                     );
                 }

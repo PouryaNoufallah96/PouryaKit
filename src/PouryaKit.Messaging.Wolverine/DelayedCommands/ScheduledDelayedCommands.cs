@@ -9,7 +9,8 @@ internal sealed class ScheduledDelayedCommands : IDelayedCommandOutbox
 
     public void Add(Command command, DateTimeOffset at) => _scheduled.Add((command, at, false));
 
-    public void AddOccurrence(Command command, DateTimeOffset occurrence) => _scheduled.Add((command, occurrence, true));
+    public void AddOccurrence(Command command, DateTimeOffset occurrence) =>
+        _scheduled.Add((command, occurrence, true));
 
     public List<(Command Command, DateTimeOffset At, bool IsOccurrence)> Take()
     {

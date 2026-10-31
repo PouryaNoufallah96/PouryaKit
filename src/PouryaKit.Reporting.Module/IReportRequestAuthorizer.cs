@@ -13,5 +13,9 @@ public interface IReportRequestAuthorizer
     /// True when the Actor and tenant of <paramref name="context"/> may request <paramref name="request"/>: its kind,
     /// format and parameters as the caller gave them, not yet validated.
     /// </summary>
-    Task<bool> MayRequestAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken);
+    Task<bool> MayRequestAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    );
 }

@@ -38,7 +38,12 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(2, removed.Value);
         // A product is soft-deletable: removing one marks it deleted and keeps its row.
-        Assert.Equal([["Desk"]], await Fixture.RowsAsync("select name from catalog.products where not is_deleted"));
+        Assert.Equal(
+            [
+                ["Desk"],
+            ],
+            await Fixture.RowsAsync("select name from catalog.products where not is_deleted")
+        );
     }
 
     [Fact]
@@ -58,10 +63,16 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.Equal(1, imported.Value);
         Assert.Equal(
-            [["Desk"], ["Lamp"]],
+            [
+                ["Desk"],
+                ["Lamp"],
+            ],
             await Fixture.RowsAsync("select name from catalog.products order by name")
         );
-        Assert.Equal(2, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+        Assert.Equal(
+            2,
+            await Fixture.ScalarAsync<int>("select product_count from catalog.categories")
+        );
     }
 
     [Fact]
@@ -81,8 +92,16 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         );
 
         Assert.Equal(ProductErrors.NameRepeated, Assert.Single(imported.Errors));
-        Assert.Equal([["Lamp"]], await Fixture.RowsAsync("select name from catalog.products"));
-        Assert.Equal(1, await Fixture.ScalarAsync<int>("select product_count from catalog.categories"));
+        Assert.Equal(
+            [
+                ["Lamp"],
+            ],
+            await Fixture.RowsAsync("select name from catalog.products")
+        );
+        Assert.Equal(
+            1,
+            await Fixture.ScalarAsync<int>("select product_count from catalog.categories")
+        );
     }
 
     [Fact]
@@ -95,10 +114,16 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         // The probe is test code, so no Gateway runs it: Catalog's Gateway refuses an operation another Module
         // registered. The test begins a scope as a Catalog Operation itself, as a delivery step does.
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant), typeof(CatalogModule));
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor, AppFixture.TestTenant),
+            typeof(CatalogModule)
+        );
         var probed = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new ProbeProductRepositoriesCommand(id, category), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new ProbeProductRepositoriesCommand(id, category),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.True(probed.Value);
         Assert.Equal(id, await Fixture.ScalarAsync<Guid>("select id from catalog.products"));
@@ -110,10 +135,16 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .SendAsync(new WriteNoteThroughQueryCommand("nested"), TestContext.Current.CancellationToken)
+                .SendAsync(
+                    new WriteNoteThroughQueryCommand("nested"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
-        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
+        Assert.StartsWith(
+            "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write",
+            thrown.Message
+        );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
     }
 
@@ -124,10 +155,16 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .QueryAsync(new WriteNoteInQueryQuery("alone"), TestContext.Current.CancellationToken)
+                .QueryAsync(
+                    new WriteNoteInQueryQuery("alone"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
-        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
+        Assert.StartsWith(
+            "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write",
+            thrown.Message
+        );
     }
 
     // Only a Unit of Work's commit saves what a repository tracks, so outside one the change would be dropped with the
@@ -135,19 +172,29 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_repository_write_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_saves_nothing(bool afterItsCommand)
+    public async Task A_repository_write_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_saves_nothing(
+        bool afterItsCommand
+    )
     {
-        var kept = await Fixture.ScalarAsync<long>("insert into stub.notes (text, version) values ('kept', 0) returning id");
+        var kept = await Fixture.ScalarAsync<long>(
+            "insert into stub.notes (text, version) values ('kept', 0) returning id"
+        );
         Exception? added;
         Exception? removed;
         await using (var scope = Fixture.Host.Services.CreateAsyncScope())
         {
-            scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
+            scope.ServiceProvider.BeginOperation(
+                new OperationContext(GatewayTestExtensions.TestActor),
+                typeof(StubModule)
+            );
             if (afterItsCommand)
             {
                 var committed = await scope
                     .ServiceProvider.GetRequiredService<IDispatcher>()
-                    .SendAsync(new WriteNoteCommand("committed"), TestContext.Current.CancellationToken);
+                    .SendAsync(
+                        new WriteNoteCommand("committed"),
+                        TestContext.Current.CancellationToken
+                    );
                 Assert.True(committed.IsSuccess);
             }
 
@@ -155,7 +202,12 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
         }
 
         string[] stored = afterItsCommand ? ["committed", "kept"] : ["kept"];
-        Assert.Equal(stored, (await Fixture.RowsAsync("select text from stub.notes order by text")).Select(row => row[0]));
+        Assert.Equal(
+            stored,
+            (await Fixture.RowsAsync("select text from stub.notes order by text")).Select(row =>
+                row[0]
+            )
+        );
         Assert.Equal(NoUnitOfWork, Assert.IsType<InvalidOperationException>(added).Message);
         Assert.Equal(NoUnitOfWork, Assert.IsType<InvalidOperationException>(removed).Message);
     }
@@ -171,19 +223,27 @@ public sealed class RepositoryTests(AppFixture app) : HostTest<AppFixture>(app)
             scope.ServiceProvider.GetRequiredService<IRepository<Note, NoteId>>()
         );
 
-        Assert.StartsWith("The Unit of Work was needed in a scope whose Operation names no Module.", thrown.Message);
+        Assert.StartsWith(
+            "The Unit of Work was needed in a scope whose Operation names no Module.",
+            thrown.Message
+        );
     }
 
     // Finds the note with the id through the repository, which needs no Unit of Work, then adds a note and removes the
     // one it found: what each write threw, or null where it returned.
-    internal static async Task<(Exception? Added, Exception? Removed)> WriteOutsideAUnitOfWorkAsync(IServiceProvider scope, long id)
+    internal static async Task<(Exception? Added, Exception? Removed)> WriteOutsideAUnitOfWorkAsync(
+        IServiceProvider scope,
+        long id
+    )
     {
         var notes = scope.GetRequiredService<IRepository<Note, NoteId>>();
         var found = await notes.FindAsync(new NoteId(id), TestContext.Current.CancellationToken);
         Assert.NotNull(found);
 
         return (
-            await Record.ExceptionAsync(() => notes.AddAsync(Note.Write("lost"), TestContext.Current.CancellationToken)),
+            await Record.ExceptionAsync(() =>
+                notes.AddAsync(Note.Write("lost"), TestContext.Current.CancellationToken)
+            ),
             Record.Exception(() => notes.Remove(found))
         );
     }

@@ -10,5 +10,6 @@ public static class UnversionedEndpoints;
 
 internal sealed class ReadActorEndpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder routes) => routes.MapGet("/actor", (OperationContext context) => context.Actor.Id);
+    public void Map(IEndpointRouteBuilder routes) =>
+        routes.MapGet("/actor", (OperationContext context) => context.Actor.Id);
 }

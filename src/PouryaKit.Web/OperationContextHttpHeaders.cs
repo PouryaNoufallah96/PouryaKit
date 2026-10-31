@@ -25,9 +25,17 @@ public static class OperationContextHttpHeaders
 
     // Every name the codec writes or reads, the optional tenant's included: a writer removes them all before it adds the
     // pairs, so no earlier value survives beside a context without it.
-    internal static readonly string[] Names = [ActorId, ActorKindName, Tenant, CorrelationId, CausationId];
+    internal static readonly string[] Names =
+    [
+        ActorId,
+        ActorKindName,
+        Tenant,
+        CorrelationId,
+        CausationId,
+    ];
 
-    internal static readonly string Rule = $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
+    internal static readonly string Rule =
+        $"1 to {MaxValueLength} visible ASCII characters, with spaces only between them";
 
     /// <summary>
     /// The header pairs that carry <paramref name="context"/> to a Kit Host that trusts the caller as a peer: the
@@ -41,7 +49,11 @@ public static class OperationContextHttpHeaders
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        List<KeyValuePair<string, string>> pairs = [new(ActorId, context.Actor.Id), new(ActorKindName, context.Actor.Kind.ToString())];
+        List<KeyValuePair<string, string>> pairs =
+        [
+            new(ActorId, context.Actor.Id),
+            new(ActorKindName, context.Actor.Kind.ToString()),
+        ];
         if (context.Tenant is not null)
         {
             pairs.Add(new(Tenant, context.Tenant));
@@ -87,9 +99,13 @@ public static class OperationContextHttpHeaders
         }
 
         string Single(string name) =>
-            headers.TryGetValue(name, out var values) && values is [{ } value] && IsHeaderValue(value)
+            headers.TryGetValue(name, out var values)
+            && values is [{ } value]
+            && IsHeaderValue(value)
                 ? value
-                : throw new KitBadRequestException($"The request continues an Operation but has no single {name} header that is {Rule}.");
+                : throw new KitBadRequestException(
+                    $"The request continues an Operation but has no single {name} header that is {Rule}."
+                );
 
         var actorId = Single(ActorId);
         var actor = Single(ActorKindName) switch

@@ -83,6 +83,7 @@ Correct a repeated mistake at the highest level that works; add the rule here on
 | Feature code never saves, commits or touches the Outbox (ADR 0003) | `FeatureCodeTests`, `ModuleRules` |
 | One namespace per Kit package; application namespaces follow folders (ADR 0010) | `NamespaceTests`; IDE0130 in `.editorconfig`; `SampleNamespaceTests` for the Proving Sample, partial types included |
 | Private fields are `_camelCase`; `const` and `static readonly` fields PascalCase | IDE1006 in `.editorconfig` |
+| C# and project files are formatted with CSharpier | CI's `format` job runs `dotnet csharpier check .`; `.csharpierignore` leaves out EF migrations and the docs site |
 | Every public member of a Kit package has a summary | CS1591 in the build where `IsKitPackage` is true (`Directory.Build.props`) |
 | Docs name real code, paths and tests | `check-docs.py` (names, also in `website/content/**/*.mdx` and `src/*/README.md`; links, Kit paths, acceptance pointers) |
 | No tracker number in the docs: no `#` number of two digits or more, no PR, issue, ticket or spec number, and no link to this repository's issues or pull requests; a third party's issue link passes | `check-docs.py` (tracker numbers), over `README.md`, `GLOSSARY.md`, `AGENTS.md`, `src/*/README.md`, `docs/**/*.md` but `docs/agents/issue-tracker.md`, the Kit skill and `.claude/rules/*.md` |

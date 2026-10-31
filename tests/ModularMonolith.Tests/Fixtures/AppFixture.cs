@@ -65,16 +65,14 @@ public sealed class AppFixture : HostFixture
         params string[] arguments
     )
     {
-        var builder = ModularMonolithHost.CreateBuilder(
-            [
-                "--environment",
-                environment,
-                $"--ConnectionStrings:app={connectionString}",
-                $"--PouryaKit:TrustedPeers:Peers:0={TrustedPeer}",
-                .. TestIssuer.HostArguments,
-                .. arguments,
-            ]
-        );
+        var builder = ModularMonolithHost.CreateBuilder([
+            "--environment",
+            environment,
+            $"--ConnectionStrings:app={connectionString}",
+            $"--PouryaKit:TrustedPeers:Peers:0={TrustedPeer}",
+            .. TestIssuer.HostArguments,
+            .. arguments,
+        ]);
         builder.AddPouryaKitModules(modules => modules.Add<StubModule>());
         builder.Services.UsePouryaKitTestDelivery();
         CommitProbe.Install(builder.Services);
@@ -83,7 +81,10 @@ public sealed class AppFixture : HostFixture
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(
+                TestAuthentication.SchemeName,
+                null
+            );
         builder.Services.AddScoped<CallerPermissions>();
         builder.Services.AddScoped<IActorPermissions, TestActorPermissions>();
         builder.Logging.AddProvider(logs);
@@ -102,17 +103,31 @@ public sealed class AppFixture : HostFixture
     /// <paramref name="permissions"/>, or anonymous, that calls API version <see cref="ApiVersion"/> on a versioned
     /// Module's unversioned paths, such as <c>/catalog/products</c>.
     /// </summary>
-    public HttpClient Client(string? caller = null, string? tenant = null, params string[] permissions) =>
-        ClientOf(Host, caller, tenant, permissions);
+    public HttpClient Client(
+        string? caller = null,
+        string? tenant = null,
+        params string[] permissions
+    ) => ClientOf(Host, caller, tenant, permissions);
 
     /// <summary>A client of <paramref name="host"/>'s HTTP pipeline, as <see cref="Client"/> makes one.</summary>
-    public static HttpClient ClientOf(IHost host, string? caller = null, string? tenant = null, params string[] permissions)
+    public static HttpClient ClientOf(
+        IHost host,
+        string? caller = null,
+        string? tenant = null,
+        params string[] permissions
+    )
     {
         var client = host.GetTestClient();
-        client.DefaultRequestHeaders.Add(WebOpenApiServiceCollectionExtensions.ApiVersionHeader, ApiVersion);
+        client.DefaultRequestHeaders.Add(
+            WebOpenApiServiceCollectionExtensions.ApiVersionHeader,
+            ApiVersion
+        );
         if (caller is not null)
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthentication.SchemeName, caller);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                TestAuthentication.SchemeName,
+                caller
+            );
         }
 
         if (tenant is not null)
@@ -122,7 +137,10 @@ public sealed class AppFixture : HostFixture
 
         if (permissions.Length > 0)
         {
-            client.DefaultRequestHeaders.Add(TestAuthentication.PermissionsHeader, string.Join(',', permissions));
+            client.DefaultRequestHeaders.Add(
+                TestAuthentication.PermissionsHeader,
+                string.Join(',', permissions)
+            );
         }
 
         return client;
@@ -134,5 +152,6 @@ public sealed class AppFixture : HostFixture
     public async Task<T> ScalarAsync<T>(string sql) => (T)(await RowsAsync(sql))[0][0];
 
     /// <summary>Waits until the SQL <paramref name="condition"/> holds; fails with <paramref name="because"/> after 15 s.</summary>
-    public Task WaitUntilAsync(string condition, string because) => Sql.WaitUntilAsync(ConnectionString, condition, because);
+    public Task WaitUntilAsync(string condition, string because) =>
+        Sql.WaitUntilAsync(ConnectionString, condition, because);
 }

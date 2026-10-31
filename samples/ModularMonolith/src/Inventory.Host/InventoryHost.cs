@@ -37,7 +37,10 @@ public static class InventoryHost
     /// issuer, audiences and signing keys of <c>Authentication:Schemes:Bearer</c>, without which the Host does not start. A
     /// test that composes a second kind of Host on the same broker gives it another <paramref name="serviceName"/>.
     /// </summary>
-    public static WebApplicationBuilder CreateBuilder(string[] args, string serviceName = ServiceName)
+    public static WebApplicationBuilder CreateBuilder(
+        string[] args,
+        string serviceName = ServiceName
+    )
     {
         var builder = WebApplication.CreateBuilder(args);
         // OpenTelemetry with the Kit's source and meter and Npgsql's source, health checks, service discovery and the

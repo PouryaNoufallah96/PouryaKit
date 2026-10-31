@@ -30,11 +30,13 @@ public sealed class OrdersModule : IModuleDefinition
     }
 }
 
-internal sealed record PlaceOrderCommand(Guid OrderId, int Installments, int PayWithinSeconds) : Command;
+internal sealed record PlaceOrderCommand(Guid OrderId, int Installments, int PayWithinSeconds)
+    : Command;
 
 internal sealed record RecordPaymentCommand(Guid OrderId) : Command;
 
-internal sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : PouryaKitDbContext(options);
+internal sealed class OrdersDbContext(DbContextOptions<OrdersDbContext> options)
+    : PouryaKitDbContext(options);
 
 internal sealed record OrderId(Guid Value) : TypedId<Guid>(Value);
 
@@ -48,7 +50,12 @@ internal sealed class Order : AggregateRoot<OrderId>
 
     public static Order Place(OrderId id, int installments, int payWithinSeconds)
     {
-        var order = new Order { Id = id, Installments = installments, PayWithinSeconds = payWithinSeconds };
+        var order = new Order
+        {
+            Id = id,
+            Installments = installments,
+            PayWithinSeconds = payWithinSeconds,
+        };
         order.Raise(new OrderPlaced(id.Value, installments, payWithinSeconds));
         return order;
     }
@@ -61,22 +68,38 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
     public void Configure(EntityTypeBuilder<Order> builder) => builder.ToTable("orders");
 }
 
-internal sealed record OrderPlaced(Guid OrderId, int Installments, int PayWithinSeconds) : DomainEvent;
+internal sealed record OrderPlaced(Guid OrderId, int Installments, int PayWithinSeconds)
+    : DomainEvent;
 
 internal sealed record PaymentRecorded(Guid OrderId) : DomainEvent;
 
-internal sealed class PlaceOrderHandler(IRepository<Order, OrderId> orders) : CommandHandler<PlaceOrderCommand>
+internal sealed class PlaceOrderHandler(IRepository<Order, OrderId> orders)
+    : CommandHandler<PlaceOrderCommand>
 {
-    public override async Task<Result> Handle(PlaceOrderCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        PlaceOrderCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        await orders.AddAsync(Order.Place(new OrderId(command.OrderId), command.Installments, command.PayWithinSeconds), cancellationToken);
+        await orders.AddAsync(
+            Order.Place(
+                new OrderId(command.OrderId),
+                command.Installments,
+                command.PayWithinSeconds
+            ),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
 
-internal sealed class RecordPaymentHandler(IRepository<Order, OrderId> orders) : CommandHandler<RecordPaymentCommand>
+internal sealed class RecordPaymentHandler(IRepository<Order, OrderId> orders)
+    : CommandHandler<RecordPaymentCommand>
 {
-    public override async Task<Result> Handle(RecordPaymentCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        RecordPaymentCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var order = await orders.FindAsync(new OrderId(command.OrderId), cancellationToken);
         order!.RecordPayment();
@@ -84,17 +107,22 @@ internal sealed class RecordPaymentHandler(IRepository<Order, OrderId> orders) :
     }
 }
 
-internal sealed class PublishOrderPlaced(IIntegrationEventPublisher events) : INotificationHandler<OrderPlaced>
+internal sealed class PublishOrderPlaced(IIntegrationEventPublisher events)
+    : INotificationHandler<OrderPlaced>
 {
     public Task<Result> Handle(OrderPlaced placed, CancellationToken cancellationToken)
     {
-        events.Publish(placed.Id, new OrderPlacedV1(placed.OrderId, placed.Installments, placed.PayWithinSeconds));
+        events.Publish(
+            placed.Id,
+            new OrderPlacedV1(placed.OrderId, placed.Installments, placed.PayWithinSeconds)
+        );
         return Task.FromResult(Result.Success());
     }
 }
 
 // One Domain Event, two contracts: both carry its identity, as Catalog's V1 and V2 of one product do.
-internal sealed class PublishPaymentReceived(IIntegrationEventPublisher events) : INotificationHandler<PaymentRecorded>
+internal sealed class PublishPaymentReceived(IIntegrationEventPublisher events)
+    : INotificationHandler<PaymentRecorded>
 {
     public Task<Result> Handle(PaymentRecorded recorded, CancellationToken cancellationToken)
     {

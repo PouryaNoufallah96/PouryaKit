@@ -19,7 +19,10 @@ public sealed record ProductRenamedDomainEvent(ProductId ProductId, string NewNa
 
 public static class ProductErrors
 {
-    public static readonly Error NameRequired = Error.Validation("Product.NameRequired", "A product needs a name.");
+    public static readonly Error NameRequired = Error.Validation(
+        "Product.NameRequired",
+        "A product needs a name."
+    );
 }
 
 public sealed class ProductNameMustNotBeBlank(string name) : IBusinessRule

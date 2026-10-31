@@ -19,7 +19,10 @@ internal sealed class StreamCommitProbe : DocumentSessionListenerBase
     public static void Install(IServiceCollection services, StreamCommitProbe probe) =>
         services.ConfigureMarten(options => options.Listeners.Add(probe));
 
-    public override async Task BeforeSaveChangesAsync(IDocumentSession session, CancellationToken token)
+    public override async Task BeforeSaveChangesAsync(
+        IDocumentSession session,
+        CancellationToken token
+    )
     {
         if (OnBeforeSave is { } onBeforeSave)
         {
@@ -27,7 +30,11 @@ internal sealed class StreamCommitProbe : DocumentSessionListenerBase
         }
     }
 
-    public override async Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token)
+    public override async Task AfterCommitAsync(
+        IDocumentSession session,
+        IChangeSet commit,
+        CancellationToken token
+    )
     {
         if (OnCommit is { } onCommit)
         {
@@ -46,16 +53,27 @@ internal static class FailingStreamSend
     {
         var outbox = services.Single(descriptor => descriptor.ServiceType == typeof(IStreamOutbox));
         services.Remove(outbox);
-        services.AddScoped<IStreamOutbox>(provider => new Failing((IStreamOutbox)outbox.ImplementationFactory!(provider)));
+        services.AddScoped<IStreamOutbox>(provider => new Failing(
+            (IStreamOutbox)outbox.ImplementationFactory!(provider)
+        ));
     }
 
     private sealed class Failing(IStreamOutbox outbox) : IStreamOutbox
     {
-        public async Task WriteAsync(IDocumentSession session, IReadOnlyList<object> messages, CancellationToken cancellationToken)
+        public async Task WriteAsync(
+            IDocumentSession session,
+            IReadOnlyList<object> messages,
+            CancellationToken cancellationToken
+        )
         {
             await outbox.WriteAsync(session, messages, cancellationToken);
             // None when nothing the Operation published has a subscription.
-            if (session.Listeners.SingleOrDefault(listener => listener.GetType().Name == "FlushOutgoingMessagesOnCommit") is { } send)
+            if (
+                session.Listeners.SingleOrDefault(listener =>
+                    listener.GetType().Name == "FlushOutgoingMessagesOnCommit"
+                ) is
+                { } send
+            )
             {
                 session.Listeners[session.Listeners.IndexOf(send)] = new Throwing();
             }
@@ -64,8 +82,11 @@ internal static class FailingStreamSend
 
     private sealed class Throwing : DocumentSessionListenerBase
     {
-        public override Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token) =>
-            throw new InvalidOperationException("The send after the commit failed.");
+        public override Task AfterCommitAsync(
+            IDocumentSession session,
+            IChangeSet commit,
+            CancellationToken token
+        ) => throw new InvalidOperationException("The send after the commit failed.");
     }
 }
 
@@ -77,8 +98,13 @@ internal sealed class FailingStoreListener(Guid stream) : DocumentSessionListene
 {
     private int _failed;
 
-    public override Task AfterCommitAsync(IDocumentSession session, IChangeSet commit, CancellationToken token) =>
-        commit.GetStreams().Any(action => action.Id == stream) && Interlocked.Exchange(ref _failed, 1) == 0
+    public override Task AfterCommitAsync(
+        IDocumentSession session,
+        IChangeSet commit,
+        CancellationToken token
+    ) =>
+        commit.GetStreams().Any(action => action.Id == stream)
+        && Interlocked.Exchange(ref _failed, 1) == 0
             ? throw new InvalidOperationException("A store listener failed after the commit.")
             : Task.CompletedTask;
 }

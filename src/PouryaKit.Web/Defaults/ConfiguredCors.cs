@@ -24,7 +24,9 @@ internal sealed class ConfiguredCors : IValidateOptions<PouryaKitCorsOptions>
                 }
             );
         services.AddOptions<PouryaKitCorsOptions>().ValidateOnStart();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IValidateOptions<PouryaKitCorsOptions>, ConfiguredCors>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IValidateOptions<PouryaKitCorsOptions>, ConfiguredCors>()
+        );
     }
 
     public ValidateOptionsResult Validate(string? name, PouryaKitCorsOptions options)
@@ -43,7 +45,10 @@ internal sealed class ConfiguredCors : IValidateOptions<PouryaKitCorsOptions>
                 policy
                     .Methods.Concat(policy.Headers)
                     .Concat(policy.ExposedHeaders)
-                    .Where(value => string.IsNullOrWhiteSpace(value) || value.Contains('*', StringComparison.Ordinal))
+                    .Where(value =>
+                        string.IsNullOrWhiteSpace(value)
+                        || value.Contains('*', StringComparison.Ordinal)
+                    )
                     .Select(value =>
                         $"The CORS policy {policyName} lists '{value}' as a method or header; name each one, never a wildcard."
                     )
@@ -54,7 +59,9 @@ internal sealed class ConfiguredCors : IValidateOptions<PouryaKitCorsOptions>
             }
         }
 
-        return failures.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
+        return failures.Count == 0
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(failures);
     }
 
     private static void Build(CorsPolicyBuilder builder, PouryaKitCorsPolicy policy)
@@ -79,5 +86,9 @@ internal sealed class ConfiguredCors : IValidateOptions<PouryaKitCorsOptions>
         !origin.Contains('*', StringComparison.Ordinal)
         && Uri.TryCreate(origin, UriKind.Absolute, out var uri)
         && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
-        && string.Equals(uri.GetLeftPart(UriPartial.Authority), origin, StringComparison.OrdinalIgnoreCase);
+        && string.Equals(
+            uri.GetLeftPart(UriPartial.Authority),
+            origin,
+            StringComparison.OrdinalIgnoreCase
+        );
 }

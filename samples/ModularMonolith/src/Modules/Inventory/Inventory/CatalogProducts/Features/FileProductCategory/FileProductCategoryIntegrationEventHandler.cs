@@ -11,16 +11,27 @@ namespace Inventory.CatalogProducts.Features.FileProductCategory;
 // subscribes to ProductCreatedV2 alone, beside the v1 subscription that opens the stock item, and receives no v1: each
 // subscription gets only the version it declared. Keyed by tenant and product, under the tenant the event was delivered
 // for. Only the effect: the Kit records the Receipt and commits, so a redelivered ProductCreatedV2 files the product once.
-internal sealed class FileProductCategoryIntegrationEventHandler(IUnitOfWorkConnection unitOfWork, OperationContext context)
-    : IIntegrationEventHandler<ProductCreatedV2>
+internal sealed class FileProductCategoryIntegrationEventHandler(
+    IUnitOfWorkConnection unitOfWork,
+    OperationContext context
+) : IIntegrationEventHandler<ProductCreatedV2>
 {
-    public async Task<Result> Handle(ProductCreatedV2 integrationEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        ProductCreatedV2 integrationEvent,
+        CancellationToken cancellationToken
+    )
     {
         var (connection, transaction) = unitOfWork.Join();
         await connection.ExecuteAsync(
             new CommandDefinition(
                 "insert into inventory.product_categories (tenant, product_id, category_id, filed_by) values (@Tenant, @ProductId, @CategoryId, @FiledBy)",
-                new { context.Tenant, integrationEvent.ProductId, integrationEvent.CategoryId, FiledBy = context.Actor.Id },
+                new
+                {
+                    context.Tenant,
+                    integrationEvent.ProductId,
+                    integrationEvent.CategoryId,
+                    FiledBy = context.Actor.Id,
+                },
                 transaction,
                 cancellationToken: cancellationToken
             )

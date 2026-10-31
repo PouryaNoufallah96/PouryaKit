@@ -43,25 +43,41 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         await using var dying = Compose(connectionString, TimeSpan.FromSeconds(3));
         await using var starting = Compose(connectionString, TimeSpan.FromSeconds(3));
         await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
-        await Sql.WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
+        await Sql.WaitUntilAsync(
+            connectionString,
+            "exists (select from inventory.stock_reconciliations)"
+        );
         object[] stored;
         DateTime died;
         try
         {
-            using (var committed = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), ReconcileStock))
+            using (
+                var committed = DeliveryProbes.HoldAfterCommit(
+                    typeof(InventoryModule),
+                    ReconcileStock
+                )
+            )
             {
                 // An occurrence committed its reconciliation and the next occurrence, and is not yet acknowledged.
                 await committed.Held;
                 stored = Assert.Single(
-                    await Sql.RowsAsync(connectionString, $"select id, execution_time from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'")
+                    await Sql.RowsAsync(
+                        connectionString,
+                        $"select id, execution_time from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'"
+                    )
                 );
                 // Wolverine's quick stop neither drains nor gives up what the Host holds, as a killed process leaves it.
-                ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode = StopMode.Quick;
+                (
+                    (WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()
+                ).StopMode = StopMode.Quick;
                 await dying.StopAsync(TestContext.Current.CancellationToken);
                 died = (DateTime)(await Sql.RowsAsync(connectionString, "select now()"))[0][0];
 
                 await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
-                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored[0]}' and status = 'Handled')");
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored[0]}' and status = 'Handled')"
+                );
             }
         }
         finally
@@ -72,14 +88,18 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         // The occurrence stored before the Host died ran after the restart, under the system Actor, with its Receipt.
         var occurrence = (DateTime)stored[1];
         Assert.Equal(
-            [[Reconciler, true]],
+            [
+                [Reconciler, true],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"select reconciled_by, pg_xact_commit_timestamp(xmin) > '{died:O}' from inventory.stock_reconciliations where occurrence = '{occurrence:O}'"
             )
         );
         Assert.Equal(
-            [[1L]],
+            [
+                [1L],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"select count(*) from inventory.pouryakit_receipts where subscription = '{ReconcileStock}' and message_id = '{ReceiptOf(occurrence)}'"
@@ -87,7 +107,9 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         );
         // At least one more ran before it, each occurrence once, on whole seconds, by the system Actor, with its Receipt.
         Assert.Equal(
-            [[true, true, true, true]],
+            [
+                [true, true, true, true],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"""
@@ -98,17 +120,32 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 """
             )
         );
-        Assert.Empty(await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Empty(
+            await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters")
+        );
         // Each attempt was a new Operation of the system Actor, starting a chain of its own: continuing nothing, trusted
         // as nothing's continuation, and for no tenant.
         var contexts = DeliveryProbes.ContextsOf(ReconcileStock);
         Assert.NotEmpty(contexts);
         Assert.All(
             contexts,
-            context => Assert.Equal(
-                (Actor.System(Reconciler), (string?)null, context.OperationId, (Guid?)null, false),
-                (context.Actor, context.Tenant, context.CorrelationId, context.CausationId, context.IsTrustedContinuation)
-            )
+            context =>
+                Assert.Equal(
+                    (
+                        Actor.System(Reconciler),
+                        (string?)null,
+                        context.OperationId,
+                        (Guid?)null,
+                        false
+                    ),
+                    (
+                        context.Actor,
+                        context.Tenant,
+                        context.CorrelationId,
+                        context.CausationId,
+                        context.IsTrustedContinuation
+                    )
+                )
         );
     }
 
@@ -130,7 +167,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         List<object[]> afterSecond;
         try
         {
-            afterSecond = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue}");
+            afterSecond = await Sql.RowsAsync(
+                connectionString,
+                $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue}"
+            );
         }
         finally
         {
@@ -139,7 +179,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
 
         // The first start stored the next whole hour; the second found it waiting and stored nothing.
         Assert.True((bool)Assert.Single(waiting)[1]);
-        Assert.Equal([[waiting[0][0]]], afterSecond);
+        Assert.Equal(
+            [
+                [waiting[0][0]],
+            ],
+            afterSecond
+        );
     }
 
     [Fact]
@@ -152,13 +197,21 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         object[] next;
         try
         {
-            using (var committed = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), ReconcileStock))
+            using (
+                var committed = DeliveryProbes.HoldAfterCommit(
+                    typeof(InventoryModule),
+                    ReconcileStock
+                )
+            )
             {
                 await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
                 // The first occurrence committed, and is not yet acknowledged.
                 await committed.Held;
                 occurrence = Assert.Single(
-                    await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Incoming'")
+                    await Sql.RowsAsync(
+                        connectionString,
+                        $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Incoming'"
+                    )
                 );
                 next = Assert.Single(
                     await Sql.RowsAsync(
@@ -184,7 +237,9 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
 
             Assert.Equal(turnedAway + 1, DeliveryProbes.TurnedAwayFrom(ReconcileStock));
             Assert.Equal(
-                [[1L, 1L]],
+                [
+                    [1L, 1L],
+                ],
                 await Sql.RowsAsync(
                     connectionString,
                     $"select (select count(*) from inventory.stock_reconciliations), (select count(*) from inventory.pouryakit_receipts where subscription = '{ReconcileStock}')"
@@ -197,7 +252,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                     $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and id not in ('{occurrence[0]}', '{next[0]}')"
                 )
             );
-            Assert.Empty(await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+            Assert.Empty(
+                await Sql.RowsAsync(
+                    connectionString,
+                    "select id from wolverine.wolverine_dead_letters"
+                )
+            );
         }
         finally
         {
@@ -225,7 +285,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 await HostFixture.StartHostAsync(running, TestContext.Current.CancellationToken);
                 await held.Held;
                 await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
-                Assert.Single(await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'"));
+                Assert.Single(
+                    await Sql.RowsAsync(
+                        connectionString,
+                        $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'"
+                    )
+                );
             }
 
             // Two chains would keep two occurrences stored for good; one remains once they met.
@@ -241,9 +306,14 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         }
 
         Assert.True(DeliveryProbes.TurnedAwayFrom(ReconcileStock) > turnedAway);
-        var reconciliations = await Sql.RowsAsync(connectionString, "select count(*), count(distinct occurrence) from inventory.stock_reconciliations");
+        var reconciliations = await Sql.RowsAsync(
+            connectionString,
+            "select count(*), count(distinct occurrence) from inventory.stock_reconciliations"
+        );
         Assert.Equal(reconciliations[0][0], reconciliations[0][1]);
-        Assert.Empty(await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Empty(
+            await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters")
+        );
     }
 
     // Every attempt fails, as while its database is down for longer than the stored retries, until the first occurrence is
@@ -259,18 +329,31 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             using (DeliveryProbes.FailAfterReceipt(ReconcileStock))
             {
                 await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
-                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})"
+                );
             }
 
-            await Sql.WaitUntilAsync(connectionString, "exists (select from inventory.stock_reconciliations)");
+            await Sql.WaitUntilAsync(
+                connectionString,
+                "exists (select from inventory.stock_reconciliations)"
+            );
             // An occurrence stored close to the first dead letter may have come due, and been set aside, before the failure ended.
             var deadLetters = await host
                 .Services.GetRequiredService<IWolverineRuntime>()
-                .Storage.DeadLetters.QueryAsync(new DeadLetterEnvelopeQuery { PageSize = 0 }, TestContext.Current.CancellationToken);
+                .Storage.DeadLetters.QueryAsync(
+                    new DeadLetterEnvelopeQuery { PageSize = 0 },
+                    TestContext.Current.CancellationToken
+                );
             setAside =
             [
                 .. deadLetters.Envelopes.Select(deadLetter =>
-                    DateTimeOffset.Parse(deadLetter.Envelope.Headers[DelayedCommandHeaders.Occurrence]!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)
+                    DateTimeOffset.Parse(
+                        deadLetter.Envelope.Headers[DelayedCommandHeaders.Occurrence]!,
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.RoundtripKind
+                    )
                 ),
             ];
         }
@@ -283,14 +366,19 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         Assert.NotEmpty(setAside);
         Assert.All(
             setAside,
-            occurrence => Assert.Equal(
-                1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
-                DeliveryProbes.AttemptsOf(ReconcileStock, ReceiptOf(occurrence.UtcDateTime)).Count
-            )
+            occurrence =>
+                Assert.Equal(
+                    1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
+                    DeliveryProbes
+                        .AttemptsOf(ReconcileStock, ReceiptOf(occurrence.UtcDateTime))
+                        .Count
+                )
         );
         // What ran came after every occurrence set aside, under the system Actor, each with its Receipt.
         Assert.Equal(
-            [[true, true]],
+            [
+                [true, true],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"""
@@ -317,7 +405,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                     .Services.AddPouryaKitRecurringCommand(
                         UnstoredNext,
                         systemActor: "stub.unstored-next",
-                        occurrence => storing ? new WriteKindChangedNoteCommand($"recurring {occurrence:O}") : throw new TimeoutException("The test failed to store an occurrence."),
+                        occurrence =>
+                            storing
+                                ? new WriteKindChangedNoteCommand($"recurring {occurrence:O}")
+                                : throw new TimeoutException(
+                                    "The test failed to store an occurrence."
+                                ),
                         typeof(StubModule)
                     )
                     .Configure(options => options.Every = TimeSpan.FromSeconds(1))
@@ -329,7 +422,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             storing = false;
             using (DeliveryProbes.FailAfterReceipt(UnstoredNext))
             {
-                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/')");
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/')"
+                );
             }
         }
         finally
@@ -338,19 +434,37 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         }
 
         Assert.Equal(
-            [[typeof(InvalidOperationException).FullName, $"The test failed the delivery to {UnstoredNext} after its Receipt."]],
-            await Sql.RowsAsync(connectionString, $"select exception_type, exception_message from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/'")
+            [
+                [
+                    typeof(InvalidOperationException).FullName,
+                    $"The test failed the delivery to {UnstoredNext} after its Receipt.",
+                ],
+            ],
+            await Sql.RowsAsync(
+                connectionString,
+                $"select exception_type, exception_message from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/'"
+            )
         );
         var logged = Assert.Single(
             Fixture.Logs.Entries,
-            entry => entry.Level == LogLevel.Error && entry.Message.Contains($"recurring command {UnstoredNext} failed", StringComparison.Ordinal)
+            entry =>
+                entry.Level == LogLevel.Error
+                && entry.Message.Contains(
+                    $"recurring command {UnstoredNext} failed",
+                    StringComparison.Ordinal
+                )
         );
         Assert.Equal(
             [typeof(TimeoutException), typeof(InvalidOperationException)],
-            Assert.IsType<AggregateException>(logged.Exception).InnerExceptions.Select(exception => exception.GetType())
+            Assert
+                .IsType<AggregateException>(logged.Exception)
+                .InnerExceptions.Select(exception => exception.GetType())
         );
         Assert.Empty(
-            await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{UnstoredNext}/' and status <> 'Handled'")
+            await Sql.RowsAsync(
+                connectionString,
+                $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{UnstoredNext}/' and status <> 'Handled'"
+            )
         );
     }
 
@@ -364,13 +478,26 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         List<object[]> waiting;
         try
         {
-            using (DeliveryProbes.FailAfterReceipt(ReconcileStock, TestDeliveryServiceCollectionExtensions.RetryDelays.Count))
-            using (var committed = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), ReconcileStock))
+            using (
+                DeliveryProbes.FailAfterReceipt(
+                    ReconcileStock,
+                    TestDeliveryServiceCollectionExtensions.RetryDelays.Count
+                )
+            )
+            using (
+                var committed = DeliveryProbes.HoldAfterCommit(
+                    typeof(InventoryModule),
+                    ReconcileStock
+                )
+            )
             {
                 await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
                 // The last attempt committed, and is not yet acknowledged.
                 await committed.Held;
-                reconciled = await Sql.RowsAsync(connectionString, "select occurrence from inventory.stock_reconciliations");
+                reconciled = await Sql.RowsAsync(
+                    connectionString,
+                    "select occurrence from inventory.stock_reconciliations"
+                );
                 waiting = await Sql.RowsAsync(
                     connectionString,
                     $"select pg_xact_commit_timestamp(e.xmin) = pg_xact_commit_timestamp(r.xmin) from wolverine.wolverine_incoming_envelopes e, inventory.stock_reconciliations r where e.{OnQueue} and e.status = 'Scheduled'"
@@ -384,7 +511,9 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
 
         Assert.Equal(
             1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
-            DeliveryProbes.AttemptsOf(ReconcileStock, ReceiptOf((DateTime)Assert.Single(reconciled)[0])).Count
+            DeliveryProbes
+                .AttemptsOf(ReconcileStock, ReceiptOf((DateTime)Assert.Single(reconciled)[0]))
+                .Count
         );
         // One occurrence waits, the one stored in the reconciliation's commit.
         Assert.True((bool)Assert.Single(waiting)[0]);
@@ -404,8 +533,13 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             TimeSpan.FromSeconds(2),
             builder =>
             {
-                builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = TimeSpan.FromMilliseconds(500));
-                builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(StaleNote, typeof(StubModule));
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+                    store.InboxStaleTime = TimeSpan.FromMilliseconds(500)
+                );
+                builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
+                    StaleNote,
+                    typeof(StubModule)
+                );
             }
         );
         DeliveryProbes.Hold? later = null;
@@ -420,25 +554,45 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             {
                 Assert.True(
                     (
-                        await host.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
-                            .SendAsync(new ScheduleKindChangedNoteCommand(text), TestContext.Current.CancellationToken)
+                        await host
+                            .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                            .SendAsync(
+                                new ScheduleKindChangedNoteCommand(text),
+                                TestContext.Current.CancellationToken
+                            )
                     ).IsSuccess
                 );
                 await held.Held;
-                await Sql.RowsAsync(connectionString, $"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://{StaleNote}/' and status = 'Incoming' returning 1");
+                await Sql.RowsAsync(
+                    connectionString,
+                    $"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where received_at = 'local://{StaleNote}/' and status = 'Incoming' returning 1"
+                );
                 await Sql.WaitUntilAsync(connectionString, CopyWaitsOnReceipt("stub"));
             }
 
-            delayed = Assert.Single(await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{StaleNote}/'"));
+            delayed = Assert.Single(
+                await Sql.RowsAsync(
+                    connectionString,
+                    $"select id from wolverine.wolverine_incoming_envelopes where received_at = 'local://{StaleNote}/'"
+                )
+            );
             await Sql.WaitUntilAsync(connectionString, Handled(delayed[0]));
 
             // An occurrence's commit stores the next one, due a cadence later.
             DeliveryProbes.Hold running;
-            using (var committed = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), ReconcileStock))
+            using (
+                var committed = DeliveryProbes.HoldAfterCommit(
+                    typeof(InventoryModule),
+                    ReconcileStock
+                )
+            )
             {
                 await committed.Held;
                 occurrence = Assert.Single(
-                    await Sql.RowsAsync(connectionString, $"select id, execution_time from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'")
+                    await Sql.RowsAsync(
+                        connectionString,
+                        $"select id, execution_time from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'"
+                    )
                 );
                 running = DeliveryProbes.HoldAfterReceipt(ReconcileStock);
             }
@@ -446,14 +600,20 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             using (running)
             {
                 await running.Held;
-                await Sql.RowsAsync(connectionString, $"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where {OnQueue} and status = 'Incoming' returning 1");
+                await Sql.RowsAsync(
+                    connectionString,
+                    $"update wolverine.wolverine_incoming_envelopes set owner_id = 0 where {OnQueue} and status = 'Incoming' returning 1"
+                );
                 await Sql.WaitUntilAsync(connectionString, CopyWaitsOnReceipt("inventory"));
             }
 
             // The occurrence after it, when due, waits after its Receipt until the test ends, so it commits nothing here.
             later = DeliveryProbes.HoldAfterReceipt(ReconcileStock);
             await Sql.WaitUntilAsync(connectionString, Handled(occurrence[0]));
-            waiting = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'");
+            waiting = await Sql.RowsAsync(
+                connectionString,
+                $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'"
+            );
         }
         finally
         {
@@ -466,20 +626,26 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         Assert.True(DeliveryProbes.AttemptsOf(StaleNote, (Guid)delayed[0]).Count >= 2);
         Assert.True(DeliveryProbes.AttemptsOf(ReconcileStock, ReceiptOf(occurred)).Count >= 2);
         Assert.Equal(
-            [[1L, 1L, 1L, 1L]],
+            [
+                [1L, 1L, 1L, 1L],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"""
                 select (select count(*) from stub.notes where text = '{text}'),
                        (select count(*) from stub.pouryakit_receipts where subscription = '{StaleNote}'),
                        (select count(*) from inventory.stock_reconciliations where occurrence = '{occurred:O}'),
-                       (select count(*) from inventory.pouryakit_receipts where subscription = '{ReconcileStock}' and message_id = '{ReceiptOf(occurred)}')
+                       (select count(*) from inventory.pouryakit_receipts where subscription = '{ReconcileStock}' and message_id = '{ReceiptOf(
+                    occurred
+                )}')
                 """
             )
         );
         // The occurrence stored one next occurrence; no copy stored one of its own.
         Assert.Single(waiting);
-        Assert.Empty(await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters"));
+        Assert.Empty(
+            await Sql.RowsAsync(connectionString, "select id from wolverine.wolverine_dead_letters")
+        );
     }
 
     // A release changed ReconcileStock's shape while an occurrence of the old one waited in the store: the restarted Host
@@ -496,11 +662,23 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             await released.StopAsync(TestContext.Current.CancellationToken);
         }
 
-        var stored = Assert.Single(await Sql.RowsAsync(connectionString, $"select id, body from wolverine.wolverine_incoming_envelopes where {OnQueue}"));
+        var stored = Assert.Single(
+            await Sql.RowsAsync(
+                connectionString,
+                $"select id, body from wolverine.wolverine_incoming_envelopes where {OnQueue}"
+            )
+        );
         // Its message as the release before wrote it, with the occurrence under a member since renamed.
         var envelope = EnvelopeSerializer.Deserialize((byte[])stored[1]);
-        envelope.Data = Encoding.UTF8.GetBytes($$"""{"at":"{{envelope.Headers[DelayedCommandHeaders.Occurrence]}}"}""");
-        await ExecuteAsync(connectionString, "update wolverine.wolverine_incoming_envelopes set body = $1 where id = $2", EnvelopeSerializer.Serialize(envelope), stored[0]);
+        envelope.Data = Encoding.UTF8.GetBytes(
+            $$"""{"at":"{{envelope.Headers[DelayedCommandHeaders.Occurrence]}}"}"""
+        );
+        await ExecuteAsync(
+            connectionString,
+            "update wolverine.wolverine_incoming_envelopes set body = $1 where id = $2",
+            EnvelopeSerializer.Serialize(envelope),
+            stored[0]
+        );
         List<object[]> waiting;
         await using (var restarted = Compose(connectionString, TimeSpan.FromHours(1)))
         {
@@ -508,9 +686,19 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             try
             {
                 // Due now, an hour early, once the start has looked for a waiting occurrence.
-                await ExecuteAsync(connectionString, "update wolverine.wolverine_incoming_envelopes set execution_time = now() where id = $1", stored[0]);
-                await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})");
-                waiting = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'");
+                await ExecuteAsync(
+                    connectionString,
+                    "update wolverine.wolverine_incoming_envelopes set execution_time = now() where id = $1",
+                    stored[0]
+                );
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_dead_letters where {OnQueue})"
+                );
+                waiting = await Sql.RowsAsync(
+                    connectionString,
+                    $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status <> 'Handled'"
+                );
             }
             finally
             {
@@ -524,7 +712,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
             await HostFixture.StartHostAsync(next, TestContext.Current.CancellationToken);
             try
             {
-                afterNextStart = await Sql.RowsAsync(connectionString, $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'");
+                afterNextStart = await Sql.RowsAsync(
+                    connectionString,
+                    $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue} and status = 'Scheduled'"
+                );
             }
             finally
             {
@@ -535,16 +726,30 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         // Set aside before the Kit's delivery ran, so it recorded no Receipt and reconciled nothing; the dead letter and an
         // Error entry name it and its queue.
         Assert.Equal(
-            [[stored[0], typeof(JsonException).FullName]],
-            await Sql.RowsAsync(connectionString, $"select id, exception_type from wolverine.wolverine_dead_letters where {OnQueue}")
+            [
+                [stored[0], typeof(JsonException).FullName],
+            ],
+            await Sql.RowsAsync(
+                connectionString,
+                $"select id, exception_type from wolverine.wolverine_dead_letters where {OnQueue}"
+            )
         );
         Assert.Contains(
             Fixture.Logs.Entries,
-            entry => entry.Level == LogLevel.Error && entry.Exception is JsonException && entry.Message.Contains($"#{stored[0]}", StringComparison.Ordinal) && entry.Message.Contains($"to local://{ReconcileStock}/", StringComparison.Ordinal)
+            entry =>
+                entry.Level == LogLevel.Error
+                && entry.Exception is JsonException
+                && entry.Message.Contains($"#{stored[0]}", StringComparison.Ordinal)
+                && entry.Message.Contains($"to local://{ReconcileStock}/", StringComparison.Ordinal)
         );
         Assert.Equal(
-            [[0L, 0L]],
-            await Sql.RowsAsync(connectionString, "select (select count(*) from inventory.stock_reconciliations), (select count(*) from inventory.pouryakit_receipts)")
+            [
+                [0L, 0L],
+            ],
+            await Sql.RowsAsync(
+                connectionString,
+                "select (select count(*) from inventory.stock_reconciliations), (select count(*) from inventory.pouryakit_receipts)"
+            )
         );
         // No next occurrence was stored until the next Host start stored the first one after now.
         Assert.Empty(waiting);
@@ -561,7 +766,11 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         await using var delayed = Compose(
             connectionString,
             TimeSpan.FromHours(1),
-            builder => builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(KindChanged, typeof(StubModule))
+            builder =>
+                builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
+                    KindChanged,
+                    typeof(StubModule)
+                )
         );
         await using var recurring = Compose(
             connectionString,
@@ -579,8 +788,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         await HostFixture.StartHostAsync(delayed, TestContext.Current.CancellationToken);
         Assert.True(
             (
-                await delayed.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
-                    .SendAsync(new ScheduleKindChangedNoteCommand(text), TestContext.Current.CancellationToken)
+                await delayed
+                    .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                    .SendAsync(
+                        new ScheduleKindChangedNoteCommand(text),
+                        TestContext.Current.CancellationToken
+                    )
             ).IsSuccess
         );
         await delayed.StopAsync(TestContext.Current.CancellationToken);
@@ -588,7 +801,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         await HostFixture.StartHostAsync(recurring, TestContext.Current.CancellationToken);
         try
         {
-            await Sql.WaitUntilAsync(connectionString, $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/')");
+            await Sql.WaitUntilAsync(
+                connectionString,
+                $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/')"
+            );
         }
         finally
         {
@@ -597,11 +813,18 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
 
         // Refused before it began any Operation: no Receipt, no note, no attempt under the system Actor.
         Assert.Equal(
-            [[typeof(UnknownDelayedCommandException).FullName]],
-            await Sql.RowsAsync(connectionString, $"select exception_type from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/'")
+            [
+                [typeof(UnknownDelayedCommandException).FullName],
+            ],
+            await Sql.RowsAsync(
+                connectionString,
+                $"select exception_type from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/'"
+            )
         );
         Assert.Equal(
-            [[0L, 0L]],
+            [
+                [0L, 0L],
+            ],
             await Sql.RowsAsync(
                 connectionString,
                 $"select (select count(*) from stub.notes where text = '{text}'), (select count(*) from stub.pouryakit_receipts where subscription = '{KindChanged}')"
@@ -614,10 +837,20 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     public void A_recurring_command_declared_again_with_another_occurrence_factory_is_refused_naming_the_declaration_it_has()
     {
         var services = new ServiceCollection();
-        services.AddPouryaKitRecurringCommand(KindChanged, "stub.kind-changer", _ => new WriteKindChangedNoteCommand("first"), typeof(StubModule));
+        services.AddPouryaKitRecurringCommand(
+            KindChanged,
+            "stub.kind-changer",
+            _ => new WriteKindChangedNoteCommand("first"),
+            typeof(StubModule)
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            services.AddPouryaKitRecurringCommand(KindChanged, "stub.kind-changer", _ => new WriteKindChangedNoteCommand("second"), typeof(StubModule))
+            services.AddPouryaKitRecurringCommand(
+                KindChanged,
+                "stub.kind-changer",
+                _ => new WriteKindChangedNoteCommand("second"),
+                typeof(StubModule)
+            )
         );
 
         Assert.Equal(
@@ -640,13 +873,18 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                     .Services.AddPouryaKitRecurringCommand<WriteKindChangedNoteCommand>(
                         UnstoredFirst,
                         systemActor: "stub.unstored-first",
-                        _ => throw new TimeoutException("The test failed to store the first occurrence."),
+                        _ =>
+                            throw new TimeoutException(
+                                "The test failed to store the first occurrence."
+                            ),
                         typeof(StubModule)
                     )
                     .Configure(options => options.Every = TimeSpan.FromHours(1))
         );
 
-        var thrown = await Assert.ThrowsAsync<TimeoutException>(() => HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<TimeoutException>(() =>
+            HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal("The test failed to store the first occurrence.", thrown.Message);
         Assert.True(host.Lifetime.ApplicationStopped.IsCancellationRequested);
@@ -660,7 +898,9 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     {
         await using var host = Compose(Fixture.ConnectionString, TimeSpan.FromTicks(ticks));
 
-        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var thrown = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             $"The recurring command {ReconcileStock} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {ReconcileStock}, longer than zero and at most 36500.00:00:00 (MaxEvery), as its declaration's options builder binds it.",
@@ -681,11 +921,18 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     private static Guid ReceiptOf(DateTime occurrence)
     {
         Span<byte> bytes = stackalloc byte[16];
-        BinaryPrimitives.WriteInt64BigEndian(bytes, new DateTimeOffset(occurrence, TimeSpan.Zero).UtcTicks);
+        BinaryPrimitives.WriteInt64BigEndian(
+            bytes,
+            new DateTimeOffset(occurrence, TimeSpan.Zero).UtcTicks
+        );
         return new Guid(bytes, bigEndian: true);
     }
 
-    private WebApplication Compose(string connectionString, TimeSpan every, Action<WebApplicationBuilder>? configure = null) =>
+    private WebApplication Compose(
+        string connectionString,
+        TimeSpan every,
+        Action<WebApplicationBuilder>? configure = null
+    ) =>
         AppFixture.ComposeHost(
             "Development",
             connectionString,
@@ -701,10 +948,17 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     {
         var database = $"recurring_{Guid.CreateVersion7():N}";
         await Fixture.RowsAsync($"create database {database}");
-        return new NpgsqlConnectionStringBuilder(Fixture.ConnectionString) { Database = database }.ConnectionString;
+        return new NpgsqlConnectionStringBuilder(Fixture.ConnectionString)
+        {
+            Database = database,
+        }.ConnectionString;
     }
 
-    private static async Task ExecuteAsync(string connectionString, string sql, params object[] values)
+    private static async Task ExecuteAsync(
+        string connectionString,
+        string sql,
+        params object[] values
+    )
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync(TestContext.Current.CancellationToken);

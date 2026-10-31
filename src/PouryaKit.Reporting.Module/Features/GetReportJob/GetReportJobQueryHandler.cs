@@ -23,7 +23,10 @@ internal sealed class GetReportJobQueryHandler(
     IOptions<ReportOptions> options
 ) : QueryHandler<GetReportJobQuery, ReportJobDto>
 {
-    public override async Task<Result<ReportJobDto>> Handle(GetReportJobQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<ReportJobDto>> Handle(
+        GetReportJobQuery query,
+        CancellationToken cancellationToken
+    )
     {
         JobRow? job;
         await using (var connection = await connections.OpenAsync(cancellationToken))
@@ -41,7 +44,11 @@ internal sealed class GetReportJobQueryHandler(
             job is null
             || (
                 !(job.RequestedBy == context.Actor.Id && job.RequestedByKind == context.Actor.Kind)
-                && !await permissions.HasPermissionAsync(context, ReportModule.ReadTenantJobsPermission, cancellationToken)
+                && !await permissions.HasPermissionAsync(
+                    context,
+                    ReportModule.ReadTenantJobsPermission,
+                    cancellationToken
+                )
             )
         )
         {
@@ -55,7 +62,11 @@ internal sealed class GetReportJobQueryHandler(
         if (state == ReportJobState.Completed)
         {
             var lifetime = left < options.Value.LinkLifetime ? left : options.Value.LinkLifetime;
-            var signed = await files.GetPresignedUrlAsync(job.FileKey!, lifetime, cancellationToken);
+            var signed = await files.GetPresignedUrlAsync(
+                job.FileKey!,
+                lifetime,
+                cancellationToken
+            );
             if (signed.IsFailure)
             {
                 return signed.Errors;

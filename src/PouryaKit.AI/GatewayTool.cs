@@ -21,6 +21,8 @@ internal sealed class GatewayTool(
 
     public override JsonSerializerOptions JsonSerializerOptions => json;
 
-    protected override async ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken) =>
-        await call(arguments, cancellationToken);
+    protected override async ValueTask<object?> InvokeCoreAsync(
+        AIFunctionArguments arguments,
+        CancellationToken cancellationToken
+    ) => await call(arguments, cancellationToken);
 }

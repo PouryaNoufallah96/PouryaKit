@@ -21,21 +21,33 @@ public sealed class ReportRenderer : IReportRenderer
         }
 
         // Only the PDF draws the logo: a CSV or a spreadsheet holds the table alone, so an unreadable logo is no failure there.
-        if (format is ReportFormat.Pdf && layout.Branding.Logo is { } logo && !IsReadablePngOrJpeg(logo))
+        if (
+            format is ReportFormat.Pdf
+            && layout.Branding.Logo is { } logo
+            && !IsReadablePngOrJpeg(logo)
+        )
         {
             return ReportErrors.LogoFormat;
         }
 
         return format switch
         {
-            ReportFormat.Pdf => new RenderedReport(PdfReport.Render(layout), "application/pdf", ".pdf"),
+            ReportFormat.Pdf => new RenderedReport(
+                PdfReport.Render(layout),
+                "application/pdf",
+                ".pdf"
+            ),
             ReportFormat.Csv => new RenderedReport(CsvReport.Render(table), "text/csv", ".csv"),
             ReportFormat.Spreadsheet => new RenderedReport(
                 SpreadsheetReport.Render(table),
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 ".xlsx"
             ),
-            _ => throw new ArgumentOutOfRangeException(nameof(format), format, "No such report format."),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(format),
+                format,
+                "No such report format."
+            ),
         };
     }
 
@@ -43,8 +55,12 @@ public sealed class ReportRenderer : IReportRenderer
     // that load and draws a placeholder in a PDF that renders as a success, so the same failure is a LogoFormat here.
     private static bool IsReadablePngOrJpeg(byte[] image)
     {
-        if (!image.AsSpan().StartsWith((ReadOnlySpan<byte>)[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
-            && !image.AsSpan().StartsWith((ReadOnlySpan<byte>)[0xFF, 0xD8, 0xFF]))
+        if (
+            !image
+                .AsSpan()
+                .StartsWith((ReadOnlySpan<byte>)[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+            && !image.AsSpan().StartsWith((ReadOnlySpan<byte>)[0xFF, 0xD8, 0xFF])
+        )
         {
             return false;
         }

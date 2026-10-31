@@ -11,7 +11,10 @@ namespace ModularMonolith.Tests;
 
 public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(app)
 {
-    private static readonly Error Refused = Error.Conflict("StockCount.Refused", "The stock count was refused after its number.");
+    private static readonly Error Refused = Error.Conflict(
+        "StockCount.Refused",
+        "The stock count was refused after its number."
+    );
 
     [Fact(Timeout = 60_000)]
     public async Task Two_operations_on_one_scope_key_get_consecutive_numbers_and_the_second_waits_for_the_first_to_commit()
@@ -33,7 +36,9 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
         );
         await first.Changed.Task.WaitAsync(cancellationToken);
 
-        var secondRun = Fixture.Gateway<InventoryModule>().SendAsync(new StartStockCountCommand(), cancellationToken);
+        var secondRun = Fixture
+            .Gateway<InventoryModule>()
+            .SendAsync(new StartStockCountCommand(), cancellationToken);
         await Fixture.WaitUntilAsync(
             "exists (select from pg_stat_activity where wait_event_type = 'Lock' and query like '%pouryakit_number_sequences%')",
             "The second stock count did not wait on the first's number sequence row."
@@ -46,7 +51,13 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
 
         Assert.Equal(1, firstNumber);
         Assert.Equal(2, second.Value);
-        Assert.Equal([[1L], [2L]], await Fixture.RowsAsync("select number from inventory.stock_counts order by number"));
+        Assert.Equal(
+            [
+                [1L],
+                [2L],
+            ],
+            await Fixture.RowsAsync("select number from inventory.stock_counts order by number")
+        );
     }
 
     [Fact]
@@ -68,12 +79,19 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
             ),
             cancellationToken
         );
-        var next = await Fixture.Gateway<InventoryModule>().SendAsync(new StartStockCountCommand(), cancellationToken);
+        var next = await Fixture
+            .Gateway<InventoryModule>()
+            .SendAsync(new StartStockCountCommand(), cancellationToken);
 
         Assert.Equal(Refused, Assert.Single(failed.Errors));
         Assert.Equal(1, released);
         Assert.Equal(released, next.Value);
-        Assert.Equal([[1L]], await Fixture.RowsAsync("select number from inventory.stock_counts"));
+        Assert.Equal(
+            [
+                [1L],
+            ],
+            await Fixture.RowsAsync("select number from inventory.stock_counts")
+        );
     }
 
     [Fact(Timeout = 60_000)]
@@ -99,31 +117,54 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
 
         await caller.CancelAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelledRun);
-        var next = await Fixture.Gateway<InventoryModule>().SendAsync(new StartStockCountCommand(), cancellationToken);
+        var next = await Fixture
+            .Gateway<InventoryModule>()
+            .SendAsync(new StartStockCountCommand(), cancellationToken);
 
         Assert.Equal(1, taken);
         Assert.Equal(taken, next.Value);
-        Assert.Equal([[1L]], await Fixture.RowsAsync("select number from inventory.stock_counts"));
+        Assert.Equal(
+            [
+                [1L],
+            ],
+            await Fixture.RowsAsync("select number from inventory.stock_counts")
+        );
     }
 
     [Fact(Timeout = 60_000)]
     public async Task Two_operations_that_deadlock_on_two_scope_keys_commit_once_and_the_other_fails_with_a_conflict()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        Hold northFirst = new(), southFirst = new();
-        var northRun = RunInInventoryAsync(new TakeNumbersCommand(["north", "south"], northFirst), cancellationToken);
-        var southRun = RunInInventoryAsync(new TakeNumbersCommand(["south", "north"], southFirst), cancellationToken);
-        await Task.WhenAll(northFirst.Changed.Task, southFirst.Changed.Task).WaitAsync(cancellationToken);
+        Hold northFirst = new(),
+            southFirst = new();
+        var northRun = RunInInventoryAsync(
+            new TakeNumbersCommand(["north", "south"], northFirst),
+            cancellationToken
+        );
+        var southRun = RunInInventoryAsync(
+            new TakeNumbersCommand(["south", "north"], southFirst),
+            cancellationToken
+        );
+        await Task.WhenAll(northFirst.Changed.Task, southFirst.Changed.Task)
+            .WaitAsync(cancellationToken);
 
         northFirst.Released.SetResult();
         southFirst.Released.SetResult();
         Result[] results = await Task.WhenAll(northRun, southRun);
 
         Assert.Single(results, result => result.IsSuccess);
-        Assert.Equal(UnitOfWorkErrors.ConcurrencyConflict, Assert.Single(Assert.Single(results, result => result.IsFailure).Errors));
         Assert.Equal(
-            [["north", 1L], ["south", 1L]],
-            await Fixture.RowsAsync("select scope_key, last_value from inventory.pouryakit_number_sequences order by scope_key")
+            UnitOfWorkErrors.ConcurrencyConflict,
+            Assert.Single(Assert.Single(results, result => result.IsFailure).Errors)
+        );
+        Assert.Equal(
+            [
+                ["north", 1L],
+                ["south", 1L],
+            ],
+            await Fixture.RowsAsync(
+                "select scope_key, last_value from inventory.pouryakit_number_sequences order by scope_key"
+            )
         );
     }
 
@@ -133,7 +174,12 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
         Hold none = new();
 
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            Fixture.Gateway<StubModule>().SendAsync(new TakeNumbersCommand(["any"], none), TestContext.Current.CancellationToken)
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(
+                    new TakeNumbersCommand(["any"], none),
+                    TestContext.Current.CancellationToken
+                )
         );
 
         Assert.Equal(
@@ -143,12 +189,20 @@ public sealed class NumberSequenceTests(AppFixture app) : HostTest<AppFixture>(a
     }
 
     // Begun in a scope as an Inventory Operation, so the command runs in Inventory's Unit of Work.
-    private async Task<Result> RunInInventoryAsync(Command command, CancellationToken cancellationToken)
+    private async Task<Result> RunInInventoryAsync(
+        Command command,
+        CancellationToken cancellationToken
+    )
     {
         // Yields first, so the caller goes on before this Operation reaches a hold or a lock.
         await Task.Yield();
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(InventoryModule));
-        return await scope.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(command, cancellationToken);
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor),
+            typeof(InventoryModule)
+        );
+        return await scope
+            .ServiceProvider.GetRequiredService<IDispatcher>()
+            .SendAsync(command, cancellationToken);
     }
 }

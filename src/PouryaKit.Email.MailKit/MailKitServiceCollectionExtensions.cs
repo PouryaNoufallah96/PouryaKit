@@ -23,7 +23,9 @@ public static class MailKitServiceCollectionExtensions
         /// build fails, through the Kit's composition checks, naming each registration's type when it registers another,
         /// before or after this call, a second call included, and naming the contract when it removes this one.
         /// </summary>
-        public IServiceCollection AddPouryaKitMailKit(Action<PouryaKitMailKitOptions>? configure = null)
+        public IServiceCollection AddPouryaKitMailKit(
+            Action<PouryaKitMailKitOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             var options = services
@@ -45,7 +47,8 @@ public static class MailKitServiceCollectionExtensions
                     "PouryaKitMailKitOptions.Security is not a SecureSocketOptions value; set None, Auto, SslOnConnect, StartTls or StartTlsWhenAvailable."
                 )
                 .Validate(
-                    mail => string.IsNullOrEmpty(mail.UserName) == string.IsNullOrEmpty(mail.Password),
+                    mail =>
+                        string.IsNullOrEmpty(mail.UserName) == string.IsNullOrEmpty(mail.Password),
                     "PouryaKitMailKitOptions.UserName and Password are set together or not at all."
                 )
                 .ValidateOnStart();
@@ -54,12 +57,17 @@ public static class MailKitServiceCollectionExtensions
                 options.Configure(configure);
             }
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck>(new OneProviderCheck<IEmailSender>("AddPouryaKitMailKit", "email sender")));
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck>(
+                    new OneProviderCheck<IEmailSender>("AddPouryaKitMailKit", "email sender")
+                )
+            );
             services.AddSingleton<IEmailSender>(Create);
             return services;
         }
     }
 
     // A named method, which the one-provider check names.
-    private static MailKitEmailSender Create(IServiceProvider provider) => new(provider.GetRequiredService<IOptions<PouryaKitMailKitOptions>>().Value);
+    private static MailKitEmailSender Create(IServiceProvider provider) =>
+        new(provider.GetRequiredService<IOptions<PouryaKitMailKitOptions>>().Value);
 }

@@ -21,14 +21,20 @@ internal static class ReadProbe
     /// <summary>Wraps the Host's Dapper connection factory so its connections pass through the probe.</summary>
     public static void Install(IServiceCollection services)
     {
-        var reads = services.Single(descriptor => descriptor.ServiceType == typeof(IReadConnectionFactory));
+        var reads = services.Single(descriptor =>
+            descriptor.ServiceType == typeof(IReadConnectionFactory)
+        );
         services.Remove(reads);
-        services.AddScoped<IReadConnectionFactory>(provider => new HeldReads((IReadConnectionFactory)reads.ImplementationFactory!(provider)));
+        services.AddScoped<IReadConnectionFactory>(provider => new HeldReads(
+            (IReadConnectionFactory)reads.ImplementationFactory!(provider)
+        ));
     }
 
     private sealed class HeldReads(IReadConnectionFactory reads) : IReadConnectionFactory
     {
-        public async ValueTask<DbConnection> OpenAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<DbConnection> OpenAsync(
+            CancellationToken cancellationToken = default
+        )
         {
             var connection = await reads.OpenAsync(cancellationToken);
             return Armed.Value is { } hold ? new HeldConnection(connection, hold) : connection;
@@ -52,13 +58,15 @@ internal static class ReadProbe
 
         public override ConnectionState State => connection.State;
 
-        public override void ChangeDatabase(string databaseName) => connection.ChangeDatabase(databaseName);
+        public override void ChangeDatabase(string databaseName) =>
+            connection.ChangeDatabase(databaseName);
 
         public override void Close() => connection.Close();
 
         public override void Open() => connection.Open();
 
-        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => connection.BeginTransaction(isolationLevel);
+        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
+            connection.BeginTransaction(isolationLevel);
 
         protected override DbCommand CreateDbCommand() => connection.CreateCommand();
 

@@ -24,12 +24,20 @@ internal sealed record IntKey(int Value) : TypedId<int>(Value);
 
 internal sealed record StringKey(string Value) : TypedId<string>(Value);
 
-internal sealed record TypedIdRow(GuidKey GuidKey, LongKey LongKey, IntKey IntKey, StringKey StringKey);
+internal sealed record TypedIdRow(
+    GuidKey GuidKey,
+    LongKey LongKey,
+    IntKey IntKey,
+    StringKey StringKey
+);
 
 public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     // A factory is the scope's, and leases bind the scope's Operation's tenant; these leases read no tenant-scoped table.
-    private IReadConnectionFactory Connections => Fixture.Host.Services.CreateScope().ServiceProvider.GetRequiredService<IReadConnectionFactory>();
+    private IReadConnectionFactory Connections =>
+        Fixture
+            .Host.Services.CreateScope()
+            .ServiceProvider.GetRequiredService<IReadConnectionFactory>();
 
     [Fact]
     public async Task Get_and_list_read_what_commands_committed_and_a_missing_product_is_not_found()
@@ -38,12 +46,27 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         var furniture = Guid.CreateVersion7();
         var lamp = Guid.CreateVersion7();
         var desk = Guid.CreateVersion7();
-        await gateway.SendAsync(new CreateCategoryCommand(furniture, "Furniture"), TestContext.Current.CancellationToken);
-        await gateway.SendAsync(new CreateProductCommand(lamp, furniture, "Lamp"), TestContext.Current.CancellationToken);
-        await gateway.SendAsync(new CreateProductCommand(desk, furniture, "Desk"), TestContext.Current.CancellationToken);
+        await gateway.SendAsync(
+            new CreateCategoryCommand(furniture, "Furniture"),
+            TestContext.Current.CancellationToken
+        );
+        await gateway.SendAsync(
+            new CreateProductCommand(lamp, furniture, "Lamp"),
+            TestContext.Current.CancellationToken
+        );
+        await gateway.SendAsync(
+            new CreateProductCommand(desk, furniture, "Desk"),
+            TestContext.Current.CancellationToken
+        );
 
-        var found = await gateway.QueryAsync(new GetProductQuery(lamp), TestContext.Current.CancellationToken);
-        var listed = await gateway.QueryAsync(new ListProductsQuery(new PageRequest()), TestContext.Current.CancellationToken);
+        var found = await gateway.QueryAsync(
+            new GetProductQuery(lamp),
+            TestContext.Current.CancellationToken
+        );
+        var listed = await gateway.QueryAsync(
+            new ListProductsQuery(new PageRequest()),
+            TestContext.Current.CancellationToken
+        );
         var missing = await gateway.QueryAsync(
             new GetProductQuery(Guid.CreateVersion7()),
             TestContext.Current.CancellationToken
@@ -52,7 +75,9 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(new ProductDto(lamp, furniture, "Lamp"), found.Value);
         Assert.Equal(
             [(desk, furniture, "Desk"), (lamp, furniture, "Lamp")],
-            listed.Value.Items.Select(product => (product.Id.Value, product.CategoryId.Value, product.Name))
+            listed.Value.Items.Select(product =>
+                (product.Id.Value, product.CategoryId.Value, product.Name)
+            )
         );
         Assert.Equal(ProductErrors.NotFound, Assert.Single(missing.Errors));
     }
@@ -83,12 +108,16 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     public async Task Disposing_a_host_disposes_its_read_connection_pool()
     {
         var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
-        var connections = host.Services.CreateScope().ServiceProvider.GetRequiredService<IReadConnectionFactory>();
+        var connections = host
+            .Services.CreateScope()
+            .ServiceProvider.GetRequiredService<IReadConnectionFactory>();
         await using (await connections.OpenAsync(TestContext.Current.CancellationToken)) { }
 
         await host.DisposeAsync();
 
-        await Assert.ThrowsAsync<ObjectDisposedException>(async () => await connections.OpenAsync(TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ObjectDisposedException>(async () =>
+            await connections.OpenAsync(TestContext.Current.CancellationToken)
+        );
     }
 
     [Fact]
@@ -106,8 +135,15 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         // Registered again, as a second Module or a second Host in this process would.
         new ServiceCollection().AddPouryaKitDapper("app", typeof(DapperTests).Assembly);
-        var sent = new TypedIdRow(new GuidKey(Guid.CreateVersion7()), new LongKey(5_000_000_000), new IntKey(7), new StringKey("sku-1"));
-        await using var connection = await Connections.OpenAsync(TestContext.Current.CancellationToken);
+        var sent = new TypedIdRow(
+            new GuidKey(Guid.CreateVersion7()),
+            new LongKey(5_000_000_000),
+            new IntKey(7),
+            new StringKey("sku-1")
+        );
+        await using var connection = await Connections.OpenAsync(
+            TestContext.Current.CancellationToken
+        );
 
         var types = await connection.QuerySingleAsync<(string, string, string, string)>(
             new CommandDefinition(
@@ -133,7 +169,10 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var gateway = Fixture.Gateway<StubModule>();
 
-        var kept = await gateway.SendAsync(new WriteTalliedNoteCommand("kept", Reject: false), TestContext.Current.CancellationToken);
+        var kept = await gateway.SendAsync(
+            new WriteTalliedNoteCommand("kept", Reject: false),
+            TestContext.Current.CancellationToken
+        );
         var rejected = await gateway.SendAsync(
             new WriteTalliedNoteCommand("rejected", Reject: true),
             TestContext.Current.CancellationToken
@@ -145,9 +184,22 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.True(kept.IsSuccess);
         Assert.Equal(WriteTalliedNoteCommandHandler.Rejected, Assert.Single(rejected.Errors));
-        Assert.Equal(WriteTalliedNoteCommandHandler.Rejected, Assert.Single(keptAgainThenRejected.Errors));
-        Assert.Equal([["kept", 1]], await Fixture.RowsAsync("select text, count from stub.note_tallies"));
-        Assert.Equal([["kept"]], await Fixture.RowsAsync("select text from stub.notes"));
+        Assert.Equal(
+            WriteTalliedNoteCommandHandler.Rejected,
+            Assert.Single(keptAgainThenRejected.Errors)
+        );
+        Assert.Equal(
+            [
+                ["kept", 1],
+            ],
+            await Fixture.RowsAsync("select text, count from stub.note_tallies")
+        );
+        Assert.Equal(
+            [
+                ["kept"],
+            ],
+            await Fixture.RowsAsync("select text from stub.notes")
+        );
     }
 
     [Fact]
@@ -156,10 +208,16 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .QueryAsync(new TallyNoteInQueryQuery("read"), TestContext.Current.CancellationToken)
+                .QueryAsync(
+                    new TallyNoteInQueryQuery("read"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
-        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
+        Assert.StartsWith(
+            "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write",
+            thrown.Message
+        );
     }
 
     [Fact]
@@ -167,7 +225,10 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         // A scope begun as a Stub Operation in which no command runs: nothing opened a transaction to join.
         await using var scope = Fixture.Host.Services.CreateAsyncScope();
-        scope.ServiceProvider.BeginOperation(new OperationContext(GatewayTestExtensions.TestActor), typeof(StubModule));
+        scope.ServiceProvider.BeginOperation(
+            new OperationContext(GatewayTestExtensions.TestActor),
+            typeof(StubModule)
+        );
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             scope.ServiceProvider.GetRequiredService<IUnitOfWorkConnection>().Join()
@@ -182,10 +243,16 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .SendAsync(new TallyNoteThroughQueryCommand("nested"), TestContext.Current.CancellationToken)
+                .SendAsync(
+                    new TallyNoteThroughQueryCommand("nested"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
-        Assert.StartsWith("Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write", thrown.Message);
+        Assert.StartsWith(
+            "Code that only reads, such as a query, an authorizer, a validator or a step of the Unit of Work that only reads, asked to write",
+            thrown.Message
+        );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.note_tallies"));
     }
 
@@ -194,7 +261,9 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var services = new ServiceCollection().AddPouryaKitDapper("app");
 
-        var thrown = Assert.Throws<InvalidOperationException>(() => services.AddPouryaKitDapper("reports"));
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            services.AddPouryaKitDapper("reports")
+        );
 
         Assert.Contains("'app'", thrown.Message);
         Assert.Contains("'reports'", thrown.Message);
@@ -206,11 +275,17 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var services = new ServiceCollection().AddPouryaKitDapper("app").AddPouryaKitDapper("APP");
 
-        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(IReadConnectionFactory));
+        Assert.Single(
+            services,
+            descriptor => descriptor.ServiceType == typeof(IReadConnectionFactory)
+        );
     }
 
     private static Task<int> BackendAsync(System.Data.Common.DbConnection connection) =>
         connection.ExecuteScalarAsync<int>(
-            new CommandDefinition("select pg_backend_pid()", cancellationToken: TestContext.Current.CancellationToken)
+            new CommandDefinition(
+                "select pg_backend_pid()",
+                cancellationToken: TestContext.Current.CancellationToken
+            )
         );
 }

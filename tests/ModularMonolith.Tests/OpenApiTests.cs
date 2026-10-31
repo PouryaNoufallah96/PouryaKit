@@ -36,19 +36,54 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         var lamp = await CreateLampAsync();
         using var client = Unversioned(Fixture.Client("ada", AppFixture.TestTenant));
 
-        var renamedByUrl = await RenameAsync(client, $"/catalog/v2/products/{lamp}/name", null, "Desk lamp");
-        var refusedByUrl = await RenameAsync(client, $"/catalog/v1/products/{lamp}/name", null, "Floor lamp");
-        var renamedByHeader = await RenameAsync(client, $"/catalog/products/{lamp}/name", "2.0", "Reading lamp");
-        var refusedByHeader = await RenameAsync(client, $"/catalog/products/{lamp}/name", "1.0", "Floor lamp");
-        var readByUrl = await SendAsync(client, HttpMethod.Get, $"/catalog/v1/products/{lamp}", null);
-        var readByHeader = await SendAsync(client, HttpMethod.Get, $"/catalog/products/{lamp}", "1.0");
+        var renamedByUrl = await RenameAsync(
+            client,
+            $"/catalog/v2/products/{lamp}/name",
+            null,
+            "Desk lamp"
+        );
+        var refusedByUrl = await RenameAsync(
+            client,
+            $"/catalog/v1/products/{lamp}/name",
+            null,
+            "Floor lamp"
+        );
+        var renamedByHeader = await RenameAsync(
+            client,
+            $"/catalog/products/{lamp}/name",
+            "2.0",
+            "Reading lamp"
+        );
+        var refusedByHeader = await RenameAsync(
+            client,
+            $"/catalog/products/{lamp}/name",
+            "1.0",
+            "Floor lamp"
+        );
+        var readByUrl = await SendAsync(
+            client,
+            HttpMethod.Get,
+            $"/catalog/v1/products/{lamp}",
+            null
+        );
+        var readByHeader = await SendAsync(
+            client,
+            HttpMethod.Get,
+            $"/catalog/products/{lamp}",
+            "1.0"
+        );
 
         Assert.Equal(HttpStatusCode.NoContent, renamedByUrl.StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, renamedByHeader.StatusCode);
         // Renaming arrived in 2.0: version 1.0 serves no such operation.
         await ProblemAsync(refusedByUrl, HttpStatusCode.NotFound);
         await ProblemAsync(refusedByHeader, HttpStatusCode.BadRequest);
-        Assert.Equal("Reading lamp", await Fixture.ScalarAsync<string>($"select name from catalog.products where id = '{lamp}'"));
+        Assert.Equal(
+            "Reading lamp",
+            await Fixture.ScalarAsync<string>(
+                $"select name from catalog.products where id = '{lamp}'"
+            )
+        );
         Assert.Equal(HttpStatusCode.OK, readByUrl.StatusCode);
         Assert.Equal(HttpStatusCode.OK, readByHeader.StatusCode);
         Assert.Equal(["2.0"], readByUrl.Headers.GetValues("api-supported-versions"));
@@ -93,7 +128,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
         Assert.Equal(
             ConfiguredSunsetLink,
-            v1.GetProperty("x-api-versioning").GetProperty("links")[0].GetProperty("url").GetString()
+            v1.GetProperty("x-api-versioning")
+                .GetProperty("links")[0]
+                .GetProperty("url")
+                .GetString()
         );
         Assert.Equal("", v2.GetProperty("info").GetProperty("description").GetString());
         Assert.False(v2.TryGetProperty("x-api-versioning", out _));
@@ -125,7 +163,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             CatalogOperations(v1).Select(operation => operation.Name)
         );
-        Assert.All(CatalogOperations(v1), operation => Assert.True(operation.Body.GetProperty("deprecated").GetBoolean()));
+        Assert.All(
+            CatalogOperations(v1),
+            operation => Assert.True(operation.Body.GetProperty("deprecated").GetBoolean())
+        );
         Assert.Equal("2.0", v2.GetProperty("info").GetProperty("version").GetString());
         Assert.Equal(
             [
@@ -146,11 +187,20 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             CatalogOperations(v2).Select(operation => operation.Name)
         );
-        Assert.All(CatalogOperations(v2), operation => Assert.False(operation.Body.TryGetProperty("deprecated", out _)));
+        Assert.All(
+            CatalogOperations(v2),
+            operation => Assert.False(operation.Body.TryGetProperty("deprecated", out _))
+        );
         // An unversioned path takes its version from the header.
         Assert.Contains(
-            v2.GetProperty("paths").GetProperty("/catalog/products/{productId}").GetProperty("get").GetProperty("parameters").EnumerateArray(),
-            parameter => parameter.GetProperty("name").GetString() == "api-version" && parameter.GetProperty("in").GetString() == "header"
+            v2.GetProperty("paths")
+                .GetProperty("/catalog/products/{productId}")
+                .GetProperty("get")
+                .GetProperty("parameters")
+                .EnumerateArray(),
+            parameter =>
+                parameter.GetProperty("name").GetString() == "api-version"
+                && parameter.GetProperty("in").GetString() == "header"
         );
     }
 
@@ -174,7 +224,12 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
         Assert.Equal(
             """{"type":"http","scheme":"bearer"}""",
-            v2.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer").GetRawText().Replace(" ", "").Replace("\n", "")
+            v2.GetProperty("components")
+                .GetProperty("securitySchemes")
+                .GetProperty("Bearer")
+                .GetRawText()
+                .Replace(" ", "")
+                .Replace("\n", "")
         );
         Assert.Equal(
             [
@@ -190,7 +245,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                 ("/stub/public/context get", false),
             ],
             Operations(v2)
-                .Where(operation => operation.Name.StartsWith("/catalog/v2/") || operation.Name.Contains("/context "))
+                .Where(operation =>
+                    operation.Name.StartsWith("/catalog/v2/")
+                    || operation.Name.Contains("/context ")
+                )
                 .Select(operation => (operation.Name, RequiresBearer(operation.Body)))
         );
         // The document says what the pipeline does: the Stub's public endpoint serves an anonymous caller, reading a
@@ -210,17 +268,26 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         // Creating a product requires one; no other Catalog operation, creating a category included, does.
         Assert.Equal(
             ["/catalog/products post", "/catalog/v1/products post"],
-            CatalogOperations(v1).Where(operation => IdempotencyKeyOf(operation.Body) is not null).Select(operation => operation.Name)
+            CatalogOperations(v1)
+                .Where(operation => IdempotencyKeyOf(operation.Body) is not null)
+                .Select(operation => operation.Name)
         );
         Assert.Equal(
             ["/catalog/products post", "/catalog/v2/products post"],
-            CatalogOperations(v2).Where(operation => IdempotencyKeyOf(operation.Body) is not null).Select(operation => operation.Name)
+            CatalogOperations(v2)
+                .Where(operation => IdempotencyKeyOf(operation.Body) is not null)
+                .Select(operation => operation.Name)
         );
-        var header = IdempotencyKeyOf(v2.GetProperty("paths").GetProperty("/catalog/v2/products").GetProperty("post"))!.Value;
+        var header = IdempotencyKeyOf(
+            v2.GetProperty("paths").GetProperty("/catalog/v2/products").GetProperty("post")
+        )!.Value;
         Assert.Equal("header", header.GetProperty("in").GetString());
         Assert.True(header.GetProperty("required").GetBoolean());
         Assert.Equal("string", header.GetProperty("schema").GetProperty("type").GetString());
-        Assert.Contains("1 to 256 visible ASCII characters, with spaces only between them", header.GetProperty("description").GetString());
+        Assert.Contains(
+            "1 to 256 visible ASCII characters, with spaces only between them",
+            header.GetProperty("description").GetString()
+        );
     }
 
     [Fact]
@@ -231,8 +298,15 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         // The fixture's default scheme is its test scheme, not a JWT bearer one.
         var v2 = await DocumentAsync(client, "v2");
 
-        Assert.All(Operations(v2), operation => Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name));
-        Assert.False(v2.TryGetProperty("components", out var components) && components.TryGetProperty("securitySchemes", out _));
+        Assert.All(
+            Operations(v2),
+            operation =>
+                Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name)
+        );
+        Assert.False(
+            v2.TryGetProperty("components", out var components)
+                && components.TryGetProperty("securitySchemes", out _)
+        );
     }
 
     // The Host registers JWT bearer beside the fixture's default test scheme, which the document cannot state; only the
@@ -240,9 +314,18 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     [Fact]
     public async Task An_operation_whose_policy_names_a_scheme_requires_that_scheme_and_not_the_default_one()
     {
-        await using var host = AppFixture.ComposeHost("Development", Fixture.ConnectionString, new RecordedLogs());
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs()
+        );
         host.MapGet("/bearer-only", () => "bearer")
-            .RequireAuthorization(new AuthorizeAttribute { AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme });
+            .RequireAuthorization(
+                new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
+                }
+            );
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var anonymous = Unversioned(AppFixture.ClientOf(host));
 
@@ -256,7 +339,12 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
         Assert.Equal(
             """{"type":"http","scheme":"bearer"}""",
-            v2.GetProperty("components").GetProperty("securitySchemes").GetProperty("Bearer").GetRawText().Replace(" ", "").Replace("\n", "")
+            v2.GetProperty("components")
+                .GetProperty("securitySchemes")
+                .GetProperty("Bearer")
+                .GetRawText()
+                .Replace(" ", "")
+                .Replace("\n", "")
         );
     }
 
@@ -278,7 +366,9 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
         Assert.Equal(
             ["/catalog/products post", "/catalog/v1/products post"],
-            CatalogOperations(v1).Where(operation => IdempotencyKeyOf(operation.Body) is not null).Select(operation => operation.Name)
+            CatalogOperations(v1)
+                .Where(operation => IdempotencyKeyOf(operation.Body) is not null)
+                .Select(operation => operation.Name)
         );
     }
 
@@ -286,21 +376,67 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     public async Task A_created_products_location_names_the_version_the_request_selected_and_is_followed_as_it_is()
     {
         var category = Guid.CreateVersion7();
-        await Fixture.Gateway<CatalogModule>().SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await Fixture
+            .Gateway<CatalogModule>()
+            .SendAsync(
+                new CreateCategoryCommand(category, "Lamps"),
+                TestContext.Current.CancellationToken
+            );
         using var client = Unversioned(Fixture.Client("ada", AppFixture.TestTenant));
         var byUrl = Guid.CreateVersion7();
         var byHeader = Guid.CreateVersion7();
 
-        var createdByUrl = await SendAsync(client, HttpMethod.Post, "/catalog/v2/products", null, JsonContent.Create(new { productId = byUrl, categoryId = category, name = "Desk lamp" }), IdempotentRequests.NewKey());
-        var readByUrl = await SendAsync(client, HttpMethod.Get, createdByUrl.Headers.Location!.OriginalString, null);
-        var createdByHeader = await SendAsync(client, HttpMethod.Post, "/catalog/products", "1.0", JsonContent.Create(new { productId = byHeader, categoryId = category, name = "Floor lamp" }), IdempotentRequests.NewKey());
-        var readByHeader = await SendAsync(client, HttpMethod.Get, createdByHeader.Headers.Location!.OriginalString, "1.0");
+        var createdByUrl = await SendAsync(
+            client,
+            HttpMethod.Post,
+            "/catalog/v2/products",
+            null,
+            JsonContent.Create(
+                new
+                {
+                    productId = byUrl,
+                    categoryId = category,
+                    name = "Desk lamp",
+                }
+            ),
+            IdempotentRequests.NewKey()
+        );
+        var readByUrl = await SendAsync(
+            client,
+            HttpMethod.Get,
+            createdByUrl.Headers.Location!.OriginalString,
+            null
+        );
+        var createdByHeader = await SendAsync(
+            client,
+            HttpMethod.Post,
+            "/catalog/products",
+            "1.0",
+            JsonContent.Create(
+                new
+                {
+                    productId = byHeader,
+                    categoryId = category,
+                    name = "Floor lamp",
+                }
+            ),
+            IdempotentRequests.NewKey()
+        );
+        var readByHeader = await SendAsync(
+            client,
+            HttpMethod.Get,
+            createdByHeader.Headers.Location!.OriginalString,
+            "1.0"
+        );
 
         Assert.Equal(HttpStatusCode.Created, createdByUrl.StatusCode);
         Assert.Equal($"/catalog/v2/products/{byUrl}", createdByUrl.Headers.Location.OriginalString);
         Assert.Equal(HttpStatusCode.OK, readByUrl.StatusCode);
         Assert.Equal(HttpStatusCode.Created, createdByHeader.StatusCode);
-        Assert.Equal($"/catalog/v1/products/{byHeader}", createdByHeader.Headers.Location.OriginalString);
+        Assert.Equal(
+            $"/catalog/v1/products/{byHeader}",
+            createdByHeader.Headers.Location.OriginalString
+        );
         Assert.Equal(HttpStatusCode.OK, readByHeader.StatusCode);
     }
 
@@ -310,7 +446,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         await using var host = PlainHost(services =>
         {
             services.AddPouryaKitOpenApi();
-            services.AddPouryaKitApiVersions("/plians", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+            services.AddPouryaKitApiVersions(
+                "/plians",
+                versions => versions.HasApiVersion(new ApiVersion(1, 0))
+            );
         });
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -332,7 +471,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             services =>
             {
                 services.AddPouryaKitOpenApi();
-                services.AddPouryaKitApiVersions("/plians", versions => versions.HasApiVersion(new ApiVersion(1, 0)));
+                services.AddPouryaKitApiVersions(
+                    "/plians",
+                    versions => versions.HasApiVersion(new ApiVersion(1, 0))
+                );
             },
             installChecks: false
         );
@@ -360,7 +502,11 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal("text/html", page.Content.Headers.ContentType?.MediaType);
         Assert.Equal(
             [("v1", "openapi/v1.json"), ("v2", "openapi/v2.json")],
-            sources.EnumerateArray().Select(source => (source.GetProperty("title").GetString(), source.GetProperty("url").GetString()))
+            sources
+                .EnumerateArray()
+                .Select(source =>
+                    (source.GetProperty("title").GetString(), source.GetProperty("url").GetString())
+                )
         );
         foreach (var (source, version) in sources.EnumerateArray().Zip(["1.0", "2.0"]))
         {
@@ -382,7 +528,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         var read = await client.GetAsync("/plain/actor", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, read.StatusCode);
-        Assert.Equal("ada", await read.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(
+            "ada",
+            await read.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
+        );
         Assert.Null(host.Services.GetService<IApiVersionDescriptionProvider>());
         Assert.Null(host.Services.GetService<IModuleRouteGroups>());
     }
@@ -392,7 +541,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             PlainHost(services =>
-                services.AddPouryaKitApiVersions("/plain", versions => versions.HasApiVersion(new ApiVersion(1, 0)))
+                services.AddPouryaKitApiVersions(
+                    "/plain",
+                    versions => versions.HasApiVersion(new ApiVersion(1, 0))
+                )
             )
         );
 
@@ -404,13 +556,19 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
     // A Host of PouryaKit.Web alone: no Modules and no API versioning, with one route group of an endpoint that
     // declares no version.
-    private static WebApplication PlainHost(Action<IServiceCollection>? configure = null, bool installChecks = true)
+    private static WebApplication PlainHost(
+        Action<IServiceCollection>? configure = null,
+        bool installChecks = true
+    )
     {
         var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
         builder.WebHost.UseTestServer();
         builder
             .Services.AddAuthentication(TestAuthentication.SchemeName)
-            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(TestAuthentication.SchemeName, null);
+            .AddScheme<AuthenticationSchemeOptions, TestAuthentication>(
+                TestAuthentication.SchemeName,
+                null
+            );
         builder.Services.AddAuthorization();
         builder.Services.AddPouryaKitCqrs();
         builder.Services.AddPouryaKitWeb();
@@ -443,8 +601,14 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         var catalog = Fixture.Gateway<CatalogModule>();
         var lamps = Guid.CreateVersion7();
         var lamp = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(lamps, "Lamps"), TestContext.Current.CancellationToken);
-        await catalog.SendAsync(new CreateProductCommand(lamp, lamps, $"Lamp {lamp}"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(lamps, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
+        await catalog.SendAsync(
+            new CreateProductCommand(lamp, lamps, $"Lamp {lamp}"),
+            TestContext.Current.CancellationToken
+        );
         return lamp;
     }
 
@@ -455,8 +619,12 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         return client;
     }
 
-    private static Task<HttpResponseMessage> RenameAsync(HttpClient client, string path, string? version, string name) =>
-        SendAsync(client, HttpMethod.Put, path, version, JsonContent.Create(new { name }));
+    private static Task<HttpResponseMessage> RenameAsync(
+        HttpClient client,
+        string path,
+        string? version,
+        string name
+    ) => SendAsync(client, HttpMethod.Put, path, version, JsonContent.Create(new { name }));
 
     private static async Task<HttpResponseMessage> SendAsync(
         HttpClient client,
@@ -483,24 +651,43 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
     private static async Task<JsonElement> DocumentAsync(HttpClient client, string name)
     {
-        var response = await client.GetAsync($"/openapi/{name}.json", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync(
+            $"/openapi/{name}.json",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        return await response.Content.ReadFromJsonAsync<JsonElement>(
+            TestContext.Current.CancellationToken
+        );
     }
 
     private static IEnumerable<(string Name, JsonElement Body)> Operations(JsonElement document) =>
         document
             .GetProperty("paths")
             .EnumerateObject()
-            .SelectMany(path => path.Value.EnumerateObject().Select(operation => ($"{path.Name} {operation.Name}", operation.Value)))
+            .SelectMany(path =>
+                path.Value.EnumerateObject()
+                    .Select(operation => ($"{path.Name} {operation.Name}", operation.Value))
+            )
             .OrderBy(operation => operation.Item1, StringComparer.Ordinal);
 
     private static List<(string Name, JsonElement Body)> CatalogOperations(JsonElement document) =>
-        [.. Operations(document).Where(operation => operation.Name.StartsWith("/catalog/", StringComparison.Ordinal))];
+        [
+            .. Operations(document)
+                .Where(operation =>
+                    operation.Name.StartsWith("/catalog/", StringComparison.Ordinal)
+                ),
+        ];
 
     private static JsonElement? IdempotencyKeyOf(JsonElement operation) =>
         operation.TryGetProperty("parameters", out var parameters)
-            ? parameters.EnumerateArray().Where(parameter => parameter.GetProperty("name").GetString() == IdempotencyKeyRequirement.Header).Cast<JsonElement?>().SingleOrDefault()
+            ? parameters
+                .EnumerateArray()
+                .Where(parameter =>
+                    parameter.GetProperty("name").GetString() == IdempotencyKeyRequirement.Header
+                )
+                .Cast<JsonElement?>()
+                .SingleOrDefault()
             : null;
 
     private static bool RequiresBearer(JsonElement operation) =>

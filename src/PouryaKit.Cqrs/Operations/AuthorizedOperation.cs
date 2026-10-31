@@ -10,6 +10,7 @@ internal sealed class AuthorizedOperation : IDisposable
 
     private readonly OperationContext? _context;
     private readonly AuthorizedOperation? _previous;
+
     // Read by a task started inside the work, on another thread than the one that ends it.
     private volatile bool _ended;
 

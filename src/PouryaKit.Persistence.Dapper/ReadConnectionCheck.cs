@@ -16,11 +16,14 @@ internal sealed class ReadConnectionCheck : ICompositionCheck
             return [];
         }
 
-        var connectionString = services.GetRequiredService<IConfiguration>().GetConnectionString(connection.Name);
+        var connectionString = services
+            .GetRequiredService<IConfiguration>()
+            .GetConnectionString(connection.Name);
         return string.IsNullOrWhiteSpace(connectionString)
-            ? [
-                $"Dapper reads use the connection string {connection.Name}, which the Host's configuration does not set (ConnectionStrings:{connection.Name}), so every read would fail. Set ConnectionStrings:{connection.Name}, or name in AddPouryaKitDapper a connection the Host configures.",
-            ]
+                ?
+                [
+                    $"Dapper reads use the connection string {connection.Name}, which the Host's configuration does not set (ConnectionStrings:{connection.Name}), so every read would fail. Set ConnectionStrings:{connection.Name}, or name in AddPouryaKitDapper a connection the Host configures.",
+                ]
             : connection.Refusal(connectionString) is { } refusal ? [refusal]
             : [];
     }

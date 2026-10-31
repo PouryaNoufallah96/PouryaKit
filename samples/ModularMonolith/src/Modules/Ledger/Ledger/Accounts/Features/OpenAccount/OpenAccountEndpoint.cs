@@ -21,8 +21,21 @@ internal sealed class OpenAccountEndpoint : IEndpoint
                 LinkGenerator links,
                 CancellationToken cancellationToken
             ) =>
-                (await ledger.SendAsync(new OpenAccountCommand(body.AccountId, body.Holder), context, cancellationToken)).ToHttpResult(id =>
-                    TypedResults.Created(links.GetPathByName(httpContext, GetAccountEndpoint.Name, new { accountId = id }), new { id })
+                (
+                    await ledger.SendAsync(
+                        new OpenAccountCommand(body.AccountId, body.Holder),
+                        context,
+                        cancellationToken
+                    )
+                ).ToHttpResult(id =>
+                    TypedResults.Created(
+                        links.GetPathByName(
+                            httpContext,
+                            GetAccountEndpoint.Name,
+                            new { accountId = id }
+                        ),
+                        new { id }
+                    )
                 )
         );
 }

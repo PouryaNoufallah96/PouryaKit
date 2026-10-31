@@ -17,18 +17,43 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- NoDefaultExcludes keeps the dotfiles a template ships; a Finder .DS_Store is excluded by name (ticket #92). -->
-    <_TemplateContent Include="content/**" Exclude="content/*/Directory.Packages.props;content/**/.DS_Store" />
+    <_TemplateContent
+      Include="content/**"
+      Exclude="content/*/Directory.Packages.props;content/**/.DS_Store"
+    />
     <_TemplatePackages Include="content/*/Directory.Packages.props" />
     <!-- The business code the templates generate, packed from the Proving Sample: no copy of it is kept here. -->
-    <_SampleCode Include="$(_Sample)Modules/**/*.cs" Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**" />
-    <_SampleCode Include="$(_Sample)Modules/**/*.proto" Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**" />
+    <_SampleCode
+      Include="$(_Sample)Modules/**/*.cs"
+      Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**"
+    />
+    <_SampleCode
+      Include="$(_Sample)Modules/**/*.proto"
+      Exclude="$(_Sample)**/bin/**;$(_Sample)**/obj/**"
+    />
     <_SampleCode Include="$(_Sample)ModularMonolith.Host/CallerPermissions.cs;$(_Sample)ModularMonolith.Host/LoggedNewProductAnnouncer.cs;$(_Sample)ModularMonolith.Host/CardNumberGuardrail.cs" />
     <_SampleCode Include="$(_Sample)ModularMonolith.ServiceDefaults/Extensions.cs" />
-    <None Include="@(_TemplateContent)" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
-    <None Include="@(_SampleCode)" Pack="true" PackagePath="content/sample/$([MSBuild]::MakeRelative('$(_Sample)', '%(FullPath)'))" />
-    <!-- Every generated solution builds with the Kit's SDK and test runner, and migrates with its dotnet-ef. -->
-    <None Include="$(MSBuildThisFileDirectory)../../global.json" Pack="true" PackagePath="content/monolith/global.json;content/modular/global.json;content/service/global.json" />
-    <None Include="$(MSBuildThisFileDirectory)../../.config/dotnet-tools.json" Pack="true" PackagePath="content/monolith/.config/dotnet-tools.json;content/modular/.config/dotnet-tools.json;content/service/.config/dotnet-tools.json" />
+    <None
+      Include="@(_TemplateContent)"
+      Pack="true"
+      PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)"
+    />
+    <None
+      Include="@(_SampleCode)"
+      Pack="true"
+      PackagePath="content/sample/$([MSBuild]::MakeRelative('$(_Sample)', '%(FullPath)'))"
+    />
+    <!-- Every generated solution builds with the Kit's SDK and test runner, and migrates and formats with its dotnet-ef and csharpier. -->
+    <None
+      Include="$(MSBuildThisFileDirectory)../../global.json"
+      Pack="true"
+      PackagePath="content/monolith/global.json;content/modular/global.json;content/service/global.json"
+    />
+    <None
+      Include="$(MSBuildThisFileDirectory)../../.config/dotnet-tools.json"
+      Pack="true"
+      PackagePath="content/monolith/.config/dotnet-tools.json;content/modular/.config/dotnet-tools.json;content/service/.config/dotnet-tools.json"
+    />
   </ItemGroup>
 
   <!-- Each template's Directory.Packages.props names the Kit's packages at the version this package is packed with. -->
@@ -39,10 +64,21 @@
         <Text>$([System.IO.File]::ReadAllText('%(FullPath)'))</Text>
       </_BakedPackages>
     </ItemGroup>
-    <Error Condition="!$([System.String]::new('%(_BakedPackages.Text)').Contains('$(_KitVersionToken)'))" Text="%(_BakedPackages.Identity) has no $(_KitVersionToken) to replace with the Kit's version." />
-    <WriteLinesToFile File="%(_BakedPackages.Baked)" Lines="$([MSBuild]::Escape($([System.String]::new('%(_BakedPackages.Text)').Replace('$(_KitVersionToken)', '$(PackageVersion)'))))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <Error
+      Condition="!$([System.String]::new('%(_BakedPackages.Text)').Contains('$(_KitVersionToken)'))"
+      Text="%(_BakedPackages.Identity) has no $(_KitVersionToken) to replace with the Kit's version."
+    />
+    <WriteLinesToFile
+      File="%(_BakedPackages.Baked)"
+      Lines="$([MSBuild]::Escape($([System.String]::new('%(_BakedPackages.Text)').Replace('$(_KitVersionToken)', '$(PackageVersion)'))))"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
     <ItemGroup>
-      <TfmSpecificPackageFile Include="%(_BakedPackages.Baked)" PackagePath="content/%(_BakedPackages.RecursiveDir)Directory.Packages.props" />
+      <TfmSpecificPackageFile
+        Include="%(_BakedPackages.Baked)"
+        PackagePath="content/%(_BakedPackages.RecursiveDir)Directory.Packages.props"
+      />
     </ItemGroup>
   </Target>
 </Project>

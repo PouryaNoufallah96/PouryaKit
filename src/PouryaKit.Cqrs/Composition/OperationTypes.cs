@@ -27,11 +27,16 @@ public static class OperationTypes
     public static Type? HandledBy(Type handlerService)
     {
         ArgumentNullException.ThrowIfNull(handlerService);
-        return handlerService.IsConstructedGenericType
+        return
+            handlerService.IsConstructedGenericType
             && handlerService.GetGenericTypeDefinition() is var definition
-            && (definition == typeof(CommandHandler<>) || definition == typeof(CommandHandler<,>) || definition == typeof(QueryHandler<,>))
-                ? handlerService.GenericTypeArguments[0]
-                : null;
+            && (
+                definition == typeof(CommandHandler<>)
+                || definition == typeof(CommandHandler<,>)
+                || definition == typeof(QueryHandler<,>)
+            )
+            ? handlerService.GenericTypeArguments[0]
+            : null;
     }
 
     /// <summary>
@@ -43,7 +48,10 @@ public static class OperationTypes
     public static string KeyName(Type operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
-        return KeyNames.GetOrAdd(operation, static type => $"{type.FullName}, {type.Assembly.GetName().Name}");
+        return KeyNames.GetOrAdd(
+            operation,
+            static type => $"{type.FullName}, {type.Assembly.GetName().Name}"
+        );
     }
 
     /// <summary>
@@ -57,7 +65,13 @@ public static class OperationTypes
     {
         ArgumentNullException.ThrowIfNull(types);
         Type[] all = [.. types];
-        return all.Where(IsOperation).Concat(all.Select(HandlerBase).OfType<Type>().Select(handler => handler.GenericTypeArguments[0])).Distinct();
+        return all.Where(IsOperation)
+            .Concat(
+                all.Select(HandlerBase)
+                    .OfType<Type>()
+                    .Select(handler => handler.GenericTypeArguments[0])
+            )
+            .Distinct();
     }
 
     // The handler service a handler class is registered as: the first base class that is one, or null.

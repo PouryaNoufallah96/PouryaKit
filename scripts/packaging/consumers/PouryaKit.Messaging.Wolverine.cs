@@ -8,8 +8,13 @@ System.Type[] types = [typeof(IReceipts)];
 // Composition Root does.
 var services = new ServiceCollection();
 services
-    .AddPouryaKitRecurringCommand("consumer.tick", systemActor: "package-consumer", occurrence => new TickCommand(occurrence))
+    .AddPouryaKitRecurringCommand(
+        "consumer.tick",
+        systemActor: "package-consumer",
+        occurrence => new TickCommand(occurrence)
+    )
     .Configure(options => options.Every = TimeSpan.FromHours(1));
+
 // A declaration the Host's composition makes on a Module's behalf names the Module.
 services.AddPouryaKitDelayedCommand<ArchiveCommand>("consumer.archive", typeof(ConsumerModule));
 Console.WriteLine(types.Length + services.Count);

@@ -22,7 +22,11 @@ internal sealed class RenameProductEndpoint : IEndpoint
                     CancellationToken cancellationToken
                 ) =>
                     (
-                        await catalog.SendAsync(new RenameProductCommand(productId, body.Name), context, cancellationToken)
+                        await catalog.SendAsync(
+                            new RenameProductCommand(productId, body.Name),
+                            context,
+                            cancellationToken
+                        )
                     ).ToHttpResult()
             )
             .MapToApiVersion(new ApiVersion(2, 0));

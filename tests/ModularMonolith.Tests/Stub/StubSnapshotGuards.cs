@@ -1,5 +1,5 @@
-using Dapper;
 using Catalog.Products.ValueObjects;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PouryaKit.Cqrs;
@@ -48,7 +48,13 @@ internal sealed record ShelfSize(int Width, int Depth);
 
 internal sealed record ShelfAnnouncedDomainEvent(string Aisle, string Bay) : DomainEvent;
 
-internal sealed record ShelfSnapshotV1(string Aisle, string Bay, int Labels, bool IsRemoved, long Version);
+internal sealed record ShelfSnapshotV1(
+    string Aisle,
+    string Bay,
+    int Labels,
+    bool IsRemoved,
+    long Version
+);
 
 internal sealed class ShelfSnapshotMapper(
     IDispatcher dispatcher,
@@ -69,14 +75,20 @@ internal sealed class ShelfSnapshotMapper(
     {
         if (shelf.Labels.Contains(SendsACommand))
         {
-            _ = dispatcher.SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None).GetAwaiter().GetResult();
+            _ = dispatcher
+                .SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
         }
 
         if (shelf.Labels.Contains(SwallowsItsRefusedCommand))
         {
             try
             {
-                _ = dispatcher.SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None).GetAwaiter().GetResult();
+                _ = dispatcher
+                    .SendAsync(new MarkShelfCommand(shelf.Aisle), CancellationToken.None)
+                    .GetAwaiter()
+                    .GetResult();
             }
             catch (InvalidOperationException)
             {
@@ -86,7 +98,10 @@ internal sealed class ShelfSnapshotMapper(
 
         if (shelf.Labels.Contains(AddsAShelf))
         {
-            shelves.AddAsync(Shelf.Put(shelf.Aisle, "added by its mapper"), CancellationToken.None).GetAwaiter().GetResult();
+            shelves
+                .AddAsync(Shelf.Put(shelf.Aisle, "added by its mapper"), CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
         }
 
         if (shelf.Labels.Contains(JoinsTheConnection))
@@ -112,15 +127,20 @@ internal sealed class ShelfSnapshotMapper(
         return new(shelf.Aisle, shelf.Bay, shelf.Labels.Count, IsRemoved: false, shelf.Version);
     }
 
-    public ShelfSnapshotV1 Tombstone(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Labels.Count, IsRemoved: true, shelf.Version);
+    public ShelfSnapshotV1 Tombstone(Shelf shelf) =>
+        new(shelf.Aisle, shelf.Bay, shelf.Labels.Count, IsRemoved: true, shelf.Version);
 }
 
 internal sealed record PutShelvesCommand(string[][] Shelves) : Command;
 
 // Each shelf is its aisle, its bay, then its labels.
-internal sealed class PutShelvesCommandHandler(IRepository<Shelf, string> shelves) : CommandHandler<PutShelvesCommand>
+internal sealed class PutShelvesCommandHandler(IRepository<Shelf, string> shelves)
+    : CommandHandler<PutShelvesCommand>
 {
-    public override async Task<Result> Handle(PutShelvesCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        PutShelvesCommand command,
+        CancellationToken cancellationToken
+    )
     {
         foreach (var shelf in command.Shelves)
         {
@@ -157,16 +177,22 @@ internal sealed record CounterSnapshotV1(long CounterId, bool IsRemoved, long Ve
 
 internal sealed class CounterSnapshotMapper : ISnapshotMapper<Counter, CounterSnapshotV1>
 {
-    public CounterSnapshotV1 Map(Counter counter) => new(counter.Id.Value, IsRemoved: false, counter.Version);
+    public CounterSnapshotV1 Map(Counter counter) =>
+        new(counter.Id.Value, IsRemoved: false, counter.Version);
 
-    public CounterSnapshotV1 Tombstone(Counter counter) => new(counter.Id.Value, IsRemoved: true, counter.Version);
+    public CounterSnapshotV1 Tombstone(Counter counter) =>
+        new(counter.Id.Value, IsRemoved: true, counter.Version);
 }
 
 internal sealed record StartCounterCommand(string Name) : Command;
 
-internal sealed class StartCounterCommandHandler(IRepository<Counter, CounterId> counters) : CommandHandler<StartCounterCommand>
+internal sealed class StartCounterCommandHandler(IRepository<Counter, CounterId> counters)
+    : CommandHandler<StartCounterCommand>
 {
-    public override async Task<Result> Handle(StartCounterCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        StartCounterCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await counters.AddAsync(Counter.Start(command.Name), cancellationToken);
         return Result.Success();
@@ -191,10 +217,16 @@ internal sealed class Leaflet : AggregateRoot<ProductId>
     public static Leaflet Print(ProductId id, string title) => new() { Id = id, Title = title };
 }
 
-internal sealed record ProductKeyedSnapshotV1(string Aggregate, Guid ProductId, bool IsRemoved, long Version);
+internal sealed record ProductKeyedSnapshotV1(
+    string Aggregate,
+    Guid ProductId,
+    bool IsRemoved,
+    long Version
+);
 
 // Declared by the Stub for every aggregate keyed by a product ID: Catalog's products are, and must not publish it.
-internal sealed class ProductKeyedSnapshotMapper : ISnapshotMapper<AggregateRoot<ProductId>, ProductKeyedSnapshotV1>
+internal sealed class ProductKeyedSnapshotMapper
+    : ISnapshotMapper<AggregateRoot<ProductId>, ProductKeyedSnapshotV1>
 {
     public ProductKeyedSnapshotV1 Map(AggregateRoot<ProductId> aggregate) =>
         new(aggregate.GetType().Name, aggregate.Id.Value, IsRemoved: false, aggregate.Version);
@@ -205,11 +237,18 @@ internal sealed class ProductKeyedSnapshotMapper : ISnapshotMapper<AggregateRoot
 
 internal sealed record PrintLeafletCommand(Guid ProductId, string Title) : Command;
 
-internal sealed class PrintLeafletCommandHandler(IRepository<Leaflet, ProductId> leaflets) : CommandHandler<PrintLeafletCommand>
+internal sealed class PrintLeafletCommandHandler(IRepository<Leaflet, ProductId> leaflets)
+    : CommandHandler<PrintLeafletCommand>
 {
-    public override async Task<Result> Handle(PrintLeafletCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        PrintLeafletCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        await leaflets.AddAsync(Leaflet.Print(new ProductId(command.ProductId), command.Title), cancellationToken);
+        await leaflets.AddAsync(
+            Leaflet.Print(new ProductId(command.ProductId), command.Title),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
@@ -220,12 +259,17 @@ internal sealed class LeafletConfiguration : IEntityTypeConfiguration<Leaflet>
     {
         builder.ToTable("leaflets");
         // Catalog's typed ID is not in the Stub's assembly, whose typed IDs alone are converted by convention.
-        builder.Property(leaflet => leaflet.Id).HasConversion(id => id.Value, value => new ProductId(value));
+        builder
+            .Property(leaflet => leaflet.Id)
+            .HasConversion(id => id.Value, value => new ProductId(value));
     }
 }
 
-internal sealed class RecordSnapshotIntegrationEventHandler<TSnapshot>(IntegrationEventLog log, OperationContext context, Operation operation)
-    : IIntegrationEventHandler<TSnapshot>
+internal sealed class RecordSnapshotIntegrationEventHandler<TSnapshot>(
+    IntegrationEventLog log,
+    OperationContext context,
+    Operation operation
+) : IIntegrationEventHandler<TSnapshot>
     where TSnapshot : class
 {
     public Task<Result> Handle(TSnapshot snapshot, CancellationToken cancellationToken)
@@ -238,9 +282,13 @@ internal sealed class RecordSnapshotIntegrationEventHandler<TSnapshot>(Integrati
 internal sealed record MarkShelfCommand(string Aisle) : Command;
 
 // Would succeed: it writes a row with plain SQL in the Operation's transaction, which no mapper guard could see.
-internal sealed class MarkShelfCommandHandler(IUnitOfWorkConnection unitOfWork) : CommandHandler<MarkShelfCommand>
+internal sealed class MarkShelfCommandHandler(IUnitOfWorkConnection unitOfWork)
+    : CommandHandler<MarkShelfCommand>
 {
-    public override async Task<Result> Handle(MarkShelfCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        MarkShelfCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var (connection, transaction) = unitOfWork.Join();
         await connection.ExecuteAsync(
@@ -272,23 +320,28 @@ internal sealed class MislaidShelfSnapshotMapper : ISnapshotMapper<Shelf, Mislai
 {
     public MislaidShelfSnapshotV1 Map(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
 
-    public MislaidShelfSnapshotV1 Tombstone(Shelf shelf) => new(shelf.Aisle, shelf.Bay, shelf.Version);
+    public MislaidShelfSnapshotV1 Tombstone(Shelf shelf) =>
+        new(shelf.Aisle, shelf.Bay, shelf.Version);
 }
 
 internal sealed record CaseSnapshotV1(Guid CaseId, string Kind, bool IsRemoved, long Version);
 
 internal sealed class CaseSnapshotMapper : ISnapshotMapper<Case, CaseSnapshotV1>
 {
-    public CaseSnapshotV1 Map(Case @case) => new(@case.Id.Value, @case.GetType().Name, IsRemoved: false, @case.Version);
+    public CaseSnapshotV1 Map(Case @case) =>
+        new(@case.Id.Value, @case.GetType().Name, IsRemoved: false, @case.Version);
 
-    public CaseSnapshotV1 Tombstone(Case @case) => new(@case.Id.Value, @case.GetType().Name, IsRemoved: true, @case.Version);
+    public CaseSnapshotV1 Tombstone(Case @case) =>
+        new(@case.Id.Value, @case.GetType().Name, IsRemoved: true, @case.Version);
 }
 
 internal sealed record LeafletSnapshotV1(Guid ProductId, long Version);
 
-internal sealed class LeafletSnapshotMapperThatWritesWhenBuilt : ISnapshotMapper<Leaflet, LeafletSnapshotV1>
+internal sealed class LeafletSnapshotMapperThatWritesWhenBuilt
+    : ISnapshotMapper<Leaflet, LeafletSnapshotV1>
 {
-    public LeafletSnapshotMapperThatWritesWhenBuilt(IUnitOfWorkConnection unitOfWork) => _ = unitOfWork.Join();
+    public LeafletSnapshotMapperThatWritesWhenBuilt(IUnitOfWorkConnection unitOfWork) =>
+        _ = unitOfWork.Join();
 
     public LeafletSnapshotV1 Map(Leaflet leaflet) => new(leaflet.Id.Value, leaflet.Version);
 

@@ -24,14 +24,25 @@ public sealed class SharedJsonTests(AppFixture app) : HostTest<AppFixture>(app)
         var product = Guid.CreateVersion7();
         Assert.Equal(
             HttpStatusCode.OK,
-            (await client.PostAsJsonAsync("/catalog/categories", new { categoryId = category, name = "Lamps" }, TestContext.Current.CancellationToken)).StatusCode
+            (
+                await client.PostAsJsonAsync(
+                    "/catalog/categories",
+                    new { categoryId = category, name = "Lamps" },
+                    TestContext.Current.CancellationToken
+                )
+            ).StatusCode
         );
         Assert.Equal(
             HttpStatusCode.Created,
             (
                 await client.PostAsJsonAsync(
                     "/catalog/products",
-                    new { productId = product, categoryId = category, name = "Desk lamp" },
+                    new
+                    {
+                        productId = product,
+                        categoryId = category,
+                        name = "Desk lamp",
+                    },
                     IdempotentRequests.NewKey(),
                     TestContext.Current.CancellationToken
                 )
@@ -49,7 +60,9 @@ public sealed class SharedJsonTests(AppFixture app) : HostTest<AppFixture>(app)
             $"select body from wolverine.wolverine_incoming_envelopes where message_type = '{typeof(ProductCreatedDomainEvent).ToMessageTypeName()}' and status = 'Handled'"
         );
         Assert.Equal(2, bodies.Count);
-        var serializer = Fixture.Host.Services.GetRequiredService<IWolverineRuntime>().Options.DefaultSerializer;
+        var serializer = Fixture
+            .Host.Services.GetRequiredService<IWolverineRuntime>()
+            .Options.DefaultSerializer;
 
         Assert.Equal($"\"{product}\"", http.GetProperty("id").GetRawText());
         Assert.Equal($"\"{category}\"", http.GetProperty("categoryId").GetRawText());
@@ -57,10 +70,18 @@ public sealed class SharedJsonTests(AppFixture app) : HostTest<AppFixture>(app)
         {
             var envelope = EnvelopeSerializer.Deserialize((byte[])body[0]);
             using var stored = JsonDocument.Parse(envelope.Data!);
-            Assert.Equal(http.GetProperty("id").GetRawText(), stored.RootElement.GetProperty("productId").GetRawText());
-            Assert.Equal(http.GetProperty("categoryId").GetRawText(), stored.RootElement.GetProperty("categoryId").GetRawText());
+            Assert.Equal(
+                http.GetProperty("id").GetRawText(),
+                stored.RootElement.GetProperty("productId").GetRawText()
+            );
+            Assert.Equal(
+                http.GetProperty("categoryId").GetRawText(),
+                stored.RootElement.GetProperty("categoryId").GetRawText()
+            );
             // And it reads back as the typed IDs it was written from.
-            var delivered = Assert.IsType<ProductCreatedDomainEvent>(serializer.ReadFromData(typeof(ProductCreatedDomainEvent), envelope));
+            var delivered = Assert.IsType<ProductCreatedDomainEvent>(
+                serializer.ReadFromData(typeof(ProductCreatedDomainEvent), envelope)
+            );
             Assert.Equal(new ProductId(product), delivered.ProductId);
             Assert.Equal(new CategoryId(category), delivered.CategoryId);
         }

@@ -11,8 +11,17 @@ internal sealed class CreateCategoryEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder routes) =>
         routes.MapPost(
             "/categories",
-            async (CreateCategoryBody body, IDispatcher dispatcher, CancellationToken cancellationToken) =>
-                (await dispatcher.SendAsync(new CreateCategoryCommand(body.CategoryId, body.Name), cancellationToken)).ToHttpResult()
+            async (
+                CreateCategoryBody body,
+                IDispatcher dispatcher,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await dispatcher.SendAsync(
+                        new CreateCategoryCommand(body.CategoryId, body.Name),
+                        cancellationToken
+                    )
+                ).ToHttpResult()
         );
 }
 

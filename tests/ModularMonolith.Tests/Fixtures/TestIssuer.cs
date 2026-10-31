@@ -36,13 +36,19 @@ internal static class TestIssuer
     public static IReadOnlyDictionary<string, string> HostEnvironment { get; } =
         HostArguments
             .Select(argument => argument.TrimStart('-').Split('=', 2))
-            .ToDictionary(setting => setting[0].Replace(":", "__", StringComparison.Ordinal), setting => setting[1]);
+            .ToDictionary(
+                setting => setting[0].Replace(":", "__", StringComparison.Ordinal),
+                setting => setting[1]
+            );
 
     /// <summary>
     /// A token for the caller <paramref name="claims"/> describe, valid now for five minutes unless
     /// <paramref name="change"/> says otherwise.
     /// </summary>
-    public static string Token(Dictionary<string, object> claims, Action<SecurityTokenDescriptor>? change = null)
+    public static string Token(
+        Dictionary<string, object> claims,
+        Action<SecurityTokenDescriptor>? change = null
+    )
     {
         var now = DateTime.UtcNow;
         var descriptor = new SecurityTokenDescriptor
@@ -60,7 +66,9 @@ internal static class TestIssuer
     }
 
     /// <summary>Credentials of a key no Host trusts.</summary>
-    public static SigningCredentials Untrusted() => Signing(new SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32)));
+    public static SigningCredentials Untrusted() =>
+        Signing(new SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32)));
 
-    private static SigningCredentials Signing(SymmetricSecurityKey key) => new(key, SecurityAlgorithms.HmacSha256);
+    private static SigningCredentials Signing(SymmetricSecurityKey key) =>
+        new(key, SecurityAlgorithms.HmacSha256);
 }

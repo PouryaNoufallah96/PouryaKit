@@ -13,9 +13,11 @@ internal sealed class Hold(string? mark = null)
     /// </summary>
     public string? Mark { get; } = mark;
 
-    public TaskCompletionSource Changed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource Changed { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource Released { get; } =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 }
 
 // Begun in a scope as a Catalog Operation, it runs a Catalog Feature's command nested, so the Feature loads and changes
@@ -23,12 +25,21 @@ internal sealed class Hold(string? mark = null)
 // have both read the same version before either commits. It also writes a category of the Operation's tenant straight to
 // the database in the Operation's transaction, stating the tenant itself, as plain SQL must: the column has no default. EF
 // Core undoes its own writes when a save fails, so only this row shows whether the Unit of Work rolled the transaction back.
-internal sealed record HoldChangeCommand(Func<IDispatcher, CancellationToken, Task<Result>> Change, Hold Hold) : Command;
+internal sealed record HoldChangeCommand(
+    Func<IDispatcher, CancellationToken, Task<Result>> Change,
+    Hold Hold
+) : Command;
 
-internal sealed class HoldChangeCommandHandler(IDispatcher dispatcher, IUnitOfWorkConnection unitOfWork, OperationContext context)
-    : CommandHandler<HoldChangeCommand>
+internal sealed class HoldChangeCommandHandler(
+    IDispatcher dispatcher,
+    IUnitOfWorkConnection unitOfWork,
+    OperationContext context
+) : CommandHandler<HoldChangeCommand>
 {
-    public override async Task<Result> Handle(HoldChangeCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        HoldChangeCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var changed = await command.Change(dispatcher, cancellationToken);
         if (command.Hold.Mark is not null)
@@ -37,7 +48,12 @@ internal sealed class HoldChangeCommandHandler(IDispatcher dispatcher, IUnitOfWo
             await connection.ExecuteAsync(
                 new CommandDefinition(
                     "insert into catalog.categories (id, name, product_count, version, tenant) values (@Id, @Mark, 0, 1, @Tenant)",
-                    new { Id = Guid.CreateVersion7(), command.Hold.Mark, context.Tenant },
+                    new
+                    {
+                        Id = Guid.CreateVersion7(),
+                        command.Hold.Mark,
+                        context.Tenant,
+                    },
                     transaction,
                     cancellationToken: cancellationToken
                 )

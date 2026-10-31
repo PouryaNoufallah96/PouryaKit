@@ -10,7 +10,9 @@ internal sealed class PostgresUniqueConstraintReader : IUniqueConstraintReader
     public string? ViolatedConstraint(DbUpdateException exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        return exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } violation
+        return
+            exception.InnerException
+                is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } violation
             ? violation.ConstraintName
             : null;
     }

@@ -61,7 +61,13 @@ public sealed class DispatchTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(
-            ["log:Running PingCommand", "uow:begin", "handle PingCommand", "uow:commit", "log:Succeeded PingCommand"],
+            [
+                "log:Running PingCommand",
+                "uow:begin",
+                "handle PingCommand",
+                "uow:commit",
+                "log:Succeeded PingCommand",
+            ],
             Trace(scope)
         );
     }
@@ -132,7 +138,9 @@ public sealed class DispatchTests
         await using var host = TestHost.Build();
         using var scope = host.CreateScope();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.QuerySendingACommand(Dispatcher(scope)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.QuerySendingACommand(Dispatcher(scope))
+        );
 
         Assert.DoesNotContain("uow:begin", Trace(scope));
         Assert.DoesNotContain("handle PingCommand", Trace(scope));
@@ -145,7 +153,9 @@ public sealed class DispatchTests
         using var scope = host.CreateScope();
         await ThingsGateway.Ping(Dispatcher(scope));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(Dispatcher(scope)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.Ping(Dispatcher(scope))
+        );
 
         Assert.Single(Trace(scope), step => step == "uow:begin");
     }
@@ -191,7 +201,8 @@ public sealed class DispatchTests
             ["handle GetThingQuery", "uow:begin", "handle GuardedByQueryCommand", "uow:commit"],
             Trace(scope)
                 .Where(step =>
-                    step.StartsWith("handle", StringComparison.Ordinal) || step.StartsWith("uow", StringComparison.Ordinal)
+                    step.StartsWith("handle", StringComparison.Ordinal)
+                    || step.StartsWith("uow", StringComparison.Ordinal)
                 )
         );
     }
@@ -218,7 +229,9 @@ public sealed class DispatchTests
         await using var host = TestHost.Build(unitOfWork: typeof(SuccessReportingUnitOfWork));
         using var scope = host.CreateScope();
 
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.CreateThing(Dispatcher(scope)));
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.CreateThing(Dispatcher(scope))
+        );
 
         Assert.Contains("returned a success that is not the command's own Result", error.Message);
     }
@@ -229,12 +242,15 @@ public sealed class DispatchTests
         await using var host = TestHost.Build(unitOfWork: typeof(NoRecheckUnitOfWork));
         using var scope = host.CreateScope();
 
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.CreateThing(Dispatcher(scope)));
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.CreateThing(Dispatcher(scope))
+        );
 
         Assert.Contains("rollback-only", error.Message);
     }
 
-    private static IDispatcher Dispatcher(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IDispatcher>();
+    private static IDispatcher Dispatcher(IServiceScope scope) =>
+        scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
     private static IReadOnlyList<string> Trace(IServiceScope scope) =>
         scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps;

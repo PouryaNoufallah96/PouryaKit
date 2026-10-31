@@ -7,4 +7,10 @@ namespace PouryaKit.Testing;
 /// the Host's broker queue, before it reached any subscription, such as a wire name the Host no longer receives, names
 /// that queue's address instead, such as <c>rabbitmq://queue/inventory</c>; replaying it hands it to that queue again.
 /// </summary>
-public sealed record DeadLetter(Guid Id, string Subscription, string WireName, string ExceptionType, string ExceptionMessage);
+public sealed record DeadLetter(
+    Guid Id,
+    string Subscription,
+    string WireName,
+    string ExceptionType,
+    string ExceptionMessage
+);

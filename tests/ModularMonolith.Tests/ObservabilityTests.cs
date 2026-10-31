@@ -28,7 +28,9 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task A_product_created_in_catalog_and_stocked_in_inventory_is_one_trace_with_the_upstream_tracestate(bool wolverineListened)
+    public async Task A_product_created_in_catalog_and_stocked_in_inventory_is_one_trace_with_the_upstream_tracestate(
+        bool wolverineListened
+    )
     {
         using var telemetry = new RecordedTelemetry(wolverineListened);
         var product = Guid.CreateVersion7();
@@ -36,7 +38,11 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         var upstream = await CreateProductAsync(product);
 
         var trace = telemetry.Of(upstream.TraceId);
-        var createProduct = Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(CreateProductCommand));
+        var createProduct = Assert.Single(
+            trace,
+            activity =>
+                Tag(activity, OperationTelemetry.OperationTag) == nameof(CreateProductCommand)
+        );
         var publishing = DeliveryOperation(Publishing, upstream.TraceId);
         var inventory = DeliveryOperation(Inventory, upstream.TraceId);
         // Each delivery's parent is Wolverine's span of its envelope when Wolverine's source is listened, whose parent is
@@ -49,11 +55,31 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.All(chain, activity => Assert.Equal(TraceState, activity.TraceStateString));
         Assert.Equal(
             (nameof(CatalogModule), "Person", OperationTelemetry.Succeeded),
-            (Tag(createProduct, OperationTelemetry.ModuleTag), Tag(createProduct, OperationTelemetry.ActorKindTag), Tag(createProduct, OperationTelemetry.OutcomeTag))
+            (
+                Tag(createProduct, OperationTelemetry.ModuleTag),
+                Tag(createProduct, OperationTelemetry.ActorKindTag),
+                Tag(createProduct, OperationTelemetry.OutcomeTag)
+            )
         );
-        Assert.Equal(("InventoryModule", OperationTelemetry.Succeeded), (Tag(inventory, OperationTelemetry.ModuleTag), Tag(inventory, OperationTelemetry.OutcomeTag)));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>($"select count(*) from catalog.products where id = '{product}'"));
-        Assert.Equal([[product, "ada"]], await Fixture.RowsAsync("select product_id, created_by from inventory.stock_items"));
+        Assert.Equal(
+            ("InventoryModule", OperationTelemetry.Succeeded),
+            (
+                Tag(inventory, OperationTelemetry.ModuleTag),
+                Tag(inventory, OperationTelemetry.OutcomeTag)
+            )
+        );
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from catalog.products where id = '{product}'"
+            )
+        );
+        Assert.Equal(
+            [
+                [product, "ada"],
+            ],
+            await Fixture.RowsAsync("select product_id, created_by from inventory.stock_items")
+        );
     }
 
     // The first attempt runs from the envelope the Outbox published in memory; only the store's retry reads the parent-id
@@ -71,11 +97,23 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         }
 
         var publishing = DeliveryOperation(Publishing, upstream.TraceId);
-        var attempts = DeliveryProbes.ActivitiesOf(Inventory).OfType<Activity>().Where(activity => activity.TraceId == upstream.TraceId).ToList();
-        Assert.Equal([OperationTelemetry.Threw, OperationTelemetry.Succeeded], attempts.Select(attempt => Tag(attempt, OperationTelemetry.OutcomeTag)));
+        var attempts = DeliveryProbes
+            .ActivitiesOf(Inventory)
+            .OfType<Activity>()
+            .Where(activity => activity.TraceId == upstream.TraceId)
+            .ToList();
+        Assert.Equal(
+            [OperationTelemetry.Threw, OperationTelemetry.Succeeded],
+            attempts.Select(attempt => Tag(attempt, OperationTelemetry.OutcomeTag))
+        );
         Assert.All(attempts, attempt => Assert.Equal(publishing.SpanId, attempt.ParentSpanId));
         Assert.All(attempts, attempt => Assert.Equal(TraceState, attempt.TraceStateString));
-        Assert.Equal([[product, "ada"]], await Fixture.RowsAsync("select product_id, created_by from inventory.stock_items"));
+        Assert.Equal(
+            [
+                [product, "ada"],
+            ],
+            await Fixture.RowsAsync("select product_id, created_by from inventory.stock_items")
+        );
     }
 
     // Billing's OpenQuote schedules the quote's expiry; the message store holds it until due, and its delivery then runs
@@ -92,7 +130,10 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             upstream.TraceStateString = TraceState;
             var opened = await Fixture
                 .Gateway<BillingModule>()
-                .SendAsync(new OpenQuoteCommand(quote, TimeSpan.FromMilliseconds(300)), TestContext.Current.CancellationToken);
+                .SendAsync(
+                    new OpenQuoteCommand(quote, TimeSpan.FromMilliseconds(300)),
+                    TestContext.Current.CancellationToken
+                );
             Assert.True(opened.IsSuccess);
         }
 
@@ -102,12 +143,29 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         );
 
         var trace = telemetry.Of(upstream.TraceId);
-        var openQuote = Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(OpenQuoteCommand));
+        var openQuote = Assert.Single(
+            trace,
+            activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(OpenQuoteCommand)
+        );
         var expiry = DeliveryOperation(ExpireQuote, upstream.TraceId);
         Assert.Equal(openQuote.SpanId, expiry.ParentSpanId);
         Assert.Equal(TraceState, expiry.TraceStateString);
-        Assert.Equal(expiry.SpanId, Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(ExpireQuoteCommand)).ParentSpanId);
-        Assert.Equal("Expired", await Fixture.ScalarAsync<string>($"select state from billing.quotes where id = '{quote}'"));
+        Assert.Equal(
+            expiry.SpanId,
+            Assert
+                .Single(
+                    trace,
+                    activity =>
+                        Tag(activity, OperationTelemetry.OperationTag) == nameof(ExpireQuoteCommand)
+                )
+                .ParentSpanId
+        );
+        Assert.Equal(
+            "Expired",
+            await Fixture.ScalarAsync<string>(
+                $"select state from billing.quotes where id = '{quote}'"
+            )
+        );
     }
 
     [Fact]
@@ -121,22 +179,85 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
 
         using (upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!)
         {
-            Assert.True((await stub.SendAsync(new WriteNoteCommand("written"), person, cancellationToken)).IsSuccess);
-            Assert.True((await stub.QueryAsync(new FindNotesQuery(0, "written"), cancellationToken)).IsSuccess);
-            Assert.True((await stub.SendAsync(new WriteNoteThenFailCommand("rejected", Ending.Fail), cancellationToken)).IsFailure);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => stub.SendAsync(new WriteNoteThenFailCommand("thrown", Ending.Throw), cancellationToken));
-            Assert.True((await stub.SendAsync(new PostNoteThenNestCommand("nesting", NestedFailure.Handler), cancellationToken)).IsFailure);
+            Assert.True(
+                (
+                    await stub.SendAsync(new WriteNoteCommand("written"), person, cancellationToken)
+                ).IsSuccess
+            );
+            Assert.True(
+                (
+                    await stub.QueryAsync(new FindNotesQuery(0, "written"), cancellationToken)
+                ).IsSuccess
+            );
+            Assert.True(
+                (
+                    await stub.SendAsync(
+                        new WriteNoteThenFailCommand("rejected", Ending.Fail),
+                        cancellationToken
+                    )
+                ).IsFailure
+            );
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                stub.SendAsync(
+                    new WriteNoteThenFailCommand("thrown", Ending.Throw),
+                    cancellationToken
+                )
+            );
+            Assert.True(
+                (
+                    await stub.SendAsync(
+                        new PostNoteThenNestCommand("nesting", NestedFailure.Handler),
+                        cancellationToken
+                    )
+                ).IsFailure
+            );
         }
 
         var trace = telemetry.Of(upstream.TraceId);
         Assert.Equal(
             [
-                (nameof(WriteNoteCommand), "Person", OperationTelemetry.Succeeded, ActivityStatusCode.Ok, null),
-                (nameof(FindNotesQuery), "System", OperationTelemetry.Succeeded, ActivityStatusCode.Ok, null),
-                (nameof(WriteNoteThenFailCommand), "System", OperationTelemetry.Failed, ActivityStatusCode.Error, WriteNoteThenFailCommandHandler.Rejected.Code),
-                (nameof(WriteNoteThenFailCommand), "System", OperationTelemetry.Threw, ActivityStatusCode.Error, typeof(InvalidOperationException).FullName),
-                (nameof(NestedNoteCommand), "System", OperationTelemetry.Failed, ActivityStatusCode.Error, NestedNoteCommandHandler.Refused.Code),
-                (nameof(PostNoteThenNestCommand), "System", OperationTelemetry.Failed, ActivityStatusCode.Error, NestedNoteCommandHandler.Refused.Code),
+                (
+                    nameof(WriteNoteCommand),
+                    "Person",
+                    OperationTelemetry.Succeeded,
+                    ActivityStatusCode.Ok,
+                    null
+                ),
+                (
+                    nameof(FindNotesQuery),
+                    "System",
+                    OperationTelemetry.Succeeded,
+                    ActivityStatusCode.Ok,
+                    null
+                ),
+                (
+                    nameof(WriteNoteThenFailCommand),
+                    "System",
+                    OperationTelemetry.Failed,
+                    ActivityStatusCode.Error,
+                    WriteNoteThenFailCommandHandler.Rejected.Code
+                ),
+                (
+                    nameof(WriteNoteThenFailCommand),
+                    "System",
+                    OperationTelemetry.Threw,
+                    ActivityStatusCode.Error,
+                    typeof(InvalidOperationException).FullName
+                ),
+                (
+                    nameof(NestedNoteCommand),
+                    "System",
+                    OperationTelemetry.Failed,
+                    ActivityStatusCode.Error,
+                    NestedNoteCommandHandler.Refused.Code
+                ),
+                (
+                    nameof(PostNoteThenNestCommand),
+                    "System",
+                    OperationTelemetry.Failed,
+                    ActivityStatusCode.Error,
+                    NestedNoteCommandHandler.Refused.Code
+                ),
             ],
             trace
                 .Where(activity => activity.Source.Name == OperationTelemetry.SourceName)
@@ -150,15 +271,36 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
                     )
                 )
         );
-        Assert.All(trace.Where(activity => activity.Source.Name == OperationTelemetry.SourceName), activity => Assert.Equal(nameof(StubModule), Tag(activity, OperationTelemetry.ModuleTag)));
+        Assert.All(
+            trace.Where(activity => activity.Source.Name == OperationTelemetry.SourceName),
+            activity =>
+                Assert.Equal(nameof(StubModule), Tag(activity, OperationTelemetry.ModuleTag))
+        );
         // A nested command is a child of the command that sent it; every outermost one, of the request.
-        var nesting = Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(PostNoteThenNestCommand));
-        Assert.Equal(nesting.SpanId, Assert.Single(trace, activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(NestedNoteCommand)).ParentSpanId);
+        var nesting = Assert.Single(
+            trace,
+            activity =>
+                Tag(activity, OperationTelemetry.OperationTag) == nameof(PostNoteThenNestCommand)
+        );
+        Assert.Equal(
+            nesting.SpanId,
+            Assert
+                .Single(
+                    trace,
+                    activity =>
+                        Tag(activity, OperationTelemetry.OperationTag) == nameof(NestedNoteCommand)
+                )
+                .ParentSpanId
+        );
         Assert.Equal(5, trace.Count(activity => activity.ParentSpanId == upstream.SpanId));
         Assert.Contains(trace, activity => activity.Events.Any(e => e.Name == "exception"));
 
         // The duration of each, in seconds with the fraction kept, with the activity's tags.
-        var written = Assert.Single(telemetry.Durations, duration => (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand));
+        var written = Assert.Single(
+            telemetry.Durations,
+            duration =>
+                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
+        );
         Assert.InRange(written.Seconds, double.Epsilon, 30);
         Assert.NotEqual(Math.Floor(written.Seconds), written.Seconds);
         Assert.Equal(
@@ -175,7 +317,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.Single(
             telemetry.Durations,
             duration =>
-                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteThenFailCommand)
+                (string?)duration.Tags[OperationTelemetry.OperationTag]
+                    == nameof(WriteNoteThenFailCommand)
                 && (string?)duration.Tags[OperationTelemetry.ModuleTag] == nameof(StubModule)
                 && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Threw
         );
@@ -187,14 +330,17 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
     {
         using var telemetry = new RecordedTelemetry(activities: false);
 
-        var written = await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("metered"), TestContext.Current.CancellationToken);
+        var written = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new WriteNoteCommand("metered"), TestContext.Current.CancellationToken);
 
         Assert.True(written.IsSuccess);
         Assert.Contains(
             telemetry.Durations,
             duration =>
                 (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
-                && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Succeeded
+                && (string?)duration.Tags[OperationTelemetry.OutcomeTag]
+                    == OperationTelemetry.Succeeded
         );
     }
 
@@ -207,12 +353,23 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
 
         using (upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!)
         {
-            Assert.True((await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("traced"), TestContext.Current.CancellationToken)).IsSuccess);
+            Assert.True(
+                (
+                    await Fixture
+                        .Gateway<StubModule>()
+                        .SendAsync(
+                            new WriteNoteCommand("traced"),
+                            TestContext.Current.CancellationToken
+                        )
+                ).IsSuccess
+            );
         }
 
         Assert.Contains(
             telemetry.Of(upstream.TraceId),
-            activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand) && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
+            activity =>
+                Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand)
+                && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
         );
     }
     #endregion
@@ -227,7 +384,10 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         {
             InstrumentPublished = (instrument, published) =>
             {
-                if (instrument.Meter.Name == OperationTelemetry.SourceName && instrument.Name == OperationTelemetry.DurationName)
+                if (
+                    instrument.Meter.Name == OperationTelemetry.SourceName
+                    && instrument.Name == OperationTelemetry.DurationName
+                )
                 {
                     published.EnableMeasurementEvents(instrument);
                 }
@@ -238,7 +398,10 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             {
                 foreach (var (name, value) in tags)
                 {
-                    if (name == OperationTelemetry.OperationTag && value is nameof(WriteNoteCommand))
+                    if (
+                        name == OperationTelemetry.OperationTag
+                        && value is nameof(WriteNoteCommand)
+                    )
                     {
                         owners.Enqueue(instrument.Meter.Scope);
                     }
@@ -247,11 +410,16 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         );
         listener.Start();
 
-        var written = await Fixture.Gateway<StubModule>().SendAsync(new WriteNoteCommand("owned"), TestContext.Current.CancellationToken);
+        var written = await Fixture
+            .Gateway<StubModule>()
+            .SendAsync(new WriteNoteCommand("owned"), TestContext.Current.CancellationToken);
 
         Assert.True(written.IsSuccess);
         Assert.NotEmpty(owners);
-        Assert.All(owners, owner => Assert.Same(Fixture.Host.Services.GetRequiredService<IMeterFactory>(), owner));
+        Assert.All(
+            owners,
+            owner => Assert.Same(Fixture.Host.Services.GetRequiredService<IMeterFactory>(), owner)
+        );
     }
 
     // The category is created first, outside the trace; CreateProduct runs inside an upstream activity standing in for a
@@ -260,12 +428,18 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
     {
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, $"Lamps {category}"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, $"Lamps {category}"),
+            TestContext.Current.CancellationToken
+        );
         Activity? upstream = null;
         await Fixture.WaitForDeliveriesAsync(
             async () =>
             {
-                using var request = upstream = RecordedTelemetry.Upstream.StartActivity("request", ActivityKind.Server)!;
+                using var request = upstream = RecordedTelemetry.Upstream.StartActivity(
+                    "request",
+                    ActivityKind.Server
+                )!;
                 request.TraceStateString = TraceState;
                 var created = await catalog.SendAsync(
                     new CreateProductCommand(product, category, $"Lamp {product}"),
@@ -282,10 +456,17 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
 
     // The Operation activity of the one delivery to subscription in trace, as current when it recorded its Receipt.
     private static Activity DeliveryOperation(string subscription, ActivityTraceId trace) =>
-        Assert.Single(DeliveryProbes.ActivitiesOf(subscription).OfType<Activity>(), activity => activity.TraceId == trace);
+        Assert.Single(
+            DeliveryProbes.ActivitiesOf(subscription).OfType<Activity>(),
+            activity => activity.TraceId == trace
+        );
 
     // The span the delivery's envelope named as its parent: Wolverine's span's parent when that span is the delivery's.
-    private static ActivitySpanId PublisherOf(Activity delivery, IReadOnlyList<Activity> trace, bool wolverineListened)
+    private static ActivitySpanId PublisherOf(
+        Activity delivery,
+        IReadOnlyList<Activity> trace,
+        bool wolverineListened
+    )
     {
         if (!wolverineListened)
         {
@@ -297,5 +478,6 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         return execution.ParentSpanId;
     }
 
-    private static string? Tag(Activity activity, string name) => activity.GetTagItem(name) as string;
+    private static string? Tag(Activity activity, string name) =>
+        activity.GetTagItem(name) as string;
 }

@@ -15,8 +15,17 @@ internal sealed class GetProductEndpoint : IEndpoint
         routes
             .MapGet(
                 "/products/{productId}",
-                async (Guid productId, IDispatcher dispatcher, CancellationToken cancellationToken) =>
-                    (await dispatcher.QueryAsync(new GetProductQuery(productId), cancellationToken)).ToHttpResult()
+                async (
+                    Guid productId,
+                    IDispatcher dispatcher,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await dispatcher.QueryAsync(
+                            new GetProductQuery(productId),
+                            cancellationToken
+                        )
+                    ).ToHttpResult()
             )
             .WithName(Name);
 }

@@ -29,19 +29,19 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
           "line": 49,
-          "end_line": 136,
+          "end_line": 152,
           "label": "one envelope per route, with the context"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OutboxWriter.cs",
-          "line": 138,
-          "end_line": 153,
+          "line": 154,
+          "end_line": 179,
           "label": "the #published record"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/WolverineOutbox.cs",
-          "line": 51,
-          "end_line": 68,
+          "line": 50,
+          "end_line": 67,
           "label": "sent after the commit"
         }
       ]
@@ -54,8 +54,8 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine.RabbitMq/RabbitMqExtension.cs",
-          "line": 10,
-          "end_line": 33,
+          "line": 14,
+          "end_line": 40,
           "label": "fanout per wire name, a queue per kind of Host"
         },
         {
@@ -75,19 +75,19 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitWolverineExtension.cs",
           "line": 16,
-          "end_line": 28,
+          "end_line": 31,
           "label": "a local queue each; stored retries"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/WolverineHostApplicationBuilderExtensions.cs",
-          "line": 111,
-          "end_line": 112,
+          "line": 132,
+          "end_line": 133,
           "label": "durable; unknown types dead-lettered"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/PouryaKitMessagingOptions.cs",
           "line": 6,
-          "end_line": 13,
+          "end_line": 14,
           "label": "1 s, 10 s, 1 min, then a dead letter"
         }
       ]
@@ -101,19 +101,19 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
           "line": 19,
-          "end_line": 48,
+          "end_line": 54,
           "label": "subscription by queue, new scope"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/SubscriptionDelivery.cs",
-          "line": 50,
-          "end_line": 90,
+          "line": 56,
+          "end_line": 110,
           "label": "a broker envelope fanned out"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs",
-          "line": 45,
-          "end_line": 81,
+          "line": 57,
+          "end_line": 106,
           "label": "a trusted continuation, trace parent"
         }
       ]
@@ -127,13 +127,13 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs",
           "line": 7,
-          "end_line": 11,
+          "end_line": 16,
           "label": "runs as the Operation's command"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Deliver.cs",
-          "line": 28,
-          "end_line": 75,
+          "line": 33,
+          "end_line": 96,
           "label": "tenant check, Receipt, version gate, handler"
         }
       ]
@@ -147,7 +147,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs",
           "line": 8,
-          "end_line": 38,
+          "end_line": 42,
           "label": "Receipt and version rows"
         }
       ]
@@ -160,14 +160,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscription.cs",
-          "line": 45,
-          "end_line": 76,
+          "line": 53,
+          "end_line": 105,
           "label": "Notification or Integration Event"
         },
         {
           "path": "src/PouryaKit.Messaging.Wolverine/Subscriptions/IntegrationEventPublisher.cs",
           "line": 19,
-          "end_line": 67,
+          "end_line": 70,
           "label": "publishes only in a Notification"
         }
       ]

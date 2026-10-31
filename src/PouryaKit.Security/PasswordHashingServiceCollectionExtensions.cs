@@ -16,7 +16,9 @@ public static class PasswordHashingServiceCollectionExtensions
         /// bound configuration section set, and never restores the defaults. The Host fails to start, naming every
         /// problem, when an option is outside its documented bounds. Independent of <c>AddPouryaKitPermissions</c>.
         /// </summary>
-        public IServiceCollection AddPouryaKitPasswordHashing(Action<PouryaKitPasswordHashingOptions>? configure = null)
+        public IServiceCollection AddPouryaKitPasswordHashing(
+            Action<PouryaKitPasswordHashingOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
 
@@ -27,11 +29,18 @@ public static class PasswordHashingServiceCollectionExtensions
             }
 
             services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IValidateOptions<PouryaKitPasswordHashingOptions>, Pbkdf2PasswordHasher.Validation>()
+                ServiceDescriptor.Singleton<
+                    IValidateOptions<PouryaKitPasswordHashingOptions>,
+                    Pbkdf2PasswordHasher.Validation
+                >()
             );
             services.Replace(
                 ServiceDescriptor.Singleton<IPasswordHasher>(provider =>
-                    Pbkdf2PasswordHasher.Create(provider.GetRequiredService<IOptions<PouryaKitPasswordHashingOptions>>().Value)
+                    Pbkdf2PasswordHasher.Create(
+                        provider
+                            .GetRequiredService<IOptions<PouryaKitPasswordHashingOptions>>()
+                            .Value
+                    )
                 )
             );
             return services;

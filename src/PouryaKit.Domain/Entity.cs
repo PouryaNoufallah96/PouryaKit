@@ -27,10 +27,14 @@ public abstract class Entity<TId>
     /// <inheritdoc />
     public override bool Equals(object? obj) =>
         obj is Entity<TId> other
-        && (ReferenceEquals(this, other) || (other.GetType() == GetType() && Id is not null && Id.Equals(other.Id)));
+        && (
+            ReferenceEquals(this, other)
+            || (other.GetType() == GetType() && Id is not null && Id.Equals(other.Id))
+        );
 
     /// <inheritdoc />
-    public override int GetHashCode() => Id is null ? RuntimeHelpers.GetHashCode(this) : HashCode.Combine(GetType(), Id);
+    public override int GetHashCode() =>
+        Id is null ? RuntimeHelpers.GetHashCode(this) : HashCode.Combine(GetType(), Id);
 
     /// <summary>
     /// A failed Result with the rule's Error when <paramref name="rule"/> is broken; otherwise a success.

@@ -42,13 +42,25 @@ public static class AppHost
         // per Actor, the configured sunset of each API version, and how long idempotency keys are kept. None is configured but
         // the sunset: every caller starts a new chain of work, and the Host answers no cross-origin request, compresses nothing
         // and limits no one.
-        builder.Services.Configure<PouryaKitTrustedPeerOptions>(builder.Configuration.GetSection("PouryaKit:TrustedPeers"));
-        builder.Services.Configure<PouryaKitCorsOptions>(builder.Configuration.GetSection("PouryaKit:Web:Cors"));
-        builder.Services.Configure<PouryaKitCompressionOptions>(builder.Configuration.GetSection("PouryaKit:Web:Compression"));
-        builder.Services.Configure<PouryaKitRateLimitOptions>(builder.Configuration.GetSection("PouryaKit:Web:RateLimit"));
+        builder.Services.Configure<PouryaKitTrustedPeerOptions>(
+            builder.Configuration.GetSection("PouryaKit:TrustedPeers")
+        );
+        builder.Services.Configure<PouryaKitCorsOptions>(
+            builder.Configuration.GetSection("PouryaKit:Web:Cors")
+        );
+        builder.Services.Configure<PouryaKitCompressionOptions>(
+            builder.Configuration.GetSection("PouryaKit:Web:Compression")
+        );
+        builder.Services.Configure<PouryaKitRateLimitOptions>(
+            builder.Configuration.GetSection("PouryaKit:Web:RateLimit")
+        );
         builder.Services.AddPouryaKitOpenApi();
-        builder.Services.Configure<PouryaKitOpenApiOptions>(builder.Configuration.GetSection("PouryaKit:OpenApi"));
-        builder.Services.Configure<PouryaKitIdempotencyOptions>(builder.Configuration.GetSection("PouryaKit:Idempotency"));
+        builder.Services.Configure<PouryaKitOpenApiOptions>(
+            builder.Configuration.GetSection("PouryaKit:OpenApi")
+        );
+        builder.Services.Configure<PouryaKitIdempotencyOptions>(
+            builder.Configuration.GetSection("PouryaKit:Idempotency")
+        );
         // Calls to another Host carry the Operation Context they are sent with, never the caller's bearer token. The service
         // defaults already give the client its one resilience pipeline: AddPouryaKitResilience here would stack a second, which
         // the Kit refuses when the client is created.
@@ -77,7 +89,9 @@ public static class AppHost
         // Catalog's agent asks the model of PouryaKit:AI through the Host's one chat client; appsettings.json names a local
         // Ollama, and GetProduct as the one tool a run may be given.
         builder.Services.AddPouryaKitAI();
-        builder.Services.Configure<PouryaKitAIOptions>(builder.Configuration.GetSection("PouryaKit:AI"));
+        builder.Services.Configure<PouryaKitAIOptions>(
+            builder.Configuration.GetSection("PouryaKit:AI")
+        );
         // The application's guardrail checks every call to the model, before and after it: no card number goes either way.
         builder.Services.AddSingleton<IChatGuardrail, CardNumberGuardrail>();
         // What a Notification Handler pushes through IRealtimePublisher, such as Catalog's new products, reaches the browsers

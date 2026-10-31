@@ -1,5 +1,5 @@
-using FluentValidation;
 using Ardalis.Specification;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
@@ -43,16 +43,29 @@ internal sealed class ReadFolderCommandHandler(
     Operation operation
 ) : CommandHandler<ReadFolderCommand>
 {
-    public override async Task<Result> Handle(ReadFolderCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ReadFolderCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await notes.AddAsync(Note.Write("legitimate pending write"), cancellationToken);
-        var folder = command.Held ? (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))! : null;
+        var folder = command.Held
+            ? (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!
+            : null;
         folder?.Relabel("blue");
         try
         {
             if (command.Point == ReadingPoint.Query)
             {
-                _ = await dispatcher.QueryAsync(new ReadFolderQuery(command.FolderId, folder, command.Change, command.QueryThrows), cancellationToken);
+                _ = await dispatcher.QueryAsync(
+                    new ReadFolderQuery(
+                        command.FolderId,
+                        folder,
+                        command.Change,
+                        command.QueryThrows
+                    ),
+                    cancellationToken
+                );
             }
             else if (command.Point == ReadingPoint.OnlyReading)
             {
@@ -61,7 +74,10 @@ internal sealed class ReadFolderCommandHandler(
             }
             else
             {
-                _ = await dispatcher.SendAsync(new ReadFolderCheckCommand(folder!, command.Point, command.Change), cancellationToken);
+                _ = await dispatcher.SendAsync(
+                    new ReadFolderCheckCommand(folder!, command.Point, command.Change),
+                    cancellationToken
+                );
             }
         }
         catch (InvalidOperationException) when (command.Swallow) { }
@@ -70,15 +86,30 @@ internal sealed class ReadFolderCommandHandler(
     }
 }
 
-internal sealed record ReadFolderQuery(Guid FolderId, Folder? Held, ReadingChange Change, bool Throws, Guid? ReadAlso = null) : Query<bool>;
+internal sealed record ReadFolderQuery(
+    Guid FolderId,
+    Folder? Held,
+    ReadingChange Change,
+    bool Throws,
+    Guid? ReadAlso = null
+) : Query<bool>;
 
-internal sealed class ReadFolderQueryHandler(IRepository<Folder, FolderId> folders) : QueryHandler<ReadFolderQuery, bool>
+internal sealed class ReadFolderQueryHandler(IRepository<Folder, FolderId> folders)
+    : QueryHandler<ReadFolderQuery, bool>
 {
-    public static readonly Error Missing = Error.NotFound("Reading.Missing", "The query found nothing.");
+    public static readonly Error Missing = Error.NotFound(
+        "Reading.Missing",
+        "The query found nothing."
+    );
 
-    public override async Task<Result<bool>> Handle(ReadFolderQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<bool>> Handle(
+        ReadFolderQuery query,
+        CancellationToken cancellationToken
+    )
     {
-        var folder = query.Held ?? (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!;
+        var folder =
+            query.Held
+            ?? (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!;
         ChangeFolderRead.Apply(folder, query.Change);
         if (query.ReadAlso is { } readAlso)
         {
@@ -122,7 +153,11 @@ internal static class ChangeFolderRead
     }
 }
 
-internal sealed record ReadFolderWithoutAutomaticDetectionCommand(Guid FolderId, ReadingChange Change, Guid? ReadAlso = null) : Command;
+internal sealed record ReadFolderWithoutAutomaticDetectionCommand(
+    Guid FolderId,
+    ReadingChange Change,
+    Guid? ReadAlso = null
+) : Command;
 
 internal sealed class ReadFolderWithoutAutomaticDetectionCommandHandler(
     IRepository<Folder, FolderId> folders,
@@ -130,20 +165,34 @@ internal sealed class ReadFolderWithoutAutomaticDetectionCommandHandler(
     StubDbContext db
 ) : CommandHandler<ReadFolderWithoutAutomaticDetectionCommand>
 {
-    public override async Task<Result> Handle(ReadFolderWithoutAutomaticDetectionCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ReadFolderWithoutAutomaticDetectionCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var folder = (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!;
         db.ChangeTracker.AutoDetectChangesEnabled = false;
         folder.AddPage("legitimate pending page");
         try
         {
-            _ = await dispatcher.QueryAsync(new ReadFolderQuery(command.FolderId, folder, command.Change, false, command.ReadAlso), cancellationToken);
+            _ = await dispatcher.QueryAsync(
+                new ReadFolderQuery(
+                    command.FolderId,
+                    folder,
+                    command.Change,
+                    false,
+                    command.ReadAlso
+                ),
+                cancellationToken
+            );
         }
         catch (InvalidOperationException) { }
 
         if (db.ChangeTracker.AutoDetectChangesEnabled)
         {
-            throw new InvalidOperationException("A read changed the automatic change detection setting.");
+            throw new InvalidOperationException(
+                "A read changed the automatic change detection setting."
+            );
         }
 
         db.ChangeTracker.AutoDetectChangesEnabled = true;
@@ -151,11 +200,18 @@ internal sealed class ReadFolderWithoutAutomaticDetectionCommandHandler(
     }
 }
 
-internal sealed record ReadFolderCheckCommand(Folder Folder, ReadingPoint Point, ReadingChange Change) : Command;
+internal sealed record ReadFolderCheckCommand(
+    Folder Folder,
+    ReadingPoint Point,
+    ReadingChange Change
+) : Command;
 
 internal sealed class ReadFolderCheckCommandAuthorizer : IAuthorizer<ReadFolderCheckCommand>
 {
-    public Task<Result> AuthorizeAsync(ReadFolderCheckCommand command, CancellationToken cancellationToken)
+    public Task<Result> AuthorizeAsync(
+        ReadFolderCheckCommand command,
+        CancellationToken cancellationToken
+    )
     {
         if (command.Point == ReadingPoint.Authorizer)
         {
@@ -168,59 +224,96 @@ internal sealed class ReadFolderCheckCommandAuthorizer : IAuthorizer<ReadFolderC
 
 internal sealed class ReadFolderCheckCommandValidator : AbstractValidator<ReadFolderCheckCommand>
 {
-    public ReadFolderCheckCommandValidator() => RuleFor(command => command).Custom((command, _) =>
-    {
-        if (command.Point == ReadingPoint.Validator)
-        {
-            ChangeFolderRead.Apply(command.Folder, command.Change);
-        }
-    });
+    public ReadFolderCheckCommandValidator() =>
+        RuleFor(command => command)
+            .Custom(
+                (command, _) =>
+                {
+                    if (command.Point == ReadingPoint.Validator)
+                    {
+                        ChangeFolderRead.Apply(command.Folder, command.Change);
+                    }
+                }
+            );
 }
 
 internal sealed class ReadFolderCheckCommandHandler : CommandHandler<ReadFolderCheckCommand>
 {
-    public override Task<Result> Handle(ReadFolderCheckCommand command, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+    public override Task<Result> Handle(
+        ReadFolderCheckCommand command,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }
 
 internal sealed record ReadFolderOuterCheckCommand(Guid FolderId, ReadingPoint Point) : Command;
 
-internal sealed class ReadFolderOuterCheckCommandAuthorizer(IRepository<Folder, FolderId> folders) : IAuthorizer<ReadFolderOuterCheckCommand>
+internal sealed class ReadFolderOuterCheckCommandAuthorizer(IRepository<Folder, FolderId> folders)
+    : IAuthorizer<ReadFolderOuterCheckCommand>
 {
-    public async Task<Result> AuthorizeAsync(ReadFolderOuterCheckCommand command, CancellationToken cancellationToken)
+    public async Task<Result> AuthorizeAsync(
+        ReadFolderOuterCheckCommand command,
+        CancellationToken cancellationToken
+    )
     {
         if (command.Point == ReadingPoint.Authorizer)
         {
-            (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!.Relabel("changed by outer authorization");
+            (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!.Relabel(
+                "changed by outer authorization"
+            );
         }
 
         return Result.Success();
     }
 }
 
-internal sealed class ReadFolderOuterCheckCommandValidator : AbstractValidator<ReadFolderOuterCheckCommand>
+internal sealed class ReadFolderOuterCheckCommandValidator
+    : AbstractValidator<ReadFolderOuterCheckCommand>
 {
-    public ReadFolderOuterCheckCommandValidator(IRepository<Folder, FolderId> folders) => RuleFor(command => command).CustomAsync(async (command, _, cancellationToken) =>
-    {
-        if (command.Point == ReadingPoint.Validator)
-        {
-            (await folders.FindAsync(new FolderId(command.FolderId), cancellationToken))!.Relabel("changed by outer validation");
-        }
-    });
+    public ReadFolderOuterCheckCommandValidator(IRepository<Folder, FolderId> folders) =>
+        RuleFor(command => command)
+            .CustomAsync(
+                async (command, _, cancellationToken) =>
+                {
+                    if (command.Point == ReadingPoint.Validator)
+                    {
+                        (
+                            await folders.FindAsync(
+                                new FolderId(command.FolderId),
+                                cancellationToken
+                            )
+                        )!.Relabel("changed by outer validation");
+                    }
+                }
+            );
 }
 
-internal sealed class ReadFolderOuterCheckCommandHandler : CommandHandler<ReadFolderOuterCheckCommand>
+internal sealed class ReadFolderOuterCheckCommandHandler
+    : CommandHandler<ReadFolderOuterCheckCommand>
 {
-    public override Task<Result> Handle(ReadFolderOuterCheckCommand command, CancellationToken cancellationToken) => Task.FromResult(Result.Success());
+    public override Task<Result> Handle(
+        ReadFolderOuterCheckCommand command,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(Result.Success());
 }
 
 internal sealed record ReadShelfLabelsCommand(string Aisle, string Bay) : Command;
 
-internal sealed class ReadShelfLabelsCommandHandler(IRepository<Shelf, string> shelves, IDispatcher dispatcher)
-    : CommandHandler<ReadShelfLabelsCommand>
+internal sealed class ReadShelfLabelsCommandHandler(
+    IRepository<Shelf, string> shelves,
+    IDispatcher dispatcher
+) : CommandHandler<ReadShelfLabelsCommand>
 {
-    public override async Task<Result> Handle(ReadShelfLabelsCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ReadShelfLabelsCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        var shelf = (await shelves.FindAsync(new ShelfReadLocation(command.Aisle, command.Bay), cancellationToken))!;
+        var shelf = (
+            await shelves.FindAsync(
+                new ShelfReadLocation(command.Aisle, command.Bay),
+                cancellationToken
+            )
+        )!;
         shelf.AddLabel("legitimate pending label");
         _ = await dispatcher.QueryAsync(new ReadShelfLabelsQuery(shelf), cancellationToken);
         return Result.Success();
@@ -229,14 +322,18 @@ internal sealed class ReadShelfLabelsCommandHandler(IRepository<Shelf, string> s
 
 internal sealed class ShelfReadLocation : Specification<Shelf>
 {
-    public ShelfReadLocation(string aisle, string bay) => Query.Where(shelf => shelf.Aisle == aisle && shelf.Bay == bay);
+    public ShelfReadLocation(string aisle, string bay) =>
+        Query.Where(shelf => shelf.Aisle == aisle && shelf.Bay == bay);
 }
 
 internal sealed record ReadShelfLabelsQuery(Shelf Shelf) : Query<bool>;
 
 internal sealed class ReadShelfLabelsQueryHandler : QueryHandler<ReadShelfLabelsQuery, bool>
 {
-    public override Task<Result<bool>> Handle(ReadShelfLabelsQuery query, CancellationToken cancellationToken)
+    public override Task<Result<bool>> Handle(
+        ReadShelfLabelsQuery query,
+        CancellationToken cancellationToken
+    )
     {
         query.Shelf.AddLabel("changed in a read");
         return Task.FromResult<Result<bool>>(ReadFolderQueryHandler.Missing);
@@ -245,14 +342,22 @@ internal sealed class ReadShelfLabelsQueryHandler : QueryHandler<ReadShelfLabels
 
 internal sealed record ReadNoteEventsCommand(string Text, bool Reverse) : Command;
 
-internal sealed class ReadNoteEventsCommandHandler(IRepository<Note, NoteId> notes, IDispatcher dispatcher)
-    : CommandHandler<ReadNoteEventsCommand>
+internal sealed class ReadNoteEventsCommandHandler(
+    IRepository<Note, NoteId> notes,
+    IDispatcher dispatcher
+) : CommandHandler<ReadNoteEventsCommand>
 {
-    public override async Task<Result> Handle(ReadNoteEventsCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ReadNoteEventsCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var note = (await notes.FindAsync(new NotesWithText(command.Text), cancellationToken))!;
         note.Raising(new ReadingNoteDomainEvent()).Raising(new ReadingNoteDomainEvent());
-        _ = await dispatcher.QueryAsync(new ReadNoteEventsQuery(note, command.Reverse), cancellationToken);
+        _ = await dispatcher.QueryAsync(
+            new ReadNoteEventsQuery(note, command.Reverse),
+            cancellationToken
+        );
         return Result.Success();
     }
 }
@@ -263,7 +368,10 @@ internal sealed record ReadNoteEventsQuery(Note Note, bool Reverse) : Query<bool
 
 internal sealed class ReadNoteEventsQueryHandler : QueryHandler<ReadNoteEventsQuery, bool>
 {
-    public override Task<Result<bool>> Handle(ReadNoteEventsQuery query, CancellationToken cancellationToken)
+    public override Task<Result<bool>> Handle(
+        ReadNoteEventsQuery query,
+        CancellationToken cancellationToken
+    )
     {
         var events = query.Note.DomainEvents.ToArray();
         ((IAggregateRoot)query.Note).ClearDomainEvents();
@@ -284,7 +392,10 @@ internal sealed record ConstantReadQuery : Query<string>;
 
 internal sealed class ConstantReadQueryHandler : QueryHandler<ConstantReadQuery, string>
 {
-    public override Task<Result<string>> Handle(ConstantReadQuery query, CancellationToken cancellationToken) => Task.FromResult<Result<string>>("read without persistence");
+    public override Task<Result<string>> Handle(
+        ConstantReadQuery query,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result<string>>("read without persistence");
 }
 
 public enum ComplexReadingChange
@@ -321,7 +432,8 @@ internal sealed class ReadCollectionLeaf
     public string Text { get; set; } = "";
 }
 
-internal sealed class ReadCollectionDbContext(DbContextOptions<ReadCollectionDbContext> options) : PouryaKitDbContext(options)
+internal sealed class ReadCollectionDbContext(DbContextOptions<ReadCollectionDbContext> options)
+    : PouryaKitDbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -330,21 +442,30 @@ internal sealed class ReadCollectionDbContext(DbContextOptions<ReadCollectionDbC
         root.ToTable("read_collections", "stub");
         root.Property(aggregate => aggregate.Id).HasColumnName("id");
         root.Property(aggregate => aggregate.Version).HasColumnName("version");
-        root.ComplexCollection(aggregate => aggregate.Parts, parts =>
-        {
-            parts.ToJson("parts");
-            parts.ComplexProperty(part => part.Detail);
-            parts.ComplexCollection(part => part.Children);
-        });
+        root.ComplexCollection(
+            aggregate => aggregate.Parts,
+            parts =>
+            {
+                parts.ToJson("parts");
+                parts.ComplexProperty(part => part.Detail);
+                parts.ComplexCollection(part => part.Children);
+            }
+        );
     }
 }
 
-internal sealed record ReadCollectionCommand(Guid Id, ComplexReadingChange Change, bool Held) : Command;
+internal sealed record ReadCollectionCommand(Guid Id, ComplexReadingChange Change, bool Held)
+    : Command;
 
-internal sealed class ReadCollectionCommandHandler(IRepository<ReadCollectionRoot, Guid> roots, IDispatcher dispatcher)
-    : CommandHandler<ReadCollectionCommand>
+internal sealed class ReadCollectionCommandHandler(
+    IRepository<ReadCollectionRoot, Guid> roots,
+    IDispatcher dispatcher
+) : CommandHandler<ReadCollectionCommand>
 {
-    public override async Task<Result> Handle(ReadCollectionCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ReadCollectionCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var held = command.Held ? await roots.FindAsync(command.Id, cancellationToken) : null;
         if (held is not null)
@@ -354,7 +475,10 @@ internal sealed class ReadCollectionCommandHandler(IRepository<ReadCollectionRoo
 
         try
         {
-            _ = await dispatcher.QueryAsync(new ReadCollectionQuery(command.Id, held, command.Change), cancellationToken);
+            _ = await dispatcher.QueryAsync(
+                new ReadCollectionQuery(command.Id, held, command.Change),
+                cancellationToken
+            );
         }
         catch (InvalidOperationException) { }
 
@@ -362,11 +486,19 @@ internal sealed class ReadCollectionCommandHandler(IRepository<ReadCollectionRoo
     }
 }
 
-internal sealed record ReadCollectionQuery(Guid Id, ReadCollectionRoot? Held, ComplexReadingChange Change) : Query<bool>;
+internal sealed record ReadCollectionQuery(
+    Guid Id,
+    ReadCollectionRoot? Held,
+    ComplexReadingChange Change
+) : Query<bool>;
 
-internal sealed class ReadCollectionQueryHandler(IRepository<ReadCollectionRoot, Guid> roots) : QueryHandler<ReadCollectionQuery, bool>
+internal sealed class ReadCollectionQueryHandler(IRepository<ReadCollectionRoot, Guid> roots)
+    : QueryHandler<ReadCollectionQuery, bool>
 {
-    public override async Task<Result<bool>> Handle(ReadCollectionQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<bool>> Handle(
+        ReadCollectionQuery query,
+        CancellationToken cancellationToken
+    )
     {
         var root = query.Held ?? (await roots.FindAsync(query.Id, cancellationToken))!;
         switch (query.Change)

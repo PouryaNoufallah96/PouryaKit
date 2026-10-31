@@ -22,8 +22,11 @@ internal sealed class RobotoFontResolver : IFontResolver
 
     public byte[] GetFont(string faceName)
     {
-        using var font = typeof(RobotoFontResolver).Assembly.GetManifestResourceStream(faceName)
-            ?? throw new InvalidOperationException($"PouryaKit.Reporting embeds no font face {faceName}.");
+        using var font =
+            typeof(RobotoFontResolver).Assembly.GetManifestResourceStream(faceName)
+            ?? throw new InvalidOperationException(
+                $"PouryaKit.Reporting embeds no font face {faceName}."
+            );
         using var bytes = new MemoryStream();
         font.CopyTo(bytes);
         return bytes.ToArray();

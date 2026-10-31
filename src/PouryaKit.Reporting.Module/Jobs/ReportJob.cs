@@ -50,7 +50,13 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
 
     public ReportRequest ToRequest() => new(Kind, Format, Parameters);
 
-    public static ReportJob Request(ReportJobId id, ReportRequest request, OperationContext requester, DateTimeOffset now, TimeSpan retention) =>
+    public static ReportJob Request(
+        ReportJobId id,
+        ReportRequest request,
+        OperationContext requester,
+        DateTimeOffset now,
+        TimeSpan retention
+    ) =>
         new()
         {
             Id = id,
@@ -85,12 +91,15 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
         return claimable;
     }
 
-    public bool IsClaimedBy(int attempt) => State == ReportJobState.Generating && Attempt == attempt;
+    public bool IsClaimedBy(int attempt) =>
+        State == ReportJobState.Generating && Attempt == attempt;
 
-    public static string FileKeyOf(ReportJobId id, int attempt) => $"reports/{id.Value:N}/{attempt}";
+    public static string FileKeyOf(ReportJobId id, int attempt) =>
+        $"reports/{id.Value:N}/{attempt}";
 
     // Every key an attempt of this job may have stored its file under.
-    public IEnumerable<string> FileKeys => Enumerable.Range(1, Attempt).Select(attempt => FileKeyOf(Id, attempt));
+    public IEnumerable<string> FileKeys =>
+        Enumerable.Range(1, Attempt).Select(attempt => FileKeyOf(Id, attempt));
 
     public void Complete(int attempt, string fileKey)
     {
@@ -110,7 +119,11 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
     // that is not yet stale is left until it is: that attempt may still store its file.
     public bool TryExpire(DateTimeOffset now, TimeSpan staleAfter)
     {
-        if (State == ReportJobState.Expired || ExpiresAt > now || (State == ReportJobState.Generating && now - ClaimedAt < staleAfter))
+        if (
+            State == ReportJobState.Expired
+            || ExpiresAt > now
+            || (State == ReportJobState.Generating && now - ClaimedAt < staleAfter)
+        )
         {
             return false;
         }
@@ -124,7 +137,9 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
     {
         if (!IsClaimedBy(attempt))
         {
-            throw new InvalidOperationException($"Attempt {attempt} does not hold the claim on the report job {Id.Value}.");
+            throw new InvalidOperationException(
+                $"Attempt {attempt} does not hold the claim on the report job {Id.Value}."
+            );
         }
     }
 }

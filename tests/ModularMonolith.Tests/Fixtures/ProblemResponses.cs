@@ -11,11 +11,16 @@ public static class ProblemResponses
     /// Asserts that <paramref name="response"/> is a problem response of <paramref name="status"/>, in its status line and
     /// in its body, and returns the body.
     /// </summary>
-    public static async Task<JsonElement> ProblemAsync(HttpResponseMessage response, HttpStatusCode status)
+    public static async Task<JsonElement> ProblemAsync(
+        HttpResponseMessage response,
+        HttpStatusCode status
+    )
     {
         Assert.Equal(status, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal((int)status, problem.GetProperty("status").GetInt32());
         return problem;
     }

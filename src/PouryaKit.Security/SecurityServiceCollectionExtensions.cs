@@ -34,14 +34,20 @@ public static class SecurityServiceCollectionExtensions
             var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
             var declaring = ImplementingTypes
                 .Candidates(typeof(object), assemblies)
-                .Concat(OperationTypes.Dispatchable(ImplementingTypes.Of(typeof(object), assemblies)))
+                .Concat(
+                    OperationTypes.Dispatchable(ImplementingTypes.Of(typeof(object), assemblies))
+                )
                 .Distinct()
                 .Where(type => type.IsDefined(typeof(RequiresPermissionAttribute), inherit: false))
                 .ToList();
             List<string> problems =
             [
                 .. declaring
-                    .Where(type => type.IsAbstract || type.ContainsGenericParameters || !OperationTypes.IsOperation(type))
+                    .Where(type =>
+                        type.IsAbstract
+                        || type.ContainsGenericParameters
+                        || !OperationTypes.IsOperation(type)
+                    )
                     .Select(type =>
                         $"{type.FullName} declares a permission but is not one concrete command or query; the dispatcher would never check it."
                     ),

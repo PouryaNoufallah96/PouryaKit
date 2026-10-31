@@ -26,19 +26,34 @@ public static class WebEndpointRouteBuilderExtensions
         {
             ArgumentNullException.ThrowIfNull(routes);
 
-            var options = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitWebOptions>>().Value;
-            var peers = routes.ServiceProvider.GetRequiredService<IOptions<PouryaKitTrustedPeerOptions>>().Value.Peers;
+            var options = routes
+                .ServiceProvider.GetRequiredService<IOptions<PouryaKitWebOptions>>()
+                .Value;
+            var peers = routes
+                .ServiceProvider.GetRequiredService<IOptions<PouryaKitTrustedPeerOptions>>()
+                .Value.Peers;
             var moduleRouteGroups = routes.ServiceProvider.GetService<IModuleRouteGroups>();
             var mapped = routes.ServiceProvider.GetService<MappedEndpoints>();
             foreach (var module in routes.ServiceProvider.GetServices<ModuleEndpoints>())
             {
                 // Recorded once every route builder of the Module has its endpoints, a versioned Module's two included.
-                if (module.Endpoints.Where(endpoint => mapped?.Contains(endpoint.GetType()) is not true).ToList() is not [_, ..] endpoints)
+                if (
+                    module
+                        .Endpoints.Where(endpoint =>
+                            mapped?.Contains(endpoint.GetType()) is not true
+                        )
+                        .ToList()
+                    is not [_, ..] endpoints
+                )
                 {
                     continue;
                 }
 
-                var group = BeginOperationOn(routes.MapGroup(module.RoutePrefix).RequireAuthorization(), options, peers);
+                var group = BeginOperationOn(
+                    routes.MapGroup(module.RoutePrefix).RequireAuthorization(),
+                    options,
+                    peers
+                );
                 foreach (var target in moduleRouteGroups?.Map(module.RoutePrefix, group) ?? [group])
                 {
                     foreach (var endpoint in endpoints)
@@ -110,19 +125,30 @@ public static class WebEndpointRouteBuilderExtensions
         /// included, it throws when the endpoint is built, which fails the Host's start; a command that does not opt in is
         /// refused when it is dispatched, since only then is it known.
         /// </summary>
-        public TBuilder RequireIdempotencyKey() => builder.WithMetadata(new IdempotencyKeyRequirement());
+        public TBuilder RequireIdempotencyKey() =>
+            builder.WithMetadata(new IdempotencyKeyRequirement());
     }
 
-    private static RouteGroupBuilder BeginOperationOn(RouteGroupBuilder group, PouryaKitWebOptions options, ISet<string> peers)
+    private static RouteGroupBuilder BeginOperationOn(
+        RouteGroupBuilder group,
+        PouryaKitWebOptions options,
+        ISet<string> peers
+    )
     {
-        ((IEndpointConventionBuilder)group).Finally(endpoint => BeginOperationFirst(endpoint, options, peers));
+        ((IEndpointConventionBuilder)group).Finally(endpoint =>
+            BeginOperationFirst(endpoint, options, peers)
+        );
         return group;
     }
 
     // Runs as the endpoint's own first step, after authorization and before the endpoint binds its parameters, which
     // is where it resolves the OperationContext; an endpoint filter would run after that binding. The request id is part
     // of that context, so the Idempotency-Key header is read here too.
-    private static void BeginOperationFirst(EndpointBuilder endpoint, PouryaKitWebOptions options, ISet<string> peers)
+    private static void BeginOperationFirst(
+        EndpointBuilder endpoint,
+        PouryaKitWebOptions options,
+        ISet<string> peers
+    )
     {
         // A nested group that also begins the Operation runs this again on the same endpoint, which one wrapper serves.
         if (endpoint.Metadata.OfType<OperationBegunPerRequest>().Any())
@@ -131,7 +157,10 @@ public static class WebEndpointRouteBuilderExtensions
         }
 
         endpoint.Metadata.Add(new OperationBegunPerRequest());
-        if (!endpoint.Metadata.OfType<AnonymousActor>().Any() && endpoint.Metadata.OfType<IAllowAnonymous>().Any())
+        if (
+            !endpoint.Metadata.OfType<AnonymousActor>().Any()
+            && endpoint.Metadata.OfType<IAllowAnonymous>().Any()
+        )
         {
             throw new InvalidOperationException(
                 $"{endpoint.DisplayName} allows anonymous callers but names no Actor for them. State it with AllowAnonymousAs(actor)."
@@ -140,14 +169,17 @@ public static class WebEndpointRouteBuilderExtensions
 
         var run =
             endpoint.RequestDelegate
-            ?? throw new InvalidOperationException($"{endpoint.DisplayName} has no request delegate to run.");
+            ?? throw new InvalidOperationException(
+                $"{endpoint.DisplayName} has no request delegate to run."
+            );
         var requiresIdempotencyKey = endpoint.Metadata.OfType<IdempotencyKeyRequirement>().Any();
         // A safe method sends a query, which ignores the request id, so the key would be required and change nothing; an
         // endpoint mapped for no method, without method metadata or with an empty list, answers every method, GET
         // included. Whether the endpoint's command opts in with [Idempotent] is known only when it is dispatched (ADR 0002).
         if (requiresIdempotencyKey)
         {
-            var methods = endpoint.Metadata.OfType<IHttpMethodMetadata>().LastOrDefault()?.HttpMethods ?? [];
+            var methods =
+                endpoint.Metadata.OfType<IHttpMethodMetadata>().LastOrDefault()?.HttpMethods ?? [];
             if (methods.Count == 0)
             {
                 throw new InvalidOperationException(
@@ -164,10 +196,15 @@ public static class WebEndpointRouteBuilderExtensions
         }
         endpoint.RequestDelegate = httpContext =>
         {
-            var context = HttpCallerContext.Resolve(httpContext, options, peers) ?? throw Unresolved(httpContext, options);
+            var context =
+                HttpCallerContext.Resolve(httpContext, options, peers)
+                ?? throw Unresolved(httpContext, options);
             httpContext.RequestServices.BeginOperation(
                 requiresIdempotencyKey
-                    ? context with { RequestId = IdempotencyKeyHeader.Read(httpContext.Request.Headers) }
+                    ? context with
+                    {
+                        RequestId = IdempotencyKeyHeader.Read(httpContext.Request.Headers),
+                    }
                     : context
             );
             return run(httpContext);
@@ -177,9 +214,15 @@ public static class WebEndpointRouteBuilderExtensions
     private sealed class OperationBegunPerRequest;
 
     private static bool IsSafe(string method) =>
-        HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method) || HttpMethods.IsTrace(method);
+        HttpMethods.IsGet(method)
+        || HttpMethods.IsHead(method)
+        || HttpMethods.IsOptions(method)
+        || HttpMethods.IsTrace(method);
 
-    private static InvalidOperationException Unresolved(HttpContext httpContext, PouryaKitWebOptions options) =>
+    private static InvalidOperationException Unresolved(
+        HttpContext httpContext,
+        PouryaKitWebOptions options
+    ) =>
         httpContext.User.Identity?.IsAuthenticated == true
             ? new InvalidOperationException(
                 $"The authenticated caller has no {options.ActorClaim} claim to identify the Actor. Set PouryaKitWebOptions.ActorClaim to the claim the authentication scheme issues."

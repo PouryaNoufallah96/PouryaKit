@@ -11,7 +11,10 @@ namespace Catalog.Products.Features.RenameProduct;
 internal sealed class RenameProductCommandHandler(IRepository<Product, ProductId> products)
     : CommandHandler<RenameProductCommand>
 {
-    public override async Task<Result> Handle(RenameProductCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        RenameProductCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var product = await products.FindAsync(new ProductId(command.ProductId), cancellationToken);
         return product is null ? ProductErrors.NotFound : product.Rename(command.Name);

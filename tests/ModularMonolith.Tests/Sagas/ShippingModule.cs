@@ -19,21 +19,30 @@ public sealed class ShippingModule : IModuleDefinition
         module.AddPouryaKitSaga<FulfilmentSaga>(
             Fulfilment,
             systemActor: Fulfilment,
-            saga => saga
-                .Input<OrderPlacedV1>(placed => placed.OrderId)
-                .Input<PaymentReceivedV1>(paid => paid.OrderId)
-                .Input<PaymentReceivedV2>(paid => paid.OrderId)
-                .Timeout<FulfilmentTimeout>()
+            saga =>
+                saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+                    .Input<PaymentReceivedV1>(paid => paid.OrderId)
+                    .Input<PaymentReceivedV2>(paid => paid.OrderId)
+                    .Timeout<FulfilmentTimeout>()
         );
         #endregion
         // Two sagas of one event: each its own chain, on its own queue.
-        module.AddPouryaKitSaga<ReferenceSaga>("shipping.reference", "shipping.reference", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
+        module.AddPouryaKitSaga<ReferenceSaga>(
+            "shipping.reference",
+            "shipping.reference",
+            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        );
         module.AddPouryaKitSaga<ReminderSaga>(
             "shipping.reminder",
             "shipping.reminder",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference).Timeout<ReminderTimeout>()
+            saga =>
+                saga.Input<ReferenceOpenedV1>(opened => opened.Reference).Timeout<ReminderTimeout>()
         );
-        module.AddPouryaKitSaga<TallySaga>("shipping.tally", "shipping.tally", saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference));
+        module.AddPouryaKitSaga<TallySaga>(
+            "shipping.tally",
+            "shipping.tally",
+            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        );
     }
 }
 
@@ -54,9 +63,15 @@ public sealed class FulfilmentSaga : PouryaKitSaga
 
     #region fulfilment-saga-start
     /// <summary>Starts the saga, and schedules its timeout.</summary>
-    public static (FulfilmentSaga, FulfilmentTimeout) Start(SagaInput<FulfilmentSaga, OrderPlacedV1> placed) =>
+    public static (FulfilmentSaga, FulfilmentTimeout) Start(
+        SagaInput<FulfilmentSaga, OrderPlacedV1> placed
+    ) =>
         (
-            new FulfilmentSaga { Order = placed.Event.OrderId, Installments = placed.Event.Installments },
+            new FulfilmentSaga
+            {
+                Order = placed.Event.OrderId,
+                Installments = placed.Event.Installments,
+            },
             new FulfilmentTimeout(TimeSpan.FromSeconds(placed.Event.PayWithinSeconds))
         );
     #endregion
@@ -108,7 +123,8 @@ public sealed class ReferenceSaga : PouryaKitSaga
     public string Reference { get; set; } = "";
 
     /// <summary>Starts the saga.</summary>
-    public static ReferenceSaga Start(SagaInput<ReferenceSaga, ReferenceOpenedV1> opened) => new() { Reference = opened.Event.Reference };
+    public static ReferenceSaga Start(SagaInput<ReferenceSaga, ReferenceOpenedV1> opened) =>
+        new() { Reference = opened.Event.Reference };
 }
 
 /// <summary>A saga whose starting step schedules two timeouts of one type.</summary>
@@ -118,8 +134,14 @@ public sealed class ReminderSaga : PouryaKitSaga
     public List<int> Reminded { get; set; } = [];
 
     /// <summary>Starts the saga, and schedules two reminders.</summary>
-    public static (ReminderSaga, ReminderTimeout, ReminderTimeout) Start(SagaInput<ReminderSaga, ReferenceOpenedV1> opened) =>
-        (new ReminderSaga(), new ReminderTimeout(TimeSpan.FromSeconds(1)), new ReminderTimeout(TimeSpan.FromSeconds(2)));
+    public static (ReminderSaga, ReminderTimeout, ReminderTimeout) Start(
+        SagaInput<ReminderSaga, ReferenceOpenedV1> opened
+    ) =>
+        (
+            new ReminderSaga(),
+            new ReminderTimeout(TimeSpan.FromSeconds(1)),
+            new ReminderTimeout(TimeSpan.FromSeconds(2))
+        );
 
     /// <summary>A reminder is due.</summary>
     public void Handle(ReminderTimeout reminder) => Reminded.Add((int)reminder.Within.TotalSeconds);

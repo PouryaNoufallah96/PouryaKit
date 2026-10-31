@@ -18,8 +18,12 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var gateway = Fixture.Gateway<StubModule>();
 
-        var first = (await gateway.QueryAsync(new ProbeScopeQuery(), TestContext.Current.CancellationToken)).Value;
-        var second = (await gateway.QueryAsync(new ProbeScopeQuery(), TestContext.Current.CancellationToken)).Value;
+        var first = (
+            await gateway.QueryAsync(new ProbeScopeQuery(), TestContext.Current.CancellationToken)
+        ).Value;
+        var second = (
+            await gateway.QueryAsync(new ProbeScopeQuery(), TestContext.Current.CancellationToken)
+        ).Value;
 
         Assert.NotSame(first.DbContext, second.DbContext);
         Assert.NotSame(first.Operation, second.Operation);
@@ -34,14 +38,20 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var created = await Fixture
             .Gateway<CatalogModule>()
-            .SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new CreateCategoryCommand(category, "Lamps"),
+                TestContext.Current.CancellationToken
+            );
         var written = await Fixture
             .Gateway<StubModule>()
             .SendAsync(new WriteNoteCommand("hello"), TestContext.Current.CancellationToken);
 
         Assert.True(created.IsSuccess);
         Assert.True(written.IsSuccess);
-        Assert.Equal(category, await Fixture.ScalarAsync<Guid>("select id from catalog.categories"));
+        Assert.Equal(
+            category,
+            await Fixture.ScalarAsync<Guid>("select id from catalog.categories")
+        );
         Assert.Equal("hello", await Fixture.ScalarAsync<string>("select text from stub.notes"));
     }
 
@@ -52,7 +62,10 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            dispatcher.SendAsync(new WriteNoteCommand("hello"), TestContext.Current.CancellationToken)
+            dispatcher.SendAsync(
+                new WriteNoteCommand("hello"),
+                TestContext.Current.CancellationToken
+            )
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes"));
     }
@@ -63,7 +76,10 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             Fixture
                 .Gateway<StubModule>()
-                .SendAsync(new CreateProductCommand(Guid.CreateVersion7(), Guid.CreateVersion7(), "Lamp"), TestContext.Current.CancellationToken)
+                .SendAsync(
+                    new CreateProductCommand(Guid.CreateVersion7(), Guid.CreateVersion7(), "Lamp"),
+                    TestContext.Current.CancellationToken
+                )
         );
 
         Assert.Contains("belongs to CatalogModule", thrown.Message);
@@ -85,13 +101,31 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
         ];
         Action[] notOwned =
         [
-            () => _ = gateway.SendAsync(new RenameProductCommand(Guid.CreateVersion7(), "Lamp"), context, cancellationToken),
-            () => _ = gateway.SendAsync(new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"), context, cancellationToken),
-            () => _ = gateway.QueryAsync(new GetProductQuery(Guid.CreateVersion7()), context, cancellationToken),
+            () =>
+                _ = gateway.SendAsync(
+                    new RenameProductCommand(Guid.CreateVersion7(), "Lamp"),
+                    context,
+                    cancellationToken
+                ),
+            () =>
+                _ = gateway.SendAsync(
+                    new CreateCategoryCommand(Guid.CreateVersion7(), "Lamps"),
+                    context,
+                    cancellationToken
+                ),
+            () =>
+                _ = gateway.QueryAsync(
+                    new GetProductQuery(Guid.CreateVersion7()),
+                    context,
+                    cancellationToken
+                ),
             () => _ = gateway.SendAsync(new UnownedCommand(), context, cancellationToken),
         ];
 
-        Assert.All(withoutContext, send => Assert.Equal("context", Assert.Throws<ArgumentNullException>(send).ParamName));
+        Assert.All(
+            withoutContext,
+            send => Assert.Equal("context", Assert.Throws<ArgumentNullException>(send).ParamName)
+        );
         Assert.All(notOwned, send => Assert.Throws<InvalidOperationException>(send));
     }
 }

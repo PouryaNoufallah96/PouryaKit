@@ -36,7 +36,12 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
         .WithEnvironment("RUSTFS_ACCESS_KEY", AccessKey)
         .WithEnvironment("RUSTFS_SECRET_KEY", SecretKey)
         .WithPortBinding(S3Port, true)
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(S3Port).ForPath("/health/ready")))
+        .WithWaitStrategy(
+            Wait.ForUnixContainer()
+                .UntilHttpRequestIsSucceeded(request =>
+                    request.ForPort(S3Port).ForPath("/health/ready")
+                )
+        )
         .Build();
 
     private WebApplication? _host;
@@ -44,29 +49,41 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     private string? _serviceUrl;
 
     /// <summary>The started application.</summary>
-    public WebApplication Host => _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
+    public WebApplication Host =>
+        _host ?? throw new InvalidOperationException("The Host starts in InitializeAsync.");
 
     /// <summary>The Host's report kinds.</summary>
     public TestReports Reports { get; } = new();
 
     /// <summary>The Host's one file storage, which records the keys it signed a link for and each link's lifetime.</summary>
-    public RecordingFileStorage Storage => (RecordingFileStorage)Host.Services.GetRequiredService<IFileStorage>();
+    public RecordingFileStorage Storage =>
+        (RecordingFileStorage)Host.Services.GetRequiredService<IFileStorage>();
 
     public async ValueTask InitializeAsync()
     {
         await _store.StartAsync(TestContext.Current.CancellationToken);
         _serviceUrl = $"http://{_store.Hostname}:{_store.GetMappedPublicPort(S3Port)}";
-        using (var client = new AmazonS3Client(
-                   new BasicAWSCredentials(AccessKey, SecretKey),
-                   new AmazonS3Config { ServiceURL = _serviceUrl, ForcePathStyle = true, AuthenticationRegion = "us-east-1" }
-               ))
+        using (
+            var client = new AmazonS3Client(
+                new BasicAWSCredentials(AccessKey, SecretKey),
+                new AmazonS3Config
+                {
+                    ServiceURL = _serviceUrl,
+                    ForcePathStyle = true,
+                    AuthenticationRegion = "us-east-1",
+                }
+            )
+        )
         {
             await client.PutBucketAsync(Bucket, TestContext.Current.CancellationToken);
         }
 
         var database = $"reports_{Guid.CreateVersion7():N}";
         await app.RowsAsync($"create database {database}");
-        _connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString) { Database = database }.ConnectionString;
+        _connectionString = new NpgsqlConnectionStringBuilder(app.ConnectionString)
+        {
+            Database = database,
+        }.ConnectionString;
         _host = Compose();
         await HostFixture.StartHostAsync(_host, TestContext.Current.CancellationToken);
     }
@@ -75,11 +92,16 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     public WebApplication Compose(params string[] arguments) =>
         AppFixture.ComposeHost(
             "Development",
-            _connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."),
+            _connectionString
+                ?? throw new InvalidOperationException(
+                    "The database is created in InitializeAsync."
+                ),
             new RecordedLogs(),
             builder =>
             {
-                builder.Services.Replace(ServiceDescriptor.Singleton<IReportRequestAuthorizer>(Reports));
+                builder.Services.Replace(
+                    ServiceDescriptor.Singleton<IReportRequestAuthorizer>(Reports)
+                );
                 builder.Services.Replace(ServiceDescriptor.Singleton<IReportLayouts>(Reports));
                 RecordingFileStorage.Install(builder.Services);
             },
@@ -100,11 +122,25 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
 
     /// <summary>Every row <paramref name="sql"/> returns on the application's database.</summary>
     public Task<List<object[]>> RowsAsync(string sql) =>
-        Sql.RowsAsync(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."), sql);
+        Sql.RowsAsync(
+            _connectionString
+                ?? throw new InvalidOperationException(
+                    "The database is created in InitializeAsync."
+                ),
+            sql
+        );
 
     /// <summary>Waits until the SQL <paramref name="condition"/> holds on the application's database; fails after 30 s.</summary>
     public Task WaitUntilAsync(string condition, string because) =>
-        Sql.WaitUntilAsync(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."), condition, because, 30);
+        Sql.WaitUntilAsync(
+            _connectionString
+                ?? throw new InvalidOperationException(
+                    "The database is created in InitializeAsync."
+                ),
+            condition,
+            because,
+            30
+        );
 
     /// <summary>
     /// Holds every delivery of the Module, the retention's included, until the returned hold is disposed: its transaction
@@ -113,10 +149,21 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     /// </summary>
     public async Task<IAsyncDisposable> HoldDeliveriesAsync()
     {
-        var connection = new NpgsqlConnection(_connectionString ?? throw new InvalidOperationException("The database is created in InitializeAsync."));
+        var connection = new NpgsqlConnection(
+            _connectionString
+                ?? throw new InvalidOperationException(
+                    "The database is created in InitializeAsync."
+                )
+        );
         await connection.OpenAsync(TestContext.Current.CancellationToken);
-        var transaction = await connection.BeginTransactionAsync(TestContext.Current.CancellationToken);
-        await using var hold = new NpgsqlCommand("lock table reports.pouryakit_receipts in share mode", connection, transaction);
+        var transaction = await connection.BeginTransactionAsync(
+            TestContext.Current.CancellationToken
+        );
+        await using var hold = new NpgsqlCommand(
+            "lock table reports.pouryakit_receipts in share mode",
+            connection,
+            transaction
+        );
         await hold.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
         return connection;
     }
@@ -153,8 +200,12 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
     public const string Stalled = "stalled";
 
     private readonly SalesReports _sales = new();
-    private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    private readonly TaskCompletionSource _releaseStalled = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _release = new(
+        TaskCreationOptions.RunContinuationsAsynchronously
+    );
+    private readonly TaskCompletionSource _releaseStalled = new(
+        TaskCreationOptions.RunContinuationsAsynchronously
+    );
     private int _heldCalls;
     private int _stalledCalls;
 
@@ -172,7 +223,11 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
 
     public void ReleaseStalled() => _releaseStalled.TrySetResult();
 
-    public Task<bool> MayRequestAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
+    public Task<bool> MayRequestAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    )
     {
         Authorized.Enqueue(context);
         return request.Kind is Held or Stalled
@@ -180,7 +235,11 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
             : _sales.MayRequestAsync(context, request, cancellationToken);
     }
 
-    public async Task<Result<ReportLayout>> LayOutAsync(OperationContext context, ReportRequest request, CancellationToken cancellationToken)
+    public async Task<Result<ReportLayout>> LayOutAsync(
+        OperationContext context,
+        ReportRequest request,
+        CancellationToken cancellationToken
+    )
     {
         LaidOut.Enqueue(context);
         if (request.Kind == Stalled)
@@ -205,7 +264,16 @@ public sealed class TestReports : IReportRequestAuthorizer, IReportLayouts
     }
 
     /// <summary>The layout the <paramref name="call"/>th layout of <see cref="Held"/> gives.</summary>
-    public static ReportLayout HeldLayout(int call) => new("Held", new ReportTable([new("Call")], [[$"call {call}"]]));
+    public static ReportLayout HeldLayout(int call) =>
+        new(
+            "Held",
+            new ReportTable(
+                [new("Call")],
+                [
+                    [$"call {call}"],
+                ]
+            )
+        );
 }
 
 /// <summary>
@@ -224,23 +292,40 @@ public sealed class RecordingFileStorage(IFileStorage provider) : IFileStorage, 
     /// <summary>Puts the recording in front of the provider <paramref name="services"/> registered, as its one registration.</summary>
     public static void Install(IServiceCollection services)
     {
-        var registered = services.Single(descriptor => !descriptor.IsKeyedService && descriptor.ServiceType == typeof(IFileStorage));
+        var registered = services.Single(descriptor =>
+            !descriptor.IsKeyedService && descriptor.ServiceType == typeof(IFileStorage)
+        );
         var factory = registered.ImplementationFactory!;
-        services[services.IndexOf(registered)] = ServiceDescriptor.Singleton<IFileStorage>(provider => new RecordingFileStorage((IFileStorage)factory(provider)));
+        services[services.IndexOf(registered)] = ServiceDescriptor.Singleton<IFileStorage>(
+            provider => new RecordingFileStorage((IFileStorage)factory(provider))
+        );
     }
 
-    public async Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken)
+    public async Task<Result> UploadAsync(
+        string key,
+        Stream content,
+        string contentType,
+        CancellationToken cancellationToken
+    )
     {
         var stored = await provider.UploadAsync(key, content, contentType, cancellationToken);
         Uploaded.Enqueue(key);
         return stored;
     }
 
-    public Task<Result<StoredFile>> DownloadAsync(string key, CancellationToken cancellationToken) => provider.DownloadAsync(key, cancellationToken);
+    public Task<Result<StoredFile>> DownloadAsync(
+        string key,
+        CancellationToken cancellationToken
+    ) => provider.DownloadAsync(key, cancellationToken);
 
-    public Task<Result> DeleteAsync(string key, CancellationToken cancellationToken) => provider.DeleteAsync(key, cancellationToken);
+    public Task<Result> DeleteAsync(string key, CancellationToken cancellationToken) =>
+        provider.DeleteAsync(key, cancellationToken);
 
-    public Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken)
+    public Task<Result<Uri>> GetPresignedUrlAsync(
+        string key,
+        TimeSpan lifetime,
+        CancellationToken cancellationToken
+    )
     {
         Signed.Enqueue((key, lifetime));
         return provider.GetPresignedUrlAsync(key, lifetime, cancellationToken);

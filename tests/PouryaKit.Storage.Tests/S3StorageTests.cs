@@ -19,7 +19,16 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     public async Task An_uploaded_file_downloads_with_its_content_and_content_type()
     {
         var key = Key();
-        Assert.True((await fixture.Storage.UploadAsync(key, new MemoryStream(Report), "application/pdf", Cancel)).IsSuccess);
+        Assert.True(
+            (
+                await fixture.Storage.UploadAsync(
+                    key,
+                    new MemoryStream(Report),
+                    "application/pdf",
+                    Cancel
+                )
+            ).IsSuccess
+        );
 
         var download = await fixture.Storage.DownloadAsync(key, Cancel);
 
@@ -48,7 +57,9 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         using var cancelled = new CancellationTokenSource();
         await cancelled.CancelAsync();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromMinutes(5), cancelled.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromMinutes(5), cancelled.Token)
+        );
     }
 
     [Fact]
@@ -72,11 +83,18 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         await fixture.Storage.UploadAsync(key, new MemoryStream(Report), "application/pdf", Cancel);
 
         var link = await fixture.Storage.GetPresignedUrlAsync(key, TimeSpan.FromMinutes(5), Cancel);
-        var expiring = await fixture.Storage.GetPresignedUrlAsync(key, TimeSpan.FromSeconds(1), Cancel);
+        var expiring = await fixture.Storage.GetPresignedUrlAsync(
+            key,
+            TimeSpan.FromSeconds(1),
+            Cancel
+        );
 
         using var http = new HttpClient();
         using var response = await http.GetAsync(link.Value, Cancel);
-        Assert.True(response.IsSuccessStatusCode, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Cancel)}");
+        Assert.True(
+            response.IsSuccessStatusCode,
+            $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Cancel)}"
+        );
         Assert.Equal(Report, await response.Content.ReadAsByteArrayAsync(Cancel));
         await Task.Delay(TimeSpan.FromSeconds(3), Cancel);
         using var expired = await http.GetAsync(expiring.Value, Cancel);
@@ -86,9 +104,17 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     [Fact]
     public async Task A_host_with_invalid_storage_options_fails_to_start_naming_each_problem()
     {
-        using var host = S3StoreFixture.ComposeHost(new() { ["PouryaKit:Storage:S3:ServiceUrl"] = "minio:9000", ["PouryaKit:Storage:S3:AccessKey"] = "kit" });
+        using var host = S3StoreFixture.ComposeHost(
+            new()
+            {
+                ["PouryaKit:Storage:S3:ServiceUrl"] = "minio:9000",
+                ["PouryaKit:Storage:S3:AccessKey"] = "kit",
+            }
+        );
 
-        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() => host.StartAsync(Cancel));
+        var failure = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync(Cancel)
+        );
 
         Assert.Equal(
             [
@@ -105,9 +131,15 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     [InlineData(604_801)]
     [InlineData(0)]
     [InlineData(-1)]
-    public async Task A_presigned_url_whose_lifetime_is_not_positive_or_over_seven_days_is_refused_with_its_error(int seconds)
+    public async Task A_presigned_url_whose_lifetime_is_not_positive_or_over_seven_days_is_refused_with_its_error(
+        int seconds
+    )
     {
-        var refused = await fixture.Storage.GetPresignedUrlAsync(Key(), TimeSpan.FromSeconds(seconds), Cancel);
+        var refused = await fixture.Storage.GetPresignedUrlAsync(
+            Key(),
+            TimeSpan.FromSeconds(seconds),
+            Cancel
+        );
 
         var error = Assert.Single(refused.Errors);
         Assert.Equal(StorageErrors.LinkLifetimeOutOfRange(TimeSpan.FromDays(7)), error);
@@ -127,9 +159,12 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     [InlineData("a type, after")]
     [InlineData("a factory, after")]
     [InlineData("a second call")]
-    public void A_host_that_registers_another_file_storage_provider_fails_when_it_is_built_naming_both(string other)
+    public void A_host_that_registers_another_file_storage_provider_fails_when_it_is_built_naming_both(
+        string other
+    )
     {
-        const string S3 = "the factory PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions.Create";
+        const string S3 =
+            "the factory PouryaKit.Storage.S3.S3StorageServiceCollectionExtensions.Create";
         var builder = Host.CreateApplicationBuilder();
         builder.AddPouryaKitCompositionChecks();
         if (other == "a type, before")
@@ -142,7 +177,11 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
         {
             "a type, before" => [typeof(LocalFileStorage).FullName!, S3],
             "a type, after" => [S3, typeof(LocalFileStorage).FullName!],
-            "a factory, after" => [S3, $"the factory {typeof(S3StorageTests).FullName}.{nameof(LocalFactory)}"],
+            "a factory, after" =>
+            [
+                S3,
+                $"the factory {typeof(S3StorageTests).FullName}.{nameof(LocalFactory)}",
+            ],
             _ => [S3, S3],
         };
         switch (other)
@@ -199,12 +238,25 @@ public sealed class S3StorageTests(S3StoreFixture fixture) : IClassFixture<S3Sto
     // Another provider a Host could register, never called.
     private sealed class LocalFileStorage : IFileStorage
     {
-        public Task<Result> UploadAsync(string key, Stream content, string contentType, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Result> UploadAsync(
+            string key,
+            Stream content,
+            string contentType,
+            CancellationToken cancellationToken
+        ) => throw new NotSupportedException();
 
-        public Task<Result<StoredFile>> DownloadAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Result<StoredFile>> DownloadAsync(
+            string key,
+            CancellationToken cancellationToken
+        ) => throw new NotSupportedException();
 
-        public Task<Result> DeleteAsync(string key, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Result> DeleteAsync(string key, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
 
-        public Task<Result<Uri>> GetPresignedUrlAsync(string key, TimeSpan lifetime, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Result<Uri>> GetPresignedUrlAsync(
+            string key,
+            TimeSpan lifetime,
+            CancellationToken cancellationToken
+        ) => throw new NotSupportedException();
     }
 }

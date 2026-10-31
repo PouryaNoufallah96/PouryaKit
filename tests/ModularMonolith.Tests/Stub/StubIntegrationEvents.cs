@@ -25,9 +25,14 @@ internal sealed class IntegrationEventLog
     public void Add(Received received) => _entries.Enqueue(received);
 }
 
-internal sealed record Received(object IntegrationEvent, OperationContext Context, Operation Operation);
+internal sealed record Received(
+    object IntegrationEvent,
+    OperationContext Context,
+    Operation Operation
+);
 
-internal sealed record NoteToShareDomainEvent(string Text, bool RefuseAfterSharing = false) : DomainEvent;
+internal sealed record NoteToShareDomainEvent(string Text, bool RefuseAfterSharing = false)
+    : DomainEvent;
 
 internal sealed class ShareNoteNotificationHandler(
     IIntegrationEventPublisher events,
@@ -36,18 +41,38 @@ internal sealed class ShareNoteNotificationHandler(
     Operation operation
 ) : INotificationHandler<NoteToShareDomainEvent>
 {
-    public static readonly Error Refused = Error.Conflict("Note.ShareRefused", "The note was refused after it was shared.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.ShareRefused",
+        "The note was refused after it was shared."
+    );
 
-    public Task<Result> Handle(NoteToShareDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteToShareDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        log.Add(new Delivered(nameof(ShareNoteNotificationHandler), domainEvent.Text, context, operation, true));
-        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text));
+        log.Add(
+            new Delivered(
+                nameof(ShareNoteNotificationHandler),
+                domainEvent.Text,
+                context,
+                operation,
+                true
+            )
+        );
+        events.Publish(
+            domainEvent.Id,
+            new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text)
+        );
         return Task.FromResult(domainEvent.RefuseAfterSharing ? Refused : Result.Success());
     }
 }
 
-internal sealed class RecordSharedNoteIntegrationEventHandler(IntegrationEventLog log, OperationContext context, Operation operation)
-    : IIntegrationEventHandler<NoteSharedV1>
+internal sealed class RecordSharedNoteIntegrationEventHandler(
+    IntegrationEventLog log,
+    OperationContext context,
+    Operation operation
+) : IIntegrationEventHandler<NoteSharedV1>
 {
     public Task<Result> Handle(NoteSharedV1 integrationEvent, CancellationToken cancellationToken)
     {
@@ -60,13 +85,28 @@ internal sealed class RecordSharedNoteIntegrationEventHandler(IntegrationEventLo
 // the strict wire options refuse to write.
 internal sealed record NoteToCopyAndShareDomainEvent(string Text, bool WithoutText) : DomainEvent;
 
-internal sealed class CopyAndShareNoteNotificationHandler(IRepository<Note, NoteId> notes, IIntegrationEventPublisher events)
-    : INotificationHandler<NoteToCopyAndShareDomainEvent>
+internal sealed class CopyAndShareNoteNotificationHandler(
+    IRepository<Note, NoteId> notes,
+    IIntegrationEventPublisher events
+) : INotificationHandler<NoteToCopyAndShareDomainEvent>
 {
-    public async Task<Result> Handle(NoteToCopyAndShareDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteToCopyAndShareDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        await notes.AddAsync(Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)), cancellationToken);
-        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.WithoutText ? null! : domainEvent.Text));
+        await notes.AddAsync(
+            Note.Write(CopyFiledNoteNotificationHandler.CopyOf(domainEvent.Text)),
+            cancellationToken
+        );
+        events.Publish(
+            domainEvent.Id,
+            new NoteSharedV1(
+                domainEvent.Id,
+                domainEvent.OccurredOn,
+                domainEvent.WithoutText ? null! : domainEvent.Text
+            )
+        );
         return Result.Success();
     }
 }
@@ -76,9 +116,15 @@ internal sealed record NoteCopyRequestedDomainEvent(string Text) : DomainEvent;
 internal sealed class RequestNoteCopyNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<NoteCopyRequestedDomainEvent>
 {
-    public Task<Result> Handle(NoteCopyRequestedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteCopyRequestedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        events.Publish(domainEvent.Id, new NoteCopyRequestedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text));
+        events.Publish(
+            domainEvent.Id,
+            new NoteCopyRequestedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text)
+        );
         return Task.FromResult(Result.Success());
     }
 }
@@ -91,12 +137,21 @@ internal sealed class CopyRequestedNoteThenRefuseIntegrationEventHandler(
     Operation operation
 ) : IIntegrationEventHandler<NoteCopyRequestedV1>
 {
-    public static readonly Error Refused = Error.Conflict("Note.CopyRequestRefused", "The requested copy was refused after it was written.");
+    public static readonly Error Refused = Error.Conflict(
+        "Note.CopyRequestRefused",
+        "The requested copy was refused after it was written."
+    );
 
-    public async Task<Result> Handle(NoteCopyRequestedV1 integrationEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteCopyRequestedV1 integrationEvent,
+        CancellationToken cancellationToken
+    )
     {
         log.Add(new Received(integrationEvent, context, operation));
-        await notes.AddAsync(Note.Write(CopyFiledNoteNotificationHandler.CopyOf(integrationEvent.Text)), cancellationToken);
+        await notes.AddAsync(
+            Note.Write(CopyFiledNoteNotificationHandler.CopyOf(integrationEvent.Text)),
+            cancellationToken
+        );
         return Refused;
     }
 }
@@ -117,22 +172,42 @@ internal sealed record PublishingMisusedDomainEvent(Misuse Misuse) : DomainEvent
 internal sealed class MisusePublisherNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<PublishingMisusedDomainEvent>
 {
-    public Task<Result> Handle(PublishingMisusedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        PublishingMisusedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         switch (domainEvent.Misuse)
         {
             case Misuse.AnotherIdentity:
-                events.Publish(Guid.CreateVersion7(), new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused"));
+                events.Publish(
+                    Guid.CreateVersion7(),
+                    new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused")
+                );
                 break;
             case Misuse.UndeclaredType:
                 events.Publish(domainEvent.Id, new UndeclaredV1(domainEvent.Id));
                 break;
             case Misuse.SameTypeTwice:
-                events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused"));
-                events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused again"));
+                events.Publish(
+                    domainEvent.Id,
+                    new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused")
+                );
+                events.Publish(
+                    domainEvent.Id,
+                    new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, "misused again")
+                );
                 break;
             default:
-                events.Publish(domainEvent.Id, new ProductCreatedV1(domainEvent.Id, domainEvent.OccurredOn, Guid.CreateVersion7(), "misused"));
+                events.Publish(
+                    domainEvent.Id,
+                    new ProductCreatedV1(
+                        domainEvent.Id,
+                        domainEvent.OccurredOn,
+                        Guid.CreateVersion7(),
+                        "misused"
+                    )
+                );
                 break;
         }
 
@@ -143,11 +218,18 @@ internal sealed class MisusePublisherNotificationHandler(IIntegrationEventPublis
 // A command is not where an Integration Event is published.
 internal sealed record PublishFromCommandCommand(string Text) : Command;
 
-internal sealed class PublishFromCommandCommandHandler(IIntegrationEventPublisher events) : CommandHandler<PublishFromCommandCommand>
+internal sealed class PublishFromCommandCommandHandler(IIntegrationEventPublisher events)
+    : CommandHandler<PublishFromCommandCommand>
 {
-    public override Task<Result> Handle(PublishFromCommandCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        PublishFromCommandCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        events.Publish(Guid.CreateVersion7(), new NoteSharedV1(Guid.CreateVersion7(), DateTimeOffset.UtcNow, command.Text));
+        events.Publish(
+            Guid.CreateVersion7(),
+            new NoteSharedV1(Guid.CreateVersion7(), DateTimeOffset.UtcNow, command.Text)
+        );
         return Task.FromResult(Result.Success());
     }
 }
@@ -158,9 +240,15 @@ internal sealed record NoteToShareTwiceDomainEvent(string Text) : DomainEvent;
 internal sealed class FirstShareTwiceNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<NoteToShareTwiceDomainEvent>
 {
-    public Task<Result> Handle(NoteToShareTwiceDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteToShareTwiceDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text));
+        events.Publish(
+            domainEvent.Id,
+            new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text)
+        );
         return Task.FromResult(Result.Success());
     }
 }
@@ -168,9 +256,15 @@ internal sealed class FirstShareTwiceNotificationHandler(IIntegrationEventPublis
 internal sealed class SecondShareTwiceNotificationHandler(IIntegrationEventPublisher events)
     : INotificationHandler<NoteToShareTwiceDomainEvent>
 {
-    public Task<Result> Handle(NoteToShareTwiceDomainEvent domainEvent, CancellationToken cancellationToken)
+    public Task<Result> Handle(
+        NoteToShareTwiceDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
-        events.Publish(domainEvent.Id, new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text));
+        events.Publish(
+            domainEvent.Id,
+            new NoteSharedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text)
+        );
         return Task.FromResult(Result.Success());
     }
 }
@@ -178,15 +272,29 @@ internal sealed class SecondShareTwiceNotificationHandler(IIntegrationEventPubli
 // A Notification Handler whose nested query publishes, then fails; the handler ignores the query's Result.
 internal sealed record NoteToShareThroughQueryDomainEvent(string Text) : DomainEvent;
 
-internal sealed record PublishInQueryQuery(Guid DomainEventId, DateTimeOffset OccurredOn, string Text) : Query<bool>;
+internal sealed record PublishInQueryQuery(
+    Guid DomainEventId,
+    DateTimeOffset OccurredOn,
+    string Text
+) : Query<bool>;
 
-internal sealed class PublishInQueryQueryHandler(IIntegrationEventPublisher events) : QueryHandler<PublishInQueryQuery, bool>
+internal sealed class PublishInQueryQueryHandler(IIntegrationEventPublisher events)
+    : QueryHandler<PublishInQueryQuery, bool>
 {
-    public static readonly Error Failed = Error.Unexpected("Note.QueryPublished", "The query failed after it published.");
+    public static readonly Error Failed = Error.Unexpected(
+        "Note.QueryPublished",
+        "The query failed after it published."
+    );
 
-    public override Task<Result<bool>> Handle(PublishInQueryQuery query, CancellationToken cancellationToken)
+    public override Task<Result<bool>> Handle(
+        PublishInQueryQuery query,
+        CancellationToken cancellationToken
+    )
     {
-        events.Publish(query.DomainEventId, new NoteSharedV1(query.DomainEventId, query.OccurredOn, query.Text));
+        events.Publish(
+            query.DomainEventId,
+            new NoteSharedV1(query.DomainEventId, query.OccurredOn, query.Text)
+        );
         return Task.FromResult<Result<bool>>(Failed);
     }
 }
@@ -194,7 +302,10 @@ internal sealed class PublishInQueryQueryHandler(IIntegrationEventPublisher even
 internal sealed class ShareThroughQueryNotificationHandler(IDispatcher dispatcher)
     : INotificationHandler<NoteToShareThroughQueryDomainEvent>
 {
-    public async Task<Result> Handle(NoteToShareThroughQueryDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        NoteToShareThroughQueryDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         await dispatcher.QueryAsync(
             new PublishInQueryQuery(domainEvent.Id, domainEvent.OccurredOn, domainEvent.Text),

@@ -11,16 +11,26 @@ namespace Ledger.Accounts.Events.Notifications;
 // Integration Event and the delivery's Receipt commit together, or none does. The Integration Event carries the Domain
 // Event's identity and time, so every receiver recognises a redelivery. An entry posted to the account meanwhile appends
 // to the same stream, so one of the two is the Kit's concurrency conflict, and a conflicting delivery is retried.
-internal sealed class ActivateAccountNotificationHandler(IStreams streams, IIntegrationEventPublisher events)
-    : INotificationHandler<AccountOpenedDomainEvent>
+internal sealed class ActivateAccountNotificationHandler(
+    IStreams streams,
+    IIntegrationEventPublisher events
+) : INotificationHandler<AccountOpenedDomainEvent>
 {
-    public async Task<Result> Handle(AccountOpenedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        AccountOpenedDomainEvent domainEvent,
+        CancellationToken cancellationToken
+    )
     {
         var account = (await streams.LoadAsync<Account>(domainEvent.AccountId, cancellationToken))!;
         account.Activate();
         events.Publish(
             domainEvent.Id,
-            new AccountOpenedV1(domainEvent.Id, domainEvent.OccurredOn, domainEvent.AccountId.Value, domainEvent.Holder)
+            new AccountOpenedV1(
+                domainEvent.Id,
+                domainEvent.OccurredOn,
+                domainEvent.AccountId.Value,
+                domainEvent.Holder
+            )
         );
         return Result.Success();
     }

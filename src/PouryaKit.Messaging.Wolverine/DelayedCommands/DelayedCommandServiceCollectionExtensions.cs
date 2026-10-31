@@ -29,7 +29,13 @@ public static class DelayedCommandServiceCollectionExtensions
         /// queue, as Wolverine built it, is not a durable application queue.
         /// </summary>
         public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name)
-            where TCommand : Command => DeclareDelayedCommand(services, name, typeof(TCommand), IModuleServices.ModuleOf(services));
+            where TCommand : Command =>
+            DeclareDelayedCommand(
+                services,
+                name,
+                typeof(TCommand),
+                IModuleServices.ModuleOf(services)
+            );
 
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, schedules
@@ -38,7 +44,12 @@ public static class DelayedCommandServiceCollectionExtensions
         /// </summary>
         public IServiceCollection AddPouryaKitDelayedCommand<TCommand>(string name, Type module)
             where TCommand : Command =>
-            DeclareDelayedCommand(services, name, typeof(TCommand), IModuleServices.ModuleOf(services, module));
+            DeclareDelayedCommand(
+                services,
+                name,
+                typeof(TCommand),
+                IModuleServices.ModuleOf(services, module)
+            );
 
         /// <summary>
         /// Declares that the Module whose Composition Root calls it on its builder (<see cref="IModuleServices"/>), or the
@@ -75,7 +86,14 @@ public static class DelayedCommandServiceCollectionExtensions
             string systemActor,
             Func<DateTimeOffset, TCommand> occurrence
         )
-            where TCommand : Command => DeclareRecurringCommand(services, name, systemActor, occurrence, IModuleServices.ModuleOf(services));
+            where TCommand : Command =>
+            DeclareRecurringCommand(
+                services,
+                name,
+                systemActor,
+                occurrence,
+                IModuleServices.ModuleOf(services)
+            );
 
         /// <summary>
         /// Declares, in the Host's composition, that <paramref name="module"/>, a Module's definition type, runs
@@ -90,14 +108,27 @@ public static class DelayedCommandServiceCollectionExtensions
             Type module
         )
             where TCommand : Command =>
-            DeclareRecurringCommand(services, name, systemActor, occurrence, IModuleServices.ModuleOf(services, module));
+            DeclareRecurringCommand(
+                services,
+                name,
+                systemActor,
+                occurrence,
+                IModuleServices.ModuleOf(services, module)
+            );
     }
 
-    private static IServiceCollection DeclareDelayedCommand(IServiceCollection services, string name, Type command, Type? module)
+    private static IServiceCollection DeclareDelayedCommand(
+        IServiceCollection services,
+        string name,
+        Type command,
+        Type? module
+    )
     {
         DelayedCommandDeclarations.In(services).Add(name, command, module);
         DurableQueuesCheck.AddTo(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>()
+        );
         return services;
     }
 
@@ -112,15 +143,25 @@ public static class DelayedCommandServiceCollectionExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
         ArgumentNullException.ThrowIfNull(occurrence);
-        DelayedCommandDeclarations.In(services).Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
+        DelayedCommandDeclarations
+            .In(services)
+            .Add(name, typeof(TCommand), module, new Recurrence(systemActor, occurrence));
         DurableQueuesCheck.AddTo(services);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RecurringCommandTenancyCheck>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, ModuleOwnershipCheck>()
+        );
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<ICompositionCheck, RecurringCommandTenancyCheck>()
+        );
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHostedService, RecurringCommandStart>()
+        );
         return services
             .AddOptions<PouryaKitRecurringCommandOptions>(name.ToLowerInvariant())
             .Validate(
-                options => options.Every > TimeSpan.Zero && options.Every <= PouryaKitRecurringCommandOptions.MaxEvery,
+                options =>
+                    options.Every > TimeSpan.Zero
+                    && options.Every <= PouryaKitRecurringCommandOptions.MaxEvery,
                 $"The recurring command {name} has no cadence: set PouryaKitRecurringCommandOptions.Every, named {name.ToLowerInvariant()}, longer than zero and at most {PouryaKitRecurringCommandOptions.MaxEvery} (MaxEvery), as its declaration's options builder binds it."
             )
             .ValidateOnStart();

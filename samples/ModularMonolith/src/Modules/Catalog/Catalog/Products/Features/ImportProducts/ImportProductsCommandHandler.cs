@@ -8,10 +8,15 @@ using PouryaKit.Domain;
 
 namespace Catalog.Products.Features.ImportProducts;
 
-internal sealed class ImportProductsCommandHandler(IProductRepository products, OperationContext context)
-    : CommandHandler<ImportProductsCommand, int>
+internal sealed class ImportProductsCommandHandler(
+    IProductRepository products,
+    OperationContext context
+) : CommandHandler<ImportProductsCommand, int>
 {
-    public override async Task<Result<int>> Handle(ImportProductsCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<int>> Handle(
+        ImportProductsCommand command,
+        CancellationToken cancellationToken
+    )
     {
         // Names are compared as Product stores them. A name given twice is a mistake in the request, refused before
         // anything else. A name already in use is skipped, which makes a repeated import harmless. That is a courtesy,
@@ -30,7 +35,12 @@ internal sealed class ImportProductsCommandHandler(IProductRepository products, 
         foreach (var name in names.Where(candidate => !inUse.Contains(candidate)))
         {
             // Catalog is tenant-scoped: an Operation without a tenant never reaches its handlers.
-            var product = Product.Create(new ProductId(Guid.CreateVersion7()), categoryId, name, context.Tenant!);
+            var product = Product.Create(
+                new ProductId(Guid.CreateVersion7()),
+                categoryId,
+                name,
+                context.Tenant!
+            );
             if (product.IsFailure)
             {
                 return product.Errors;

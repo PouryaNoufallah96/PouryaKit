@@ -13,7 +13,11 @@ internal sealed class IdempotencyKeyParameter : IOpenApiOperationTransformer
         CancellationToken cancellationToken
     )
     {
-        if (context.Description.ActionDescriptor.EndpointMetadata.OfType<IdempotencyKeyRequirement>().Any())
+        if (
+            context
+                .Description.ActionDescriptor.EndpointMetadata.OfType<IdempotencyKeyRequirement>()
+                .Any()
+        )
         {
             operation.Parameters ??= [];
             operation.Parameters.Add(

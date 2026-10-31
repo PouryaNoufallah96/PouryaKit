@@ -17,7 +17,11 @@ internal sealed class ReportJobConfiguration : IEntityTypeConfiguration<ReportJo
             .HasColumnType("jsonb")
             .HasConversion(
                 parameters => JsonSerializer.Serialize(parameters, JsonSerializerOptions.Default),
-                json => JsonSerializer.Deserialize<Dictionary<string, string>>(json, JsonSerializerOptions.Default)!,
+                json =>
+                    JsonSerializer.Deserialize<Dictionary<string, string>>(
+                        json,
+                        JsonSerializerOptions.Default
+                    )!,
                 new ValueComparer<Dictionary<string, string>>(
                     (left, right) => left!.Count == right!.Count && !left.Except(right).Any(),
                     parameters => parameters.Count,

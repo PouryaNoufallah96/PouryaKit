@@ -11,8 +11,8 @@ using PouryaKit.Email.MailKit;
 using PouryaKit.Messaging;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
-using PouryaKit.Persistence.Dapper;
 using PouryaKit.Modularity;
+using PouryaKit.Persistence.Dapper;
 using PouryaKit.Persistence.Postgres;
 using PouryaKit.Realtime;
 using PouryaKit.Testing;
@@ -32,10 +32,17 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         var catalog = Fixture.Gateway<CatalogModule>();
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+        await catalog.SendAsync(
+            new CreateCategoryCommand(category, "Lamps"),
+            TestContext.Current.CancellationToken
+        );
 
         var (created, deliveries) = await Fixture.WaitForDeliveriesAsync(
-            () => catalog.SendAsync(new CreateProductCommand(product, category, "Lamp"), TestContext.Current.CancellationToken),
+            () =>
+                catalog.SendAsync(
+                    new CreateProductCommand(product, category, "Lamp"),
+                    TestContext.Current.CancellationToken
+                ),
             TestContext.Current.CancellationToken
         );
 
@@ -43,15 +50,26 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(
             [
                 new Delivery("billing.product-created", "catalog.product-created.v1", false),
-                new Delivery("catalog.product-created.announce-new-product", "catalog.product-created", false),
-                new Delivery("catalog.product-created.publish-product-created", "catalog.product-created", false),
+                new Delivery(
+                    "catalog.product-created.announce-new-product",
+                    "catalog.product-created",
+                    false
+                ),
+                new Delivery(
+                    "catalog.product-created.publish-product-created",
+                    "catalog.product-created",
+                    false
+                ),
                 new Delivery("inventory.catalog-products", "catalog.product-snapshot.v1", false),
                 new Delivery("inventory.product-categories", "catalog.product-created.v2", false),
                 new Delivery("inventory.product-created", "catalog.product-created.v1", false),
             ],
             deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
         );
-        Assert.Single(Fixture.Logs.Entries, entry => entry.Message == $"New in the catalog: Lamp ({product})");
+        Assert.Single(
+            Fixture.Logs.Entries,
+            entry => entry.Message == $"New in the catalog: Lamp ({product})"
+        );
     }
     #endregion
 
@@ -93,15 +111,26 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         // transaction, so the note and the envelopes carry different ids however they commit.
         Assert.Equal(
             [
-                [$"local://{Subscription<RejectContestedNoteNotificationHandler, NoteContestedDomainEvent>()}/", "modular-monolith.tests.note-contested", "Incoming", committedAt],
-                [$"local://{Subscription<AcceptContestedNoteNotificationHandler, NoteContestedDomainEvent>()}/", "modular-monolith.tests.note-contested", "Incoming", committedAt],
+                [
+                    $"local://{Subscription<RejectContestedNoteNotificationHandler, NoteContestedDomainEvent>()}/",
+                    "modular-monolith.tests.note-contested",
+                    "Incoming",
+                    committedAt,
+                ],
+                [
+                    $"local://{Subscription<AcceptContestedNoteNotificationHandler, NoteContestedDomainEvent>()}/",
+                    "modular-monolith.tests.note-contested",
+                    "Incoming",
+                    committedAt,
+                ],
             ],
             envelopes.OrderByDescending(row => (string)row[0])
         );
         Assert.Equal(0, deliveredBeforeSending);
     }
 
-    public static TheoryData<string> RolledBackOperations() => ["failed Result", "failed Domain Event Handler", "refused save"];
+    public static TheoryData<string> RolledBackOperations() =>
+        ["failed Result", "failed Domain Event Handler", "refused save"];
 
     [Theory]
     [MemberData(nameof(RolledBackOperations))]
@@ -113,10 +142,17 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         var category = Guid.CreateVersion7();
         if (rollback == "refused save")
         {
-            await catalog.SendAsync(new CreateCategoryCommand(category, "Lamps"), TestContext.Current.CancellationToken);
+            await catalog.SendAsync(
+                new CreateCategoryCommand(category, "Lamps"),
+                TestContext.Current.CancellationToken
+            );
             // Its deliveries finish first, so none of them is taken for one of the refused save's.
             await Fixture.WaitForDeliveriesAsync(
-                () => catalog.SendAsync(new CreateProductCommand(Guid.CreateVersion7(), category, text), TestContext.Current.CancellationToken),
+                () =>
+                    catalog.SendAsync(
+                        new CreateProductCommand(Guid.CreateVersion7(), category, text),
+                        TestContext.Current.CancellationToken
+                    ),
                 TestContext.Current.CancellationToken
             );
         }
@@ -126,12 +162,19 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 rollback switch
                 {
                     "failed Result" => await stub.SendAsync(
-                        new WriteNoteRaisingCommand(text, [new NotePostedDomainEvent(text)], Fail: true),
+                        new WriteNoteRaisingCommand(
+                            text,
+                            [new NotePostedDomainEvent(text)],
+                            Fail: true
+                        ),
                         TestContext.Current.CancellationToken
                     ),
                     // The posted note's Domain Event is handled first, then a Domain Event Handler refuses the next.
                     "failed Domain Event Handler" => await stub.SendAsync(
-                        new WriteNoteRaisingCommand(text, [new NotePostedDomainEvent(text), new NoteRefusedDomainEvent()]),
+                        new WriteNoteRaisingCommand(
+                            text,
+                            [new NotePostedDomainEvent(text), new NoteRefusedDomainEvent()]
+                        ),
                         TestContext.Current.CancellationToken
                     ),
                     // The Notification is written before the save, which the database refuses for a name in use.
@@ -152,14 +195,23 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             },
             Assert.Single(failed.Errors)
         );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{text}'"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>(
+                $"select count(*) from stub.notes where text = '{text}'"
+            )
+        );
     }
 
     [Fact]
     public async Task A_notification_handler_runs_after_commit_in_a_scope_of_its_own_continuing_the_raising_operation()
     {
         var text = Unique();
-        var raising = new OperationContext(Actor.Person("ada"), tenant: "acme", correlationId: Guid.CreateVersion7());
+        var raising = new OperationContext(
+            Actor.Person("ada"),
+            tenant: "acme",
+            correlationId: Guid.CreateVersion7()
+        );
 
         await Fixture.WaitForDeliveriesAsync(
             () =>
@@ -178,7 +230,12 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(typeof(StubModule), delivered.Operation.Module);
         Assert.Equal(
             (raising.Actor, raising.Tenant, raising.CorrelationId, (Guid?)raising.OperationId),
-            (delivered.Context.Actor, delivered.Context.Tenant, delivered.Context.CorrelationId, delivered.Context.CausationId)
+            (
+                delivered.Context.Actor,
+                delivered.Context.Tenant,
+                delivered.Context.CorrelationId,
+                delivered.Context.CausationId
+            )
         );
         Assert.NotEqual(raising.OperationId, delivered.Context.OperationId);
     }
@@ -200,16 +257,34 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         var runs = Log.For(text);
-        var rejections = runs.Where(run => run.Handler == nameof(RejectContestedNoteNotificationHandler)).ToList();
+        var rejections = runs.Where(run =>
+                run.Handler == nameof(RejectContestedNoteNotificationHandler)
+            )
+            .ToList();
         // The first attempt and one more after each retry delay, each in a scope of its own; the handler that
         // succeeded on the first attempt never ran again.
-        Assert.Equal(1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count, rejections.Count);
+        Assert.Equal(
+            1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
+            rejections.Count
+        );
         Assert.Equal(rejections.Count, rejections.Select(run => run.Operation).Distinct().Count());
         Assert.Single(runs, run => run.Handler == nameof(AcceptContestedNoteNotificationHandler));
         Assert.Equal(
             [
-                (Subscription<AcceptContestedNoteNotificationHandler, NoteContestedDomainEvent>(), false),
-                (Subscription<RejectContestedNoteNotificationHandler, NoteContestedDomainEvent>(), true),
+                (
+                    Subscription<
+                        AcceptContestedNoteNotificationHandler,
+                        NoteContestedDomainEvent
+                    >(),
+                    false
+                ),
+                (
+                    Subscription<
+                        RejectContestedNoteNotificationHandler,
+                        NoteContestedDomainEvent
+                    >(),
+                    true
+                ),
             ],
             deliveries.Select(delivery => (delivery.Subscription, delivery.DeadLettered)).Order()
         );
@@ -219,7 +294,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task A_receipt_makes_a_redelivered_notification_apply_its_effect_once()
     {
         var text = Unique();
-        var subscription = Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>();
+        var subscription = Subscription<
+            CopyFiledNoteNotificationHandler,
+            NoteFiledForCopyDomainEvent
+        >();
         await Fixture.WaitForDeliveriesAsync(
             () =>
                 Fixture
@@ -247,7 +325,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             )
         );
         Assert.Equal(1L, await CopiesOfAsync(text));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts")
+        );
     }
 
     [Fact]
@@ -260,7 +341,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 Fixture
                     .Gateway<StubModule>()
                     .SendAsync(
-                        new WriteNoteRaisingCommand(text, [new NoteFiledForBrokenCopyDomainEvent(text)]),
+                        new WriteNoteRaisingCommand(
+                            text,
+                            [new NoteFiledForBrokenCopyDomainEvent(text)]
+                        ),
                         TestContext.Current.CancellationToken
                     ),
             TestContext.Current.CancellationToken
@@ -268,7 +352,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
 
         Assert.True(Assert.Single(deliveries).DeadLettered);
         Assert.Equal(0L, await CopiesOfAsync(text));
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts")
+        );
     }
 
     // Shows, in one process, that a Notification committed by a Host that dies before sending it stays with that Host
@@ -278,8 +365,16 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task A_notification_committed_by_a_host_that_died_before_sending_it_is_handled_after_a_host_starts()
     {
         var text = Unique();
-        await using var dying = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
-        await using var starting = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        await using var dying = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs
+        );
+        await using var starting = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs
+        );
         await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
         var stub = dying.Services.GetRequiredService<IGatewayProcessor<StubModule>>();
         List<object[]> afterDeath = [];
@@ -298,11 +393,16 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 }
 
                 // Wolverine's quick stop neither drains nor gives up what the Host holds, as a killed process leaves it.
-                ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode = StopMode.Quick;
+                (
+                    (WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()
+                ).StopMode = StopMode.Quick;
                 await dying.StopAsync(TestContext.Current.CancellationToken);
                 // A bounded wait for something that must not happen: the fixture's Host, alive throughout, polls the
                 // store several times and leaves the dead Host's delivery where it is.
-                await Task.Delay(TestDeliveryServiceCollectionExtensions.PollingTime * 5, TestContext.Current.CancellationToken);
+                await Task.Delay(
+                    TestDeliveryServiceCollectionExtensions.PollingTime * 5,
+                    TestContext.Current.CancellationToken
+                );
                 // Beside the first occurrences of Inventory's recurring ReconcileStock and the report Module's retention,
                 // which the dying Host stored as it started.
                 afterDeath = await Fixture.RowsAsync(
@@ -316,10 +416,18 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
 
         Assert.True(written.IsSuccess);
-        Assert.Equal([["Incoming", true]], afterDeath);
+        Assert.Equal(
+            [
+                ["Incoming", true],
+            ],
+            afterDeath
+        );
         Assert.False(Assert.Single(deliveries).DeadLettered);
         Assert.Equal(1L, await CopiesOfAsync(text));
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>("select count(*) from stub.pouryakit_receipts")
+        );
     }
 
     [Fact]
@@ -331,7 +439,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             Fixture.ConnectionString,
             Fixture.Logs,
             builder =>
-                builder.Services.Configure<PouryaKitMessageStoreOptions>(store => store.InboxStaleTime = TimeSpan.FromSeconds(1))
+                builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+                    store.InboxStaleTime = TimeSpan.FromSeconds(1)
+                )
         );
         await HostFixture.StartHostAsync(live, TestContext.Current.CancellationToken);
 
@@ -341,9 +451,13 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             {
                 using (CommitProbe.AfterCommit(() => Task.FromResult(false)))
                 {
-                    return await live.Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                    return await live
+                        .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
                         .SendAsync(
-                            new WriteNoteRaisingCommand(text, [new NoteFiledForCopyDomainEvent(text)]),
+                            new WriteNoteRaisingCommand(
+                                text,
+                                [new NoteFiledForCopyDomainEvent(text)]
+                            ),
                             TestContext.Current.CancellationToken
                         );
                 }
@@ -366,11 +480,16 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             () =>
                 Fixture
                     .Gateway<StubModule>()
-                    .SendAsync(new WriteNoteRaisingCommand(text, [filed]), TestContext.Current.CancellationToken),
+                    .SendAsync(
+                        new WriteNoteRaisingCommand(text, [filed]),
+                        TestContext.Current.CancellationToken
+                    ),
             TestContext.Current.CancellationToken
         );
         // Declared as stub.Cased-Copy; kept as its queue keeps it, whichever case a later declaration uses.
-        var receipts = await Fixture.RowsAsync("select subscription, message_id from stub.pouryakit_receipts");
+        var receipts = await Fixture.RowsAsync(
+            "select subscription, message_id from stub.pouryakit_receipts"
+        );
 
         Assert.Single(
             await Fixture.RowsAsync(
@@ -379,14 +498,22 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         );
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal([["stub.cased-copy", filed.Id]], receipts);
+        Assert.Equal(
+            [
+                ["stub.cased-copy", filed.Id],
+            ],
+            receipts
+        );
         Assert.Equal(1L, await CopiesOfAsync(text));
     }
 
     [Fact]
     public void Startup_fails_on_a_missing_an_invalid_or_a_duplicate_name()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             builder.AddPouryaKitModules(modules => modules.Add<MisnamedModule>())
@@ -402,20 +529,27 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 "ModularMonolith.Tests.Misnamed.SpacedNotificationHandler's subscription name misnamed.has space is not a valid name: use letters and digits in segments joined by single dots or hyphens, not beginning with amq., which RabbitMQ reserves.",
                 "ModularMonolith.Tests.Misnamed.UnnamedDomainEvent's wire name is missing; declare one or remove the empty name.",
             ],
-            thrown.Message.Split(Environment.NewLine).Where(line => !line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)
+            thrown
+                .Message.Split(Environment.NewLine)
+                .Where(line => !line.Contains(MisshapenMark, StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal)
         );
     }
 
     [Fact]
     public void Startup_fails_on_a_notification_handler_that_is_generic_or_handles_several_an_abstract_or_a_generic_domain_event()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             builder.AddPouryaKitModules(modules => modules.Add<MisnamedModule>())
         );
 
-        const string Rule = "a Notification Handler is a non-generic class that handles one concrete, non-generic Domain Event type.";
+        const string Rule =
+            "a Notification Handler is a non-generic class that handles one concrete, non-generic Domain Event type.";
         Assert.Equal(
             [
                 $"ModularMonolith.Tests.Misnamed.AnyEventNotificationHandler`1{MisshapenMark}TDomainEvent; {Rule}",
@@ -423,7 +557,10 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                 $"ModularMonolith.Tests.Misnamed.BoxedNotificationHandler{MisshapenMark}BoxedDomainEvent`1; {Rule}",
                 $"ModularMonolith.Tests.Misnamed.TwoEventsNotificationHandler{MisshapenMark}PackedDomainEvent, SealedDomainEvent; {Rule}",
             ],
-            thrown.Message.Split(Environment.NewLine).Where(line => line.Contains(MisshapenMark, StringComparison.Ordinal)).Order(StringComparer.Ordinal)
+            thrown
+                .Message.Split(Environment.NewLine)
+                .Where(line => line.Contains(MisshapenMark, StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal)
         );
     }
 
@@ -438,12 +575,18 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     [Fact]
     public async Task A_host_whose_subscription_queue_does_not_store_its_deliveries_fails_at_start()
     {
-        var subscription = Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>();
+        var subscription = Subscription<
+            CopyFiledNoteNotificationHandler,
+            NoteFiledForCopyDomainEvent
+        >();
         await using var host = AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
             new RecordedLogs(),
-            builder => builder.Services.ConfigureWolverine(wolverine => wolverine.LocalQueue(subscription).BufferedInMemory())
+            builder =>
+                builder.Services.ConfigureWolverine(wolverine =>
+                    wolverine.LocalQueue(subscription).BufferedInMemory()
+                )
         );
 
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -461,16 +604,24 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     [Fact]
     public void A_host_that_declares_notification_handlers_but_writes_no_outbox_fails_when_built()
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(["--environment", "Production"]);
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+        ]);
         // A handler with no dependency: the composition checks' container is validated when it is built.
-        builder.Services.AddPouryaKitNotificationHandlers(typeof(Unowned.UnownedNotificationHandler).Assembly);
+        builder.Services.AddPouryaKitNotificationHandlers(
+            typeof(Unowned.UnownedNotificationHandler).Assembly
+        );
         // The transport-neutral overload, which installs the composition checks: Wolverine runs, but no Unit of Work
         // writes an Outbox.
         builder.UsePouryaKitWolverine();
 
         var thrown = Assert.Throws<InvalidOperationException>(() => builder.Build());
 
-        Assert.StartsWith("Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox", thrown.Message);
+        Assert.StartsWith(
+            "Notification Handlers, Integration Events, Snapshots or delayed commands are declared, but nothing writes them to an Outbox",
+            thrown.Message
+        );
     }
 
     [Fact]
@@ -478,16 +629,23 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
     {
         var text = Unique();
         var filed = new NoteFiledForCopyDomainEvent(text);
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Production", $"--ConnectionStrings:app={Fixture.ConnectionString}"]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Production",
+            $"--ConnectionStrings:app={Fixture.ConnectionString}",
+        ]);
         builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
         // The one command it sends, by hand, and what the Stub's Notification Handlers need: its other Features need
         // the Stub Module's services, and the Kit's container is validated when it is built.
-        builder.Services.AddScoped<CommandHandler<WriteNoteRaisingCommand>, WriteNoteRaisingCommandHandler>();
+        builder.Services.AddScoped<
+            CommandHandler<WriteNoteRaisingCommand>,
+            WriteNoteRaisingCommandHandler
+        >();
         builder.Services.AddSingleton<DeliveryLog>();
         builder.Services.AddPouryaKitMailKit();
-        builder.Services.Configure<PouryaKitMailKitOptions>(builder.Configuration.GetSection("PouryaKit:Email"));
+        builder.Services.Configure<PouryaKitMailKitOptions>(
+            builder.Configuration.GetSection("PouryaKit:Email")
+        );
         builder.Services.AddPouryaKitRealtime(connectionName: "app");
         builder.Services.AddPouryaKitDapper(connectionName: "app");
         builder.Services.AddPouryaKitNotificationHandlers(typeof(StubDbContext).Assembly);
@@ -500,10 +658,15 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             async () =>
             {
                 await using var scope = host.Services.CreateAsyncScope();
-                scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
+                scope.ServiceProvider.BeginOperation(
+                    new OperationContext(Actor.System("single-module"))
+                );
                 return await scope
                     .ServiceProvider.GetRequiredService<IDispatcher>()
-                    .SendAsync(new WriteNoteRaisingCommand(text, [filed]), TestContext.Current.CancellationToken);
+                    .SendAsync(
+                        new WriteNoteRaisingCommand(text, [filed]),
+                        TestContext.Current.CancellationToken
+                    );
             },
             TestContext.Current.CancellationToken
         );
@@ -513,7 +676,12 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.False(Assert.Single(deliveries).DeadLettered);
         Assert.Equal(1L, await CopiesOfAsync(text));
         Assert.Equal(
-            [[Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>(), filed.Id]],
+            [
+                [
+                    Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>(),
+                    filed.Id,
+                ],
+            ],
             await Fixture.RowsAsync("select subscription, message_id from stub.pouryakit_receipts")
         );
     }
@@ -540,8 +708,12 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
-            [["local://stub.renamed/", typeof(UnknownSubscriptionException).FullName]],
-            await Fixture.RowsAsync("select received_at, exception_type from wolverine.wolverine_dead_letters")
+            [
+                ["local://stub.renamed/", typeof(UnknownSubscriptionException).FullName],
+            ],
+            await Fixture.RowsAsync(
+                "select received_at, exception_type from wolverine.wolverine_dead_letters"
+            )
         );
         Assert.Equal(1L, await CopiesOfAsync(text));
     }
@@ -554,8 +726,14 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         // the waits build the race, they do not wait for a delivery.
         async Task<Result> NothingAfterTheCascade()
         {
-            await Task.Delay(CascadeLateNotificationHandler.Delay * 3, TestContext.Current.CancellationToken);
-            return await stub.SendAsync(new WriteNoteCommand(Unique()), TestContext.Current.CancellationToken);
+            await Task.Delay(
+                CascadeLateNotificationHandler.Delay * 3,
+                TestContext.Current.CancellationToken
+            );
+            return await stub.SendAsync(
+                new WriteNoteCommand(Unique()),
+                TestContext.Current.CancellationToken
+            );
         }
 
         var first = Unique();
@@ -563,14 +741,20 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             new WriteNoteRaisingCommand(first, [new NoteCascadingDomainEvent(first)]),
             TestContext.Current.CancellationToken
         );
-        var nothing = await Fixture.AssertNothingSentAsync(NothingAfterTheCascade, TestContext.Current.CancellationToken);
+        var nothing = await Fixture.AssertNothingSentAsync(
+            NothingAfterTheCascade,
+            TestContext.Current.CancellationToken
+        );
         var second = Unique();
         await stub.SendAsync(
             new WriteNoteRaisingCommand(second, [new NoteCascadingDomainEvent(second)]),
             TestContext.Current.CancellationToken
         );
         var thrown = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
-            Fixture.WaitForDeliveriesAsync(NothingAfterTheCascade, TestContext.Current.CancellationToken)
+            Fixture.WaitForDeliveriesAsync(
+                NothingAfterTheCascade,
+                TestContext.Current.CancellationToken
+            )
         );
 
         Assert.True(nothing.IsSuccess);
@@ -610,16 +794,27 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             () =>
                 Fixture
                     .Gateway<StubModule>()
-                    .SendAsync(new WriteNoteRaisingCommand(text, [filed]), TestContext.Current.CancellationToken),
+                    .SendAsync(
+                        new WriteNoteRaisingCommand(text, [filed]),
+                        TestContext.Current.CancellationToken
+                    ),
             TestContext.Current.CancellationToken
         );
 
         Assert.Equal(1L, await CopiesOfAsync(text));
         Assert.Equal(
-            [[Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>(), filed.Id]],
+            [
+                [
+                    Subscription<CopyFiledNoteNotificationHandler, NoteFiledForCopyDomainEvent>(),
+                    filed.Id,
+                ],
+            ],
             await Fixture.RowsAsync("select subscription, message_id from stub.pouryakit_receipts")
         );
-        Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.pouryakit_receipts"));
+        Assert.Equal(
+            0L,
+            await Fixture.ScalarAsync<long>("select count(*) from catalog.pouryakit_receipts")
+        );
     }
 
     // What the registration says of a Notification Handler of the wrong shape, which the Misnamed assembly also holds.
@@ -631,7 +826,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
         MessageNames.SubscriptionNameOf(typeof(THandler), typeof(TDomainEvent));
 
     private Task<long> CopiesOfAsync(string text) =>
-        Fixture.ScalarAsync<long>($"select count(*) from stub.notes where text = '{CopyFiledNoteNotificationHandler.CopyOf(text)}'");
+        Fixture.ScalarAsync<long>(
+            $"select count(*) from stub.notes where text = '{CopyFiledNoteNotificationHandler.CopyOf(text)}'"
+        );
 }
 
 public sealed class MisnamedModule : IModuleDefinition

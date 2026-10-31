@@ -16,11 +16,18 @@ public sealed class ReadingStepTests
         using var scope = host.CreateScope();
 
         var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => nested ? ThingsGateway.RunOuterIgnoringAFailedQuery(dispatcher) : ThingsGateway.GetThing(dispatcher));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            nested
+                ? ThingsGateway.RunOuterIgnoringAFailedQuery(dispatcher)
+                : ThingsGateway.GetThing(dispatcher)
+        );
 
         var trace = scope.ServiceProvider.GetRequiredService<OperationTrace>().Steps;
         var query = nested ? "FindMissingThingQuery" : "GetThingQuery";
-        Assert.Equal([$"log:Threw {query} InvalidOperationException"], trace.Where(step => step.StartsWith("log:Threw", StringComparison.Ordinal)));
+        Assert.Equal(
+            [$"log:Threw {query} InvalidOperationException"],
+            trace.Where(step => step.StartsWith("log:Threw", StringComparison.Ordinal))
+        );
         Assert.DoesNotContain($"log:Succeeded {query}", trace);
         Assert.DoesNotContain($"log:Failed {query}", trace);
         Assert.True(scope.ServiceProvider.GetRequiredService<Operation>().IsRollbackOnly);
@@ -32,10 +39,14 @@ public sealed class ReadingStepTests
         var services = new ServiceCollection().AddPouryaKitCqrs(typeof(ThingsGateway).Assembly);
         services.AddScoped<OperationTrace>();
         services.AddScoped(typeof(ILogger<>), typeof(TraceLogger<>));
-        await using var host = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
+        await using var host = services.BuildServiceProvider(
+            new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true }
+        );
         using var scope = host.CreateScope();
 
-        var result = await ThingsGateway.GetThing(scope.ServiceProvider.GetRequiredService<IDispatcher>());
+        var result = await ThingsGateway.GetThing(
+            scope.ServiceProvider.GetRequiredService<IDispatcher>()
+        );
 
         Assert.Equal("thing", result.Value);
         Assert.False(scope.ServiceProvider.GetRequiredService<Operation>().IsRollbackOnly);
@@ -51,13 +62,17 @@ public sealed class ReadingStepTests
 
         var outer = operation.OnlyReading("the outer step");
         var inner = operation.OnlyReading("the inner step");
-        var refusedInside = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(dispatcher));
+        var refusedInside = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.Ping(dispatcher)
+        );
         var read = await ThingsGateway.GetThing(dispatcher);
         // Closed out of order: the inner step stays open.
         outer.Dispose();
         outer.Dispose();
         var mayChangeInInner = operation.MayChangeState;
-        var refusedInInner = await Assert.ThrowsAsync<InvalidOperationException>(() => ThingsGateway.Ping(dispatcher));
+        var refusedInInner = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ThingsGateway.Ping(dispatcher)
+        );
         inner.Dispose();
         var mayChangeAfter = operation.MayChangeState;
 
@@ -73,7 +88,10 @@ public sealed class ReadingStepTests
 
     private sealed class ReadingViolationUnitOfWork : IUnitOfWork, IReadingStateGuard
     {
-        public Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken) => command(cancellationToken);
+        public Task<Result> RunAsync(
+            Func<CancellationToken, Task<Result>> command,
+            CancellationToken cancellationToken
+        ) => command(cancellationToken);
 
         public IDisposable OnlyReading(string step) => new ReadingViolation(step);
 

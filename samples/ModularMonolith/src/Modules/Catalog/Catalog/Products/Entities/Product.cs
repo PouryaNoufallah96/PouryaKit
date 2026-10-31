@@ -36,7 +36,12 @@ internal sealed class Product : AggregateRoot<ProductId>, IAuditable, ISoftDelet
     public string? DeletedBy { get; private set; }
 
     #region product-create
-    public static Result<Product> Create(ProductId id, CategoryId categoryId, string name, string tenant)
+    public static Result<Product> Create(
+        ProductId id,
+        CategoryId categoryId,
+        string name,
+        string tenant
+    )
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(categoryId);

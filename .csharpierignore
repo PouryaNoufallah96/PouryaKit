@@ -1,0 +1,5 @@
+# EF Core writes these. The next `dotnet ef migrations add` would not match CSharpier.
+**/Migrations/
+
+# The docs site is formatted with Biome.
+website/

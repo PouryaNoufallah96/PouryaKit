@@ -11,7 +11,10 @@
     <PackageVersion Include="PouryaKit.Messaging.Wolverine" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.EFCore" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.Marten" Version="$(PouryaKitVersion)" />
-    <PackageVersion Include="PouryaKit.Messaging.Wolverine.RabbitMq" Version="$(PouryaKitVersion)" />
+    <PackageVersion
+      Include="PouryaKit.Messaging.Wolverine.RabbitMq"
+      Version="$(PouryaKitVersion)"
+    />
     <PackageVersion Include="PouryaKit.Modularity" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Observability" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Dapper" Version="$(PouryaKitVersion)" />

@@ -112,12 +112,20 @@ public sealed class ChatStub : IAsyncDisposable
     /// <summary>The names of the tools the request at <paramref name="index"/> offered the model.</summary>
     public IReadOnlyList<string> ToolsOf(int index) =>
         Requests[index].TryGetProperty("tools", out var tools)
-            ? [.. tools.EnumerateArray().Select(tool => tool.GetProperty("function").GetProperty("name").GetString()!)]
+            ?
+            [
+                .. tools
+                    .EnumerateArray()
+                    .Select(tool => tool.GetProperty("function").GetProperty("name").GetString()!),
+            ]
             : [];
 
     private async Task AnswerAsync(HttpContext http)
     {
-        var body = await JsonSerializer.DeserializeAsync<JsonElement>(http.Request.Body, cancellationToken: http.RequestAborted);
+        var body = await JsonSerializer.DeserializeAsync<JsonElement>(
+            http.Request.Body,
+            cancellationToken: http.RequestAborted
+        );
         Func<JsonElement, ChatReply>? answer;
         ChatReply? scripted;
         int call;
@@ -142,17 +150,22 @@ public sealed class ChatStub : IAsyncDisposable
         var message = new JsonObject { ["role"] = "assistant", ["content"] = reply.Content };
         if (reply.ToolCalls is { Length: > 0 } calls)
         {
-            message["tool_calls"] = new JsonArray(
-                [
-                    .. calls.Select((tool, index) => new JsonObject
-                    {
-                        ["index"] = index,
-                        ["id"] = $"call_{call}_{index}",
-                        ["type"] = "function",
-                        ["function"] = new JsonObject { ["name"] = tool.Name, ["arguments"] = JsonSerializer.Serialize(tool.Arguments) },
-                    }),
-                ]
-            );
+            message["tool_calls"] = new JsonArray([
+                .. calls.Select(
+                    (tool, index) =>
+                        new JsonObject
+                        {
+                            ["index"] = index,
+                            ["id"] = $"call_{call}_{index}",
+                            ["type"] = "function",
+                            ["function"] = new JsonObject
+                            {
+                                ["name"] = tool.Name,
+                                ["arguments"] = JsonSerializer.Serialize(tool.Arguments),
+                            },
+                        }
+                ),
+            ]);
         }
 
         var finish = reply.ToolCalls is { Length: > 0 } ? "tool_calls" : "stop";
@@ -169,8 +182,20 @@ public sealed class ChatStub : IAsyncDisposable
                 ["object"] = "chat.completion",
                 ["created"] = 0,
                 ["model"] = "stub",
-                ["choices"] = new JsonArray(new JsonObject { ["index"] = 0, ["message"] = message, ["finish_reason"] = finish }),
-                ["usage"] = new JsonObject { ["prompt_tokens"] = 1, ["completion_tokens"] = 1, ["total_tokens"] = 2 },
+                ["choices"] = new JsonArray(
+                    new JsonObject
+                    {
+                        ["index"] = 0,
+                        ["message"] = message,
+                        ["finish_reason"] = finish,
+                    }
+                ),
+                ["usage"] = new JsonObject
+                {
+                    ["prompt_tokens"] = 1,
+                    ["completion_tokens"] = 1,
+                    ["total_tokens"] = 2,
+                },
             },
             http.RequestAborted
         );
@@ -180,17 +205,25 @@ public sealed class ChatStub : IAsyncDisposable
     // little-endian bytes.
     private static async Task EmbedAsync(HttpContext http)
     {
-        var body = await JsonSerializer.DeserializeAsync<JsonElement>(http.Request.Body, cancellationToken: http.RequestAborted);
+        var body = await JsonSerializer.DeserializeAsync<JsonElement>(
+            http.Request.Body,
+            cancellationToken: http.RequestAborted
+        );
         var input = body.GetProperty("input");
-        string[] texts = input.ValueKind == JsonValueKind.Array ? [.. input.EnumerateArray().Select(text => text.GetString()!)] : [input.GetString()!];
-        var base64 = body.TryGetProperty("encoding_format", out var format) && format.GetString() == "base64";
+        string[] texts =
+            input.ValueKind == JsonValueKind.Array
+                ? [.. input.EnumerateArray().Select(text => text.GetString()!)]
+                : [input.GetString()!];
+        var base64 =
+            body.TryGetProperty("encoding_format", out var format)
+            && format.GetString() == "base64";
         await http.Response.WriteAsJsonAsync(
             new JsonObject
             {
                 ["object"] = "list",
-                ["data"] = new JsonArray(
-                    [
-                        .. texts.Select((text, index) =>
+                ["data"] = new JsonArray([
+                    .. texts.Select(
+                        (text, index) =>
                         {
                             var embedding = Embed(text);
                             return new JsonObject
@@ -198,12 +231,18 @@ public sealed class ChatStub : IAsyncDisposable
                                 ["object"] = "embedding",
                                 ["index"] = index,
                                 ["embedding"] = base64
-                                    ? JsonValue.Create(Convert.ToBase64String(MemoryMarshal.AsBytes(embedding.AsSpan())))
-                                    : new JsonArray([.. embedding.Select(value => JsonValue.Create(value))]),
+                                    ? JsonValue.Create(
+                                        Convert.ToBase64String(
+                                            MemoryMarshal.AsBytes(embedding.AsSpan())
+                                        )
+                                    )
+                                    : new JsonArray([
+                                        .. embedding.Select(value => JsonValue.Create(value)),
+                                    ]),
                             };
-                        }),
-                    ]
-                ),
+                        }
+                    ),
+                ]),
                 ["model"] = "stub",
                 ["usage"] = new JsonObject { ["prompt_tokens"] = 1, ["total_tokens"] = 1 },
             },
@@ -213,19 +252,30 @@ public sealed class ChatStub : IAsyncDisposable
 
     // A streamed answer as server-sent chunks: the text in two halves, so a run sees it arrive in parts, then the tool calls
     // and the finish reason, then the end of the stream.
-    private static async Task StreamAsync(HttpContext http, int call, JsonObject message, string finish)
+    private static async Task StreamAsync(
+        HttpContext http,
+        int call,
+        JsonObject message,
+        string finish
+    )
     {
         http.Response.ContentType = "text/event-stream";
         var content = message["content"]?.GetValue<string>();
         List<JsonObject> deltas = content is { Length: > 1 }
-            ? [new() { ["role"] = "assistant", ["content"] = content[..(content.Length / 2)] }, new() { ["content"] = content[(content.Length / 2)..] }]
+            ?
+            [
+                new() { ["role"] = "assistant", ["content"] = content[..(content.Length / 2)] },
+                new() { ["content"] = content[(content.Length / 2)..] },
+            ]
             : [new() { ["role"] = "assistant", ["content"] = content }];
         if (message["tool_calls"] is JsonArray calls)
         {
             deltas.Add(new() { ["tool_calls"] = calls.DeepClone() });
         }
 
-        foreach (var (delta, last) in deltas.Select((delta, index) => (delta, index == deltas.Count - 1)))
+        foreach (
+            var (delta, last) in deltas.Select((delta, index) => (delta, index == deltas.Count - 1))
+        )
         {
             await WriteChunkAsync(http, call, delta, last ? finish : null);
         }
@@ -233,7 +283,12 @@ public sealed class ChatStub : IAsyncDisposable
         await http.Response.WriteAsync("data: [DONE]\n\n", http.RequestAborted);
     }
 
-    private static async Task WriteChunkAsync(HttpContext http, int call, JsonObject delta, string? finish)
+    private static async Task WriteChunkAsync(
+        HttpContext http,
+        int call,
+        JsonObject delta,
+        string? finish
+    )
     {
         var chunk = new JsonObject
         {
@@ -241,7 +296,14 @@ public sealed class ChatStub : IAsyncDisposable
             ["object"] = "chat.completion.chunk",
             ["created"] = 0,
             ["model"] = "stub",
-            ["choices"] = new JsonArray(new JsonObject { ["index"] = 0, ["delta"] = delta, ["finish_reason"] = finish }),
+            ["choices"] = new JsonArray(
+                new JsonObject
+                {
+                    ["index"] = 0,
+                    ["delta"] = delta,
+                    ["finish_reason"] = finish,
+                }
+            ),
         };
         await http.Response.WriteAsync($"data: {chunk.ToJsonString()}\n\n", http.RequestAborted);
         await http.Response.Body.FlushAsync(http.RequestAborted);
@@ -257,7 +319,8 @@ public sealed record ChatReply(int Status, string? Content, ToolCall[]? ToolCall
     public static ChatReply Text(string text) => new(StatusCodes.Status200OK, text, null);
 
     /// <summary>The model asks for <paramref name="calls"/>, in one turn.</summary>
-    public static ChatReply Calls(params ToolCall[] calls) => new(StatusCodes.Status200OK, null, calls);
+    public static ChatReply Calls(params ToolCall[] calls) =>
+        new(StatusCodes.Status200OK, null, calls);
 
     /// <summary>The server fails with <paramref name="status"/>, telling the client it may retry at once.</summary>
     public static ChatReply Failure(int status) => new(status, null, null);

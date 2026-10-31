@@ -70,7 +70,8 @@ public sealed class DomainEventDrain
             {
                 var invoker = Invokers.GetOrAdd(
                     domainEvent.GetType(),
-                    static type => (Invoker)Activator.CreateInstance(typeof(Invoker<>).MakeGenericType(type))!
+                    static type =>
+                        (Invoker)Activator.CreateInstance(typeof(Invoker<>).MakeGenericType(type))!
                 );
                 await invoker.Invoke(this, domainEvent, cancellationToken);
                 if (_operation.IsRollbackOnly)
@@ -85,7 +86,11 @@ public sealed class DomainEventDrain
 
     private abstract class Invoker
     {
-        public abstract Task Invoke(DomainEventDrain drain, DomainEvent domainEvent, CancellationToken cancellationToken);
+        public abstract Task Invoke(
+            DomainEventDrain drain,
+            DomainEvent domainEvent,
+            CancellationToken cancellationToken
+        );
     }
 
     private sealed class Invoker<TDomainEvent> : Invoker

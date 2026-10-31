@@ -25,7 +25,11 @@ public sealed class ReportRendererTests
 
     private static readonly IReadOnlyList<IReadOnlyList<string>> Rows =
     [
-        .. Enumerable.Range(1, 80).Select(day => (IReadOnlyList<string>)[$"Product {day}", $"{day * 3}", $"{day * 12.5m:0.00}"]),
+        .. Enumerable
+            .Range(1, 80)
+            .Select(day =>
+                (IReadOnlyList<string>)[$"Product {day}", $"{day * 3}", $"{day * 12.5m:0.00}"]
+            ),
         ["=HYPERLINK(\"https://example.com\")", "-4", "  padded  "],
         ["-4+cmd", "+1,250.50", "@SUM(A1)"],
     ];
@@ -33,10 +37,21 @@ public sealed class ReportRendererTests
     #region monthly-sales-layout
     private static readonly ReportLayout Sales = new(
         "Monthly sales",
-        new ReportTable([new("Product"), new("Quantity", ReportAlignment.Right), new("Amount", ReportAlignment.Right)], Rows)
+        new ReportTable(
+            [
+                new("Product"),
+                new("Quantity", ReportAlignment.Right),
+                new("Amount", ReportAlignment.Right),
+            ],
+            Rows
+        )
     )
     {
-        Introduction = [new ReportHeading("October 2026"), new ReportParagraph("Every order the shop settled this month.")],
+        Introduction =
+        [
+            new ReportHeading("October 2026"),
+            new ReportParagraph("Every order the shop settled this month."),
+        ],
         PageHeader = "Acme Shop",
         PageFooter = "Confidential",
         Branding = new() { Logo = Logo, Accent = new(0x1F, 0x4E, 0x79) },
@@ -52,7 +67,10 @@ public sealed class ReportRendererTests
 
         Assert.Equal(("application/pdf", ".pdf"), (report.ContentType, report.FileExtension));
         Assert.StartsWith("%PDF-", Encoding.ASCII.GetString(report.Content, 0, 5));
-        using var pdf = PdfReader.Open(new MemoryStream(report.Content), PdfDocumentOpenMode.Import);
+        using var pdf = PdfReader.Open(
+            new MemoryStream(report.Content),
+            PdfDocumentOpenMode.Import
+        );
         Assert.Equal(3, pdf.PageCount);
         Assert.Equal("Monthly sales", pdf.Info.Title);
         Assert.NotNull(pdf.Pages[0].Resources.Elements.GetDictionary("/XObject"));
@@ -61,7 +79,14 @@ public sealed class ReportRendererTests
         {
             var fonts = page.Resources.Elements.GetDictionary("/Font")!;
             Assert.NotEmpty(fonts.Elements.Keys);
-            Assert.All(fonts.Elements.Keys, key => Assert.True(Embedded(fonts.Elements.GetDictionary(key)!), $"{key} is not embedded."));
+            Assert.All(
+                fonts.Elements.Keys,
+                key =>
+                    Assert.True(
+                        Embedded(fonts.Elements.GetDictionary(key)!),
+                        $"{key} is not embedded."
+                    )
+            );
         }
     }
 
@@ -71,13 +96,22 @@ public sealed class ReportRendererTests
         var report = _renderer.Render(Sales, ReportFormat.Spreadsheet).Value;
 
         Assert.Equal(".xlsx", report.FileExtension);
-        using var spreadsheet = SpreadsheetDocument.Open(new MemoryStream(report.Content), isEditable: false);
-        Assert.Empty(new OpenXmlValidator().Validate(spreadsheet, TestContext.Current.CancellationToken));
+        using var spreadsheet = SpreadsheetDocument.Open(
+            new MemoryStream(report.Content),
+            isEditable: false
+        );
+        Assert.Empty(
+            new OpenXmlValidator().Validate(spreadsheet, TestContext.Current.CancellationToken)
+        );
         var workbook = spreadsheet.WorkbookPart!;
         var sheet = Assert.Single(workbook.Workbook!.Sheets!.Elements<Sheet>());
         Assert.Equal("Report", sheet.Name?.Value);
         var worksheet = ((WorksheetPart)workbook.GetPartById(sheet.Id!.Value!)).Worksheet!;
-        IReadOnlyList<IReadOnlyList<string>> expected = [["Product", "Quantity", "Amount"], .. Rows];
+        IReadOnlyList<IReadOnlyList<string>> expected =
+        [
+            ["Product", "Quantity", "Amount"],
+            .. Rows,
+        ];
         Assert.Equal(expected, Cells(worksheet));
         Assert.Empty(worksheet.Descendants<CellFormula>());
     }
@@ -102,29 +136,78 @@ public sealed class ReportRendererTests
     [Fact]
     public void The_empty_rows_of_a_one_column_csv_read_back()
     {
-        var notes = new ReportLayout("Notes", new ReportTable([new("Note")], [[""], ["a"], [""], ["b"], [""]]));
+        var notes = new ReportLayout(
+            "Notes",
+            new ReportTable(
+                [new("Note")],
+                [
+                    [""],
+                    ["a"],
+                    [""],
+                    ["b"],
+                    [""],
+                ]
+            )
+        );
 
-        IReadOnlyList<IReadOnlyList<string>> expected = [["Note"], [""], ["a"], [""], ["b"], [""]];
+        IReadOnlyList<IReadOnlyList<string>> expected =
+        [
+            ["Note"],
+            [""],
+            ["a"],
+            [""],
+            ["b"],
+            [""],
+        ];
         Assert.Equal(expected, Records(_renderer.Render(notes, ReportFormat.Csv).Value));
     }
 
     [Fact]
     public void The_spreadsheet_encodes_escape_like_text_and_control_characters_so_they_read_back_verbatim()
     {
-        IReadOnlyList<IReadOnlyList<string>> rows = [["Site_x0020_Column"], ["a\u0001b"], ["_x12_ and _xZZZZ_"], ["\U0001F600"]];
+        IReadOnlyList<IReadOnlyList<string>> rows =
+        [
+            ["Site_x0020_Column"],
+            ["a\u0001b"],
+            ["_x12_ and _xZZZZ_"],
+            ["\U0001F600"],
+        ];
         var codes = new ReportLayout("Codes", new ReportTable([new("Code_x0041_")], rows));
 
         var report = _renderer.Render(codes, ReportFormat.Spreadsheet).Value;
 
-        using var spreadsheet = SpreadsheetDocument.Open(new MemoryStream(report.Content), isEditable: false);
-        Assert.Empty(new OpenXmlValidator().Validate(spreadsheet, TestContext.Current.CancellationToken));
+        using var spreadsheet = SpreadsheetDocument.Open(
+            new MemoryStream(report.Content),
+            isEditable: false
+        );
+        Assert.Empty(
+            new OpenXmlValidator().Validate(spreadsheet, TestContext.Current.CancellationToken)
+        );
         var cells = Cells(spreadsheet.WorkbookPart!.WorksheetParts.Single().Worksheet!);
         Assert.Equal("Site_x005F_x0020_Column", cells[1][0]);
         // A spreadsheet application reads _xHHHH_ as the character HHHH (ECMA-376 Part 1, 22.9.2.19).
-        IReadOnlyList<IReadOnlyList<string>> expected = [["Code_x0041_"], .. rows];
+        IReadOnlyList<IReadOnlyList<string>> expected =
+        [
+            ["Code_x0041_"],
+            .. rows,
+        ];
         Assert.Equal(
             expected,
-            [.. cells.Select(row => (IReadOnlyList<string>)[.. row.Select(cell => Regex.Replace(cell, "_x([0-9A-Fa-f]{4})_", hex => ((char)Convert.ToInt32(hex.Groups[1].Value, 16)).ToString()))])]
+            [
+                .. cells.Select(row =>
+                    (IReadOnlyList<string>)
+                        [
+                            .. row.Select(cell =>
+                                Regex.Replace(
+                                    cell,
+                                    "_x([0-9A-Fa-f]{4})_",
+                                    hex =>
+                                        ((char)Convert.ToInt32(hex.Groups[1].Value, 16)).ToString()
+                                )
+                            ),
+                        ]
+                ),
+            ]
         );
     }
 
@@ -132,10 +215,18 @@ public sealed class ReportRendererTests
     [InlineData(ReportFormat.Pdf)]
     [InlineData(ReportFormat.Csv)]
     [InlineData(ReportFormat.Spreadsheet)]
-    public void A_table_without_columns_or_with_a_row_of_another_width_renders_nothing(ReportFormat format)
+    public void A_table_without_columns_or_with_a_row_of_another_width_renders_nothing(
+        ReportFormat format
+    )
     {
-        var shortRow = Sales with { Table = Sales.Table with { Rows = [.. Rows, ["Only a product"]] } };
-        var wideRow = Sales with { Table = Sales.Table with { Rows = [.. Rows, ["Tea", "1", "2.00", "extra"]] } };
+        var shortRow = Sales with
+        {
+            Table = Sales.Table with { Rows = [.. Rows, ["Only a product"]] },
+        };
+        var wideRow = Sales with
+        {
+            Table = Sales.Table with { Rows = [.. Rows, ["Tea", "1", "2.00", "extra"]] },
+        };
         var noColumns = Sales with { Table = new ReportTable([], []) };
 
         Assert.Equal([ReportErrors.TableShape], _renderer.Render(shortRow, format).Errors);
@@ -147,47 +238,104 @@ public sealed class ReportRendererTests
     public void A_logo_that_is_not_a_readable_png_or_jpeg_renders_nothing()
     {
         // A GIF, a PNG cut inside its header and a JPEG cut before its frame header: MigraDoc would draw a placeholder.
-        byte[][] unreadable = [Encoding.ASCII.GetBytes("GIF89a"), Logo[..(Logo.Length / 2)], Jpeg[..40]];
+        byte[][] unreadable =
+        [
+            Encoding.ASCII.GetBytes("GIF89a"),
+            Logo[..(Logo.Length / 2)],
+            Jpeg[..40],
+        ];
         foreach (var logo in unreadable)
         {
-            Assert.Equal([ReportErrors.LogoFormat], _renderer.Render(Sales with { Branding = new() { Logo = logo } }, ReportFormat.Pdf).Errors);
+            Assert.Equal(
+                [ReportErrors.LogoFormat],
+                _renderer
+                    .Render(Sales with { Branding = new() { Logo = logo } }, ReportFormat.Pdf)
+                    .Errors
+            );
         }
 
-        Assert.True(_renderer.Render(Sales with { Branding = new() { Logo = Jpeg } }, ReportFormat.Pdf).IsSuccess);
+        Assert.True(
+            _renderer
+                .Render(Sales with { Branding = new() { Logo = Jpeg } }, ReportFormat.Pdf)
+                .IsSuccess
+        );
         // A CSV and a spreadsheet hold the table alone, so the same logo stops neither.
-        Assert.True(_renderer.Render(Sales with { Branding = new() { Logo = unreadable[0] } }, ReportFormat.Csv).IsSuccess);
-        Assert.True(_renderer.Render(Sales with { Branding = new() { Logo = unreadable[0] } }, ReportFormat.Spreadsheet).IsSuccess);
+        Assert.True(
+            _renderer
+                .Render(Sales with { Branding = new() { Logo = unreadable[0] } }, ReportFormat.Csv)
+                .IsSuccess
+        );
+        Assert.True(
+            _renderer
+                .Render(
+                    Sales with
+                    {
+                        Branding = new() { Logo = unreadable[0] },
+                    },
+                    ReportFormat.Spreadsheet
+                )
+                .IsSuccess
+        );
     }
 
     [Fact]
     public async Task One_renderer_renders_pdfs_for_concurrent_callers()
     {
         var renders = await Task.WhenAll(
-            Enumerable.Range(0, 8).Select(_ => Task.Run(() => _renderer.Render(Sales, ReportFormat.Pdf), TestContext.Current.CancellationToken))
+            Enumerable
+                .Range(0, 8)
+                .Select(_ =>
+                    Task.Run(
+                        () => _renderer.Render(Sales, ReportFormat.Pdf),
+                        TestContext.Current.CancellationToken
+                    )
+                )
         );
 
-        Assert.All(renders, render => Assert.Equal(3, PdfReader.Open(new MemoryStream(render.Value.Content), PdfDocumentOpenMode.Import).PageCount));
+        Assert.All(
+            renders,
+            render =>
+                Assert.Equal(
+                    3,
+                    PdfReader
+                        .Open(new MemoryStream(render.Value.Content), PdfDocumentOpenMode.Import)
+                        .PageCount
+                )
+        );
     }
 
     private static List<IReadOnlyList<string>> Records(RenderedReport report)
     {
-        using var csv = new CsvReader(new StreamReader(new MemoryStream(report.Content)), CultureInfo.InvariantCulture);
+        using var csv = new CsvReader(
+            new StreamReader(new MemoryStream(report.Content)),
+            CultureInfo.InvariantCulture
+        );
         var records = new List<IReadOnlyList<string>>();
         while (csv.Read())
         {
-            records.Add([.. Enumerable.Range(0, csv.Parser.Count).Select(index => csv.GetField(index)!)]);
+            records.Add([
+                .. Enumerable.Range(0, csv.Parser.Count).Select(index => csv.GetField(index)!),
+            ]);
         }
 
         return records;
     }
 
     private static List<IReadOnlyList<string>> Cells(Worksheet worksheet) =>
-        [.. worksheet.Descendants<Row>().Select(row => (IReadOnlyList<string>)[.. row.Elements<Cell>().Select(cell => cell.InlineString!.InnerText)])];
+        [
+            .. worksheet
+                .Descendants<Row>()
+                .Select(row =>
+                    (IReadOnlyList<string>)
+                        [.. row.Elements<Cell>().Select(cell => cell.InlineString!.InnerText)]
+                ),
+        ];
 
     // A TrueType font is embedded when its descriptor, or that of the CID font a composite font descends to, holds the
     // font program.
     private static bool Embedded(PdfDictionary font) =>
         font.Elements.GetArray("/DescendantFonts") is { Elements.Count: > 0 } descendants
             ? Embedded(descendants.Elements.GetDictionary(0)!)
-            : font.Elements.GetDictionary("/FontDescriptor")?.Elements.ContainsKey("/FontFile2") == true;
+            : font.Elements.GetDictionary("/FontDescriptor")?.Elements.ContainsKey("/FontFile2")
+                == true;
 }

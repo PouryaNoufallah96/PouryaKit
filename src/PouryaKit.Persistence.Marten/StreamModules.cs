@@ -22,7 +22,12 @@ public sealed class StreamModules
     public static StreamModules In(IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        if (services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(StreamModules)) is { ImplementationInstance: StreamModules existing })
+        if (
+            services.FirstOrDefault(descriptor =>
+                descriptor.ServiceType == typeof(StreamModules)
+            ) is
+            { ImplementationInstance: StreamModules existing }
+        )
         {
             return existing;
         }

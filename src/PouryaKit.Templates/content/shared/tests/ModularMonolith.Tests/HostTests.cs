@@ -32,22 +32,40 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         using var client = Fixture.ClientAs("ada");
         var category = Guid.CreateVersion7();
         var product = Guid.CreateVersion7();
-        var body = new { productId = product, categoryId = category, name = "Desk lamp" };
+        var body = new
+        {
+            productId = product,
+            categoryId = category,
+            name = "Desk lamp",
+        };
         var key = Guid.CreateVersion7().ToString();
 
-        var lamps = await client.PostAsJsonAsync("/catalog/categories", new { categoryId = category, name = "Lamps" }, cancellationToken);
+        var lamps = await client.PostAsJsonAsync(
+            "/catalog/categories",
+            new { categoryId = category, name = "Lamps" },
+            cancellationToken
+        );
         var first = await App.PostAsync(client, "/catalog/products", body, key, cancellationToken);
         var repeat = await App.PostAsync(client, "/catalog/products", body, key, cancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, lamps.StatusCode);
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         Assert.Equal($"/catalog/v2/products/{product}", first.Headers.Location?.OriginalString);
-        Assert.Equal($$"""{"id":"{{product}}"}""", await first.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Equal(
+            $$"""{"id":"{{product}}"}""",
+            await first.Content.ReadAsStringAsync(cancellationToken)
+        );
         Assert.Equal(HttpStatusCode.Created, repeat.StatusCode);
         Assert.Equal(first.Headers.Location, repeat.Headers.Location);
-        Assert.Equal($$"""{"id":"{{product}}"}""", await repeat.Content.ReadAsStringAsync(cancellationToken));
+        Assert.Equal(
+            $$"""{"id":"{{product}}"}""",
+            await repeat.Content.ReadAsStringAsync(cancellationToken)
+        );
 
-        var read = await client.GetFromJsonAsync<JsonElement>(first.Headers.Location, cancellationToken);
+        var read = await client.GetFromJsonAsync<JsonElement>(
+            first.Headers.Location,
+            cancellationToken
+        );
         Assert.Equal("Desk lamp", read.GetProperty("name").GetString());
         Assert.Equal(category, read.GetProperty("categoryId").GetGuid());
 
@@ -57,7 +75,10 @@ public sealed class HostTests(App app) : HostTest<App>(app)
             cancellationToken
         );
         Assert.Equal(1, page.GetProperty("total").GetInt32());
-        Assert.Equal(product, Assert.Single(page.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        Assert.Equal(
+            product,
+            Assert.Single(page.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid()
+        );
     }
 
     // The service defaults map /alive in every environment, so the Host is started as it is deployed, in Production,
@@ -69,7 +90,10 @@ public sealed class HostTests(App app) : HostTest<App>(app)
     public async Task The_host_answers_alive_through_the_service_defaults()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await using var deployed = App.ComposeHost(Environments.Production, Fixture.ConnectionString);
+        await using var deployed = App.ComposeHost(
+            Environments.Production,
+            Fixture.ConnectionString
+        );
         await HostFixture.StartHostAsync(deployed, cancellationToken);
         using var client = deployed.GetTestClient();
 
@@ -97,8 +121,10 @@ public sealed class HostTests(App app) : HostTest<App>(app)
                             .Services.Where(descriptor =>
                                 !descriptor.IsKeyedService
                                 && descriptor.ServiceType.IsGenericType
-                                && descriptor.ServiceType.GetGenericTypeDefinition() == typeof(IAuthorizer<>)
-                                && descriptor.ImplementationType?.Assembly == typeof(RequiresPermissionAttribute).Assembly
+                                && descriptor.ServiceType.GetGenericTypeDefinition()
+                                    == typeof(IAuthorizer<>)
+                                && descriptor.ImplementationType?.Assembly
+                                    == typeof(RequiresPermissionAttribute).Assembly
                             )
                             .ToList()
                     )
@@ -109,7 +135,10 @@ public sealed class HostTests(App app) : HostTest<App>(app)
             )
         );
 
-        Assert.Contains("RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered", thrown.Message);
+        Assert.Contains(
+            "RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered",
+            thrown.Message
+        );
     }
 
     // With ConnectionStrings:broker the Host joins RabbitMQ under its service name, its queue on the broker, which it
@@ -142,9 +171,12 @@ public sealed class App : HostFixture
 {
     private const string Issuer = "https://issuer.test";
     private const string Audience = "app";
-    private static readonly SymmetricSecurityKey SigningKey = new(RandomNumberGenerator.GetBytes(32));
+    private static readonly SymmetricSecurityKey SigningKey = new(
+        RandomNumberGenerator.GetBytes(32)
+    );
 
-    protected override IHost CreateHost(string connectionString) => ComposeHost(Environments.Development, connectionString);
+    protected override IHost CreateHost(string connectionString) =>
+        ComposeHost(Environments.Development, connectionString);
 
     /// <summary>
     /// The application in <paramref name="environment"/> on <paramref name="connectionString"/>, served in memory, built
@@ -158,18 +190,16 @@ public sealed class App : HostFixture
         params string[] arguments
     )
     {
-        var builder = AppHost.CreateBuilder(
-            [
-                "--environment",
-                environment,
-                $"--ConnectionStrings:app={connectionString}",
-                $"--Authentication:Schemes:Bearer:ValidIssuer={Issuer}",
-                $"--Authentication:Schemes:Bearer:ValidAudiences:0={Audience}",
-                $"--Authentication:Schemes:Bearer:SigningKeys:0:Issuer={Issuer}",
-                $"--Authentication:Schemes:Bearer:SigningKeys:0:Value={Convert.ToBase64String(SigningKey.Key)}",
-                .. arguments,
-            ]
-        );
+        var builder = AppHost.CreateBuilder([
+            "--environment",
+            environment,
+            $"--ConnectionStrings:app={connectionString}",
+            $"--Authentication:Schemes:Bearer:ValidIssuer={Issuer}",
+            $"--Authentication:Schemes:Bearer:ValidAudiences:0={Audience}",
+            $"--Authentication:Schemes:Bearer:SigningKeys:0:Issuer={Issuer}",
+            $"--Authentication:Schemes:Bearer:SigningKeys:0:Value={Convert.ToBase64String(SigningKey.Key)}",
+            .. arguments,
+        ]);
         builder.WebHost.UseTestServer();
         configure?.Invoke(builder);
         return AppHost.Build(builder);
@@ -193,21 +223,40 @@ public sealed class App : HostFixture
                 {
                     Issuer = Issuer,
                     Audience = Audience,
-                    Claims = new Dictionary<string, object> { ["sub"] = person, ["tenant"] = Tenant },
+                    Claims = new Dictionary<string, object>
+                    {
+                        ["sub"] = person,
+                        ["tenant"] = Tenant,
+                    },
                     Expires = DateTime.UtcNow.AddMinutes(5),
-                    SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha256),
+                    SigningCredentials = new SigningCredentials(
+                        SigningKey,
+                        SecurityAlgorithms.HmacSha256
+                    ),
                 }
             );
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                token
+            );
         }
 
         return client;
     }
 
     /// <summary>POSTs <paramref name="value"/> as JSON with the <c>Idempotency-Key</c> <paramref name="key"/>.</summary>
-    public static async Task<HttpResponseMessage> PostAsync<T>(HttpClient client, string uri, T value, string key, CancellationToken cancellationToken)
+    public static async Task<HttpResponseMessage> PostAsync<T>(
+        HttpClient client,
+        string uri,
+        T value,
+        string key,
+        CancellationToken cancellationToken
+    )
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, uri) { Content = JsonContent.Create(value) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, uri)
+        {
+            Content = JsonContent.Create(value),
+        };
         request.Headers.Add("Idempotency-Key", key);
         return await client.SendAsync(request, cancellationToken);
     }

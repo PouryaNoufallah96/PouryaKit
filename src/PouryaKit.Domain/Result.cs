@@ -36,7 +36,8 @@ public class Result
     public static implicit operator Result(Error error) => new(OneError(error));
 
     /// <summary>A failure with <paramref name="errors"/>, which hold at least one Error and no null.</summary>
-    public static implicit operator Result(ImmutableArray<Error> errors) => new(FailureErrors(errors));
+    public static implicit operator Result(ImmutableArray<Error> errors) =>
+        new(FailureErrors(errors));
 
     private protected static ImmutableArray<Error> OneError(Error error)
     {
@@ -49,12 +50,18 @@ public class Result
     {
         if (errors.IsDefaultOrEmpty)
         {
-            throw new ArgumentException("A failed Result needs at least one Error.", nameof(errors));
+            throw new ArgumentException(
+                "A failed Result needs at least one Error.",
+                nameof(errors)
+            );
         }
 
         if (errors.Contains(null!))
         {
-            throw new ArgumentException("A failed Result cannot contain a null Error.", nameof(errors));
+            throw new ArgumentException(
+                "A failed Result cannot contain a null Error.",
+                nameof(errors)
+            );
         }
 
         return errors;
@@ -85,7 +92,11 @@ public sealed class Result<T> : Result
     public T Value
     {
         get =>
-            IsSuccess ? field! : throw new InvalidOperationException("A failed Result has no value; read its Errors.");
+            IsSuccess
+                ? field!
+                : throw new InvalidOperationException(
+                    "A failed Result has no value; read its Errors."
+                );
     }
 
     /// <summary>A success holding <paramref name="value"/>, which is never null.</summary>
@@ -95,5 +106,6 @@ public sealed class Result<T> : Result
     public static implicit operator Result<T>(Error error) => new(OneError(error));
 
     /// <summary>A failure with <paramref name="errors"/>, which hold at least one Error and no null.</summary>
-    public static implicit operator Result<T>(ImmutableArray<Error> errors) => new(FailureErrors(errors));
+    public static implicit operator Result<T>(ImmutableArray<Error> errors) =>
+        new(FailureErrors(errors));
 }

@@ -13,7 +13,9 @@ namespace PouryaKit.Localization;
 // exception handler and endpoints run in it: of English and Persian, the one with the highest quality among the first 16
 // values of the Accept-Language header, ties in listed order, a value of quality 0 never; English when they name neither or it
 // is missing. The header is the only provider, so no query string or cookie changes it.
-internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizationOptions>, IStartupFilter
+internal sealed class HeaderRequestCulture
+    : IConfigureOptions<RequestLocalizationOptions>,
+        IStartupFilter
 {
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en");
     private static readonly CultureInfo Persian = CultureInfo.GetCultureInfo("fa");
@@ -41,7 +43,9 @@ internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizati
     {
         private const int ValuesToTry = 16;
 
-        public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)
+        public override Task<ProviderCultureResult?> DetermineProviderCultureResult(
+            HttpContext httpContext
+        )
         {
             ArgumentNullException.ThrowIfNull(httpContext);
 
@@ -51,10 +55,15 @@ internal sealed class HeaderRequestCulture : IConfigureOptions<RequestLocalizati
                     .Request.GetTypedHeaders()
                     .AcceptLanguage.Take(ValuesToTry)
                     .Where(value => value.Quality is null or > 0)
-                    .OrderByDescending(value => value, StringWithQualityHeaderValueComparer.QualityComparer)
+                    .OrderByDescending(
+                        value => value,
+                        StringWithQualityHeaderValueComparer.QualityComparer
+                    )
                     .Select(value => value.Value),
             ];
-            return acceptable is [] ? NullProviderCultureResult : Task.FromResult<ProviderCultureResult?>(new(acceptable));
+            return acceptable is []
+                ? NullProviderCultureResult
+                : Task.FromResult<ProviderCultureResult?>(new(acceptable));
         }
     }
 }

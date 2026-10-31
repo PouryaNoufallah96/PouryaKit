@@ -18,7 +18,14 @@ internal sealed class AskAboutProductsEndpoint : IEndpoint
                 OperationContext context,
                 IGatewayProcessor<CatalogModule> catalog,
                 CancellationToken cancellationToken
-            ) => (await catalog.SendAsync(new AskAboutProductsCommand(body.Question), context, cancellationToken)).ToHttpResult()
+            ) =>
+                (
+                    await catalog.SendAsync(
+                        new AskAboutProductsCommand(body.Question),
+                        context,
+                        cancellationToken
+                    )
+                ).ToHttpResult()
         );
 }
 

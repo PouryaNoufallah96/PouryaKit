@@ -8,7 +8,10 @@
     <PackageVersion Include="PouryaKit.Caching" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Grpc" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Messaging.Wolverine.EFCore" Version="$(PouryaKitVersion)" />
-    <PackageVersion Include="PouryaKit.Messaging.Wolverine.RabbitMq" Version="$(PouryaKitVersion)" />
+    <PackageVersion
+      Include="PouryaKit.Messaging.Wolverine.RabbitMq"
+      Version="$(PouryaKitVersion)"
+    />
     <PackageVersion Include="PouryaKit.Observability" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Dapper" Version="$(PouryaKitVersion)" />
     <PackageVersion Include="PouryaKit.Persistence.Postgres" Version="$(PouryaKitVersion)" />

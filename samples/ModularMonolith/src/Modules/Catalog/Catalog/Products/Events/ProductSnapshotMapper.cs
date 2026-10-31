@@ -9,8 +9,10 @@ namespace Catalog.Products.Events;
 // reaction ran and the version is the one being committed; it only reads.
 internal sealed class ProductSnapshotMapper : ISnapshotMapper<Product, ProductSnapshotV1>
 {
-    public ProductSnapshotV1 Map(Product product) => new(product.Id.Value, product.Name, IsRemoved: false, product.Version);
+    public ProductSnapshotV1 Map(Product product) =>
+        new(product.Id.Value, product.Name, IsRemoved: false, product.Version);
 
-    public ProductSnapshotV1 Tombstone(Product product) => new(product.Id.Value, product.Name, IsRemoved: true, product.Version);
+    public ProductSnapshotV1 Tombstone(Product product) =>
+        new(product.Id.Value, product.Name, IsRemoved: true, product.Version);
 }
 #endregion

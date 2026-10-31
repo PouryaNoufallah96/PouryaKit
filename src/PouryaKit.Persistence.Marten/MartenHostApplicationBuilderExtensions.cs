@@ -29,7 +29,9 @@ public static class MartenHostApplicationBuilderExtensions
         /// Outbox calls that one instead, or fails when it is built if it has Stream Modules, naming them. Throws when the configuration has no such
         /// connection string or leaves it blank, and when the Host already has its Marten store.
         /// </summary>
-        public MartenServiceCollectionExtensions.MartenConfigurationExpression AddPouryaKitMarten(string connectionName)
+        public MartenServiceCollectionExtensions.MartenConfigurationExpression AddPouryaKitMarten(
+            string connectionName
+        )
         {
             ArgumentNullException.ThrowIfNull(builder);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
@@ -41,9 +43,13 @@ public static class MartenHostApplicationBuilderExtensions
                 );
             }
 
-            if (builder.Services.Any(descriptor => descriptor.ServiceType == typeof(IDocumentStore)))
+            if (
+                builder.Services.Any(descriptor => descriptor.ServiceType == typeof(IDocumentStore))
+            )
             {
-                throw new InvalidOperationException("The Host already has its Marten store; a Host keeps one, which every Stream Module writes in.");
+                throw new InvalidOperationException(
+                    "The Host already has its Marten store; a Host keeps one, which every Stream Module writes in."
+                );
             }
 
             StreamModules.In(builder.Services);
@@ -55,7 +61,9 @@ public static class MartenHostApplicationBuilderExtensions
                 {
                     options.Connection(connectionString);
                     options.DatabaseSchemaName = Schema;
-                    options.UseSystemTextJsonForSerialization(configure: json => json.UsePouryaKitJson());
+                    options.UseSystemTextJsonForSerialization(configure: json =>
+                        json.UsePouryaKitJson()
+                    );
                     options.Events.TenancyStyle = TenancyStyle.Conjoined;
                     options.Policies.AllDocumentsAreMultiTenanted();
                 })

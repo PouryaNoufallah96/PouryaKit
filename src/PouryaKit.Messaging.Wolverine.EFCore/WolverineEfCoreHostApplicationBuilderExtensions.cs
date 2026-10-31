@@ -37,7 +37,11 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
         /// the store-neutral half, and <c>UsePouryaKitWolverine()</c> of <c>PouryaKit.Messaging.Wolverine</c> do applies
         /// too; <paramref name="configure"/> adds Host-specific Wolverine configuration, as it does there.
         /// </summary>
-        public IHostApplicationBuilder UsePouryaKitWolverine(string connectionName, string schema = "wolverine", Action<WolverineOptions>? configure = null)
+        public IHostApplicationBuilder UsePouryaKitWolverine(
+            string connectionName,
+            string schema = "wolverine",
+            Action<WolverineOptions>? configure = null
+        )
         {
             ArgumentNullException.ThrowIfNull(builder);
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
@@ -45,22 +49,33 @@ public static class WolverineEfCoreHostApplicationBuilderExtensions
 
             builder.UsePouryaKitMessageStore(
                 connectionName,
-                (wolverine, connectionString) => wolverine.PersistMessagesWithPostgresql(connectionString, schema),
+                (wolverine, connectionString) =>
+                    wolverine.PersistMessagesWithPostgresql(connectionString, schema),
                 configure
             );
             builder.Services.TryAddScoped<WolverineOutbox>();
-            builder.Services.TryAddScoped<IUnitOfWorkOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
-            builder.Services.TryAddScoped<IOutbox>(scope => scope.GetRequiredService<WolverineOutbox>());
+            builder.Services.TryAddScoped<IUnitOfWorkOutbox>(scope =>
+                scope.GetRequiredService<WolverineOutbox>()
+            );
+            builder.Services.TryAddScoped<IOutbox>(scope =>
+                scope.GetRequiredService<WolverineOutbox>()
+            );
             // The Receipts of an application without Modules, and of every Module that keys none of its own.
             builder.Services.TryAddScoped<IReceipts, EfReceipts>();
             builder.Services.TryAddKeyedScoped<IReceipts, EfReceipts>(KeyedService.AnyKey);
             IModuleServices.RouteByModule<IReceipts>(builder.Services);
             builder.Services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<ICompositionCheck>(
-                    new MessageStoreDatabaseCheck(connectionName, builder.Configuration.GetConnectionString(connectionName)!, schema)
+                    new MessageStoreDatabaseCheck(
+                        connectionName,
+                        builder.Configuration.GetConnectionString(connectionName)!,
+                        schema
+                    )
                 )
             );
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SnapshotKeyTenancyCheck>());
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, SnapshotKeyTenancyCheck>()
+            );
             return builder;
         }
     }

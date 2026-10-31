@@ -7,4 +7,10 @@ namespace Catalog.Contracts.Products.Events.V2;
 /// version it subscribed to. <paramref name="Id"/> and <paramref name="OccurredOn"/> are the identity and the time of
 /// the Domain Event it follows from, the same as v1's.
 /// </summary>
-public sealed record ProductCreatedV2(Guid Id, DateTimeOffset OccurredOn, Guid ProductId, string Name, Guid CategoryId);
+public sealed record ProductCreatedV2(
+    Guid Id,
+    DateTimeOffset OccurredOn,
+    Guid ProductId,
+    string Name,
+    Guid CategoryId
+);

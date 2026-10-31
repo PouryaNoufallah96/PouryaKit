@@ -24,7 +24,10 @@ internal sealed class ApplyRetentionCommandHandler(
 {
     private const int Batch = 100;
 
-    public override async Task<Result> Handle(ApplyRetentionCommand command, CancellationToken cancellationToken)
+    public override async Task<Result> Handle(
+        ApplyRetentionCommand command,
+        CancellationToken cancellationToken
+    )
     {
         foreach (var expired in await jobs.ListAsync(new ExpiredJobs(), cancellationToken))
         {
@@ -51,12 +54,19 @@ internal sealed class ApplyRetentionCommandHandler(
 
     private sealed class ExpiredJobs : Specification<ReportJob>
     {
-        public ExpiredJobs() => Query.Where(job => job.State == ReportJobState.Expired).OrderBy(job => job.ExpiresAt).Take(Batch);
+        public ExpiredJobs() =>
+            Query
+                .Where(job => job.State == ReportJobState.Expired)
+                .OrderBy(job => job.ExpiresAt)
+                .Take(Batch);
     }
 
     private sealed class JobsPastExpiry : Specification<ReportJob>
     {
         public JobsPastExpiry(DateTimeOffset now) =>
-            Query.Where(job => job.State != ReportJobState.Expired && job.ExpiresAt <= now).OrderBy(job => job.ExpiresAt).Take(Batch);
+            Query
+                .Where(job => job.State != ReportJobState.Expired && job.ExpiresAt <= now)
+                .OrderBy(job => job.ExpiresAt)
+                .Take(Batch);
     }
 }

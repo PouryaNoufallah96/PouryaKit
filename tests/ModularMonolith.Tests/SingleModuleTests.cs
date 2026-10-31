@@ -32,7 +32,9 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     [Fact]
     public async Task A_query_sent_through_the_dispatcher_reads_without_the_modularity_package()
     {
-        var id = await Fixture.ScalarAsync<long>("insert into stub.notes (text, version) values ('solo', 0) returning id");
+        var id = await Fixture.ScalarAsync<long>(
+            "insert into stub.notes (text, version) values ('solo', 0) returning id"
+        );
         await using var services = SingleModuleServices();
         await using var scope = services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
@@ -59,7 +61,10 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             folderScope
                 .ServiceProvider.GetRequiredService<IDispatcher>()
-                .SendAsync(new CreateFolderCommand(Guid.CreateVersion7()), TestContext.Current.CancellationToken)
+                .SendAsync(
+                    new CreateFolderCommand(Guid.CreateVersion7()),
+                    TestContext.Current.CancellationToken
+                )
         );
 
         Assert.True(note.IsSuccess);
@@ -76,28 +81,47 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         var binder = Guid.CreateVersion7();
         await using (var begun = services.CreateAsyncScope())
         {
-            begun.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module"), "north"));
+            begun.ServiceProvider.BeginOperation(
+                new OperationContext(Actor.System("single-module"), "north")
+            );
             Assert.True(
-                (await begun.ServiceProvider.GetRequiredService<IDispatcher>().SendAsync(new CreateBinderCommand(binder, "North", []), TestContext.Current.CancellationToken)).IsSuccess
+                (
+                    await begun
+                        .ServiceProvider.GetRequiredService<IDispatcher>()
+                        .SendAsync(
+                            new CreateBinderCommand(binder, "North", []),
+                            TestContext.Current.CancellationToken
+                        )
+                ).IsSuccess
             );
         }
 
         await using var scope = services.CreateAsyncScope();
         var written = await scope
             .ServiceProvider.GetRequiredService<IDispatcher>()
-            .SendAsync(new WriteNoteBesideBinderCommand(binder, "beside"), TestContext.Current.CancellationToken);
+            .SendAsync(
+                new WriteNoteBesideBinderCommand(binder, "beside"),
+                TestContext.Current.CancellationToken
+            );
 
         Assert.True(written.IsSuccess);
-        Assert.Equal(1L, await Fixture.ScalarAsync<long>("select count(*) from stub.notes where text = 'beside'"));
+        Assert.Equal(
+            1L,
+            await Fixture.ScalarAsync<long>("select count(*) from stub.notes where text = 'beside'")
+        );
     }
 
     // No Module's router refuses a scope never begun here, so the repository itself refuses the write in both scopes.
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing(bool begun)
+    public async Task A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing(
+        bool begun
+    )
     {
-        var kept = await Fixture.ScalarAsync<long>("insert into stub.notes (text, version) values ('kept', 0) returning id");
+        var kept = await Fixture.ScalarAsync<long>(
+            "insert into stub.notes (text, version) values ('kept', 0) returning id"
+        );
         await using var services = SingleModuleServices();
         Exception? added;
         Exception? removed;
@@ -105,15 +129,31 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         {
             if (begun)
             {
-                scope.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
+                scope.ServiceProvider.BeginOperation(
+                    new OperationContext(Actor.System("single-module"))
+                );
             }
 
-            (added, removed) = await RepositoryTests.WriteOutsideAUnitOfWorkAsync(scope.ServiceProvider, kept);
+            (added, removed) = await RepositoryTests.WriteOutsideAUnitOfWorkAsync(
+                scope.ServiceProvider,
+                kept
+            );
         }
 
-        Assert.Equal([["kept"]], await Fixture.RowsAsync("select text from stub.notes"));
-        Assert.Equal(RepositoryTests.NoUnitOfWork, Assert.IsType<InvalidOperationException>(added).Message);
-        Assert.Equal(RepositoryTests.NoUnitOfWork, Assert.IsType<InvalidOperationException>(removed).Message);
+        Assert.Equal(
+            [
+                ["kept"],
+            ],
+            await Fixture.RowsAsync("select text from stub.notes")
+        );
+        Assert.Equal(
+            RepositoryTests.NoUnitOfWork,
+            Assert.IsType<InvalidOperationException>(added).Message
+        );
+        Assert.Equal(
+            RepositoryTests.NoUnitOfWork,
+            Assert.IsType<InvalidOperationException>(removed).Message
+        );
     }
 
     // Ticket #68, the limit ADR 0003 records: the repository's read members need no Unit of Work, and a change to an
@@ -124,7 +164,10 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     {
         await RelabelOutsideACommandAsync();
 
-        Assert.Equal("grey", await Fixture.ScalarAsync<string>("select label_colour from stub.folders"));
+        Assert.Equal(
+            "grey",
+            await Fixture.ScalarAsync<string>("select label_colour from stub.folders")
+        );
     }
 
     // The tracked-state comparison's baseline is the query's start, so it already holds the change.
@@ -132,10 +175,20 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task A_change_to_a_loaded_aggregate_is_not_refused_by_a_query_sent_after_it_and_is_still_dropped()
     {
         await RelabelOutsideACommandAsync(async dispatcher =>
-            Assert.True((await dispatcher.QueryAsync(new FindNotesQuery(0, "none"), TestContext.Current.CancellationToken)).IsSuccess)
+            Assert.True(
+                (
+                    await dispatcher.QueryAsync(
+                        new FindNotesQuery(0, "none"),
+                        TestContext.Current.CancellationToken
+                    )
+                ).IsSuccess
+            )
         );
 
-        Assert.Equal("grey", await Fixture.ScalarAsync<string>("select label_colour from stub.folders"));
+        Assert.Equal(
+            "grey",
+            await Fixture.ScalarAsync<string>("select label_colour from stub.folders")
+        );
     }
 
     // The command writes a note, another row than the folder's: its commit saves the whole DbContext.
@@ -143,10 +196,20 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
     public async Task A_change_to_a_loaded_aggregate_is_saved_by_the_commit_of_a_command_sent_after_it()
     {
         await RelabelOutsideACommandAsync(async dispatcher =>
-            Assert.True((await dispatcher.SendAsync(new WriteNoteCommand("its own"), TestContext.Current.CancellationToken)).IsSuccess)
+            Assert.True(
+                (
+                    await dispatcher.SendAsync(
+                        new WriteNoteCommand("its own"),
+                        TestContext.Current.CancellationToken
+                    )
+                ).IsSuccess
+            )
         );
 
-        Assert.Equal("blue", await Fixture.ScalarAsync<string>("select label_colour from stub.folders"));
+        Assert.Equal(
+            "blue",
+            await Fixture.ScalarAsync<string>("select label_colour from stub.folders")
+        );
         Assert.Equal("its own", await Fixture.ScalarAsync<string>("select text from stub.notes"));
     }
 
@@ -158,7 +221,9 @@ public sealed class SingleModuleTests(AppFixture app) : HostTest<AppFixture>(app
         await using var services = SingleModuleServices();
         await using (var creating = services.CreateAsyncScope())
         {
-            creating.ServiceProvider.BeginOperation(new OperationContext(Actor.System("single-module")));
+            creating.ServiceProvider.BeginOperation(
+                new OperationContext(Actor.System("single-module"))
+            );
             var created = await creating
                 .ServiceProvider.GetRequiredService<IDispatcher>()
                 .SendAsync(new CreateFolderCommand(id), TestContext.Current.CancellationToken);

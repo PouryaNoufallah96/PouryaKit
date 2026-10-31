@@ -99,7 +99,12 @@ public static class Extensions
                 )
                 .WithTracing(tracing =>
                     tracing
-                        .AddSource(builder.Environment.ApplicationName, OperationTelemetry.SourceName, NpgsqlSource, ChatClientSource)
+                        .AddSource(
+                            builder.Environment.ApplicationName,
+                            OperationTelemetry.SourceName,
+                            NpgsqlSource,
+                            ChatClientSource
+                        )
                         .AddAspNetCoreInstrumentation(aspNetCore =>
                             aspNetCore.Filter = context =>
                                 !context.Request.Path.StartsWithSegments(HealthEndpointPath)
@@ -160,7 +165,10 @@ public static class Extensions
         // the process.
         public WebApplication MapDefaultEndpoints()
         {
-            app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions { Predicate = check => check.Tags.Contains(LiveTag) })
+            app.MapHealthChecks(
+                    AlivenessEndpointPath,
+                    new HealthCheckOptions { Predicate = check => check.Tags.Contains(LiveTag) }
+                )
                 .AllowAnonymous()
                 .DisableRateLimiting();
             if (app.Environment.IsDevelopment())
@@ -177,15 +185,22 @@ public static class Extensions
     // DbContext is internal to it, so it is found through its registered options instead of by its type.
     private sealed class DbContextsHealthCheck(IServiceScopeFactory scopes) : IHealthCheck
     {
-        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public async Task<HealthCheckResult> CheckHealthAsync(
+            HealthCheckContext context,
+            CancellationToken cancellationToken = default
+        )
         {
             await using var scope = scopes.CreateAsyncScope();
             foreach (var options in scope.ServiceProvider.GetServices<DbContextOptions>())
             {
-                var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(options.ContextType);
+                var dbContext = (DbContext)
+                    scope.ServiceProvider.GetRequiredService(options.ContextType);
                 if (!await dbContext.Database.CanConnectAsync(cancellationToken))
                 {
-                    return new HealthCheckResult(context.Registration.FailureStatus, $"The database of {options.ContextType.Name} does not answer.");
+                    return new HealthCheckResult(
+                        context.Registration.FailureStatus,
+                        $"The database of {options.ContextType.Name} does not answer."
+                    );
                 }
             }
 

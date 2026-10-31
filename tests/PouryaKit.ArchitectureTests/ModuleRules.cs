@@ -36,7 +36,11 @@ internal static partial class ModuleRules
     /// run time by name, without referencing it; and a reference to a Module whose assembly name differs from its
     /// project name, since the restored closure names projects and the rule compares assembly names.
     /// </summary>
-    public static IEnumerable<string> ReferencesToOtherModules(Assembly module, RestoredPackage restored, IReadOnlySet<string> modules) =>
+    public static IEnumerable<string> ReferencesToOtherModules(
+        Assembly module,
+        RestoredPackage restored,
+        IReadOnlySet<string> modules
+    ) =>
         from reached in ReachedBy(module, restored)
         where reached != Name(module) && modules.Contains(reached)
         select $"{Name(module)} references {reached}, the implementation of another Module; reach it through {reached}.Contracts.";
@@ -45,7 +49,11 @@ internal static partial class ModuleRules
     /// Contracts are plain records other Modules compile against: nothing of the Kit, as a project or a package, and no
     /// Module, read the same way as <see cref="ReferencesToOtherModules"/>.
     /// </summary>
-    public static IEnumerable<string> ReferencesOfContracts(Assembly contracts, RestoredPackage restored, IReadOnlySet<string> modules) =>
+    public static IEnumerable<string> ReferencesOfContracts(
+        Assembly contracts,
+        RestoredPackage restored,
+        IReadOnlySet<string> modules
+    ) =>
         from reached in ReachedBy(contracts, restored)
         where reached.StartsWith("PouryaKit", StringComparison.Ordinal) || modules.Contains(reached)
         select $"{Name(contracts)} references {reached}; Contracts reference nothing from the Kit and no Module.";
@@ -88,13 +96,21 @@ internal static partial class ModuleRules
     public static IEnumerable<string> SavesOrCommits(Assembly module) =>
         (
             from call in Il.CallsIn(module)
-            where !IsMigration(call.Owner) && (IsSaveOrCommit(call.Callee) || IsBulkWrite(call.Callee) || IsKitStep(call.Callee))
+            where
+                !IsMigration(call.Owner)
+                && (
+                    IsSaveOrCommit(call.Callee)
+                    || IsBulkWrite(call.Callee)
+                    || IsKitStep(call.Callee)
+                )
             select $"{call.Owner.FullName} calls {call.Callee.DeclaringType!.Name}.{call.Callee.Name}."
-        ).Concat(
-            from literal in Il.LiteralsIn(module)
-            where !IsMigration(literal.Owner) && HoldsTransactionControl(literal.Text)
-            select $"{literal.Owner.FullName} runs the SQL statement \"{literal.Text}\"."
-        ).Distinct();
+        )
+            .Concat(
+                from literal in Il.LiteralsIn(module)
+                where !IsMigration(literal.Owner) && HoldsTransactionControl(literal.Text)
+                select $"{literal.Owner.FullName} runs the SQL statement \"{literal.Text}\"."
+            )
+            .Distinct();
 
     /// <summary>
     /// Whether <paramref name="sql"/> holds a transaction-control statement. Its comments, the bodies of its
@@ -105,7 +121,13 @@ internal static partial class ModuleRules
     /// </summary>
     public static bool HoldsTransactionControl(string sql)
     {
-        string[] statements = [.. Sql.Code(sql, keepDollarQuoted: false).Split(';').Select(statement => statement.Trim()).Where(statement => statement.Length > 0)];
+        string[] statements =
+        [
+            .. Sql.Code(sql, keepDollarQuoted: false)
+                .Split(';')
+                .Select(statement => statement.Trim())
+                .Where(statement => statement.Length > 0),
+        ];
         return statements.All(statement => SqlCommand().IsMatch(statement))
             && statements.Any(statement => TransactionStatement().IsMatch(statement));
     }
@@ -124,13 +146,17 @@ internal static partial class ModuleRules
     /// </summary>
     public static IEnumerable<string> TransportTypesUsedBy(Assembly assembly) =>
         from type in TypesReferencedBy(assembly)
-        where IsStoreOrTransport(type.Assembly)
+        where
+            IsStoreOrTransport(type.Assembly)
             && !GeneratedEvolverTypes.Contains(type.Name)
             && !(type.Name == typeof(TimeoutMessage).FullName && TimeoutsAreTheKits(assembly))
         select $"{Name(assembly)} uses {type.Name} from {type.Assembly}.";
 
     private static bool TimeoutsAreTheKits(Assembly assembly) =>
-        assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(TimeoutMessage))).All(type => type.IsAssignableTo(typeof(SagaTimeout)));
+        assembly
+            .GetTypes()
+            .Where(type => type.IsAssignableTo(typeof(TimeoutMessage)))
+            .All(type => type.IsAssignableTo(typeof(SagaTimeout)));
 
     /// <summary>
     /// The types of JasperFx's event store that Marten's source generator names in the evolver it writes into every
@@ -165,7 +191,9 @@ internal static partial class ModuleRules
                 found.Add(
                     (
                         $"{metadata.GetString(type.Namespace)}.{metadata.GetString(type.Name)}",
-                        metadata.GetString(metadata.GetAssemblyReference((AssemblyReferenceHandle)scope).Name)
+                        metadata.GetString(
+                            metadata.GetAssemblyReference((AssemblyReferenceHandle)scope).Name
+                        )
                     )
                 );
             }
@@ -181,8 +209,14 @@ internal static partial class ModuleRules
     /// </summary>
     public static IEnumerable<string> EnvelopeStorageIn(string context, IModel model) =>
         from entityType in model.GetEntityTypes()
-        where IsTransport(entityType.ClrType.Assembly.GetName().Name!)
-            || (entityType.GetTableName()?.StartsWith("wolverine_", StringComparison.OrdinalIgnoreCase) ?? false)
+        where
+            IsTransport(entityType.ClrType.Assembly.GetName().Name!)
+            || (
+                entityType
+                    .GetTableName()
+                    ?.StartsWith("wolverine_", StringComparison.OrdinalIgnoreCase)
+                ?? false
+            )
         select $"{context} maps {entityType.DisplayName()} to {entityType.GetSchema()}.{entityType.GetTableName()}.";
 
     /// <summary>
@@ -206,12 +240,19 @@ internal static partial class ModuleRules
     /// through a view; writes inside stored procedures, functions or triggers the literal only calls; and a write on a
     /// connection outside the Unit of Work to a table no aggregate maps, which this rule allows by design.
     /// </summary>
-    public static IEnumerable<string> WritesToAggregateTables(Assembly module, IReadOnlySet<string> aggregateTables) =>
+    public static IEnumerable<string> WritesToAggregateTables(
+        Assembly module,
+        IReadOnlySet<string> aggregateTables
+    ) =>
         (
             from literal in Il.LiteralsIn(module)
             where !IsMigration(literal.Owner)
             from table in TablesWrittenBy(literal.Text)
-            where aggregateTables.Contains(table) || aggregateTables.Any(mapped => mapped.EndsWith($".{table}", StringComparison.Ordinal))
+            where
+                aggregateTables.Contains(table)
+                || aggregateTables.Any(mapped =>
+                    mapped.EndsWith($".{table}", StringComparison.Ordinal)
+                )
             select $"{literal.Owner.FullName} writes the aggregate table {table} with SQL: \"{literal.Text.Trim()}\"."
         ).Distinct();
 
@@ -219,9 +260,12 @@ internal static partial class ModuleRules
     public static IEnumerable<string> TablesWrittenBy(string sql) =>
         from match in SqlWrite().Matches(Sql.Code(sql, keepDollarQuoted: true))
         let table = Unquoted(match.Groups["table"].Value)
-        select match.Groups["schema"].Success ? $"{Unquoted(match.Groups["schema"].Value)}.{table}" : table;
+        select match.Groups["schema"].Success
+            ? $"{Unquoted(match.Groups["schema"].Value)}.{table}"
+            : table;
 
-    private static string Unquoted(string name) => name.Replace("\"", "", StringComparison.Ordinal).ToLowerInvariant();
+    private static string Unquoted(string name) =>
+        name.Replace("\"", "", StringComparison.Ordinal).ToLowerInvariant();
 
     /// <summary>
     /// Only the Kit's Domain Event drain clears an aggregate's Domain Events: a call to <c>ClearDomainEvents</c> on any
@@ -230,8 +274,11 @@ internal static partial class ModuleRules
     public static IEnumerable<string> ClearsDomainEvents(Assembly assembly) =>
         (
             from call in Il.CallsIn(assembly)
-            where call.Callee.Name.EndsWith(nameof(IAggregateRoot.ClearDomainEvents), StringComparison.Ordinal)
-                && call.Callee.DeclaringType!.IsAssignableTo(typeof(IAggregateRoot))
+            where
+                call.Callee.Name.EndsWith(
+                    nameof(IAggregateRoot.ClearDomainEvents),
+                    StringComparison.Ordinal
+                ) && call.Callee.DeclaringType!.IsAssignableTo(typeof(IAggregateRoot))
             select call.Owner.FullName!
         ).Distinct();
 
@@ -243,31 +290,61 @@ internal static partial class ModuleRules
     /// Wolverine generates for each step names them (ADR 0013); a saga of Wolverine's own <c>Saga</c> is not. Not seen:
     /// <c>InternalsVisibleTo</c>, which opens a Module's internal types to the assemblies it names.
     /// </summary>
-    public static IEnumerable<string> PublicTypesOf(Assembly module, IReadOnlySet<Type> hostPorts) =>
+    public static IEnumerable<string> PublicTypesOf(
+        Assembly module,
+        IReadOnlySet<Type> hostPorts
+    ) =>
         from type in module.GetExportedTypes()
-        where !type.IsAssignableTo(typeof(IModuleDefinition)) && !IsMigration(type) && !hostPorts.Contains(type) && !IsSaga(type)
+        where
+            !type.IsAssignableTo(typeof(IModuleDefinition))
+            && !IsMigration(type)
+            && !hostPorts.Contains(type)
+            && !IsSaga(type)
         select type.FullName!;
 
-    private static bool IsSaga(Type type) => type.IsAssignableTo(typeof(PouryaKitSaga)) || type.IsAssignableTo(typeof(SagaTimeout));
+    private static bool IsSaga(Type type) =>
+        type.IsAssignableTo(typeof(PouryaKitSaga)) || type.IsAssignableTo(typeof(SagaTimeout));
 
     private static bool IsSaveOrCommit(MethodBase callee)
     {
         var type = callee.DeclaringType!;
         return callee.Name switch
         {
-            "SaveChanges" or "SaveChangesAsync" or "get_Database" => type.IsAssignableTo(typeof(DbContext)),
-            "BeginTransaction" or "BeginTransactionAsync" or "BeginDbTransaction" or "BeginDbTransactionAsync" or "EnlistTransaction" =>
-                type.IsAssignableTo(typeof(IDbConnection)) || type.IsAssignableTo(typeof(DbConnection)),
-            "Commit" or "CommitAsync" or "Rollback" or "RollbackAsync" or "Save" or "SaveAsync" or "Release" or "ReleaseAsync" =>
-                type.IsAssignableTo(typeof(IDbTransaction)) || type.IsAssignableTo(typeof(IDbContextTransaction)),
+            "SaveChanges" or "SaveChangesAsync" or "get_Database" => type.IsAssignableTo(
+                typeof(DbContext)
+            ),
+            "BeginTransaction"
+            or "BeginTransactionAsync"
+            or "BeginDbTransaction"
+            or "BeginDbTransactionAsync"
+            or "EnlistTransaction" => type.IsAssignableTo(typeof(IDbConnection))
+                || type.IsAssignableTo(typeof(DbConnection)),
+            "Commit"
+            or "CommitAsync"
+            or "Rollback"
+            or "RollbackAsync"
+            or "Save"
+            or "SaveAsync"
+            or "Release"
+            or "ReleaseAsync" => type.IsAssignableTo(typeof(IDbTransaction))
+                || type.IsAssignableTo(typeof(IDbContextTransaction)),
             ".ctor" => type == typeof(TransactionScope) || type == typeof(CommittableTransaction),
             _ => false,
         };
     }
 
     private static bool IsBulkWrite(MethodBase callee) =>
-        callee.Name is "ExecuteUpdate" or "ExecuteUpdateAsync" or "ExecuteDelete" or "ExecuteDeleteAsync"
-        && (callee.DeclaringType!.Namespace?.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal) ?? false);
+        callee.Name
+            is "ExecuteUpdate"
+                or "ExecuteUpdateAsync"
+                or "ExecuteDelete"
+                or "ExecuteDeleteAsync"
+        && (
+            callee.DeclaringType!.Namespace?.StartsWith(
+                "Microsoft.EntityFrameworkCore",
+                StringComparison.Ordinal
+            ) ?? false
+        );
 
     // The seams the Kit's own steps call. IOutbox is a marker with nothing to call, and Operation's other
     // public members only read it, so neither is listed.
@@ -292,8 +369,14 @@ internal static partial class ModuleRules
         KitSteps.Any(step => callee.DeclaringType!.IsAssignableTo(step))
         || callee.DeclaringType == typeof(EfUnitOfWorkDbContext)
         || callee.DeclaringType == typeof(MartenUnitOfWorkTransaction)
-        || (callee.DeclaringType == typeof(OperationContextServiceProviderExtensions) && callee.Name == "BeginOperation")
-        || (callee.DeclaringType == typeof(Operation) && callee.Name == nameof(Operation.OnlyReading));
+        || (
+            callee.DeclaringType == typeof(OperationContextServiceProviderExtensions)
+            && callee.Name == "BeginOperation"
+        )
+        || (
+            callee.DeclaringType == typeof(Operation)
+            && callee.Name == nameof(Operation.OnlyReading)
+        );
 
     /// <summary>
     /// Spec #33 and ADR 0002: applications register no pipeline steps, and an application's own implementation of a
@@ -333,9 +416,14 @@ internal static partial class ModuleRules
         from type in assembly.GetTypes()
         where !type.IsInterface
         from contract in PipelineContracts
-        where contract.IsGenericTypeDefinition
-            ? type.GetInterfaces().Any(implemented => implemented.IsGenericType && implemented.GetGenericTypeDefinition() == contract)
-            : type.IsAssignableTo(contract)
+        where
+            contract.IsGenericTypeDefinition
+                ? type.GetInterfaces()
+                    .Any(implemented =>
+                        implemented.IsGenericType
+                        && implemented.GetGenericTypeDefinition() == contract
+                    )
+                : type.IsAssignableTo(contract)
         select $"{type.FullName} implements {contract.Name.Split('`')[0]}, a pipeline contract only the Kit implements ({Path.GetFileName(assembly.Location)}).";
 
     private static readonly Type[] PipelineContracts =
@@ -369,7 +457,9 @@ internal static partial class ModuleRules
     /// </summary>
     public static IEnumerable<KeyValuePair<string, TenantTable>> TenantTablesOf(IModel model) =>
         from entityType in model.GetEntityTypes()
-        where entityType.GetTableName() is not null && (entityType.BaseType is null || TableOf(entityType.BaseType) != TableOf(entityType))
+        where
+            entityType.GetTableName() is not null
+            && (entityType.BaseType is null || TableOf(entityType.BaseType) != TableOf(entityType))
         let tenantScoped = entityType.ClrType.IsAssignableTo(typeof(ITenantScoped))
         let holders = tenantScoped ? [] : HolderKeysOf(entityType)
         where tenantScoped || holders.Count > 0
@@ -379,14 +469,24 @@ internal static partial class ModuleRules
             .Select(fragment =>
                 KeyValuePair.Create(
                     $"{fragment.StoreObject.Schema ?? model.GetDefaultSchema()}.{fragment.StoreObject.Name}",
-                    new TenantTable(null, [new HolderKey(TableOf(entityType), ColumnsIn(fragment.StoreObject, primaryKey, entityType, primaryKey)!)])
+                    new TenantTable(
+                        null,
+                        [
+                            new HolderKey(
+                                TableOf(entityType),
+                                ColumnsIn(fragment.StoreObject, primaryKey, entityType, primaryKey)!
+                            ),
+                        ]
+                    )
                 )
             )
             .Prepend(
                 KeyValuePair.Create(
                     TableOf(entityType),
                     new TenantTable(
-                        tenantScoped ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName() : null,
+                        tenantScoped
+                            ? entityType.FindProperty(nameof(ITenantScoped.Tenant))!.GetColumnName()
+                            : null,
                         holders
                     )
                 )
@@ -400,7 +500,10 @@ internal static partial class ModuleRules
     internal sealed record TenantTable(string? Tenant, IReadOnlyList<HolderKey> Holders);
 
     /// <summary>A part's key to the <paramref name="Holder"/> table: each of its columns with the holder's column it names.</summary>
-    internal sealed record HolderKey(string Holder, IReadOnlyList<(string Column, string HolderColumn)> Columns);
+    internal sealed record HolderKey(
+        string Holder,
+        IReadOnlyList<(string Column, string HolderColumn)> Columns
+    );
 
     private static string TableOf(IReadOnlyEntityType entityType) =>
         $"{entityType.GetSchema() ?? entityType.Model.GetDefaultSchema()}.{entityType.GetTableName()}";
@@ -412,11 +515,17 @@ internal static partial class ModuleRules
         List<HolderKey> keys =
         [
             .. from foreignKey in part.GetForeignKeys()
-            where foreignKey.PrincipalToDependent is not null
+            where
+                foreignKey.PrincipalToDependent is not null
                 && foreignKey.PrincipalEntityType.GetRootType() != part.GetRootType()
                 && TableOf(foreignKey.PrincipalEntityType) != TableOf(part)
                 && InTenantScopedAggregate(foreignKey.PrincipalEntityType, [])
-            let columns = ColumnsIn(StoreOf(part), foreignKey.Properties, foreignKey.PrincipalEntityType, foreignKey.PrincipalKey.Properties)
+            let columns = ColumnsIn(
+                StoreOf(part),
+                foreignKey.Properties,
+                foreignKey.PrincipalEntityType,
+                foreignKey.PrincipalKey.Properties
+            )
             where columns is not null
             select new HolderKey(TableOf(foreignKey.PrincipalEntityType), columns),
         ];
@@ -425,7 +534,13 @@ internal static partial class ModuleRules
             && baseType.GetTableName() is not null
             && TableOf(baseType) != TableOf(part)
             && HolderKeysOf(baseType).Count > 0
-            && ColumnsIn(StoreOf(part), part.FindPrimaryKey()!.Properties, baseType, part.FindPrimaryKey()!.Properties) is { } toBase
+            && ColumnsIn(
+                StoreOf(part),
+                part.FindPrimaryKey()!.Properties,
+                baseType,
+                part.FindPrimaryKey()!.Properties
+            )
+                is { } toBase
         )
         {
             keys.Add(new HolderKey(TableOf(baseType), toBase));
@@ -434,7 +549,8 @@ internal static partial class ModuleRules
         return keys;
     }
 
-    private static StoreObjectIdentifier StoreOf(IReadOnlyEntityType entityType) => StoreObjectIdentifier.Table(entityType.GetTableName()!, entityType.GetSchema());
+    private static StoreObjectIdentifier StoreOf(IReadOnlyEntityType entityType) =>
+        StoreObjectIdentifier.Table(entityType.GetTableName()!, entityType.GetSchema());
 
     // Each of `columns` in `partTable` with its holder column in `holder`'s table; null when either table lacks one.
     private static List<(string Column, string HolderColumn)>? ColumnsIn(
@@ -445,26 +561,46 @@ internal static partial class ModuleRules
     )
     {
         var holderTable = StoreOf(holder);
-        var pairs = columns.Zip(holderColumns, (column, holderColumn) => (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))).ToList();
+        var pairs = columns
+            .Zip(
+                holderColumns,
+                (column, holderColumn) =>
+                    (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))
+            )
+            .ToList();
         return pairs.All(pair => pair is (not null, not null))
             ? [.. pairs.Select(pair => (pair.Item1!, pair.Item2!))]
             : null;
     }
 
     // The holder is tenant-scoped, or a part held, through a navigation, by one that is: PouryaKitModelConvention's walk.
-    private static bool InTenantScopedAggregate(IReadOnlyEntityType holder, HashSet<IReadOnlyEntityType> seen) =>
+    private static bool InTenantScopedAggregate(
+        IReadOnlyEntityType holder,
+        HashSet<IReadOnlyEntityType> seen
+    ) =>
         holder.ClrType.IsAssignableTo(typeof(ITenantScoped))
         || (
             !holder.ClrType.IsAssignableTo(typeof(IAggregateRoot))
             && seen.Add(holder)
-            && holder.GetForeignKeys().Any(foreignKey => foreignKey.PrincipalToDependent is not null && InTenantScopedAggregate(foreignKey.PrincipalEntityType, seen))
+            && holder
+                .GetForeignKeys()
+                .Any(foreignKey =>
+                    foreignKey.PrincipalToDependent is not null
+                    && InTenantScopedAggregate(foreignKey.PrincipalEntityType, seen)
+                )
         );
 
     // The tenant-scoped tables `table` is held under: itself when it is one, else those its holders are held under.
-    private static IEnumerable<string> RootsOf(string table, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
+    private static IEnumerable<string> RootsOf(
+        string table,
+        IReadOnlyDictionary<string, TenantTable> tenantTables
+    ) =>
         tenantTables[table].Tenant is not null
             ? [table]
-            : tenantTables[table].Holders.Where(key => tenantTables.ContainsKey(key.Holder)).SelectMany(key => RootsOf(key.Holder, tenantTables)).Distinct();
+            : tenantTables[table]
+                .Holders.Where(key => tenantTables.ContainsKey(key.Holder))
+                .SelectMany(key => RootsOf(key.Holder, tenantTables))
+                .Distinct();
 
     /// <summary>
     /// Spec #115, Multi-tenancy: Dapper runs exactly the SQL a Feature writes, so in a tenant-scoped Module a string literal
@@ -490,7 +626,10 @@ internal static partial class ModuleRules
     /// of which none holds both a SQL word and the table's name; and a read through a view or a function. That the
     /// setting holds the Operation's tenant is the lease's, which the Gateway tests show.
     /// </summary>
-    public static IEnumerable<string> ReadsBeyondTheTenant(Assembly module, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
+    public static IEnumerable<string> ReadsBeyondTheTenant(
+        Assembly module,
+        IReadOnlyDictionary<string, TenantTable> tenantTables
+    ) =>
         (
             from literal in Il.LiteralsIn(module)
             where !IsMigration(literal.Owner)
@@ -500,7 +639,10 @@ internal static partial class ModuleRules
         ).Distinct();
 
     /// <summary>The tenant-scoped tables <paramref name="sql"/> reads, as <see cref="ReadsBeyondTheTenant"/> finds them.</summary>
-    public static IEnumerable<string> TenantTablesReadBy(string sql, IReadOnlyDictionary<string, TenantTable> tenantTables)
+    public static IEnumerable<string> TenantTablesReadBy(
+        string sql,
+        IReadOnlyDictionary<string, TenantTable> tenantTables
+    )
     {
         if (!SqlWord().IsMatch(sql))
         {
@@ -512,32 +654,52 @@ internal static partial class ModuleRules
             return tenantTables.Keys;
         }
 
-        HashSet<string> words = [.. AnyWord().Matches(sql).Select(word => word.Value.ToLowerInvariant())];
-        return tenantTables.Keys.Where(table => words.Contains(table[(table.IndexOf('.') + 1)..].ToLowerInvariant()));
+        HashSet<string> words =
+        [
+            .. AnyWord().Matches(sql).Select(word => word.Value.ToLowerInvariant()),
+        ];
+        return tenantTables.Keys.Where(table =>
+            words.Contains(table[(table.IndexOf('.') + 1)..].ToLowerInvariant())
+        );
     }
 
     /// <summary>
     /// Why <paramref name="sql"/>, which reads a tenant-scoped table, breaks the shape <see cref="ReadsBeyondTheTenant"/>
     /// holds it to; null when it keeps to it or reads no such table.
     /// </summary>
-    public static string? TenantReadFault(string sql, IReadOnlyDictionary<string, TenantTable> tenantTables)
+    public static string? TenantReadFault(
+        string sql,
+        IReadOnlyDictionary<string, TenantTable> tenantTables
+    )
     {
-        if (!TenantTablesReadBy(sql, tenantTables).Any() || TablesWrittenBy(sql).Any(table => TenantTableNamed(table, tenantTables) is not null))
+        if (
+            !TenantTablesReadBy(sql, tenantTables).Any()
+            || TablesWrittenBy(sql).Any(table => TenantTableNamed(table, tenantTables) is not null)
+        )
         {
             return null;
         }
 
         var (tokens, fault) = Sql.Tokens(sql);
-        return fault is not null ? $"{fault}, {Unread}" : new TenantSelect(tokens, tenantTables).Fault();
+        return fault is not null
+            ? $"{fault}, {Unread}"
+            : new TenantSelect(tokens, tenantTables).Fault();
     }
 
     private const string Unread = "a shape the rule does not read";
 
     // The tenant-scoped table `name` is, `schema.table` or a table of that name in any schema; null when it is none.
-    private static string? TenantTableNamed(string name, IReadOnlyDictionary<string, TenantTable> tenantTables) =>
+    private static string? TenantTableNamed(
+        string name,
+        IReadOnlyDictionary<string, TenantTable> tenantTables
+    ) =>
         name.Contains('.')
-            ? tenantTables.ContainsKey(name) ? name : null
-            : tenantTables.Keys.FirstOrDefault(table => table.EndsWith($".{name}", StringComparison.Ordinal));
+            ? tenantTables.ContainsKey(name)
+                ? name
+                : null
+            : tenantTables.Keys.FirstOrDefault(table =>
+                table.EndsWith($".{name}", StringComparison.Ordinal)
+            );
 
     // The tokens of one literal read as the SELECT TenantReadFault admits, the rule's grammar written out as code.
     private sealed class TenantSelect
@@ -550,20 +712,68 @@ internal static partial class ModuleRules
         // Words that are no alias: what may follow a FROM item, and what starts none.
         private static readonly HashSet<string> NotAliases =
         [
-            "as", "on", "using", "where", "join", "inner", "left", "right", "full", "cross", "natural", "lateral", "only",
-            "tablesample", "group", "having", "window", "order", "limit", "offset", "fetch", "for", "union", "intersect",
-            "except", "select", "from",
+            "as",
+            "on",
+            "using",
+            "where",
+            "join",
+            "inner",
+            "left",
+            "right",
+            "full",
+            "cross",
+            "natural",
+            "lateral",
+            "only",
+            "tablesample",
+            "group",
+            "having",
+            "window",
+            "order",
+            "limit",
+            "offset",
+            "fetch",
+            "for",
+            "union",
+            "intersect",
+            "except",
+            "select",
+            "from",
         ];
 
         // Words that end a join condition outside parentheses, beside a comma.
         private static readonly HashSet<string> ConditionEnds =
         [
-            "join", "inner", "left", "right", "full", "cross", "natural", "where", "group", "having", "window", "order", "limit",
-            "offset", "fetch", "for",
+            "join",
+            "inner",
+            "left",
+            "right",
+            "full",
+            "cross",
+            "natural",
+            "where",
+            "group",
+            "having",
+            "window",
+            "order",
+            "limit",
+            "offset",
+            "fetch",
+            "for",
         ];
 
         // Words that end a WHERE or an ORDER BY list outside parentheses.
-        private static readonly HashSet<string> WhereEnds = ["group", "having", "window", "order", "limit", "offset", "fetch", "for"];
+        private static readonly HashSet<string> WhereEnds =
+        [
+            "group",
+            "having",
+            "window",
+            "order",
+            "limit",
+            "offset",
+            "fetch",
+            "for",
+        ];
 
         private readonly IReadOnlyDictionary<string, TenantTable> _tenantTables;
         private readonly SqlToken[] _tokens;
@@ -571,7 +781,10 @@ internal static partial class ModuleRules
         private readonly List<FromItem> _items = [];
         private int _at;
 
-        public TenantSelect(IReadOnlyList<SqlToken> tokens, IReadOnlyDictionary<string, TenantTable> tenantTables)
+        public TenantSelect(
+            IReadOnlyList<SqlToken> tokens,
+            IReadOnlyDictionary<string, TenantTable> tenantTables
+        )
         {
             _tenantTables = tenantTables;
             var last = tokens.Count;
@@ -598,7 +811,8 @@ internal static partial class ModuleRules
         // Whether the next token stands outside every parenthesis.
         private bool Outside => !AtEnd && _depths[_at] == 0;
 
-        private SqlToken Peek(int ahead) => _at + ahead < _tokens.Length ? _tokens[_at + ahead] : End;
+        private SqlToken Peek(int ahead) =>
+            _at + ahead < _tokens.Length ? _tokens[_at + ahead] : End;
 
         public string? Fault()
         {
@@ -612,7 +826,12 @@ internal static partial class ModuleRules
                 return "is not a SELECT";
             }
 
-            if (_tokens.FirstOrDefault(token => token.Is("union") || token.Is("intersect") || token.Is("except")) is { Text: not null } setOperator)
+            if (
+                _tokens.FirstOrDefault(token =>
+                    token.Is("union") || token.Is("intersect") || token.Is("except")
+                ) is
+                { Text: not null } setOperator
+            )
             {
                 return $"has the set operator {setOperator.Name}";
             }
@@ -622,7 +841,10 @@ internal static partial class ModuleRules
                 return "has a subquery";
             }
 
-            if (_depths.Any(depth => depth < 0) || _tokens.Count(token => token.Is('(')) != _tokens.Count(token => token.Is(')')))
+            if (
+                _depths.Any(depth => depth < 0)
+                || _tokens.Count(token => token.Is('(')) != _tokens.Count(token => token.Is(')'))
+            )
             {
                 return $"has parentheses that do not pair, {Unread}";
             }
@@ -665,7 +887,19 @@ internal static partial class ModuleRules
 
                     _at++;
                     var start = _at;
-                    while (!AtEnd && !(Outside && (Next.Is(',') || (Next.Kind == SqlTokenKind.Word && ConditionEnds.Contains(Next.Name)))))
+                    while (
+                        !AtEnd
+                        && !(
+                            Outside
+                            && (
+                                Next.Is(',')
+                                || (
+                                    Next.Kind == SqlTokenKind.Word
+                                    && ConditionEnds.Contains(Next.Name)
+                                )
+                            )
+                        )
+                    )
                     {
                         _at++;
                     }
@@ -746,7 +980,10 @@ internal static partial class ModuleRules
                 alias = Peek(1).Name;
                 _at += 2;
             }
-            else if (Next.Kind == SqlTokenKind.Quoted || (Next.Kind == SqlTokenKind.Word && !NotAliases.Contains(Next.Name)))
+            else if (
+                Next.Kind == SqlTokenKind.Quoted
+                || (Next.Kind == SqlTokenKind.Word && !NotAliases.Contains(Next.Name))
+            )
             {
                 alias = Next.Name;
                 _at++;
@@ -760,7 +997,10 @@ internal static partial class ModuleRules
         private string? Where()
         {
             var start = _at;
-            while (!AtEnd && !(Outside && Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name)))
+            while (
+                !AtEnd
+                && !(Outside && Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name))
+            )
             {
                 _at++;
             }
@@ -774,7 +1014,10 @@ internal static partial class ModuleRules
             if (Next.Is("order") && Peek(1).Is("by"))
             {
                 _at += 2;
-                while (!AtEnd && !(Outside && Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name)))
+                while (
+                    !AtEnd
+                    && !(Outside && Next.Kind == SqlTokenKind.Word && WhereEnds.Contains(Next.Name))
+                )
                 {
                     _at++;
                 }
@@ -800,14 +1043,20 @@ internal static partial class ModuleRules
             var held = new bool[_items.Count];
             for (var at = 0; at < _items.Count; at++)
             {
-                held[at] = TableAt(at) is { } table
+                held[at] =
+                    TableAt(at) is { } table
                     && _tenantTables[table].Tenant is { } column
                     && conjuncts.Any(conjunct =>
-                        conjunct.Name == column && (conjunct.Qualifier is { } qualifier ? NamesOf(at).Contains(qualifier) : _items.Count == 1)
+                        conjunct.Name == column
+                        && (
+                            conjunct.Qualifier is { } qualifier
+                                ? NamesOf(at).Contains(qualifier)
+                                : _items.Count == 1
+                        )
                     );
             }
 
-            for (var found = true; found;)
+            for (var found = true; found; )
             {
                 found = false;
                 for (var part = 0; part < _items.Count; part++)
@@ -816,7 +1065,12 @@ internal static partial class ModuleRules
                         !held[part]
                         && TableAt(part) is { } table
                         && _tenantTables[table].Tenant is null
-                        && Enumerable.Range(0, _items.Count).Any(holder => held[holder] && _tenantTables[table].Holders.Any(key => Joins(part, holder, key)))
+                        && Enumerable
+                            .Range(0, _items.Count)
+                            .Any(holder =>
+                                held[holder]
+                                && _tenantTables[table].Holders.Any(key => Joins(part, holder, key))
+                            )
                     )
                     {
                         held[part] = found = true;
@@ -828,7 +1082,8 @@ internal static partial class ModuleRules
             {
                 if (!held[at] && TableAt(at) is { } table)
                 {
-                    var item = $"{table}{(_items[at].Alias is { } alias ? $" {Written(alias)}" : "")}";
+                    var item =
+                        $"{table}{(_items[at].Alias is { } alias ? $" {Written(alias)}" : "")}";
                     return _tenantTables[table].Tenant is null
                         ? $"does not join the part {item} on its key to its holder up to {string.Join(" or ", RootsOf(table, _tenantTables))} held to {TenantSetting}"
                         : $"does not hold {item} to the tenant with a top-level conjunct of its WHERE that is exactly {Written(NamesOf(at)[0])}.{_tenantTables[table].Tenant} = {TenantSetting}";
@@ -844,7 +1099,9 @@ internal static partial class ModuleRules
         // The names a column of the tenant-scoped item at `at` may be qualified by: its alias, or else its table with or
         // without its schema.
         private string[] NamesOf(int at) =>
-            _items[at] is { Alias: { } alias } ? [alias] : [_items[at].Table[(_items[at].Table.IndexOf('.') + 1)..], TableAt(at)!];
+            _items[at] is { Alias: { } alias }
+                ? [alias]
+                : [_items[at].Table[(_items[at].Table.IndexOf('.') + 1)..], TableAt(at)!];
 
         // Whether the part at `part` is joined to the item at `holder` on every column of `key`, in the ON of the later of
         // the two: the part's, or the holder's when it is no LEFT JOIN, which would keep every row of the part.
@@ -854,19 +1111,29 @@ internal static partial class ModuleRules
             return TableAt(holder) == key.Holder
                 && (holder < part || !later.Left)
                 && key.Columns.All(column =>
-                    later.On.Select(Equality.Of).Any(equality =>
-                        equality is not null
-                        && (
-                            (Names(equality.Left, part, column.Column) && Names(equality.Right, holder, column.HolderColumn))
-                            || (Names(equality.Left, holder, column.HolderColumn) && Names(equality.Right, part, column.Column))
+                    later
+                        .On.Select(Equality.Of)
+                        .Any(equality =>
+                            equality is not null
+                            && (
+                                (
+                                    Names(equality.Left, part, column.Column)
+                                    && Names(equality.Right, holder, column.HolderColumn)
+                                )
+                                || (
+                                    Names(equality.Left, holder, column.HolderColumn)
+                                    && Names(equality.Right, part, column.Column)
+                                )
+                            )
                         )
-                    )
                 );
         }
 
         // Whether `column` is the column `name` of the item at `at`, qualified by one of its names.
         private bool Names(Column column, int at, string name) =>
-            column is { Qualifier: { } qualifier } && column.Name == name && NamesOf(at).Contains(qualifier);
+            column is { Qualifier: { } qualifier }
+            && column.Name == name
+            && NamesOf(at).Contains(qualifier);
 
         // Why the tokens from `start` to `end` cannot be split into conjuncts: an OR or a CASE outside parentheses.
         private string? Unsplittable(int start, int end, string clause)
@@ -919,7 +1186,8 @@ internal static partial class ModuleRules
 
         // A name as SQL must write it to resolve to it: a name with an upper-case letter came from a double-quoted
         // identifier (a word's Name is lower case), so it is written quoted; every other name is written bare.
-        private static string Written(string name) => name == name.ToLowerInvariant() ? name : $"\"{name}\"";
+        private static string Written(string name) =>
+            name == name.ToLowerInvariant() ? name : $"\"{name}\"";
 
         private static string Shown(SqlToken token) =>
             token.Kind switch
@@ -941,7 +1209,15 @@ internal static partial class ModuleRules
 
         // The column of a conjunct that is exactly `column = current_setting('pouryakit.tenant')`.
         private static Column? TenantColumnOf(SqlToken[] conjunct) =>
-            conjunct is [.., var equals, var function, var open, { Kind: SqlTokenKind.String } setting, var close]
+            conjunct
+                is [
+                    ..,
+                    var equals,
+                    var function,
+                    var open,
+                    { Kind: SqlTokenKind.String } setting,
+                    var close,
+                ]
             && equals.Is('=')
             && function.Is("current_setting")
             && open.Is('(')
@@ -957,9 +1233,18 @@ internal static partial class ModuleRules
                 tokens switch
                 {
                     [{ IsName: true } column] => new(null, column.Name),
-                    [{ IsName: true } table, var dot, { IsName: true } column] when dot.Is('.') => new(table.Name, column.Name),
-                    [{ IsName: true } schema, var dot, { IsName: true } table, var tableDot, { IsName: true } column] when dot.Is('.') && tableDot.Is('.') =>
-                        new($"{schema.Name}.{table.Name}", column.Name),
+                    [{ IsName: true } table, var dot, { IsName: true } column] when dot.Is('.') =>
+                        new(table.Name, column.Name),
+                    [
+                        { IsName: true } schema,
+                        var dot,
+                        { IsName: true } table,
+                        var tableDot,
+                        { IsName: true } column,
+                    ] when dot.Is('.') && tableDot.Is('.') => new(
+                        $"{schema.Name}.{table.Name}",
+                        column.Name
+                    ),
                     _ => null,
                 };
         }
@@ -1007,35 +1292,40 @@ internal static partial class ModuleRules
         }
 
         var code = Sql.Code(sql, keepDollarQuoted: true);
-        return SetConfig().IsMatch(code) || code.Split(';').Any(statement => SessionStatement().IsMatch(statement.Trim()));
+        return SetConfig().IsMatch(code)
+            || code.Split(';').Any(statement => SessionStatement().IsMatch(statement.Trim()));
     }
 
     [GeneratedRegex(@"\$|\\|\b[eE]'|\b[uU]&", RegexOptions.CultureInvariant)]
     private static partial Regex OpaqueShape();
 
-    private static bool IsMigration(Type type) => type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
+    private static bool IsMigration(Type type) =>
+        type.IsAssignableTo(typeof(Migration)) || type.IsAssignableTo(typeof(ModelSnapshot));
 
     private static bool IsTransport(string assemblyName) =>
-        assemblyName.StartsWith("Wolverine", StringComparison.Ordinal) || assemblyName.StartsWith("JasperFx", StringComparison.Ordinal);
+        assemblyName.StartsWith("Wolverine", StringComparison.Ordinal)
+        || assemblyName.StartsWith("JasperFx", StringComparison.Ordinal);
 
     private static bool IsStoreOrTransport(string assemblyName) =>
-        IsTransport(assemblyName) || assemblyName.StartsWith("Marten", StringComparison.Ordinal) || assemblyName.StartsWith("Weasel", StringComparison.Ordinal);
+        IsTransport(assemblyName)
+        || assemblyName.StartsWith("Marten", StringComparison.Ordinal)
+        || assemblyName.StartsWith("Weasel", StringComparison.Ordinal);
 
     private static string Name(Assembly assembly) => assembly.GetName().Name!;
 
     // One statement of a literal, trimmed: PostgreSQL's transaction control, with the optional words each takes.
     [GeneratedRegex(
         """
-        ^(?:
-            (?:begin(?:\s+(?:transaction|work))?|start\s+transaction)
-                (?:\s*,?\s*(?:isolation\s+level\s+\w+(?:\s+\w+)?|read\s+(?:write|only)|(?:not\s+)?deferrable))*
-          | (?:commit|end|abort|rollback)(?:\s+(?:transaction|work))?(?:\s+and\s+(?:no\s+)?chain)?
-          | rollback(?:\s+(?:transaction|work))?\s+to(?:\s+savepoint)?\s+\w+
-          | savepoint\s+\w+
-          | release(?:\s+savepoint)?\s+\w+
-          | (?:prepare\s+transaction|commit\s+prepared|rollback\s+prepared)\s+'[^']*'
-        )$
-        """,
+            ^(?:
+                (?:begin(?:\s+(?:transaction|work))?|start\s+transaction)
+                    (?:\s*,?\s*(?:isolation\s+level\s+\w+(?:\s+\w+)?|read\s+(?:write|only)|(?:not\s+)?deferrable))*
+              | (?:commit|end|abort|rollback)(?:\s+(?:transaction|work))?(?:\s+and\s+(?:no\s+)?chain)?
+              | rollback(?:\s+(?:transaction|work))?\s+to(?:\s+savepoint)?\s+\w+
+              | savepoint\s+\w+
+              | release(?:\s+savepoint)?\s+\w+
+              | (?:prepare\s+transaction|commit\s+prepared|rollback\s+prepared)\s+'[^']*'
+            )$
+            """,
         RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace
     )]
     private static partial Regex TransactionStatement();

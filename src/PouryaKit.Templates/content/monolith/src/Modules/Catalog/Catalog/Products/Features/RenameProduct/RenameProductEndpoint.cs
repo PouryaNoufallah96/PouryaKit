@@ -13,8 +13,18 @@ internal sealed class RenameProductEndpoint : IEndpoint
         routes
             .MapPut(
                 "/products/{productId}/name",
-                async (Guid productId, RenameProductBody body, IDispatcher dispatcher, CancellationToken cancellationToken) =>
-                    (await dispatcher.SendAsync(new RenameProductCommand(productId, body.Name), cancellationToken)).ToHttpResult()
+                async (
+                    Guid productId,
+                    RenameProductBody body,
+                    IDispatcher dispatcher,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await dispatcher.SendAsync(
+                            new RenameProductCommand(productId, body.Name),
+                            cancellationToken
+                        )
+                    ).ToHttpResult()
             )
             .MapToApiVersion(new ApiVersion(2, 0));
 }

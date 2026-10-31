@@ -15,9 +15,12 @@ public sealed class AzuriteFixture : IAsyncLifetime
 
     // Azurite's one account and its published key, which every emulator accepts.
     public const string AccountName = "devstoreaccount1";
-    public const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
+    public const string AccountKey =
+        "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
-    private readonly AzuriteContainer _store = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.37.0")
+    private readonly AzuriteContainer _store = new AzuriteBuilder(
+        "mcr.microsoft.com/azure-storage/azurite:3.37.0"
+    )
         .WithInMemoryPersistence()
         .WithCommand("--skipApiVersionCheck")
         .Build();
@@ -32,9 +35,15 @@ public sealed class AzuriteFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         await _store.StartAsync();
-        await new BlobServiceClient(_store.GetConnectionString()).CreateBlobContainerAsync(Container);
+        await new BlobServiceClient(_store.GetConnectionString()).CreateBlobContainerAsync(
+            Container
+        );
         _host = ComposeHost(
-            new() { ["PouryaKit:Storage:AzureBlob:Container"] = Container, ["PouryaKit:Storage:AzureBlob:ConnectionString"] = _store.GetConnectionString() }
+            new()
+            {
+                ["PouryaKit:Storage:AzureBlob:Container"] = Container,
+                ["PouryaKit:Storage:AzureBlob:ConnectionString"] = _store.GetConnectionString(),
+            }
         );
         await _host.StartAsync();
     }
@@ -43,7 +52,9 @@ public sealed class AzuriteFixture : IAsyncLifetime
     {
         var builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddInMemoryCollection(settings);
-        builder.Services.Configure<PouryaKitAzureBlobStorageOptions>(builder.Configuration.GetSection("PouryaKit:Storage:AzureBlob"));
+        builder.Services.Configure<PouryaKitAzureBlobStorageOptions>(
+            builder.Configuration.GetSection("PouryaKit:Storage:AzureBlob")
+        );
         builder.Services.AddPouryaKitAzureBlobStorage();
         return builder.Build();
     }

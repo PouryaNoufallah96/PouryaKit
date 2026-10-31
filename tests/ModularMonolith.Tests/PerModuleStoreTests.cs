@@ -25,13 +25,18 @@ public sealed class PerModuleStoreTests
         ModulesAroundMessaging,
     }
 
-    private static readonly OperationContext Context = new(Actor.Person("ada")) { RequestId = "r1" };
+    private static readonly OperationContext Context = new(Actor.Person("ada"))
+    {
+        RequestId = "r1",
+    };
 
     [Theory]
     [InlineData(Order.ModulesFirst)]
     [InlineData(Order.MessagingFirst)]
     [InlineData(Order.ModulesAroundMessaging)]
-    public async Task Each_module_resolves_its_own_receipts_and_idempotency_store_whatever_the_registration_order(Order order)
+    public async Task Each_module_resolves_its_own_receipts_and_idempotency_store_whatever_the_registration_order(
+        Order order
+    )
     {
         using var host = Compose(order);
 
@@ -41,9 +46,15 @@ public sealed class PerModuleStoreTests
             var keys = scope.ServiceProvider.GetService<IIdempotencyStore>();
             var receipts = scope.ServiceProvider.GetService<IReceipts>();
 
-            Assert.Same(scope.ServiceProvider.GetRequiredKeyedService<IIdempotencyStore>(typeof(EfModule)), keys);
+            Assert.Same(
+                scope.ServiceProvider.GetRequiredKeyedService<IIdempotencyStore>(typeof(EfModule)),
+                keys
+            );
             Assert.Equal("EfIdempotencyStore", keys!.GetType().Name);
-            Assert.Same(scope.ServiceProvider.GetRequiredKeyedService<IReceipts>(typeof(EfModule)), receipts);
+            Assert.Same(
+                scope.ServiceProvider.GetRequiredKeyedService<IReceipts>(typeof(EfModule)),
+                receipts
+            );
             Assert.Equal("EfReceipts", receipts!.GetType().Name);
         }
 
@@ -61,7 +72,9 @@ public sealed class PerModuleStoreTests
             .Services.GetRequiredService<IGatewayProcessor<OtherStoreModule>>()
             .SendAsync(SameNamedFeatures.Command(), Context, TestContext.Current.CancellationToken);
 
-        var (key, response) = Assert.Single(host.Services.GetRequiredService<StandInKeys.Kept>().Responses);
+        var (key, response) = Assert.Single(
+            host.Services.GetRequiredService<StandInKeys.Kept>().Responses
+        );
         Assert.Equal("r1", key.RequestId);
         Assert.Equal($"\"{sent.Value}\"", response);
     }
@@ -76,8 +89,14 @@ public sealed class PerModuleStoreTests
         await using var scope = host.Services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(Context);
 
-        Assert.Equal("EfIdempotencyStore", scope.ServiceProvider.GetRequiredService<IIdempotencyStore>().GetType().Name);
-        Assert.Equal("EfReceipts", scope.ServiceProvider.GetRequiredService<IReceipts>().GetType().Name);
+        Assert.Equal(
+            "EfIdempotencyStore",
+            scope.ServiceProvider.GetRequiredService<IIdempotencyStore>().GetType().Name
+        );
+        Assert.Equal(
+            "EfReceipts",
+            scope.ServiceProvider.GetRequiredService<IReceipts>().GetType().Name
+        );
     }
 
     private static IHost Compose(Order order)
@@ -87,12 +106,16 @@ public sealed class PerModuleStoreTests
         switch (order)
         {
             case Order.ModulesFirst:
-                builder.AddPouryaKitModules(modules => modules.Add<EfModule>().Add<OtherStoreModule>());
+                builder.AddPouryaKitModules(modules =>
+                    modules.Add<EfModule>().Add<OtherStoreModule>()
+                );
                 builder.UsePouryaKitWolverine(connectionName: "app");
                 break;
             case Order.MessagingFirst:
                 builder.UsePouryaKitWolverine(connectionName: "app");
-                builder.AddPouryaKitModules(modules => modules.Add<EfModule>().Add<OtherStoreModule>());
+                builder.AddPouryaKitModules(modules =>
+                    modules.Add<EfModule>().Add<OtherStoreModule>()
+                );
                 break;
             case Order.ModulesAroundMessaging:
                 builder.AddPouryaKitModules(modules => modules.Add<EfModule>());
@@ -105,13 +128,16 @@ public sealed class PerModuleStoreTests
     }
 
     private static HostApplicationBuilder Builder() =>
-        Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", "Development", "--ConnectionStrings:app=Host=db;Database=app"]
-        );
+        Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            "Development",
+            "--ConnectionStrings:app=Host=db;Database=app",
+        ]);
 
     private sealed class EfModule : IModuleDefinition
     {
-        public void Configure(ModuleBuilder module) => module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
+        public void Configure(ModuleBuilder module) =>
+            module.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
     }
 
     // Another write model's Module: its own Unit of Work, and its own Receipts and keys, keyed by the Module.
@@ -129,16 +155,29 @@ public sealed class PerModuleStoreTests
 
     private sealed class StandInUnitOfWork : IUnitOfWork
     {
-        public Task<Result> RunAsync(Func<CancellationToken, Task<Result>> command, CancellationToken cancellationToken) =>
-            command(cancellationToken);
+        public Task<Result> RunAsync(
+            Func<CancellationToken, Task<Result>> command,
+            CancellationToken cancellationToken
+        ) => command(cancellationToken);
     }
 
     private sealed class StandInKeys(StandInKeys.Kept kept) : IIdempotencyStore
     {
-        public Task<RecordedSuccess?> ReserveAsync(IdempotencyKey key, CancellationToken cancellationToken) =>
-            Task.FromResult(kept.Responses.TryGetValue(key, out var response) ? new RecordedSuccess(response) : null);
+        public Task<RecordedSuccess?> ReserveAsync(
+            IdempotencyKey key,
+            CancellationToken cancellationToken
+        ) =>
+            Task.FromResult(
+                kept.Responses.TryGetValue(key, out var response)
+                    ? new RecordedSuccess(response)
+                    : null
+            );
 
-        public Task RecordAsync(IdempotencyKey key, string response, CancellationToken cancellationToken)
+        public Task RecordAsync(
+            IdempotencyKey key,
+            string response,
+            CancellationToken cancellationToken
+        )
         {
             kept.Responses[key] = response;
             return Task.CompletedTask;
@@ -152,9 +191,17 @@ public sealed class PerModuleStoreTests
 
     private sealed class StandInReceipts : IReceipts
     {
-        public Task<bool> RecordAsync(string subscription, Guid messageId, CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<bool> RecordAsync(
+            string subscription,
+            Guid messageId,
+            CancellationToken cancellationToken
+        ) => Task.FromResult(true);
 
-        public Task<bool> RecordVersionAsync(string subscription, string aggregateId, long version, CancellationToken cancellationToken) =>
-            Task.FromResult(true);
+        public Task<bool> RecordVersionAsync(
+            string subscription,
+            string aggregateId,
+            long version,
+            CancellationToken cancellationToken
+        ) => Task.FromResult(true);
     }
 }

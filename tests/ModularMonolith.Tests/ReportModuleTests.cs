@@ -27,10 +27,18 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
     {
         using var ada = reports.Client("ada", Tenant);
 
-        var requested = await ada.PostAsJsonAsync("/reports", Sales, TestContext.Current.CancellationToken);
+        var requested = await ada.PostAsJsonAsync(
+            "/reports",
+            Sales,
+            TestContext.Current.CancellationToken
+        );
 
         Assert.Equal(HttpStatusCode.Accepted, requested.StatusCode);
-        var id = (await requested.Content.ReadFromJsonAsync<Accepted>(TestContext.Current.CancellationToken))!.Id;
+        var id = (
+            await requested.Content.ReadFromJsonAsync<Accepted>(
+                TestContext.Current.CancellationToken
+            )
+        )!.Id;
         Assert.Equal($"/reports/{id}", requested.Headers.Location?.OriginalString);
         var job = await CompletedAsync(ada, id);
         Assert.Equal(("sales", "Csv"), (job.Kind, job.Format));
@@ -41,13 +49,25 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
             TestContext.Current.CancellationToken
         );
         using var download = new HttpClient();
-        Assert.Equal(Csv(layout.Value), await download.GetByteArrayAsync(job.DownloadUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(
+            Csv(layout.Value),
+            await download.GetByteArrayAsync(job.DownloadUrl, TestContext.Current.CancellationToken)
+        );
         // The layout was asked for under a continuation of the request, its Actor, tenant and correlation, by every attempt,
         // a takeover's included should a slow machine let the claim go stale.
         var request = reports.Reports.Authorized.Last();
-        var laidOut = reports.Reports.LaidOut.Where(context => context.CorrelationId == request.CorrelationId).ToList();
+        var laidOut = reports
+            .Reports.LaidOut.Where(context => context.CorrelationId == request.CorrelationId)
+            .ToList();
         Assert.NotEmpty(laidOut);
-        Assert.All(laidOut, context => Assert.Equal((Actor.Person("ada"), Tenant, true), (context.Actor, context.Tenant, context.IsTrustedContinuation)));
+        Assert.All(
+            laidOut,
+            context =>
+                Assert.Equal(
+                    (Actor.Person("ada"), Tenant, true),
+                    (context.Actor, context.Tenant, context.IsTrustedContinuation)
+                )
+        );
     }
 
     [Fact]
@@ -58,12 +78,22 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
 
         var refused = await ada.PostAsJsonAsync(
             "/reports",
-            Sales with { Parameters = new() { [SalesReports.Month] = "October" } },
+            Sales with
+            {
+                Parameters = new() { [SalesReports.Month] = "October" },
+            },
             TestContext.Current.CancellationToken
         );
 
-        Assert.Equal("Reports.RequestDenied", await ErrorCodeAsync(refused, HttpStatusCode.Forbidden));
-        Assert.Empty(await reports.RowsAsync("select id from reports.report_jobs where parameters ->> 'month' = 'October'"));
+        Assert.Equal(
+            "Reports.RequestDenied",
+            await ErrorCodeAsync(refused, HttpStatusCode.Forbidden)
+        );
+        Assert.Empty(
+            await reports.RowsAsync(
+                "select id from reports.report_jobs where parameters ->> 'month' = 'October'"
+            )
+        );
         Assert.Equal(claims.Count, (await ClaimsAsync()).Count);
     }
 
@@ -77,26 +107,53 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
 
         using var bob = reports.Client("bob", Tenant);
         using var adaElsewhere = reports.Client("ada", OtherTenant);
-        using var grantedElsewhere = reports.Client("carol", OtherTenant, ReportModule.ReadTenantJobsPermission);
+        using var grantedElsewhere = reports.Client(
+            "carol",
+            OtherTenant,
+            ReportModule.ReadTenantJobsPermission
+        );
         // Each caller's answer, so a check that admits one shows which: the permission, which spec #115 lets the Host
         // grant, reads its own tenant's jobs alone.
         List<(string Caller, HttpStatusCode Status)> reads = [];
-        foreach (var (caller, other) in new[] { ("bob", bob), ("ada elsewhere", adaElsewhere), ("granted elsewhere", grantedElsewhere) })
+        foreach (
+            var (caller, other) in new[]
+            {
+                ("bob", bob),
+                ("ada elsewhere", adaElsewhere),
+                ("granted elsewhere", grantedElsewhere),
+            }
+        )
         {
-            var read = await other.GetAsync($"/reports/{id}", TestContext.Current.CancellationToken);
+            var read = await other.GetAsync(
+                $"/reports/{id}",
+                TestContext.Current.CancellationToken
+            );
             reads.Add((caller, read.StatusCode));
             if (read.StatusCode == HttpStatusCode.NotFound)
             {
-                Assert.Equal("Reports.JobNotFound", await ErrorCodeAsync(read, HttpStatusCode.NotFound));
+                Assert.Equal(
+                    "Reports.JobNotFound",
+                    await ErrorCodeAsync(read, HttpStatusCode.NotFound)
+                );
             }
         }
 
-        Assert.Equal([("bob", HttpStatusCode.NotFound), ("ada elsewhere", HttpStatusCode.NotFound), ("granted elsewhere", HttpStatusCode.NotFound)], reads);
+        Assert.Equal(
+            [
+                ("bob", HttpStatusCode.NotFound),
+                ("ada elsewhere", HttpStatusCode.NotFound),
+                ("granted elsewhere", HttpStatusCode.NotFound),
+            ],
+            reads
+        );
 
         // Nothing was signed for anyone who may not read the job.
         Assert.Equal(signed, reports.Storage.Signed.Count);
         using var carol = reports.Client("carol", Tenant, ReportModule.ReadTenantJobsPermission);
-        var granted = await carol.GetFromJsonAsync<Job>($"/reports/{id}", TestContext.Current.CancellationToken);
+        var granted = await carol.GetFromJsonAsync<Job>(
+            $"/reports/{id}",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(("Completed", true), (granted!.State, granted.DownloadUrl is not null));
     }
 
@@ -126,13 +183,32 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         );
         var served = await CompletedAsync(ada, id);
         using var download = new HttpClient();
-        Assert.Equal(Csv(TestReports.HeldLayout(2)), await download.GetByteArrayAsync(served.DownloadUrl, TestContext.Current.CancellationToken));
+        Assert.Equal(
+            Csv(TestReports.HeldLayout(2)),
+            await download.GetByteArrayAsync(
+                served.DownloadUrl,
+                TestContext.Current.CancellationToken
+            )
+        );
         // Its retry, finding the claim lost, removed the file the late upload stored under its own key.
         Assert.Contains($"reports/{id:N}/1", reports.Storage.Uploaded);
         await NotStoredAsync($"reports/{id:N}/1");
-        Assert.Equal([[2, $"reports/{id:N}/2"]], await reports.RowsAsync($"select attempt, file_key from reports.report_jobs where id = '{id}'"));
+        Assert.Equal(
+            [
+                [2, $"reports/{id:N}/2"],
+            ],
+            await reports.RowsAsync(
+                $"select attempt, file_key from reports.report_jobs where id = '{id}'"
+            )
+        );
         // Taken over once: the first claim scheduled the one takeover, and the takeover scheduled none.
-        Assert.Equal([1, 2], (await ClaimsAsync()).Where(claim => claim.JobId == id).Select(claim => claim.Attempt).Order());
+        Assert.Equal(
+            [1, 2],
+            (await ClaimsAsync())
+                .Where(claim => claim.JobId == id)
+                .Select(claim => claim.Attempt)
+                .Order()
+        );
         Assert.Equal(2, reports.Reports.HeldCalls);
     }
 
@@ -141,15 +217,25 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
     {
         using var ada = reports.Client("ada", Tenant);
         using var bea = reports.Client("bea", OtherTenant);
-        var (adas, beas, kept) = (await RequestAsync(ada, Sales), await RequestAsync(bea, Sales), await RequestAsync(ada, Sales));
+        var (adas, beas, kept) = (
+            await RequestAsync(ada, Sales),
+            await RequestAsync(bea, Sales),
+            await RequestAsync(ada, Sales)
+        );
         await CompletedAsync(ada, adas);
         await CompletedAsync(bea, beas);
         await CompletedAsync(ada, kept);
-        var expiredFiles = (await reports.RowsAsync($"select file_key from reports.report_jobs where id in ('{adas}', '{beas}')"))
+        var expiredFiles = (
+            await reports.RowsAsync(
+                $"select file_key from reports.report_jobs where id in ('{adas}', '{beas}')"
+            )
+        )
             .Select(row => (string)row[0])
             .ToList();
 
-        await reports.RowsAsync($"update reports.report_jobs set expires_at = now() - interval '1 second' where id in ('{adas}', '{beas}')");
+        await reports.RowsAsync(
+            $"update reports.report_jobs set expires_at = now() - interval '1 second' where id in ('{adas}', '{beas}')"
+        );
 
         await reports.WaitUntilAsync(
             $"not exists (select from reports.report_jobs where id in ('{adas}', '{beas}'))",
@@ -158,13 +244,21 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         Assert.Equal(2, expiredFiles.Count);
         foreach (var file in expiredFiles)
         {
-            var downloaded = await reports.Storage.Provider.DownloadAsync(file, TestContext.Current.CancellationToken);
+            var downloaded = await reports.Storage.Provider.DownloadAsync(
+                file,
+                TestContext.Current.CancellationToken
+            );
             Assert.Equal(StorageErrors.FileNotFound, Assert.Single(downloaded.Errors));
         }
 
         var served = await CompletedAsync(ada, kept);
         using var download = new HttpClient();
-        Assert.NotEmpty(await download.GetByteArrayAsync(served.DownloadUrl, TestContext.Current.CancellationToken));
+        Assert.NotEmpty(
+            await download.GetByteArrayAsync(
+                served.DownloadUrl,
+                TestContext.Current.CancellationToken
+            )
+        );
     }
 
     [Fact]
@@ -180,7 +274,9 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
                 $"exists (select from reports.report_jobs where id = '{id}' and attempt = 2)",
                 "The stale claim was not taken over."
             );
-            await reports.RowsAsync($"update reports.report_jobs set expires_at = now() - interval '1 second' where id = '{id}'");
+            await reports.RowsAsync(
+                $"update reports.report_jobs set expires_at = now() - interval '1 second' where id = '{id}'"
+            );
             await reports.WaitUntilAsync(
                 $"not exists (select from reports.report_jobs where id = '{id}')",
                 "Retention did not remove the expired job."
@@ -199,7 +295,10 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
             "An attempt did not finish."
         );
         string[] keys = [$"reports/{id:N}/1", $"reports/{id:N}/2"];
-        Assert.Equal(keys, reports.Storage.Uploaded.Where(keys.Contains).Order(StringComparer.Ordinal));
+        Assert.Equal(
+            keys,
+            reports.Storage.Uploaded.Where(keys.Contains).Order(StringComparer.Ordinal)
+        );
         foreach (var key in keys)
         {
             await NotStoredAsync(key);
@@ -216,7 +315,9 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
 
         // Two minutes left: far longer than the retention's cadence, and shorter than the default LinkLifetime.
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(2);
-        await reports.RowsAsync($"update reports.report_jobs set expires_at = '{expiresAt:O}' where id = '{id}'");
+        await reports.RowsAsync(
+            $"update reports.report_jobs set expires_at = '{expiresAt:O}' where id = '{id}'"
+        );
         var near = await CompletedAsync(ada, id);
 
         Assert.Equal(TimeSpan.FromMinutes(15), fresh);
@@ -236,12 +337,26 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
         // The retention is held, so the job's row still says Completed when it is read past its expiry.
         await using (await reports.HoldDeliveriesAsync())
         {
-            await reports.RowsAsync($"update reports.report_jobs set expires_at = '{DateTimeOffset.UtcNow.AddSeconds(-1):O}' where id = '{id}'");
-            read = (await ada.GetFromJsonAsync<Job>($"/reports/{id}", TestContext.Current.CancellationToken))!;
-            stored = await reports.RowsAsync($"select state from reports.report_jobs where id = '{id}'");
+            await reports.RowsAsync(
+                $"update reports.report_jobs set expires_at = '{DateTimeOffset.UtcNow.AddSeconds(-1):O}' where id = '{id}'"
+            );
+            read = (
+                await ada.GetFromJsonAsync<Job>(
+                    $"/reports/{id}",
+                    TestContext.Current.CancellationToken
+                )
+            )!;
+            stored = await reports.RowsAsync(
+                $"select state from reports.report_jobs where id = '{id}'"
+            );
         }
 
-        Assert.Equal([["Completed"]], stored);
+        Assert.Equal(
+            [
+                ["Completed"],
+            ],
+            stored
+        );
         Assert.Equal(("Expired", null), (read.State, read.DownloadUrl));
         Assert.Equal(signed, reports.Storage.Signed.Count);
     }
@@ -257,19 +372,28 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
 
     [Theory]
     [MemberData(nameof(OutOfRange))]
-    public async Task A_host_whose_report_setting_is_out_of_range_fails_to_start_naming_the_bounds(string setting, TimeSpan value)
+    public async Task A_host_whose_report_setting_is_out_of_range_fails_to_start_naming_the_bounds(
+        string setting,
+        TimeSpan value
+    )
     {
         await using var host = reports.Compose($"--PouryaKit:Reports:{setting}={value}");
 
         // The settings are validated themselves and again when the retention's cadence reads them, so the start fails
         // with the one failure twice.
-        var failure = await Assert.ThrowsAsync<AggregateException>(() => host.StartAsync(TestContext.Current.CancellationToken));
+        var failure = await Assert.ThrowsAsync<AggregateException>(() =>
+            host.StartAsync(TestContext.Current.CancellationToken)
+        );
 
         Assert.Equal(
             [
                 "PouryaKit:Reports: Retention, CleanupInterval and ClaimTimeout must each be positive and at most 36500.00:00:00, and LinkLifetime positive and at most 7.00:00:00, the longest link S3 and Azure Blob sign.",
             ],
-            failure.InnerExceptions.SelectMany(inner => Assert.IsType<OptionsValidationException>(inner).Failures).Distinct()
+            failure
+                .InnerExceptions.SelectMany(inner =>
+                    Assert.IsType<OptionsValidationException>(inner).Failures
+                )
+                .Distinct()
         );
     }
 
@@ -284,73 +408,135 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
             new { kind = SalesReports.Kind, parameters = Sales.Parameters },
             TestContext.Current.CancellationToken
         );
-        var unknown = await ada.PostAsJsonAsync("/reports", Sales with { Format = "Docx" }, TestContext.Current.CancellationToken);
+        var unknown = await ada.PostAsJsonAsync(
+            "/reports",
+            Sales with
+            {
+                Format = "Docx",
+            },
+            TestContext.Current.CancellationToken
+        );
 
         await ProblemResponses.ProblemAsync(missing, HttpStatusCode.BadRequest);
         await ProblemResponses.ProblemAsync(unknown, HttpStatusCode.BadRequest);
         Assert.Equal(before, await reports.RowsAsync("select count(*) from reports.report_jobs"));
     }
 
-    private static readonly Request Sales = new(SalesReports.Kind, "Csv", new() { [SalesReports.Month] = "2026-10" });
+    private static readonly Request Sales = new(
+        SalesReports.Kind,
+        "Csv",
+        new() { [SalesReports.Month] = "2026-10" }
+    );
 
-    private static byte[] Csv(ReportLayout layout) => new ReportRenderer().Render(layout, ReportFormat.Csv).Value.Content;
+    private static byte[] Csv(ReportLayout layout) =>
+        new ReportRenderer().Render(layout, ReportFormat.Csv).Value.Content;
 
     private static async Task<Guid> RequestAsync(HttpClient client, Request request)
     {
-        var requested = await client.PostAsJsonAsync("/reports", request, TestContext.Current.CancellationToken);
+        var requested = await client.PostAsJsonAsync(
+            "/reports",
+            request,
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(HttpStatusCode.Accepted, requested.StatusCode);
-        return (await requested.Content.ReadFromJsonAsync<Accepted>(TestContext.Current.CancellationToken))!.Id;
+        return (
+            await requested.Content.ReadFromJsonAsync<Accepted>(
+                TestContext.Current.CancellationToken
+            )
+        )!.Id;
     }
 
     // The job as its requester reads it once it completed, polled over HTTP.
     private static async Task<Job> CompletedAsync(HttpClient client, Guid id)
     {
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         timeout.CancelAfter(TimeSpan.FromSeconds(30));
         while (true)
         {
-            var job = await client.GetFromJsonAsync<Job>($"/reports/{id}", TestContext.Current.CancellationToken);
+            var job = await client.GetFromJsonAsync<Job>(
+                $"/reports/{id}",
+                TestContext.Current.CancellationToken
+            );
             if (job!.State == "Completed")
             {
                 return job;
             }
 
-            Assert.False(timeout.IsCancellationRequested, $"The job {id} is still {job.State} after 30 s.");
+            Assert.False(
+                timeout.IsCancellationRequested,
+                $"The job {id} is still {job.State} after 30 s."
+            );
             await Task.Delay(50, TestContext.Current.CancellationToken);
         }
     }
 
-    private static async Task<string> ErrorCodeAsync(HttpResponseMessage response, HttpStatusCode status)
+    private static async Task<string> ErrorCodeAsync(
+        HttpResponseMessage response,
+        HttpStatusCode status
+    )
     {
         var problem = await ProblemResponses.ProblemAsync(response, status);
-        return Assert.Single(problem.GetProperty("errors").EnumerateArray()).GetProperty("code").GetString()!;
+        return Assert
+            .Single(problem.GetProperty("errors").EnumerateArray())
+            .GetProperty("code")
+            .GetString()!;
     }
 
     // Every claim the Module stored, of any job, read from the message store's envelopes as the Kit's JSON wrote them.
     private async Task<List<Claim>> ClaimsAsync() =>
-    [
-        .. (await reports.RowsAsync("select body from wolverine.wolverine_incoming_envelopes where received_at = 'local://reports.claim/'")).Select(row =>
-        {
-            using var claim = JsonDocument.Parse(EnvelopeSerializer.Deserialize((byte[])row[0]).Data!);
-            return new Claim(claim.RootElement.GetProperty("jobId").GetGuid(), claim.RootElement.GetProperty("attempt").GetInt32());
-        }),
-    ];
+        [
+            .. (
+                await reports.RowsAsync(
+                    "select body from wolverine.wolverine_incoming_envelopes where received_at = 'local://reports.claim/'"
+                )
+            ).Select(row =>
+            {
+                using var claim = JsonDocument.Parse(
+                    EnvelopeSerializer.Deserialize((byte[])row[0]).Data!
+                );
+                return new Claim(
+                    claim.RootElement.GetProperty("jobId").GetGuid(),
+                    claim.RootElement.GetProperty("attempt").GetInt32()
+                );
+            }),
+        ];
 
     // The lifetime of the last link signed for a file of the job.
     private TimeSpan LastLifetime(Guid id) =>
-        reports.Storage.Signed.Last(signed => signed.Key.StartsWith($"reports/{id:N}/", StringComparison.Ordinal)).Lifetime;
+        reports
+            .Storage.Signed.Last(signed =>
+                signed.Key.StartsWith($"reports/{id:N}/", StringComparison.Ordinal)
+            )
+            .Lifetime;
 
     private async Task NotStoredAsync(string key)
     {
-        var stored = await reports.Storage.Provider.DownloadAsync(key, TestContext.Current.CancellationToken);
+        var stored = await reports.Storage.Provider.DownloadAsync(
+            key,
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal(StorageErrors.FileNotFound, Assert.Single(stored.Errors));
     }
 
-    private sealed record Request(string Kind, string Format, Dictionary<string, string> Parameters);
+    private sealed record Request(
+        string Kind,
+        string Format,
+        Dictionary<string, string> Parameters
+    );
 
     private sealed record Accepted(Guid Id);
 
-    private sealed record Job(Guid Id, string Kind, string Format, string State, Uri? DownloadUrl, string? Failure, DateTimeOffset ExpiresAt);
+    private sealed record Job(
+        Guid Id,
+        string Kind,
+        string Format,
+        string State,
+        Uri? DownloadUrl,
+        string? Failure,
+        DateTimeOffset ExpiresAt
+    );
 
     private sealed record Claim(Guid JobId, int Attempt);
 }

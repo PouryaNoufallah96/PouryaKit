@@ -14,7 +14,10 @@ internal sealed class StartStockCountCommandHandler(
     OperationContext context
 ) : CommandHandler<StartStockCountCommand, long>
 {
-    public override async Task<Result<long>> Handle(StartStockCountCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<long>> Handle(
+        StartStockCountCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var year = DomainClock.Current.GetUtcNow().Year;
         var number = await sequences.NextAsync($"stock-count:{year}", cancellationToken);
@@ -27,7 +30,12 @@ internal sealed class StartStockCountCommandHandler(
         await connection.ExecuteAsync(
             new CommandDefinition(
                 "insert into inventory.stock_counts (year, number, started_by) values (@Year, @Number, @StartedBy)",
-                new { Year = year, Number = number.Value, StartedBy = context.Actor.Id },
+                new
+                {
+                    Year = year,
+                    Number = number.Value,
+                    StartedBy = context.Actor.Id,
+                },
                 transaction,
                 cancellationToken: cancellationToken
             )

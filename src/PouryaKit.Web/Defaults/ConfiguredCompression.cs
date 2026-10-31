@@ -20,13 +20,19 @@ internal sealed class ConfiguredCompression : IStartupFilter
             .Configure<IOptions<PouryaKitCompressionOptions>>(
                 (compression, configured) => compression.EnableForHttps |= configured.Value.Enabled
             );
-        services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, ConfiguredCompression>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Transient<IStartupFilter, ConfiguredCompression>()
+        );
     }
 
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>
         app =>
         {
-            if (app.ApplicationServices.GetRequiredService<IOptions<PouryaKitCompressionOptions>>().Value.Enabled)
+            if (
+                app
+                    .ApplicationServices.GetRequiredService<IOptions<PouryaKitCompressionOptions>>()
+                    .Value.Enabled
+            )
             {
                 app.UseResponseCompression();
             }

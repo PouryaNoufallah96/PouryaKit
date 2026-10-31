@@ -21,7 +21,8 @@ public static class ThingsGateway
     public static Task<Result<string>> GetThing(IDispatcher dispatcher) =>
         dispatcher.QueryAsync(new GetThingQuery(Guid.CreateVersion7()));
 
-    public static Task<Result> Ping(IDispatcher dispatcher) => dispatcher.SendAsync(new PingCommand());
+    public static Task<Result> Ping(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new PingCommand());
 
     public static Task<Result<string>> RunOuter(IDispatcher dispatcher, NestedOutcome nested) =>
         dispatcher.SendAsync(new RunOuterCommand(nested));
@@ -44,10 +45,12 @@ public static class ThingsGateway
     public static Task<Result> AuthorizeByRunningAQuery(IDispatcher dispatcher) =>
         dispatcher.SendAsync(new GuardedByQueryCommand());
 
-    public static Task<Result<string>> RunOuterLettingANestedExceptionThrough(IDispatcher dispatcher) =>
-        dispatcher.SendAsync(new RunOuterUncaughtCommand());
+    public static Task<Result<string>> RunOuterLettingANestedExceptionThrough(
+        IDispatcher dispatcher
+    ) => dispatcher.SendAsync(new RunOuterUncaughtCommand());
 
-    public static Task<Result<string>> SealThing(IDispatcher dispatcher) => dispatcher.SendAsync(new SealThingCommand());
+    public static Task<Result<string>> SealThing(IDispatcher dispatcher) =>
+        dispatcher.SendAsync(new SealThingCommand());
 
     public static Task<Result<string>> ReadThingInsideTheUnitOfWork(IDispatcher dispatcher) =>
         dispatcher.SendAsync(new ReadThingCommand());
@@ -55,15 +58,22 @@ public static class ThingsGateway
 
 internal sealed record GuardedByCommandCommand : Command;
 
-internal sealed class GuardedByCommandAuthorizer(IDispatcher dispatcher) : IAuthorizer<GuardedByCommandCommand>
+internal sealed class GuardedByCommandAuthorizer(IDispatcher dispatcher)
+    : IAuthorizer<GuardedByCommandCommand>
 {
-    public async Task<Result> AuthorizeAsync(GuardedByCommandCommand command, CancellationToken cancellationToken) =>
-        await dispatcher.SendAsync(new PingCommand(), cancellationToken);
+    public async Task<Result> AuthorizeAsync(
+        GuardedByCommandCommand command,
+        CancellationToken cancellationToken
+    ) => await dispatcher.SendAsync(new PingCommand(), cancellationToken);
 }
 
-internal sealed class GuardedByCommandHandler(OperationTrace trace) : CommandHandler<GuardedByCommandCommand>
+internal sealed class GuardedByCommandHandler(OperationTrace trace)
+    : CommandHandler<GuardedByCommandCommand>
 {
-    public override Task<Result> Handle(GuardedByCommandCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        GuardedByCommandCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle GuardedByCommandCommand");
         return Task.FromResult(Result.Success());
@@ -73,27 +83,41 @@ internal sealed class GuardedByCommandHandler(OperationTrace trace) : CommandHan
 internal sealed record SendGuardedByCommandCommand : Command;
 
 // Inside the active Unit of Work, the nested command's authorizer must still not send a command.
-internal sealed class SendGuardedByCommandHandler(IDispatcher dispatcher) : CommandHandler<SendGuardedByCommandCommand>
+internal sealed class SendGuardedByCommandHandler(IDispatcher dispatcher)
+    : CommandHandler<SendGuardedByCommandCommand>
 {
-    public override Task<Result> Handle(SendGuardedByCommandCommand command, CancellationToken cancellationToken) =>
-        dispatcher.SendAsync(new GuardedByCommandCommand(), cancellationToken);
+    public override Task<Result> Handle(
+        SendGuardedByCommandCommand command,
+        CancellationToken cancellationToken
+    ) => dispatcher.SendAsync(new GuardedByCommandCommand(), cancellationToken);
 }
 
 internal sealed record GuardedByQueryCommand : Command;
 
 // A permission lookup: an authorizer may read through a query before the Unit of Work starts.
-internal sealed class GuardedByQueryAuthorizer(IDispatcher dispatcher) : IAuthorizer<GuardedByQueryCommand>
+internal sealed class GuardedByQueryAuthorizer(IDispatcher dispatcher)
+    : IAuthorizer<GuardedByQueryCommand>
 {
-    public async Task<Result> AuthorizeAsync(GuardedByQueryCommand command, CancellationToken cancellationToken)
+    public async Task<Result> AuthorizeAsync(
+        GuardedByQueryCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        var thing = await dispatcher.QueryAsync(new GetThingQuery(Guid.CreateVersion7()), cancellationToken);
+        var thing = await dispatcher.QueryAsync(
+            new GetThingQuery(Guid.CreateVersion7()),
+            cancellationToken
+        );
         return thing.IsSuccess ? Result.Success() : thing.Errors;
     }
 }
 
-internal sealed class GuardedByQueryHandler(OperationTrace trace) : CommandHandler<GuardedByQueryCommand>
+internal sealed class GuardedByQueryHandler(OperationTrace trace)
+    : CommandHandler<GuardedByQueryCommand>
 {
-    public override Task<Result> Handle(GuardedByQueryCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        GuardedByQueryCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle GuardedByQueryCommand");
         return Task.FromResult(Result.Success());
@@ -102,9 +126,13 @@ internal sealed class GuardedByQueryHandler(OperationTrace trace) : CommandHandl
 
 internal sealed record RunOuterUncaughtCommand : Command<string>;
 
-internal sealed class RunOuterUncaughtHandler(IDispatcher dispatcher) : CommandHandler<RunOuterUncaughtCommand, string>
+internal sealed class RunOuterUncaughtHandler(IDispatcher dispatcher)
+    : CommandHandler<RunOuterUncaughtCommand, string>
 {
-    public override async Task<Result<string>> Handle(RunOuterUncaughtCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        RunOuterUncaughtCommand command,
+        CancellationToken cancellationToken
+    )
     {
         await dispatcher.SendAsync(new RunNestedCommand(NestedOutcome.Throws), cancellationToken);
         return "unreachable";
@@ -115,16 +143,23 @@ internal sealed record CreateThingCommand(string Name) : Command<Guid>;
 
 internal sealed class CreateThingAuthorizer(OperationTrace trace) : IAuthorizer<CreateThingCommand>
 {
-    public Task<Result> AuthorizeAsync(CreateThingCommand operation, CancellationToken cancellationToken)
+    public Task<Result> AuthorizeAsync(
+        CreateThingCommand operation,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("authorize CreateThingCommand");
         return Task.FromResult(Result.Success());
     }
 }
 
-internal sealed class CreateThingHandler(OperationTrace trace) : CommandHandler<CreateThingCommand, Guid>
+internal sealed class CreateThingHandler(OperationTrace trace)
+    : CommandHandler<CreateThingCommand, Guid>
 {
-    public override Task<Result<Guid>> Handle(CreateThingCommand command, CancellationToken cancellationToken)
+    public override Task<Result<Guid>> Handle(
+        CreateThingCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle CreateThingCommand");
         return Task.FromResult<Result<Guid>>(Guid.CreateVersion7());
@@ -144,7 +179,10 @@ internal sealed class GetThingAuthorizer(OperationTrace trace) : IAuthorizer<Get
 
 internal sealed class GetThingHandler(OperationTrace trace) : QueryHandler<GetThingQuery, string>
 {
-    public override Task<Result<string>> Handle(GetThingQuery query, CancellationToken cancellationToken)
+    public override Task<Result<string>> Handle(
+        GetThingQuery query,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle GetThingQuery");
         return Task.FromResult<Result<string>>("thing");
@@ -164,9 +202,13 @@ internal sealed class PingHandler(OperationTrace trace) : CommandHandler<PingCom
 
 internal sealed record RunOuterCommand(NestedOutcome Nested) : Command<string>;
 
-internal sealed class RunOuterHandler(IDispatcher dispatcher, OperationTrace trace) : CommandHandler<RunOuterCommand, string>
+internal sealed class RunOuterHandler(IDispatcher dispatcher, OperationTrace trace)
+    : CommandHandler<RunOuterCommand, string>
 {
-    public override async Task<Result<string>> Handle(RunOuterCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        RunOuterCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle RunOuterCommand");
         try
@@ -182,14 +224,19 @@ internal sealed class RunOuterHandler(IDispatcher dispatcher, OperationTrace tra
     }
 }
 
-internal sealed record RunNestedCommand(NestedOutcome Outcome) : Command<string>, IValidatedOperation
+internal sealed record RunNestedCommand(NestedOutcome Outcome)
+    : Command<string>,
+        IValidatedOperation
 {
     public bool IsValid => Outcome != NestedOutcome.ValidationFails;
 }
 
 internal sealed class RunNestedAuthorizer : IAuthorizer<RunNestedCommand>
 {
-    public Task<Result> AuthorizeAsync(RunNestedCommand operation, CancellationToken cancellationToken) =>
+    public Task<Result> AuthorizeAsync(
+        RunNestedCommand operation,
+        CancellationToken cancellationToken
+    ) =>
         Task.FromResult<Result>(
             operation.Outcome == NestedOutcome.AuthorizationFails
                 ? Error.Forbidden("Nested.AuthorizationFails", "Not allowed.")
@@ -197,9 +244,13 @@ internal sealed class RunNestedAuthorizer : IAuthorizer<RunNestedCommand>
         );
 }
 
-internal sealed class RunNestedHandler(OperationTrace trace) : CommandHandler<RunNestedCommand, string>
+internal sealed class RunNestedHandler(OperationTrace trace)
+    : CommandHandler<RunNestedCommand, string>
 {
-    public override Task<Result<string>> Handle(RunNestedCommand command, CancellationToken cancellationToken)
+    public override Task<Result<string>> Handle(
+        RunNestedCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle RunNestedCommand");
         return command.Outcome switch
@@ -207,7 +258,9 @@ internal sealed class RunNestedHandler(OperationTrace trace) : CommandHandler<Ru
             NestedOutcome.HandlerFails => Task.FromResult<Result<string>>(
                 Error.Conflict("Nested.HandlerFails", "The nested command failed.")
             ),
-            NestedOutcome.Throws => throw new InvalidOperationException("The nested command threw."),
+            NestedOutcome.Throws => throw new InvalidOperationException(
+                "The nested command threw."
+            ),
             _ => Task.FromResult<Result<string>>("nested done"),
         };
     }
@@ -218,7 +271,10 @@ internal sealed record ReadMissingThingCommand : Command<string>;
 internal sealed class ReadMissingThingHandler(IDispatcher dispatcher, OperationTrace trace)
     : CommandHandler<ReadMissingThingCommand, string>
 {
-    public override async Task<Result<string>> Handle(ReadMissingThingCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        ReadMissingThingCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle ReadMissingThingCommand");
         _ = await dispatcher.QueryAsync(new FindMissingThingQuery(), cancellationToken); // its NotFound is ignored on purpose
@@ -230,15 +286,21 @@ internal sealed record FindMissingThingQuery : Query<string>;
 
 internal sealed class FindMissingThingHandler : QueryHandler<FindMissingThingQuery, string>
 {
-    public override Task<Result<string>> Handle(FindMissingThingQuery query, CancellationToken cancellationToken) =>
-        Task.FromResult<Result<string>>(Error.NotFound("Thing.NotFound", "No such thing."));
+    public override Task<Result<string>> Handle(
+        FindMissingThingQuery query,
+        CancellationToken cancellationToken
+    ) => Task.FromResult<Result<string>>(Error.NotFound("Thing.NotFound", "No such thing."));
 }
 
 internal sealed record SendCommandQuery : Query<string>;
 
-internal sealed class SendCommandHandler(IDispatcher dispatcher) : QueryHandler<SendCommandQuery, string>
+internal sealed class SendCommandHandler(IDispatcher dispatcher)
+    : QueryHandler<SendCommandQuery, string>
 {
-    public override async Task<Result<string>> Handle(SendCommandQuery query, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        SendCommandQuery query,
+        CancellationToken cancellationToken
+    )
     {
         await dispatcher.SendAsync(new PingCommand(), cancellationToken);
         return "sent";
@@ -249,9 +311,13 @@ internal sealed class SendCommandHandler(IDispatcher dispatcher) : QueryHandler<
 internal sealed record SealThingCommand : Command<string>;
 
 // Sends a nested command that opts in too: only the outermost one reserves a key.
-internal sealed class SealThingHandler(IDispatcher dispatcher, OperationTrace trace) : CommandHandler<SealThingCommand, string>
+internal sealed class SealThingHandler(IDispatcher dispatcher, OperationTrace trace)
+    : CommandHandler<SealThingCommand, string>
 {
-    public override async Task<Result<string>> Handle(SealThingCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        SealThingCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle SealThingCommand");
         var part = await dispatcher.SendAsync(new SealPartCommand(), cancellationToken);
@@ -264,7 +330,10 @@ internal sealed record SealPartCommand : Command;
 
 internal sealed class SealPartHandler(OperationTrace trace) : CommandHandler<SealPartCommand>
 {
-    public override Task<Result> Handle(SealPartCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        SealPartCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle SealPartCommand");
         return Task.FromResult(Result.Success());
@@ -274,19 +343,30 @@ internal sealed class SealPartHandler(OperationTrace trace) : CommandHandler<Sea
 internal sealed record ReadThingCommand : Command<string>;
 
 // Runs a query nested in its own Unit of Work.
-internal sealed class ReadThingHandler(IDispatcher dispatcher, OperationTrace trace) : CommandHandler<ReadThingCommand, string>
+internal sealed class ReadThingHandler(IDispatcher dispatcher, OperationTrace trace)
+    : CommandHandler<ReadThingCommand, string>
 {
-    public override async Task<Result<string>> Handle(ReadThingCommand command, CancellationToken cancellationToken)
+    public override async Task<Result<string>> Handle(
+        ReadThingCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle ReadThingCommand");
-        return await dispatcher.QueryAsync(new GetThingQuery(Guid.CreateVersion7()), cancellationToken);
+        return await dispatcher.QueryAsync(
+            new GetThingQuery(Guid.CreateVersion7()),
+            cancellationToken
+        );
     }
 }
 
 // Handles a command its Contracts declare, outside this assembly.
-internal sealed class ArchiveThingHandler(OperationTrace trace) : CommandHandler<ArchiveThingCommand>
+internal sealed class ArchiveThingHandler(OperationTrace trace)
+    : CommandHandler<ArchiveThingCommand>
 {
-    public override Task<Result> Handle(ArchiveThingCommand command, CancellationToken cancellationToken)
+    public override Task<Result> Handle(
+        ArchiveThingCommand command,
+        CancellationToken cancellationToken
+    )
     {
         trace.Add("handle ArchiveThingCommand");
         return Task.FromResult(Result.Success());

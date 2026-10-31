@@ -31,14 +31,21 @@ public sealed class StreamFixture : IAsyncLifetime
     {
         var name = $"streams_{Guid.CreateVersion7():N}";
         await Sql.RowsAsync(_postgres.GetConnectionString(), $"create database {name}");
-        return new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString()) { Database = name }.ConnectionString;
+        return new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString())
+        {
+            Database = name,
+        }.ConnectionString;
     }
 
     /// <summary>
     /// The Host of Accounts alone over <paramref name="connectionString"/>, built and not started; with
     /// <paramref name="martenFirst"/>, its Marten store is registered before the Module.
     /// </summary>
-    public IHost MartenOnly(string connectionString, Action<IServiceCollection>? services = null, bool martenFirst = false)
+    public IHost MartenOnly(
+        string connectionString,
+        Action<IServiceCollection>? services = null,
+        bool martenFirst = false
+    )
     {
         var builder = StreamHosts.MartenOnly(connectionString, martenFirst);
         builder.Logging.AddProvider(Logs);
@@ -51,7 +58,11 @@ public sealed class StreamFixture : IAsyncLifetime
     /// Core Modules over <paramref name="connectionString"/>, built and not started; <paramref name="arguments"/> add to its
     /// configuration.
     /// </summary>
-    public WebApplication Mixed(string connectionString, Action<WebApplicationBuilder>? configure = null, params string[] arguments) =>
+    public WebApplication Mixed(
+        string connectionString,
+        Action<WebApplicationBuilder>? configure = null,
+        params string[] arguments
+    ) =>
         AppFixture.ComposeHost(
             "Development",
             connectionString,
@@ -69,11 +80,19 @@ public sealed class StreamFixture : IAsyncLifetime
     /// whose Marten store joins it over the connection string <paramref name="martenConnection"/>, integrated in the schema
     /// <paramref name="martenSchema"/>, built and not started; <paramref name="arguments"/> add to its configuration.
     /// </summary>
-    public IHost Joined(string connectionString, string martenConnection = "app", string martenSchema = "wolverine", params string[] arguments)
+    public IHost Joined(
+        string connectionString,
+        string martenConnection = "app",
+        string martenSchema = "wolverine",
+        params string[] arguments
+    )
     {
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(
-            ["--environment", Environments.Development, $"--ConnectionStrings:app={connectionString}", .. arguments]
-        );
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder([
+            "--environment",
+            Environments.Development,
+            $"--ConnectionStrings:app={connectionString}",
+            .. arguments,
+        ]);
         builder.Logging.AddProvider(Logs);
         builder.AddPouryaKitModules(modules => modules.Add<AccountsModule>());
         builder.UsePouryaKitWolverine(connectionName: "app");
@@ -82,7 +101,8 @@ public sealed class StreamFixture : IAsyncLifetime
     }
 
     /// <inheritdoc />
-    public async ValueTask InitializeAsync() => await _postgres.StartAsync(TestContext.Current.CancellationToken);
+    public async ValueTask InitializeAsync() =>
+        await _postgres.StartAsync(TestContext.Current.CancellationToken);
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync() => await _postgres.DisposeAsync();

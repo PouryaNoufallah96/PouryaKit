@@ -41,20 +41,31 @@ public static class SagaServiceCollectionExtensions
         /// are created with the message store when the Host starts; the claims are kept after the saga completes. So
         /// a saga and a Stream (Marten) cannot share one Host yet: Wolverine gives Marten's saga storage precedence and offers no supported way to keep the lightweight one beside it (ADR 0013).
         /// </summary>
-        public IServiceCollection AddPouryaKitSaga<TSaga>(string name, string systemActor, Action<SagaBuilder<TSaga>> declare)
+        public IServiceCollection AddPouryaKitSaga<TSaga>(
+            string name,
+            string systemActor,
+            Action<SagaBuilder<TSaga>> declare
+        )
             where TSaga : PouryaKitSaga
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(systemActor);
             ArgumentNullException.ThrowIfNull(declare);
 
-            var declaration = new SagaDeclaration(typeof(TSaga), (name ?? "").ToLowerInvariant(), systemActor, IModuleServices.ModuleOf(services));
+            var declaration = new SagaDeclaration(
+                typeof(TSaga),
+                (name ?? "").ToLowerInvariant(),
+                systemActor,
+                IModuleServices.ModuleOf(services)
+            );
             declare(new SagaBuilder<TSaga>(declaration));
             SagaDeclarations.In(services).Add(declaration);
             var subscriptions = Subscriptions.In(services);
             foreach (var input in declaration.Inputs)
             {
-                subscriptions.AddSagaInput(new SagaInputRoute(input.EventType, declaration.Name, input.Wrap));
+                subscriptions.AddSagaInput(
+                    new SagaInputRoute(input.EventType, declaration.Name, input.Wrap)
+                );
             }
 
             // Wolverine creates the state table of each saga it knows with the message store, not at the saga's first step.
@@ -63,9 +74,13 @@ public static class SagaServiceCollectionExtensions
             DurableQueuesCheck.AddTo(services);
             // The routing check declares the Host's wire names; the saga check after it resolves Wolverine's options, which
             // names every type Wolverine routes, so it must never come first.
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ICompositionCheck, RoutingCheck>()
+            );
             services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompositionCheck, SagaCheck>());
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IWolverineExtension, SagaWolverineExtension>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IWolverineExtension, SagaWolverineExtension>()
+            );
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, SagaStepTable>());
             return services;
         }

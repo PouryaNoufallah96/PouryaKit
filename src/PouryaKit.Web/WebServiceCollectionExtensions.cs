@@ -57,19 +57,27 @@ public static class WebServiceCollectionExtensions
             services.AddExceptionHandler<UnexpectedExceptionHandler>();
             // Outside Development a parameter that fails to bind answers an empty 400; throwing hands it to the
             // exception handler, which answers the same problem response in every environment.
-            services.PostConfigure<RouteHandlerOptions>(routeHandlers => routeHandlers.ThrowOnBadRequest = true);
+            services.PostConfigure<RouteHandlerOptions>(routeHandlers =>
+                routeHandlers.ThrowOnBadRequest = true
+            );
             // Registered first, so compression wraps everything that writes a response, the status code pages included.
             ConfiguredCompression.Add(services);
-            services.TryAddEnumerable(ServiceDescriptor.Transient<IStartupFilter, ProblemStatusCodePages>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Transient<IStartupFilter, ProblemStatusCodePages>()
+            );
             ConfiguredCors.Add(services);
             ActorRateLimiting.Add(services);
             // Set once, while the Host is composed; nothing changes AuthorizationOptions after it starts.
             services.Configure<AuthorizationOptions>(authorization =>
-                authorization.FallbackPolicy ??= new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()
+                authorization.FallbackPolicy ??= new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build()
             );
             services.ConfigureHttpJsonOptions(json => json.SerializerOptions.UsePouryaKitJson());
             services.TryAddSingleton<MappedEndpoints>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupCheck, UnmappedEndpointsCheck>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IStartupCheck, UnmappedEndpointsCheck>()
+            );
             var options = services
                 .AddOptions<PouryaKitWebOptions>()
                 .Validate(
@@ -107,22 +115,45 @@ public static class WebServiceCollectionExtensions
         /// compared ignoring case, as the router matches a literal, or an assembly is already declared, whose endpoints
         /// would be mapped twice.
         /// </summary>
-        public IServiceCollection AddPouryaKitEndpoints(string routePrefix, params Assembly[] featureAssemblies)
+        public IServiceCollection AddPouryaKitEndpoints(
+            string routePrefix,
+            params Assembly[] featureAssemblies
+        )
         {
             ArgumentNullException.ThrowIfNull(services);
             ArgumentException.ThrowIfNullOrWhiteSpace(routePrefix);
             ArgumentNullException.ThrowIfNull(featureAssemblies);
 
-            List<ModuleEndpoints> declared = [.. services.Select(descriptor => descriptor.ImplementationInstance).OfType<ModuleEndpoints>()];
-            if (declared.Any(module => string.Equals(module.RoutePrefix, routePrefix, StringComparison.OrdinalIgnoreCase)))
+            List<ModuleEndpoints> declared =
+            [
+                .. services
+                    .Select(descriptor => descriptor.ImplementationInstance)
+                    .OfType<ModuleEndpoints>(),
+            ];
+            if (
+                declared.Any(module =>
+                    string.Equals(
+                        module.RoutePrefix,
+                        routePrefix,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+            )
             {
-                throw new InvalidOperationException($"The endpoints of the route group {routePrefix} are already declared.");
+                throw new InvalidOperationException(
+                    $"The endpoints of the route group {routePrefix} are already declared."
+                );
             }
 
             var assemblies = IModuleServices.FeatureAssembliesOf(services, featureAssemblies);
             foreach (var module in declared)
             {
-                if (module.Endpoints.Select(endpoint => endpoint.GetType().Assembly).FirstOrDefault(assemblies.Contains) is { } assembly)
+                if (
+                    module
+                        .Endpoints.Select(endpoint => endpoint.GetType().Assembly)
+                        .FirstOrDefault(assemblies.Contains) is
+                    { } assembly
+                )
                 {
                     throw new InvalidOperationException(
                         $"The endpoints of {assembly.GetName().Name} are already declared, for the route group {module.RoutePrefix}."

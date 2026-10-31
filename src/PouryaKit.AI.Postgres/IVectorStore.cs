@@ -15,7 +15,12 @@ public interface IVectorStore
     /// from a command's handler or a Domain Event Handler: it throws <see cref="InvalidOperationException"/> in code
     /// that only reads, where no Unit of Work transaction is active, and when the collection has no table.
     /// </summary>
-    Task StoreAsync(string collection, string key, string content, CancellationToken cancellationToken);
+    Task StoreAsync(
+        string collection,
+        string key,
+        string content,
+        CancellationToken cancellationToken
+    );
 
     /// <summary>
     /// Removes what <paramref name="key"/> holds in <paramref name="collection"/>, if anything, on the active Unit of
@@ -29,7 +34,12 @@ public interface IVectorStore
     /// Operation's own Unit of Work. An exact search over the tenant's rows. Throws
     /// <see cref="InvalidOperationException"/> when the collection has no table.
     /// </summary>
-    Task<IReadOnlyList<VectorMatch>> SearchAsync(string collection, string query, int top, CancellationToken cancellationToken);
+    Task<IReadOnlyList<VectorMatch>> SearchAsync(
+        string collection,
+        string query,
+        int top,
+        CancellationToken cancellationToken
+    );
 }
 
 /// <summary>

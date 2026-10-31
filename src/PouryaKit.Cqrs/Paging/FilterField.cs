@@ -7,31 +7,66 @@ namespace PouryaKit.Cqrs;
 /// <summary>A field a Page read may be filtered on: its name, the operators it supports and the type of its value.</summary>
 public sealed class FilterField
 {
-    private static readonly FrozenDictionary<Type, (string Name, Func<string, object?> Parse)> Types = new Dictionary<
+    private static readonly FrozenDictionary<
         Type,
-        (string, Func<string, object?>)
-    >
+        (string Name, Func<string, object?> Parse)
+    > Types = new Dictionary<Type, (string, Func<string, object?>)>
     {
         [typeof(string)] = ("text", text => text),
-        [typeof(Guid)] = ("uuid", text => Guid.TryParse(text, CultureInfo.InvariantCulture, out var value) ? value : null),
+        [typeof(Guid)] = (
+            "uuid",
+            text => Guid.TryParse(text, CultureInfo.InvariantCulture, out var value) ? value : null
+        ),
         [typeof(int)] = (
             "whole number",
-            text => int.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value) ? value : null
+            text =>
+                int.TryParse(
+                    text,
+                    NumberStyles.AllowLeadingSign,
+                    CultureInfo.InvariantCulture,
+                    out var value
+                )
+                    ? value
+                    : null
         ),
         [typeof(long)] = (
             "whole number",
-            text => long.TryParse(text, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value) ? value : null
+            text =>
+                long.TryParse(
+                    text,
+                    NumberStyles.AllowLeadingSign,
+                    CultureInfo.InvariantCulture,
+                    out var value
+                )
+                    ? value
+                    : null
         ),
         [typeof(decimal)] = (
             "number",
-            text => decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) ? value : null
+            text =>
+                decimal.TryParse(
+                    text,
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var value
+                )
+                    ? value
+                    : null
         ),
-        [typeof(bool)] = ("true or false", text => bool.TryParse(text, out var value) ? value : null),
+        [typeof(bool)] = (
+            "true or false",
+            text => bool.TryParse(text, out var value) ? value : null
+        ),
         // A time without an offset is UTC, so the same text means the same instant on every Host.
         [typeof(DateTimeOffset)] = (
             "date and time",
             text =>
-                DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var value)
+                DateTimeOffset.TryParse(
+                    text,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal,
+                    out var value
+                )
                     ? value
                     : null
         ),
@@ -76,7 +111,10 @@ public sealed class FilterField
 
         if (operators.IsEmpty)
         {
-            throw new ArgumentException($"The filter field {name} declares no operator.", nameof(operators));
+            throw new ArgumentException(
+                $"The filter field {name} declares no operator.",
+                nameof(operators)
+            );
         }
 
         foreach (var filterOperator in operators)
@@ -88,8 +126,14 @@ public sealed class FilterField
                 FilterOperator.GreaterThan
                 or FilterOperator.GreaterThanOrEqual
                 or FilterOperator.LessThan
-                or FilterOperator.LessThanOrEqual => type != typeof(string) && type != typeof(Guid) && type != typeof(bool),
-                _ => throw new ArgumentOutOfRangeException(nameof(operators), filterOperator, "Not a filter operator."),
+                or FilterOperator.LessThanOrEqual => type != typeof(string)
+                    && type != typeof(Guid)
+                    && type != typeof(bool),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(operators),
+                    filterOperator,
+                    "Not a filter operator."
+                ),
             };
             if (!allowed)
             {
@@ -103,7 +147,10 @@ public sealed class FilterField
         ImmutableArray<FilterOperator> declared = [.. operators];
         return declared.Distinct().Count() == declared.Length
             ? new FilterField(name, type, declared)
-            : throw new ArgumentException($"The filter field {name} declares an operator twice.", nameof(operators));
+            : throw new ArgumentException(
+                $"The filter field {name} declares an operator twice.",
+                nameof(operators)
+            );
     }
 
     // A declared value, or the text of one; null for anything else.
@@ -125,7 +172,11 @@ public sealed class FilterField
     // Names become query-string keys and Dapper parameter names, so they are kept to plain letters and digits.
     internal static void EnsureName(string? name, string parameter)
     {
-        if (string.IsNullOrEmpty(name) || !char.IsAsciiLetter(name[0]) || !name.All(char.IsAsciiLetterOrDigit))
+        if (
+            string.IsNullOrEmpty(name)
+            || !char.IsAsciiLetter(name[0])
+            || !name.All(char.IsAsciiLetterOrDigit)
+        )
         {
             throw new ArgumentException(
                 $"'{name}' is not a sort key or filter field name: a letter followed by letters and digits.",

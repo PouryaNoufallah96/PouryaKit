@@ -25,20 +25,50 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
         // The cache key names the UI culture the query runs in (ticket #125); the test's own flow sets it.
         CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
 
-        await RunAsync(services, context with { RequestId = "type-key" }, dispatcher => dispatcher.SendAsync(new NameHandlingAssemblyCommand(), TestContext.Current.CancellationToken));
-        await RunAsync(services, context, dispatcher => dispatcher.QueryAsync(new HandlingAssemblyQuery("lamp"), TestContext.Current.CancellationToken));
+        await RunAsync(
+            services,
+            context with
+            {
+                RequestId = "type-key",
+            },
+            dispatcher =>
+                dispatcher.SendAsync(
+                    new NameHandlingAssemblyCommand(),
+                    TestContext.Current.CancellationToken
+                )
+        );
+        await RunAsync(
+            services,
+            context,
+            dispatcher =>
+                dispatcher.QueryAsync(
+                    new HandlingAssemblyQuery("lamp"),
+                    TestContext.Current.CancellationToken
+                )
+        );
 
         Assert.Equal(
             "ModularMonolith.Tests.Stub.NameHandlingAssemblyCommand, ModularMonolith.Tests",
-            await Fixture.ScalarAsync<string>("select command from stub.pouryakit_idempotency_keys where request_id = 'type-key'")
+            await Fixture.ScalarAsync<string>(
+                "select command from stub.pouryakit_idempotency_keys where request_id = 'type-key'"
+            )
         );
         // HybridCache answers before its distributed write completes.
         await distributed.WrittenAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(["ModularMonolith.Tests.Stub.HandlingAssemblyQuery%2C%20ModularMonolith.Tests|north|Person|ada|en|lamp"], distributed.Keys);
+        Assert.Equal(
+            [
+                "ModularMonolith.Tests.Stub.HandlingAssemblyQuery%2C%20ModularMonolith.Tests|north|Person|ada|en|lamp",
+            ],
+            distributed.Keys
+        );
     }
 
     // Each Operation in a scope of its own, as an application without Modules opens one.
-    private static async Task RunAsync<TResult>(ServiceProvider services, OperationContext context, Func<IDispatcher, Task<TResult>> run)
+    private static async Task RunAsync<TResult>(
+        ServiceProvider services,
+        OperationContext context,
+        Func<IDispatcher, Task<TResult>> run
+    )
     {
         await using var scope = services.CreateAsyncScope();
         scope.ServiceProvider.BeginOperation(context);
@@ -65,15 +95,19 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
     private sealed class RecordingDistributedCache : IDistributedCache
     {
         private readonly ConcurrentDictionary<string, byte[]> _entries = new();
-        private readonly TaskCompletionSource _written = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _written = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
 
         public IReadOnlyCollection<string> Keys => [.. _entries.Keys];
 
-        public Task WrittenAsync(CancellationToken cancellationToken) => _written.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
+        public Task WrittenAsync(CancellationToken cancellationToken) =>
+            _written.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken);
 
         public byte[]? Get(string key) => _entries.GetValueOrDefault(key);
 
-        public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => Task.FromResult(Get(key));
+        public Task<byte[]?> GetAsync(string key, CancellationToken token = default) =>
+            Task.FromResult(Get(key));
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
@@ -81,7 +115,12 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
             _written.TrySetResult();
         }
 
-        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
+        public Task SetAsync(
+            string key,
+            byte[] value,
+            DistributedCacheEntryOptions options,
+            CancellationToken token = default
+        )
         {
             Set(key, value, options);
             return Task.CompletedTask;
@@ -89,7 +128,8 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
 
         public void Refresh(string key) { }
 
-        public Task RefreshAsync(string key, CancellationToken token = default) => Task.CompletedTask;
+        public Task RefreshAsync(string key, CancellationToken token = default) =>
+            Task.CompletedTask;
 
         public void Remove(string key) => _entries.TryRemove(key, out _);
 

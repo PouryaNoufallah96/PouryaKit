@@ -13,7 +13,10 @@ public class ImplementingTypesTests
     {
         // The assembly is given twice and read once. Open generic, abstract, interface and struct implementations are
         // left out.
-        Assert.Equal([typeof(DerivedHandler), typeof(NoteHandler)], ImplementingTypes.Of(typeof(IHandler<>), Fixtures, Fixtures));
+        Assert.Equal(
+            [typeof(DerivedHandler), typeof(NoteHandler)],
+            ImplementingTypes.Of(typeof(IHandler<>), Fixtures, Fixtures)
+        );
         Assert.Equal([typeof(Ledger)], ImplementingTypes.Of(typeof(Store<>), Fixtures));
     }
     #endregion
@@ -21,8 +24,14 @@ public class ImplementingTypesTests
     [Fact]
     public void A_non_generic_or_closed_contract_finds_each_concrete_class_assignable_to_it()
     {
-        Assert.Equal([typeof(DerivedHandler), typeof(NoteHandler)], ImplementingTypes.Of(typeof(IAudited), Fixtures));
-        Assert.Equal([typeof(DerivedHandler)], ImplementingTypes.Of(typeof(IHandler<int>), Fixtures));
+        Assert.Equal(
+            [typeof(DerivedHandler), typeof(NoteHandler)],
+            ImplementingTypes.Of(typeof(IAudited), Fixtures)
+        );
+        Assert.Equal(
+            [typeof(DerivedHandler)],
+            ImplementingTypes.Of(typeof(IHandler<int>), Fixtures)
+        );
     }
 
     [Fact]
@@ -30,12 +39,25 @@ public class ImplementingTypesTests
     {
         // Interface and struct implementations are still left out.
         Assert.Equal(
-            [typeof(AbstractHandler), typeof(DerivedHandler), typeof(NoteHandler), typeof(OpenHandler<>)],
+            [
+                typeof(AbstractHandler),
+                typeof(DerivedHandler),
+                typeof(NoteHandler),
+                typeof(OpenHandler<>),
+            ],
             ImplementingTypes.Candidates(typeof(IHandler<>), Fixtures, Fixtures)
         );
-        Assert.Equal([typeof(AbstractStore), typeof(Ledger)], ImplementingTypes.Candidates(typeof(Store<>), Fixtures));
         Assert.Equal(
-            [typeof(AbstractHandler), typeof(DerivedHandler), typeof(NoteHandler), typeof(OpenHandler<>)],
+            [typeof(AbstractStore), typeof(Ledger)],
+            ImplementingTypes.Candidates(typeof(Store<>), Fixtures)
+        );
+        Assert.Equal(
+            [
+                typeof(AbstractHandler),
+                typeof(DerivedHandler),
+                typeof(NoteHandler),
+                typeof(OpenHandler<>),
+            ],
             ImplementingTypes.Candidates(typeof(IAudited), Fixtures)
         );
     }
@@ -43,7 +65,9 @@ public class ImplementingTypesTests
     [Fact]
     public void Candidates_include_a_class_the_compiler_generated()
     {
-        var iterator = Assert.Single(ImplementingTypes.Candidates(typeof(IEnumerable<NoteHandler>), Fixtures));
+        var iterator = Assert.Single(
+            ImplementingTypes.Candidates(typeof(IEnumerable<NoteHandler>), Fixtures)
+        );
 
         Assert.True(iterator.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false));
     }
@@ -54,7 +78,9 @@ public class ImplementingTypesTests
         var parameter = typeof(IHandler<>).GetGenericArguments()[0];
 
         Assert.Throws<ArgumentException>(() => ImplementingTypes.Of(parameter, Fixtures));
-        Assert.Throws<ArgumentException>(() => ImplementingTypes.Of(typeof(IHandler<>).MakeGenericType(typeof(Store<>)), Fixtures));
+        Assert.Throws<ArgumentException>(() =>
+            ImplementingTypes.Of(typeof(IHandler<>).MakeGenericType(typeof(Store<>)), Fixtures)
+        );
         Assert.Throws<ArgumentException>(() => ImplementingTypes.Candidates(parameter, Fixtures));
     }
 }
