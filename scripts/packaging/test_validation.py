@@ -189,7 +189,7 @@ def validation(folder, templates):
 
 
 class TemplateConsumerTests(unittest.TestCase):
-    """A template the inventory lists is validated with no change to the script, under the name its consumer gives (#168)."""
+    """A template the inventory lists is validated with no change to the script, under the name its consumer gives."""
 
     def test_each_template_consumer_is_generated_built_tested_and_published_under_the_name_its_entry_gives(self):
         templates = {"template-monolith": ("pouryakit-monolith", "Acme.Shop"),
@@ -318,7 +318,7 @@ class ProductionPublishTests(unittest.TestCase):
 
 
 class FinishTests(unittest.TestCase):
-    """A PASS leaves no 8 GB evidence directory behind unless asked (Wave 3 session 3: 61 of them filled the disk)."""
+    """A PASS leaves no 8 GB evidence directory behind unless asked."""
 
     def test_a_pass_removes_the_evidence_directory(self):
         with tempfile.TemporaryDirectory() as parent:

@@ -190,7 +190,6 @@ class MergePackageTest(unittest.TestCase):
         self.assertEqual(self.origin_tip(), self.base)
 
     def test_refuses_a_head_with_code_after_the_validation(self) -> None:
-        # The shape of ticket #77's fix round (2026-10-09): validate.py ran on 7086ce8, then 7baa118 added a .cs file.
         validated = self.package()
         self.git("checkout", "--quiet", "pkg")
         head = self.commit("tests/StrayType.cs", "class StrayType;\n", "test: added after the validation")
@@ -202,8 +201,7 @@ class MergePackageTest(unittest.TestCase):
         self.assertEqual(self.git("rev-parse", "HEAD"), self.base)
 
     def test_refuses_code_renamed_to_markdown_after_the_validation(self) -> None:
-        # Rename detection names a renamed file by its new path alone, so a .cs file moved to .md read as Markdown only
-        # (cubic on PR #103).
+        # Rename detection names a renamed file by its new path alone, so a .cs file moved to .md read as Markdown only.
         validated = self.package("src/Moved.cs", "class Moved;\n")
         self.git("checkout", "--quiet", "pkg")
         self.git("mv", "src/Moved.cs", "src/Moved.md")
@@ -218,14 +216,14 @@ class MergePackageTest(unittest.TestCase):
     def test_accepts_markdown_committed_after_the_validation(self) -> None:
         validated = self.package()
         self.git("checkout", "--quiet", "pkg")
-        head = self.commit("docs/acceptance.md", "# Acceptance\n\n## #1\n\n## pkg\n\nPASS\n", "docs: the PASS line")
+        head = self.commit("docs/guide.md", "# Guide\n", "docs: a guide after the validation")
         self.git("checkout", "--quiet", WAVE)
         done = self.merge(self.report(head, validated=validated), "-m", "Merge pkg", checks=[self.passing])
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         self.assertIn(f"validated={validated[:7]}: nothing a package is built from differs", done.stdout)
 
     def test_refuses_a_packed_readme_committed_after_the_validation(self) -> None:
-        # A package's README ships inside its nupkg, so a change to it is unvalidated code, unlike other Markdown (#191).
+        # A package's README ships inside its nupkg, so a change to it is unvalidated code, unlike other Markdown.
         validated = self.package()
         self.git("checkout", "--quiet", "pkg")
         head = self.commit("src/PouryaKit.Domain/README.md", "# PouryaKit.Domain\n", "docs: a README after the validation")
@@ -262,8 +260,8 @@ class MergePackageTest(unittest.TestCase):
         self.assertIn(f"validated={head[:7]}", done.stdout)
 
     def test_a_report_whose_json_does_not_parse_names_the_broken_line(self) -> None:
-        """Session 5, #87: a fix-round report's `fixes` entry lacked a key, the outer object failed to parse, and the scan
-        read a nested `commands` entry as the report. The message names the broken object's line instead."""
+        """A `fixes` entry that lacks a key fails the outer object, and the scan would read a nested `commands` entry as
+        the report. The message names the broken object's line instead."""
         head = self.package()
         path = Path(self.report(head))
         text = path.read_text().replace('"commands"', '"fixes": {"R1": "done", "R2: not a key"},\n  "commands"')
@@ -307,7 +305,6 @@ class MergePackageTest(unittest.TestCase):
         done = self.merge(self.report(head), "-m", "Merge pkg", "--push", checks=[self.passing])
         self.assertEqual(done.returncode, 10, done.stdout + done.stderr)
         self.assertIn("  docs/acceptance.md", done.stderr)
-        self.assertIn("keep both sections, in ticket order", done.stderr)
         self.assertEqual(self.git("rev-parse", "MERGE_HEAD"), head)
         self.assertEqual(self.origin_tip(), self.base)
         # The orchestrator resolves and commits the merge, then runs the post-merge form on the resolved tree.
@@ -347,7 +344,7 @@ class MergePackageTest(unittest.TestCase):
         self.assertEqual(self.origin_tip(), merged)
 
     def test_a_pushed_tip_replaced_on_the_remote_is_reported_and_fails(self) -> None:
-        """An actor holding the credential rewrites the tip right after the push (2026-10-25): the read-back catches it."""
+        """An actor holding the credential rewrites the tip right after the push: the read-back catches it."""
         head = self.package()
         self.git("push", "--quiet", "origin", f"{head}:refs/heads/attacker")
         hook = self.origin / "hooks" / "post-receive"
@@ -381,7 +378,7 @@ class MergePackageTest(unittest.TestCase):
         self.assert_nothing_changed(head)
 
     def test_not_ready_names_a_conflict_and_a_path_the_tree_check_refuses(self) -> None:
-        """Pull request #65's base: another project's files, and a file both sides changed."""
+        """A base with another project's files, and a file both sides changed."""
         self.main_at_the_tip()
         head = self.commit("docs/acceptance.md", "# Acceptance\n\n## #1\n\n## #2\n", "docs: a package's section")
         self.git("push", "--quiet", "origin", WAVE)

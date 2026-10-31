@@ -1,6 +1,5 @@
 """The Docker waiter's lock recovery: its functions sourced in bash with the lock in a temporary directory, so neither the
-machine's lock nor another agent's waiter is touched. The waits themselves (30 s polls) are proven by a recorded run
-(docs/acceptance.md, ticket #176)."""
+machine's lock nor another agent's waiter is touched. The waits themselves (30 s polls) are not tested here."""
 
 from __future__ import annotations
 

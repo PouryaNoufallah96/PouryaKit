@@ -16,9 +16,8 @@ JSX and site routes (`/docs/...`) are no Markdown the links, code-span, table or
   `scripts/`), or be in ALLOWED.
   Only code-like spans count: a span holding a path or citation (`/`, `@`), a header, YAML or config key (`Name:`,
   `Name=`) or two adjacent words that are not C# keywords (prose, a command line) is skipped, and so is a dotted
-  name rooted in a namespace of ROOTS or at an ALLOWED entry. Out of scope by design: `docs/adr/` and the plan's
-  review log (records that name renamed and removed symbols on purpose), `docs/foundation-review.md` (the plan) and
-  `docs/acceptance.md` (a record of runs, full of third-party exception and tool names).
+  name rooted in a namespace of ROOTS or at an ALLOWED entry. Out of scope by design: `docs/adr/` (records that name
+  renamed and removed symbols on purpose) and `docs/foundation-review.md` (the plan).
 - Links: every relative link and `#anchor` resolves in the working tree, inline or through a reference definition
   (`[id]: target`), with GitHub's heading slugs and duplicates numbered; a `[text][id]` with no definition fails.
 - Code spans: a span longer than 20 characters whose text starts or ends with a space fails, after CommonMark's
@@ -31,24 +30,19 @@ JSX and site routes (`/docs/...`) are no Markdown the links, code-span, table or
   from its table, or a heading or paragraph put inside one, fails.
 - Union duplicates: in a file `.gitattributes` merges with `merge=union`, a line twice or two lines linking the same
   target fails. A union merge keeps both sides of a line both branches changed.
-- Ordered sections: in `docs/acceptance.md`, the `## <prefix> ..., ticket #N` headings of each prefix in ORDERED_SECTIONS
-  (`Pre-Wave 3`, `Wave 4`, `Docs site`) run in ascending ticket order. Each ticket inserts its section in ticket order, so two
-  parallel tickets conflict at the same place by design, and the owner asked for ticket order after every merge
-  (session 5 missed one until an advisor caught it).
-  The earlier Waves' sections, and Wave 3's, which carry no prefix, are not held to it.
-- Test pointers: in `docs/acceptance.md`, which the Names rule leaves out, a span that is exactly `Class.Method`
-  with a class ending in `Tests` must name a declared test: a method that the body of a class of that name declares,
+- Test pointers: in `docs/acceptance.md`, a span that is exactly `Class.Method` with a class ending in `Tests` must
+  name a declared test: a method that the body of a class of that name declares,
   in a `.cs` file under `tests/` or the templates' generated tests, or in a `test_*.py`. Python is read with `ast`;
   in C#, comments and string literals are no code, and what sits inside a member's own braces (a method body, a
   nested type) is no declaration of the class. A pointer qualified by its namespace, `Namespace.Class.Method` or
   `Namespace.Class`, must name a class of that name in a file whose first namespace is that one, and the method when
   it names one; a span that is a test file's namespace (`PouryaKit.ArchitectureTests`) names a project, not a test.
   A span that reads both ways, `ArchitectureTests.LayerTests`, names the class when a file of that namespace declares it.
-  A renamed test is drift to fix (`git log -S<Method>` finds the new name); a test the row itself says was removed
-  goes in REMOVED_TESTS with the reason. `docs/adr/` stays out: it keeps renamed names on purpose.
+  A renamed test is drift to fix (`git log -S<Method>` finds the new name). `docs/adr/` stays out: it keeps renamed
+  names on purpose.
 - Kit paths: a path the docs cite into the Kit must name a file or folder that git tracks or would track and the
   working tree holds: each span that is a path into the Kit's packages (`src/PouryaKit.*`), `samples/` or `tests/`
-  in a top-level `docs/*.md`, the plan and the acceptance record among them. A `:line` suffix is not part of the
+  in a top-level `docs/*.md`, the plan and the acceptance map among them. A `:line` suffix is not part of the
   path, and a path holding `*` is a glob that must match one. Out of scope by design: an upstream repository's path,
   which the plan cites as `repository@commit path` or as a path outside the Kit's packages; the test project of a
   solution generated from the templates (`tests/acme-shop.Tests`), which exists only during a `validate.py` run; and
@@ -88,7 +82,7 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[2]
 CODE_DIRS = ("src/", "samples/", "tests/", "scripts/")
 CODE_SUFFIXES = (".cs", ".csproj", ".json", ".py", ".props", ".slnx")
-NAMES_SKIPPED = {"docs/foundation-review.md", "docs/foundation-review-log.md", "docs/acceptance.md"}
+NAMES_SKIPPED = {"docs/foundation-review.md"}
 PACKAGE_README = re.compile(r"src/[^/]+/README\.md")  # one segment between src/ and the file: a package, never a template's content
 SITE_PAGE = re.compile(r"website/content/.+\.mdx")  # a docs site page, which only the Names rule reads
 # Namespaces of third-party and framework code; a dotted name rooted in one is not the Kit's.
@@ -130,23 +124,10 @@ CS_NOT_CODE = re.compile("|".join((
     r'\$*("{3,}).*?\1', r'\$?@\$?"(?:[^"]|"")*"', r'\$?"(?:[^"\\\n]|\\.)*"',
     r"'(?:[^'\\\n]|\\.)+'",
 )), re.S)
-# Tests the acceptance record names although they are gone, each with the row's own reason.
-REMOVED_TESTS = {
-    "SnapshotTests.A_snapshot_declared_without_its_module_in_a_host_of_modules_fails_the_operation_that_would_publish_it":
-        "removed by #61: its row names it as the test that the composition check's test replaces",
-    "SnapshotTests.A_snapshot_declared_with_a_module_in_an_application_without_modules_fails_the_operation_that_would_publish_it":
-        "removed by #62, as its row says: the refusal at commit that it proved is only a backstop now",
-    "GrpcTests.A_client_addressed_at_kestrels_default_url_in_a_kestrel_host_with_no_listener_fails_the_start":
-        "removed by #159: the default is compared once Kestrel has bound it, and no test binds port 5000; its section names the replacements",
-    "InboxStaleTimeTests.A_retry_that_runs_after_the_stale_time_is_handed_out_again_while_it_runs_and_its_receipt_keeps_one_effect":
-        "replaced by #167: since WolverineFx 6.51.0 an instance restarts the stale clock of a delivery it claims or holds, so A_retry_due_after_the_stale_time_is_not_handed_out_again_while_it_runs states the new fact; row 9's concurrent copy stays proven by IntegrationEventTests.Concurrent_deliveries_of_one_integration_event_apply_its_effect_once",
-    "CheckDocsTests.test_an_upstream_path_in_a_provenance_record_or_the_plan_passes":
-        "replaced on 2026-10-26 by test_an_upstream_path_in_the_plan_passes: the owner removed the provenance records, so the plan's half is what is left to prove",
-}
 CITED_PATH = re.compile(r"([\w.-]+/[^\s:]*)(?::[\d,-]+)?")  # a span that is a repository path, maybe with a `:line`
 KIT_ROOTS = ("src/PouryaKit.", "samples/", "tests/")  # the Kit's packages, the Proving Sample and the tests
-# The test project of a solution that `validate.py` or ticket #59's probe generates from the templates under one of
-# these names exists only during the run. A generated `src/` project is no Kit package, so the rule never reads one.
+# The test project of a solution that `validate.py` generates from the templates under one of these names exists
+# only during the run. A generated `src/` project is no Kit package, so the rule never reads one.
 GENERATED = re.compile(r"tests/(?:acme[-_]shop|Acme\.Shop)\.")
 KEYWORDS = set("""
     abstract as base bool break byte case catch char checked class const continue decimal default delegate do double
@@ -441,26 +422,6 @@ def csharp_tests(text: str) -> dict[str, set[str]]:
     return found
 
 
-ORDERED_SECTIONS = ("Pre-Wave 3", "Wave 4", "Docs site")
-ORDERED_HEADING = re.compile(r"## (?P<prefix>" + "|".join(map(re.escape, ORDERED_SECTIONS)) + r") .*, ticket #(?P<ticket>\d+)\s*$")
-
-
-def check_section_order(docs: dict[str, Doc]) -> None:
-    doc = docs.get("docs/acceptance.md")
-    if doc is None:
-        return
-    last: dict[str, tuple[int, int]] = {}
-    for number, line in enumerate(doc.lines, start=1):
-        match = ORDERED_HEADING.match(line)
-        if not match:
-            continue
-        prefix, ticket = match.group("prefix"), int(match.group("ticket"))
-        if prefix in last and ticket < last[prefix][0]:
-            failures.append(f"docs/acceptance.md:{number}: the {prefix} section of ticket #{ticket} comes after ticket #{last[prefix][0]}'s (line {last[prefix][1]}); keep these sections in ticket order")
-        if prefix not in last or ticket > last[prefix][0]:
-            last[prefix] = (ticket, number)
-
-
 def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
     if ACCEPTANCE not in docs:
         return
@@ -471,7 +432,7 @@ def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
             for name, methods in (python_tests if path.endswith(".py") else csharp_tests)(text).items():
                 classes.setdefault(name, set()).update(methods)
     namespaces = {name.rpartition(".")[0] for name in classes if "." in name}  # `PouryaKit.ArchitectureTests`: a project
-    reported = set(REMOVED_TESTS)
+    reported = set()
     for number, span in docs[ACCEPTANCE].spans():
         qualified = QUALIFIED_POINTER.fullmatch(span)
         pointer = qualified if qualified and qualified.group(2) is None and qualified.group(1) in classes else TEST_POINTER.fullmatch(span) or qualified
@@ -481,7 +442,7 @@ def check_test_pointers(docs: dict[str, Doc], files: list[str]) -> None:
         if name not in classes or method is not None and method not in classes[name]:
             reported.add(span)
             missing = f"the class {name} has no method {method}" if name in classes else f"no test class {name}"
-            failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method or name.rpartition('.')[2]}`, a removed one goes in REMOVED_TESTS with the reason")
+            failures.append(f"{ACCEPTANCE}:{number}: `{span}` names no test: {missing}; a renamed test is found with `git log -S{method or name.rpartition('.')[2]}`, and a removed one leaves its row")
 
 
 def check_kit_paths(docs: dict[str, Doc], files: list[str]) -> None:
@@ -608,7 +569,6 @@ def main() -> int:
     check_code_spans(docs)
     check_tables(docs)
     check_union_duplicates(files)
-    check_section_order(docs)
     check_test_pointers(docs, files)
     check_kit_paths(docs, files)
     diagrams = check_diagram_sources(files)
