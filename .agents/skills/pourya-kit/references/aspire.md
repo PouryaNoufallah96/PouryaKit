@@ -11,7 +11,7 @@
 
 ## The AppHost
 
-An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts and the Reverse proxy it runs, and the package. This is the Proving Sample's `samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj`:
+An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts and the Reverse proxy it runs, and the package. This is the Proving Sample's AppHost project:
 
 ```xml
 <Project Sdk="Aspire.AppHost.Sdk/13.6.4">
@@ -170,7 +170,7 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
 
 ## Running it
 
-`dotnet run --project samples/ModularMonolith/src/ModularMonolith.AppHost` starts the containers, both Hosts and the Reverse proxy, headless; the proxy answers on `http://localhost:5100`. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`. Add `LocalAgent=true` after `--` for Ollama and the agent's model.
+`dotnet run` on the AppHost project starts the containers, both Hosts and the Reverse proxy, headless; the proxy answers on `http://localhost:5100`. It needs Docker and the .NET SDK, no Aspire workload or CLI, and the `bearer-signing-key` parameter set first, in the AppHost's user secrets or as the environment variable `Parameters__bearer-signing-key`. Add `LocalAgent=true` after `--` for Ollama and the agent's model.
 
 A named volume keeps the credentials it was first initialised with. Aspire generates each server's password as a parameter (`postgres-password`, `cache-password`, `broker-password`) and keeps it in the AppHost's user secrets, which is why the AppHost has a `UserSecretsId` and runs in Development, where it reads them back. Set a password yourself, and the volume made with another one refuses it: remove the volume (`docker volume rm`) or keep the first password.
 

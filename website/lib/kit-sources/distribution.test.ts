@@ -89,11 +89,11 @@ test('the marketplace publishes the skill from the repository root under its nam
   assert.equal(copy.plugins[0].version, '9.9.9');
 });
 
-test("SKILL.md's copy keeps its frontmatter, and a maintainer guide is its own text in the copy", () => {
+test("SKILL.md's copy keeps its frontmatter and drops the rows of the maintainer guides", () => {
   const skill = text(tree, `skills/${PLUGIN}/SKILL.md`) ?? '';
   assert.ok(skill.startsWith(`${sourceFrontmatter(readFileSync(path.join(root, SKILL), 'utf8'))}\n# PouryaKit\n`));
-  assert.match(skill, /\| packages\.md \|/);
-  assert.match(skill, /\| publication\.md \|/);
+  assert.doesNotMatch(skill, /packages\.md|publication\.md/);
+  assert.match(skill, /\| Host recipes \|/);
   assert.match(skill, /\]\(references\/security\.md#continuations\)/);
   for (const entry of tree.filter((file) => file.path.endsWith('.md'))) {
     const copy = entry.content.toString();
@@ -142,7 +142,7 @@ test("a source the site's rules refuse fails the sync, and so does a file of the
 
   const description = fixture('description');
   const skill = path.join(description, SKILL);
-  writeFileSync(skill, readFileSync(skill, 'utf8').replace('. Use when writing', '. Since Wave 4, use when writing'));
+  writeFileSync(skill, readFileSync(skill, 'utf8').replace('. Use for any code', '. Since Wave 4, use for any code'));
   assert.throws(() => assembleTree(description, covers), /SKILL\.md.*delivery vocabulary/);
 
   const unknown = fixture('unknown');

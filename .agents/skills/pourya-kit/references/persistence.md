@@ -327,7 +327,7 @@ Its counterpart, `UncountProductInCategoryDomainEventHandler`, handles `ProductR
 
 ## Migrations
 
-- Each Module keeps its migrations in its own folder. The Host project references `Microsoft.EntityFrameworkCore.Design` with `PrivateAssets="all"`, and the solution's tool manifest holds `dotnet-ef`. From the folder that holds `src/` (in the Proving Sample, `samples/ModularMonolith`):
+- Each Module keeps its migrations in its own folder. The Host project references `Microsoft.EntityFrameworkCore.Design` with `PrivateAssets="all"`, and the solution's tool manifest holds `dotnet-ef`. From the folder that holds `src/`:
 
 ```bash
 dotnet ef migrations add Initial \

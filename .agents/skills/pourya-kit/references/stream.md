@@ -11,7 +11,7 @@
 
 ## Registering
 
-The Proving Sample's Ledger (`samples/ModularMonolith/src/Modules/Ledger/`) is a Stream Module beside the EF Core Modules Catalog, Inventory and Billing: it keeps accounts, posts entries to them, reads an account's balance, and publishes `AccountOpenedV1`, which Billing receives. A Stream Module declares its write model in its Composition Root, with its own schema:
+The Proving Sample's Ledger is a Stream Module beside the EF Core Modules Catalog, Inventory and Billing: it keeps accounts, posts entries to them, reads an account's balance, and publishes `AccountOpenedV1`, which Billing receives. A Stream Module declares its write model in its Composition Root, with its own schema:
 
 ```csharp
 public sealed class LedgerModule : IModuleDefinition
