@@ -1,0 +1,115 @@
+website/lib/kit-sources/readmes.test.ts
+  s_5afe244da1e793::t_413709726cd8ba 107
+src/PouryaKit.Messaging/README.md
+  s_5afe244da1e793::t_0250b27259c362 42-45
+  s_5afe244da1e793::t_975442f36b4516 34-37,41,46,61-64,66-69
+  s_5afe244da1e793::t_acaacb8f0c7d65 56-59
+src/PouryaKit.Caching/README.md
+  s_5afe244da1e793::t_975442f36b4516 53
+  s_5afe244da1e793::t_0250b27259c362 51,54
+  s_5afe244da1e793::t_67bcfcf65336bd 50
+  s_5afe244da1e793::t_3310995b39ad19 49
+src/PouryaKit.Realtime/README.md
+  s_5afe244da1e793::t_975442f36b4516 50-53
+  s_5afe244da1e793::t_3b68d305f09017 45-48
+src/PouryaKit.Reporting/README.md
+  s_5afe244da1e793::t_4881f3ec216d27 42-46
+  s_5afe244da1e793::t_dec7cec4325e3d 32-39
+src/PouryaKit.Storage.S3/README.md
+  s_5afe244da1e793::t_3310995b39ad19 29-31
+src/PouryaKit.Storage/README.md
+  s_5afe244da1e793::t_3310995b39ad19 31-40
+src/PouryaKit.Domain/README.md
+  s_5afe244da1e793::t_3310995b39ad19 32-37
+src/PouryaKit.Storage.AzureBlob/README.md
+  s_5afe244da1e793::t_3310995b39ad19 29-31
+src/PouryaKit.Messaging.Wolverine/README.md
+  s_5afe244da1e793::t_3310995b39ad19 32-34
+  s_5afe244da1e793::t_5050fd479029d1 41-45
+  s_5afe244da1e793::t_975442f36b4516 47-50
+src/PouryaKit.Observability/README.md
+  s_5afe244da1e793::t_0250b27259c362 39,41-43
+  s_5afe244da1e793::t_3310995b39ad19 40,44
+src/PouryaKit.Modularity/README.md
+  s_5afe244da1e793::t_0250b27259c362 60-63,66-71
+  s_5afe244da1e793::t_975442f36b4516 43-48,59,64
+  s_5afe244da1e793::t_67bcfcf65336bd 65
+src/PouryaKit.Email.MailKit/README.md
+  s_5afe244da1e793::t_3310995b39ad19 31-33
+src/PouryaKit.Web.OpenApi/README.md
+  s_5afe244da1e793::t_3310995b39ad19 44-46
+  s_5afe244da1e793::t_975442f36b4516 33
+  s_5afe244da1e793::t_0250b27259c362 34-36
+src/PouryaKit.Persistence/README.md
+  s_5afe244da1e793::t_975442f36b4516 33-36
+src/PouryaKit.Email/README.md
+  s_5afe244da1e793::t_0250b27259c362 39-43,45
+  s_5afe244da1e793::t_3310995b39ad19 31
+  s_5afe244da1e793::t_67bcfcf65336bd 32,38,44
+  s_5afe244da1e793::t_975442f36b4516 34-37
+src/PouryaKit.Web/README.md
+  s_5afe244da1e793::t_0250b27259c362 56-68
+src/PouryaKit.Testing/README.md
+  s_5afe244da1e793::t_23b64726992509 71,74
+  s_5afe244da1e793::t_67bcfcf65336bd 37
+  s_5afe244da1e793::t_0250b27259c362 73
+  s_5afe244da1e793::t_3310995b39ad19 82-90
+  s_5afe244da1e793::t_975442f36b4516 36,49-52,72
+  s_5afe244da1e793::t_c1369785132206 65-70
+src/PouryaKit.Reporting.Module/README.md
+  s_5afe244da1e793::t_0250b27259c362 46-48
+  s_5afe244da1e793::t_975442f36b4516 45
+  s_5afe244da1e793::t_3310995b39ad19 38-42
+src/PouryaKit.Persistence.Postgres/README.md
+  s_5afe244da1e793::t_3310995b39ad19 32-35
+src/PouryaKit.Persistence.Dapper/README.md
+  s_5afe244da1e793::t_975442f36b4516 39-42
+src/PouryaKit.Messaging.Wolverine.Sagas/README.md
+  s_5afe244da1e793::t_8dc35e5cefe3fc 47-51
+  s_5afe244da1e793::t_0250b27259c362 33
+  s_5afe244da1e793::t_3310995b39ad19 43-45
+src/PouryaKit.AI/README.md
+  s_5afe244da1e793::t_3310995b39ad19 33-35
+src/PouryaKit.AI.Postgres/README.md
+  s_5afe244da1e793::t_975442f36b4516 40-43,45-53
+src/PouryaKit.Persistence.EFCore/README.md
+  s_5afe244da1e793::t_3310995b39ad19 31
+  s_5afe244da1e793::t_67bcfcf65336bd 32
+src/PouryaKit.Security/README.md
+  s_5afe244da1e793::t_3310995b39ad19 32,52
+  s_5afe244da1e793::t_0250b27259c362 34
+  s_5afe244da1e793::t_67bcfcf65336bd 33,53
+  s_5afe244da1e793::t_975442f36b4516 57-61
+src/PouryaKit.Cqrs/README.md
+  s_5afe244da1e793::t_975442f36b4516 46-49
+  s_5afe244da1e793::t_67bcfcf65336bd 39
+  s_5afe244da1e793::t_3310995b39ad19 38
+  s_5afe244da1e793::t_aac1341356b670 41-44
+src/PouryaKit.Localization/README.md
+  s_5afe244da1e793::t_67bcfcf65336bd 41
+  s_5afe244da1e793::t_3310995b39ad19 40
+  s_5afe244da1e793::t_277174ebb61915 43-46
+src/PouryaKit.Grpc/README.md
+  s_5afe244da1e793::t_0250b27259c362 48-54,62-63
+  s_5afe244da1e793::t_67bcfcf65336bd 61
+  s_5afe244da1e793::t_e8e4aa2c61b06f 38-41,43-46
+src/PouryaKit.Persistence.Marten/README.md
+  s_5afe244da1e793::t_975442f36b4516 58-61,63-64,66
+  s_5afe244da1e793::t_0250b27259c362 65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5c685d1ba198e80e4cd1afdd89e215265231b64e",
+  "prompts": {},
+  "sessions": {
+    "s_5afe244da1e793": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "de9f6be3-2715-4c4e-abfb-c74b47b2e1a3",
+        "model": "grok-4.7"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
