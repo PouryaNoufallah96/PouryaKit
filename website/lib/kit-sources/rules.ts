@@ -192,7 +192,7 @@ export function renderedTextViolations(text: string): Violation[] {
 const COPY_RULES: [string, RegExp][] = [
   [
     'a path only the private repository holds',
-    /(?<![\w./-])(?:GLOSSARY\.md|AGENTS\.md|samples\/|tests\/(?:ModularMonolith|PouryaKit)|scripts\/(?:packaging|ci)\/|docs\/(?:adr|agents|architecture)\/|\.agents\/)/g,
+    /(?<![\w-])(?:GLOSSARY\.md|AGENTS\.md|samples\/|tests\/(?:ModularMonolith|PouryaKit)|scripts\/(?:packaging|ci)\/|docs\/(?:adr|agents|architecture)\/|\.agents\/)/g,
   ],
   ['a published version', /\b\d+\.\d+\.\d+-(?:preview|rc)\b/g],
 ];

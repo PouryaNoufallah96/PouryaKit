@@ -19,6 +19,9 @@ expected_version=$(jq -er '.version' "$release/manifest.json")
 count=$(jq '.packages | length' "$repo/scripts/packaging/inventory.json")
 log="$(dirname "$release")/nuget-publication-$expected_version.log"
 exec > >(tee -a "$log") 2>&1
+finished=no
+pushed=0
+trap '[ "$finished" = yes ] || echo "STOP: the run ended early, after pushing $pushed packages; send this log to the session"' EXIT
 source=https://api.nuget.org/v3/index.json
 flat=https://api.nuget.org/v3-flatcontainer
 tag=v$expected_version
@@ -27,7 +30,8 @@ echo "== $(date -u +%FT%TZ) nuget.org publication of $expected_version from $rel
 
 # 1. The originals: one file per package of the inventory, named by ID and version, every SHA-256.
 version=$expected_version
-test "$(jq '.packages | length' "$release/manifest.json")" = "$count" || { echo "FAIL: not $count packages"; exit 1; }
+diff <(jq -r '.packages[].id' "$repo/scripts/packaging/inventory.json" | sort) <(jq -r '.packages[].id' "$release/manifest.json" | sort) > /dev/null \
+  || { echo "FAIL: the manifest's packages are not the inventory's"; exit 1; }
 jq -e --arg v "$version" 'all(.packages[]; .file == (.id + "." + $v + ".nupkg"))' "$release/manifest.json" > /dev/null
 diff <(jq -r '.packages[].file' "$release/manifest.json" | sort) <(ls "$release/packages" | grep '\.nupkg$' | sort)
 (cd "$release" && jq -r '.packages[] | .sha256 + "  packages/" + .file' manifest.json | shasum -a 256 -c - > /dev/null)
@@ -40,13 +44,21 @@ git -C "$repo" merge-base --is-ancestor "$expected_commit" FETCH_HEAD || { echo 
 remote_tag=$(git ls-remote "$private" "refs/tags/$tag" | cut -f1)
 test "$remote_tag" = "$expected_commit" || { echo "STOP: $tag on GitHub is '$remote_tag', not $expected_commit: push the tag first"; exit 1; }
 
-# 3. No package may have this version yet: nuget.org never lets a version be replaced.
+# 3. No package may have this version yet: nuget.org never lets a version be replaced. Only a 404 means a new ID.
+versions=$(mktemp)
 for id in $ids; do
   lower=$(tr '[:upper:]' '[:lower:]' <<< "$id")
-  if curl -sf "$flat/$lower/index.json" | jq -e --arg v "$version" '.versions | index($v) != null' > /dev/null; then
-    echo "STOP: $id already has $version on nuget.org"; exit 1
-  fi
+  code=$(curl -s -o "$versions" -w '%{http_code}' "$flat/$lower/index.json" || true)
+  case "$code" in
+    404) ;;
+    200)
+      if jq -e --arg v "$version" '.versions | index($v) != null' "$versions" > /dev/null; then
+        echo "STOP: $id already has $version on nuget.org"; exit 1
+      fi ;;
+    *) echo "STOP: nuget.org answered '$code' for $id, so its versions are unknown; nothing was pushed"; exit 1 ;;
+  esac
 done
+rm -f "$versions"
 echo "The commit and tag are on GitHub, and no package has $version yet."
 
 read -rsp "nuget.org API key (hidden): " key; echo
@@ -55,7 +67,6 @@ read -rp "Push the $count packages at $version to nuget.org now? This cannot be 
 test "$answer" = yes || { unset key; echo "Stopped; nothing pushed."; exit 1; }
 
 # 4. Push each original. The key is on the push's command line only, as the standard client requires for nuget.org.
-pushed=0
 for file in $(jq -r '.packages[].file' "$release/manifest.json"); do
   dotnet nuget push "$release/packages/$file" --source "$source" --api-key "$key" --skip-duplicate --no-symbols
   pushed=$((pushed + 1))
@@ -77,7 +88,7 @@ echo "All $count packages are listed on nuget.org."
 # 6. Content identity: nuget.org adds its repository signature, so compare every entry except the signature and the
 # content-types part the signature changes.
 work=$(cd "$(mktemp -d)" && pwd -P)
-entries() { (cd "$1" && find . -type f ! -name '.signature.p7s' ! -name '[Content_Types].xml' | sort | xargs shasum -a 256); }
+entries() { (cd "$1" && find . -type f ! -name '.signature.p7s' ! -name '[[]Content_Types].xml' | sort | xargs shasum -a 256); }
 for file in $(jq -r '.packages[].file' "$release/manifest.json"); do
   id=${file%."$version".nupkg}; lower=$(tr '[:upper:]' '[:lower:]' <<< "$id")
   mkdir -p "$work/cmp/$id/original" "$work/cmp/$id/remote"
@@ -121,5 +132,6 @@ for template in $(jq -er '.shortName' "$work/cmp/PouryaKit.Templates/original/co
   done
 done
 rm -rf "${work:?}"
+finished=yes
 echo "PASS nuget.org publication of $version from $expected_commit: $pushed pushed; from nuget.org alone with fresh caches: $proven."
 echo "Log: $log. Revoke the API key if you have not."

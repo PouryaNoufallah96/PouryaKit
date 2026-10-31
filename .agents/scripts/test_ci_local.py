@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
 LOCAL = (ROOT / ".agents/scripts/ci-local.sh").read_text(encoding="utf-8")
+PACKAGE_JOB = (ROOT / ".github/workflows/package-validation.yml").read_text(encoding="utf-8")
 JOBS = WORKFLOW[WORKFLOW.index("\njobs:\n") :]
 
 
@@ -24,6 +25,17 @@ class CiLocalTests(unittest.TestCase):
         self.assertIn("pnpm --dir website lint", steps)
         for step in steps:
             self.assertIn(step, LOCAL, f"ci-local.sh does not run {step}")
+
+    def test_the_commands_of_the_reusable_package_job_are_reproduced(self) -> None:
+        # The two evidence.py steps read the Actions run, which a local run does not have.
+        commands = [
+            line.split('"$')[0].strip()
+            for line in re.findall(r"^\s+(?:run: )?(python3 .+)$", PACKAGE_JOB, re.M)
+            if "evidence.py" not in line
+        ]
+        self.assertTrue(any("validate.py" in command for command in commands))
+        for command in commands:
+            self.assertIn(command, LOCAL, f"ci-local.sh does not run {command}")
 
 
 if __name__ == "__main__":

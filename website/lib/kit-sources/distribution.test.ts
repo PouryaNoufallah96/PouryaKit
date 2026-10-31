@@ -166,6 +166,8 @@ test('the copy refuses what an outside agent cannot open or trust, and keeps a g
       /private/,
     ],
     ['test-path', 'The proof is `tests/ModularMonolith.Tests/StreamTests.cs`.', /private/],
+    ['relative', 'Run `./samples/ModularMonolith/src/ModularMonolith.AppHost` first.', /private/],
+    ['split', 'Names follow **GLOSSARY**.md here.', /private/],
     ['version', '```bash\n# From nuget.org, such as 0.1.0-preview.0.28.\n```', /a published version/],
   ] as const) {
     const repository = fixture(name);

@@ -13,6 +13,7 @@ import {
   nodeViolations,
   parseMarkdown,
   parseSource,
+  renderedText,
   sourceFrontmatter,
   stringifyMarkdown,
   urlsOf,
@@ -132,7 +133,8 @@ function skillCopy(root: string): TreeFile[] {
     if (source === SKILL) dropMaintainerRows(tree);
     rewriteLinks(tree, source, routes, copyOf(source));
     const frontmatter = sourceFrontmatter(texts.get(source) as string);
-    const values: string[] = [frontmatter];
+    // Rendered text too, so inline markup cannot split a name across two nodes.
+    const values: string[] = [frontmatter, renderedText(tree)];
     visit(tree, (node) => {
       if ('value' in node && typeof node.value === 'string') values.push(node.value);
     });

@@ -65,10 +65,7 @@ holds_private() {
   printf '%s' "$1" | grep -qiF -e "$personal_email" -e "$personal_name" -e 'Claude-Session' -e 'session_' -e 'claude.ai/code'
 }
 
-case "$tag" in
-  assets-v[0-9]*) ;;
-  *) stop 64 "usage: publish-public.sh <new tag, assets-v and a number>" ;;
-esac
+[[ "$tag" =~ ^assets-v[0-9]+$ ]] || stop 64 "usage: publish-public.sh <new tag, assets-v and a number>"
 
 echo "1/6 the remote holds only main and assets tags, $pinned_tag among them, and not $tag"
 existing="$(anonymously git ls-remote "$remote")"
@@ -148,7 +145,9 @@ case "$remote" in
   https://github.com/*)
     slug="${remote#https://github.com/}"
     slug="${slug%.git}"
-    holds_private "$(curl -fsS "https://api.github.com/repos/$slug/commits/$commit")" &&
+    response="$(curl -fsS "https://api.github.com/repos/$slug/commits/$commit")" ||
+      stop 6 "the commit API could not be read, so the public commit is unchecked (PUSHED, tell Claude)"
+    holds_private "$response" &&
       stop 6 "the public commit shows the personal identity or a session link (PUSHED, tell Claude)"
     echo "    the commit API shows nothing personal or session-related"
     assets=0

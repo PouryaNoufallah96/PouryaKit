@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ("publish-public.sh", "deploy-site.sh", "publish-nuget.sh")
-PIN = re.compile(r"\b[0-9a-f]{40}\b|assets-v\d|\d+\.\d+\.\d+-(?:preview|rc)")
+PIN = re.compile(r"\b[0-9a-f]{40}\b|assets-v\d|\bv?\d+\.\d+\.\d+\b")
 ENV = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")} | {
     "GIT_CONFIG_GLOBAL": os.devnull,
     "GIT_CONFIG_NOSYSTEM": "1",
@@ -48,14 +48,23 @@ class PublishPublicRefusalTests(unittest.TestCase):
     def git(self, cwd: Path | None, *args: str) -> None:
         subprocess.run(["git", *args], cwd=cwd, env=ENV, capture_output=True, text=True, check=True)
 
+    def refs(self) -> str:
+        return subprocess.run(["git", "ls-remote", str(self.remote)], env=ENV, capture_output=True, text=True).stdout
+
     def run_script(self, *args: str) -> subprocess.CompletedProcess[str]:
+        before = self.refs()
         command = ["bash", str(ROOT / ".agents/scripts/publish-public.sh"), *args]
-        return subprocess.run(command, env=ENV | {"PUBLIC_REMOTE": str(self.remote)}, capture_output=True, text=True)
+        result = subprocess.run(command, env=ENV | {"PUBLIC_REMOTE": str(self.remote)}, capture_output=True, text=True)
+        self.assertEqual(before, self.refs(), "a refused run must leave the remote as it found it")
+        return result
 
     def test_a_name_outside_the_tag_series_is_refused(self) -> None:
         refused = self.run_script("release-1")
         self.assertEqual(64, refused.returncode)
         self.assertIn("STOP: usage", refused.stderr)
+
+    def test_a_tag_with_anything_after_its_number_is_refused(self) -> None:
+        self.assertEqual(64, self.run_script("assets-v2oops").returncode)
 
     def test_a_tag_that_exists_is_refused(self) -> None:
         refused = self.run_script("assets-v1")

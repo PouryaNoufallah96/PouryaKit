@@ -50,7 +50,8 @@ personal_name="${personal_name:-no-personal-name.invalid}"
 stage="$(mktemp -d)"
 log="$(mktemp -d)"
 # A step that fails on its own still ends on a STOP line, so a run can never look finished when it is not.
-trap 'rm -rf "$stage" "$log"; rm -f "$website/.vercel/.env.production.local"
+pulled=no
+trap 'rm -rf "$stage" "$log"; if [ "$pulled" = yes ]; then rm -f "$website/.vercel/.env.production.local"; fi
 if [ "$finished" != yes ]; then
   if [ "$deployed" = yes ]; then echo "STOP: a step ended early; the site WAS deployed, tell Claude" >&2
   else echo "STOP: a step ended early; nothing was deployed" >&2; fi
@@ -74,6 +75,7 @@ fi
 echo "3/7 the project's settings are pulled"
 mkdir -p "$website/.vercel"
 printf '{"projectId":"%s","orgId":"%s","projectName":"pouryakit"}\n' "$project_id" "$org_id" >"$website/.vercel/project.json"
+pulled=yes
 (cd "$website" && vercel pull --yes --environment=production) >"$log/pull.log" 2>&1 ||
   { tail -20 "$log/pull.log" >&2; stop 12 "vercel pull failed; nothing was deployed"; }
 
