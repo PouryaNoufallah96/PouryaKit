@@ -1,0 +1,89 @@
+website/lib/kit-sources/links.test.ts
+  s_5afe244da1e793::t_269c3948e8bcb4 48-52
+website/lib/kit-sources/addresses.ts
+  s_5afe244da1e793::t_932970cf1d4a2b 11
+website/lib/kit-sources/links.ts
+  s_5afe244da1e793::t_56f09cab1dec9f 46-91,93
+  s_5afe244da1e793::t_82a1b32de9cd03 34
+  s_5afe244da1e793::t_692558613edffb 18-27
+website/lib/kit-sources/errors.ts
+  s_5afe244da1e793::t_0c615fe637114e 53-77,87
+  s_5afe244da1e793::t_25f7540653d84d 29
+website/lib/kit-sources/snippets.ts
+  s_5afe244da1e793::t_92f9913c832416 68-69
+  s_5afe244da1e793::t_ba4f6796c909d8 9
+  s_5afe244da1e793::t_0221248677fd96 54-57
+  s_5afe244da1e793::t_c8dbb832bd083c 58-67,70-77
+.gitignore
+  s_5afe244da1e793::t_b6115d35790129 35
+  s_5afe244da1e793::t_d4402329a82e91 34
+website/lib/kit-sources/rules.ts
+  s_5afe244da1e793::t_680ad08a698392 172
+website/lib/kit-sources/site.ts
+  s_5afe244da1e793::t_889d417fdf7fda 42
+website/lib/kit-sources/snippets.test.ts
+  s_5afe244da1e793::t_93326b53f4805b 60-66,68-72
+  s_5afe244da1e793::t_91a637c5180e20 67
+.claude/rules/website.md
+  s_5afe244da1e793::t_a0fdb8f36eefe2 39
+website/lib/kit-sources/distribution.ts
+  s_5afe244da1e793::t_5d0c849da3727d 295,308-311,313-323,325-328,334-336,340-353
+  s_5afe244da1e793::t_329293d90e316f 169
+  s_5afe244da1e793::t_f729611b6f3cc6 42
+website/lib/kit-sources/export-check.ts
+  s_5afe244da1e793::t_d55e48b871b54b 126
+  s_5afe244da1e793::t_1ecaeff20b029f 3
+  s_5afe244da1e793::t_4f217233d0c846 77
+  s_5afe244da1e793::t_953200170fe0e6 38
+  s_5afe244da1e793::t_3a9db94103aaf1 30
+  s_5afe244da1e793::t_0c4f3fec651760 97
+  s_5afe244da1e793::t_5bc1c2aa3bde31 154
+  s_5afe244da1e793::t_bccfc46dcd3f33 98-125,135
+website/app/og/image.png/route.tsx
+  s_5afe244da1e793::t_cd949b6ed6db18 2-3
+website/lib/kit-sources/readmes.ts
+  s_5afe244da1e793::t_76c1ddc8e8a261 226-230
+  s_5afe244da1e793::t_42c38b887bba9a 102,119,123-124,126-127,138-139,141-142,147-148,150-151,153,155-157,159-161,169-186
+  s_5afe244da1e793::t_0193e1aa5cbaec 231-234,236-243
+  s_5afe244da1e793::t_2b4fac39101176 187
+website/.fallowrc.jsonc
+  s_5afe244da1e793::t_cf19d2da05033e 55-61
+  s_5afe244da1e793::t_5d38273c9e2505 20-31
+  s_5afe244da1e793::t_cb32f844aad4de 8-19,32-54,62
+  s_5afe244da1e793::t_6135c6e18e7f7a 1-7,63
+website/lib/kit-sources/references.ts
+  s_5afe244da1e793::t_19a30eb4a2c352 71-72
+website/lib/kit-sources/packages.ts
+  s_5afe244da1e793::t_636b5d41219519 16
+website/pnpm-workspace.yaml
+  s_5afe244da1e793::t_122b020779deab 11-15
+website/lib/kit-sources/glossary.ts
+  s_5afe244da1e793::t_5b5702e0f091ab 8
+website/app/og/docs/[...slug]/route.tsx
+  s_5afe244da1e793::t_bf2fce77e7a1e6 3-4
+website/components/kit-code.tsx
+  s_5afe244da1e793::t_5b13ff8d027c63 3
+website/lib/templates-install.ts
+  s_5afe244da1e793::t_e551b85e17c1da 1-13
+website/app/(home)/page.tsx
+  s_5afe244da1e793::t_5e975c11f025cb 6,11
+website/lib/shared.ts
+  s_5afe244da1e793::t_9a5267bbb0a167 18-26,28,33-34
+  s_5afe244da1e793::t_20873c81f290bb 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae6ec0c9b3ca3a8e42bd84213887fcf117e3410f",
+  "prompts": {},
+  "sessions": {
+    "s_5afe244da1e793": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "de9f6be3-2715-4c4e-abfb-c74b47b2e1a3",
+        "model": "grok-4.7"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
