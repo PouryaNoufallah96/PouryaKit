@@ -7,7 +7,7 @@ description: "Small helpers the Kit's own packages use and your code may too: pr
 You rarely reference it yourself: `PouryaKit.Cqrs`, `PouryaKit.Web`, `PouryaKit.Messaging.Wolverine`, `PouryaKit.Persistence.Dapper`, `PouryaKit.Persistence.EFCore` and `PouryaKit.Security` reference it, so a Module that uses any of them already has it.
 
 <Callout type="info" title="Core stays this small">
-  Core's public types are fixed, and an architecture test holds them to that set ([What Core never holds](#what-core-never-holds)). A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
+  Core's public types are fixed ([What Core never holds](#what-core-never-holds)). A helper that belongs to one Capability lives in that Capability's package, and one that belongs to your application lives in your application.
 </Callout>
 
 ## When to use it

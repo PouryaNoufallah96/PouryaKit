@@ -11,42 +11,36 @@ import { docsRoute, siteDescription, siteName } from '@/lib/shared';
 
 const FEATURE = 'samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct';
 
-// Each card names a rule the Kit holds and the test class that proves it; the Capability page it links states the rule.
+// Each card names a rule the Kit holds; the Capability page it links states the rule.
 const guarantees = [
   {
     title: 'Feature code never saves',
     body: "A structure rule: the sample's tests hold its Modules to it, and a project copies them for its own.",
-    proof: 'FeatureCodeTests',
     href: `${docsRoute}/capabilities/testing#structure-tests`,
   },
   {
     title: 'Notifications after the commit',
     body: 'A reaction that reaches outside the Module runs only once the change is committed.',
-    proof: 'NotificationTests',
     href: `${docsRoute}/capabilities/persistence#what-the-kit-guarantees`,
   },
   {
     title: 'One problem response',
     body: 'Every failure answers the same problem response, with each Error of its Result.',
-    proof: 'WebTests',
     href: `${docsRoute}/capabilities/web#problem-responses`,
   },
   {
     title: 'No default Actor',
     body: 'An Operation runs with the Operation Context its caller passes, or not at all.',
-    proof: 'OperationContextTests',
     href: `${docsRoute}/capabilities/modules#the-operation-context`,
   },
   {
     title: 'Tenant isolation',
     body: "A tenant-scoped Module reads and writes only its Operation's tenant's data.",
-    proof: 'TenancyTests',
     href: `${docsRoute}/capabilities/multi-tenancy#what-the-kit-guarantees`,
   },
   {
     title: 'Checked when the Host is built',
     body: 'A declaration that cannot work stops the Host before it serves a request.',
-    proof: 'CompositionCheckTests',
     href: `${docsRoute}/capabilities/modules#the-hosts-checks`,
   },
 ];
@@ -154,15 +148,10 @@ export default function HomePage() {
         </div>
       </Section>
 
-      <Section
-        title="What the Kit guarantees"
-        lead="The Proving Sample's tests prove each rule below, in the test class its card names, and the page it links states it in full. The first is a structure rule a project copies into its own tests."
-      >
+      <Section title="What the Kit guarantees">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {guarantees.map((guarantee) => (
-            <Card key={guarantee.proof} title={guarantee.title} href={guarantee.href} description={guarantee.body}>
-              <p className="mt-3 font-mono text-xs">Proof: {guarantee.proof}</p>
-            </Card>
+            <Card key={guarantee.href} title={guarantee.title} href={guarantee.href} description={guarantee.body} />
           ))}
         </div>
       </Section>

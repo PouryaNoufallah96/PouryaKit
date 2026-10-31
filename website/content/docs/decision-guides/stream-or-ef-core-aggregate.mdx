@@ -42,10 +42,10 @@ An EF Core Module calls `UsePouryaKitPostgres` in its [Composition Root](/docs/r
 
 ## What the Kit guarantees
 
-| | Stated in | Proven by |
-| --- | --- | --- |
-| An EF Core Operation commits once, with its [Outbox](/docs/reference/glossary#outbox) | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) | `UnitOfWorkTests` |
-| A Stream's events, envelopes and [Receipts](/docs/reference/glossary#receipt) commit in one transaction | [Stream guarantees](/docs/capabilities/stream#what-the-kit-guarantees) | `StreamTests` |
+| | Stated in |
+| --- | --- |
+| An EF Core Operation commits once, with its [Outbox](/docs/reference/glossary#outbox) | [Persistence guarantees](/docs/capabilities/persistence#what-the-kit-guarantees) |
+| A Stream's events, envelopes and [Receipts](/docs/reference/glossary#receipt) commit in one transaction | [Stream guarantees](/docs/capabilities/stream#what-the-kit-guarantees) |
 
 ## Failure messages
 

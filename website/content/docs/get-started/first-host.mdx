@@ -33,7 +33,7 @@ dotnet tool restore
 
 ### Start PostgreSQL
 
-The connection string the generated `appsettings.json` names finds this container, which runs the image the Kit's tests use.
+The connection string in the generated `appsettings.json` reaches this container.
 
 ```bash title="Terminal"
 docker run -d --name acme-shop-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18.6
