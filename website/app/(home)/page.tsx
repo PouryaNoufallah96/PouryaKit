@@ -156,10 +156,7 @@ export default function HomePage() {
         </div>
       </Section>
 
-      <Section
-        title="Capabilities"
-        lead="Each Capability is one or a few packages, used on their own or together. Its page explains it and carries its reference."
-      >
+      <Section title="Capabilities" lead="Each Capability is one or a few packages, used on their own or together.">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {capabilities.map((entry) => (
             <Card

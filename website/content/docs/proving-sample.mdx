@@ -5,10 +5,10 @@ description: The application whose passing tests are the evidence that the Kit's
 
 ## What it is
 
-The [Proving Sample](/docs/reference/glossary#proving-sample) is a modular monolith built on the Kit: four [Modules](/docs/reference/glossary#module), the [Hosts](/docs/reference/glossary#host) that compose them and the tests that prove every guarantee against PostgreSQL, and against RabbitMQ and Redis where they apply. The [Project templates](/docs/reference/glossary#project-template) generate their business code from it, and the code blocks on this site titled with a file's name are quoted from it, or from the Kit's tests, when the site is built.
+The [Proving Sample](/docs/reference/glossary#proving-sample) is a modular monolith built on the Kit: four [Modules](/docs/reference/glossary#module), the [Hosts](/docs/reference/glossary#host) that compose them and the tests that prove every guarantee against PostgreSQL, and against RabbitMQ and Redis where they apply. The [Project templates](/docs/reference/glossary#project-template) generate their business code from it.
 
 <Callout title="Read its code through the modular monolith">
-  The templates are generated from the sample, never maintained beside it: the business code is the sample's own files, and in the modular monolith its [Composition Roots](/docs/reference/glossary#composition-root) and endpoints are too. `dotnet new pouryakit-modular-monolith` gives you its Modules to read. Its tests are the Kit's own; a generated solution has a smoke test instead.
+  In the modular monolith, the business code, its [Composition Roots](/docs/reference/glossary#composition-root) and its endpoints are the sample's own files. `dotnet new pouryakit-modular-monolith` gives you its Modules to read. Its tests are the Kit's own; a generated solution has a smoke test instead.
 </Callout>
 
 ## When to use it
