@@ -115,7 +115,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:5080/catalog/v2/product
 In the monolith and the modular monolith:
 
 - A category and a product created over HTTP, the product with an `Idempotency-Key`: 201 with its id and versioned location; the same key again answers the same status, body and location, and the filtered, sorted list still has one product.
-- `/alive` answers 200 `Healthy` through the service defaults, to a caller without a token, from a second Host composed in Production, as it is deployed, and started with `HostFixture.StartHostAsync`; `/health` answers 401 there, since the service defaults map it in Development only. That liveness asks nothing outside the process, so it stays healthy while the database is down, is the recipe's own proof (`HostRecipeTests` in the Proving Sample).
+- `/alive` answers 200 `Healthy` through the service defaults, to a caller without a token, from a second Host composed in Production, as it is deployed, and started with `HostFixture.StartHostAsync`; `/health` answers 401 there, since the service defaults map it in Development only. Liveness asks nothing outside the process, so it stays healthy while the database is down.
 - Composed with a `ConnectionStrings:broker` value, the Host joins the broker under its derived service name (below). The test builds it and never starts it, so no broker is needed.
 - With the permission checks removed from the registrations, the Host does not build: `RemoveProductsCommand declares RequiresPermissionAttribute, but its check is not registered`.
 - The modular monolith adds one cross-Module effect: a product Catalog creates opens its stock item in Inventory's schema.

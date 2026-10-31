@@ -69,7 +69,7 @@ Routes and clusters are YARP's configuration, in the `ReverseProxy` section (`Re
 
 ## Testing
 
-Front a Host that listens on a real port, so YARP forwards over the network as it does when deployed, and serve the proxy in memory. The Proving Sample's `ReverseProxyTests` runs `ModularMonolith.Host` on Kestrel with the service defaults' health checks and its bearer scheme, then composes the proxy with the Host's endpoint in the `Services` section:
+Front a Host that listens on a real port, so YARP forwards over the network as it does when deployed, and serve the proxy in memory. The Proving Sample's tests run `ModularMonolith.Host` on Kestrel with the service defaults' health checks and its bearer scheme, then composes the proxy with the Host's endpoint in the `Services` section:
 
 ```csharp
 var builder = ReverseProxyHost.CreateBuilder(

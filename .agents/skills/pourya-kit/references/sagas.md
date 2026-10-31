@@ -123,4 +123,3 @@ builder.UsePouryaKitWolverine(connectionName: "app"); // the PostgreSQL message 
 ## Testing
 
 - Publish the events a saga takes through the Modules that publish them, through their Gateways ([testing.md](testing.md)), and read the saga's state from its table, `wolverine.shipping_fulfilment_saga` for the saga `shipping.fulfilment`, and its claims from `wolverine.pouryakit_saga_steps`.
-- The Kit's own proof is `tests/ModularMonolith.Tests/SagaTests.cs`, over the test Modules `tests/ModularMonolith.Tests/Sagas` and their Host, a child process of it for the crash cases, and two Hosts on one broker for the fan-out.

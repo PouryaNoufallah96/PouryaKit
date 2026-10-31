@@ -99,4 +99,4 @@ internal sealed record RemoveProductsCommand(IReadOnlyList<string> Names) : Comm
 
 ## Testing
 
-`CachingTests` in the Proving Sample shows the patterns: change a row with plain SQL behind the cache's back, so a stored answer (the old value) differs from a fresh read (the new one); count a handler's runs with a probe; and for Redis, start a `Testcontainers.Redis` container, compose two Hosts with its connection string, and wait until the first Host's entry is in Redis before the second reads it, since `HybridCache` answers before its distributed write completes.
+The Proving Sample's tests show the patterns: change a row with plain SQL behind the cache's back, so a stored answer (the old value) differs from a fresh read (the new one); count a handler's runs with a probe; and for Redis, start a `Testcontainers.Redis` container, compose two Hosts with its connection string, and wait until the first Host's entry is in Redis before the second reads it, since `HybridCache` answers before its distributed write completes.

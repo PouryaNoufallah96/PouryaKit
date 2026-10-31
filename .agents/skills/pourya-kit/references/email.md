@@ -74,5 +74,5 @@ internal sealed class WelcomeCustomerNotificationHandler(IEmailSender email)
 
 ## Testing
 
-- The Proving Sample's `EmailTests` run the application on a database of its own with its mail sent to a Papercut SMTP container (`Testcontainers.Papercut`, image `changemakerstudiosus/papercut-smtp:7.8.0`, configured with `Security` `None` and the container's SMTP port), and read what arrived from Papercut's HTTP API (`GET /api/messages`, then `GET /api/messages/{id}` for its recipients and body).
+- The Proving Sample's tests run the application on a database of their own with its mail sent to a Papercut SMTP container (`Testcontainers.Papercut`, image `changemakerstudiosus/papercut-smtp:7.8.0`, configured with `Security` `None` and the container's SMTP port), and read what arrived from Papercut's HTTP API (`GET /api/messages`, then `GET /api/messages/{id}` for its recipients and body).
 - A test Host that composes a Module with a Notification Handler that sends mail registers a sender too: the Kit's container is validated when it is built.

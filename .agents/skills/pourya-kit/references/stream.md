@@ -110,7 +110,7 @@ internal sealed class Account : StreamAggregate
 - The Stream type is `internal`; its `Create` and `Apply` methods, and a should-delete method, are `public`. Marten folds a stream through a dispatcher its source generator writes at compile time, which takes public methods only: with an internal `Apply`, loading the Stream throws Marten's invalid-projection exception ("No source-generated dispatcher found") when the Operation runs, not at build.
 - A behaviour applies its event to the Stream, then raises it; the Unit of Work appends what was raised, in order. Each event is a Domain Event, so a Notification Handler subscribes to it as to any other.
 - A Stream's identity is a `Guid`, `StreamAggregate.Id`, which the first event's `Apply` sets; a typed ID wraps it in Feature code, in `IStreams` and in an event, where the Kit's JSON stores its value. Marten takes no class as a stream identity, so a Stream has no typed `Id` of its own.
-- Marten stores an event under its type's name, snake-cased, without its namespace: `account_opened_domain_event` in `events.mt_events.type`. Give each event type of the Host's Stream Modules a name of its own; the sample's `DomainEvent` suffix keeps Ledger's apart from the tests' Stream Module's `AccountOpened`.
+- Marten stores an event under its type's name, snake-cased, without its namespace: `account_opened_domain_event` in `events.mt_events.type`. Give each event type of the Host's Stream Modules a name of its own.
 
 ## Reading and changing Streams
 
@@ -200,5 +200,4 @@ internal sealed class ActivateAccountNotificationHandler(IStreams streams, IInte
 ## Testing
 
 - A Stream Module's Operations go through its Gateway as any Module's do ([testing.md](testing.md)); a test reads the events from `events.mt_events` and the Module's tables from its schema.
-- The Kit's own proof is `tests/ModularMonolith.Tests/StreamTests.cs`, over the test Module `tests/ModularMonolith.Tests/Streams`: a Host of the Module alone, and the Proving Sample's Host with it beside the EF Core Modules and Ledger.
-- `tests/ModularMonolith.Tests/LedgerTests.cs` proves Ledger in the Proving Sample's Host: its entries append and its projection folds them through the Gateway and over HTTP, a second opening is the Kit's conflict, the command's commit holds the account's opening with the envelope of its Notification and the Notification Handler's commit the activation, its Receipt and the Integration Event's envelope, a delivery to Billing that fails leaves no Receipt and no quote, and an empty account id, a blank holder or an entry of zero answers 400 with its validation Errors. A test reads a commit through a Marten store listener installed on the Host (`StreamCommitProbe` in its fixtures), since an envelope's row changes once it is delivered.
+- A test reads a commit through a Marten store listener installed on the Host, since an envelope's row changes once it is delivered.

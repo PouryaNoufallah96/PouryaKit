@@ -67,7 +67,7 @@ internal sealed class GreetQueryHandler(IStringLocalizer<GreetingMessages> messa
 
 ## Testing
 
-Send the request with the header and assert the message, as the Proving Sample's `LocalizationTests` does against its Stub Module:
+Send the request with the header and assert the message, as the Proving Sample's tests do against its Stub Module:
 
 ```csharp
 using var client = app.Client("caller");

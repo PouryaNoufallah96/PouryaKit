@@ -79,7 +79,7 @@ pouryakit.operation Deliver  ── broker ──▶  [Wolverine span of the env
 - Without the `Wolverine` source sampled, the delivery's activity is a child of the publishing Operation in the other Host. With it, there are two Wolverine spans between them: that of the envelope the broker delivered, then that of the copy.
 - Every Host whose Operations belong in the trace calls `AddPouryaKitObservability()`, the receiving Host included: without it, its deliveries have no activity. Each Host exports its own spans; the backend joins them by trace id.
 
-Through the Reverse proxy ([reverse-proxy.md](reverse-proxy.md)), an HTTP request keeps the client's trace id: the Host's request is a child of the proxy's call to it, which is a child of the proxy's request, and the Operation a child of the Host's request. `ReverseProxyTests` proves it with both in the test process.
+Through the Reverse proxy ([reverse-proxy.md](reverse-proxy.md)), an HTTP request keeps the client's trace id: the Host's request is a child of the proxy's call to it, which is a child of the proxy's request, and the Operation a child of the Host's request.
 
 ## Exporting
 
@@ -108,5 +108,5 @@ ActivitySource.AddActivityListener(listener);
 
 - Assert on tags, `Status`, `ParentSpanId` and `TraceStateString`, not on timings. To assert a duration, use a `MeterListener` for the instrument `pouryakit.operation.duration` of the meter `PouryaKit`: a sub-second Operation has a value above zero with a fraction.
 - A test's tracestate reaches a first delivery attempt from the envelope held in memory. Only a retry reads the header back from the store, so test a retry when the header itself is the claim.
-- `ObservabilityTests` in the Proving Sample's tests does all of this for the Catalog-to-Inventory chain. Its `RecordedTelemetry` holds the listeners, and `DeliveryProbes.ActivitiesOf(subscription)` gives the activity each delivery attempt ran in.
-- `CrossProcessTracingTests` does it across RabbitMQ, with the Catalog Host and `Inventory.Host` of `BrokerFixture` both in the test process: a listener sees its own process only. `HostRecipeTests` shows the Kit's activities and durations, and the `Npgsql` spans of a delivery's database commands under its Operation, reaching an exporter the test adds to the service defaults' own providers.
+- The Proving Sample's tests do all of this for the Catalog-to-Inventory chain: `RecordedTelemetry` holds the listeners, and `DeliveryProbes.ActivitiesOf(subscription)` gives the activity each delivery attempt ran in.
+- To record both Hosts' activities with an `ActivityListener`, run both Hosts in the test process: a listener sees its own process only.
