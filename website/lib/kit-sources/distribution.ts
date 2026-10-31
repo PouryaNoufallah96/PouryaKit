@@ -13,6 +13,7 @@ import {
   nodeViolations,
   parseMarkdown,
   parseSource,
+  renderedText,
   sourceFrontmatter,
   stringifyMarkdown,
   urlsOf,
@@ -20,7 +21,7 @@ import {
 import { readPackageIds } from './packages.ts';
 import { listDirectory, REFERENCES, readSource, resolveInside, SKILL } from './paths.ts';
 import { MAINTAINER_GUIDES, publishedReferences } from './references.ts';
-import { describe, renderedTextViolations, type Violation } from './rules.ts';
+import { copyViolations, describe, renderedTextViolations, type Violation } from './rules.ts';
 
 // The public repository's tree: the Kit's skill as a Claude Code plugin marketplace and an `npx skills` source, the
 // covers, a front-door README and the licence. The skill is projected as the site projects it: the published references
@@ -132,7 +133,16 @@ function skillCopy(root: string): TreeFile[] {
     if (source === SKILL) dropMaintainerRows(tree);
     rewriteLinks(tree, source, routes, copyOf(source));
     const frontmatter = sourceFrontmatter(texts.get(source) as string);
-    fail(`${copyOf(source)} (from ${source})`, [...nodeViolations(tree), ...renderedTextViolations(frontmatter)]);
+    // Rendered text too, so inline markup cannot split a name across two nodes.
+    const values: string[] = [frontmatter, renderedText(tree)];
+    visit(tree, (node) => {
+      if ('value' in node && typeof node.value === 'string') values.push(node.value);
+    });
+    fail(`${copyOf(source)} (from ${source})`, [
+      ...nodeViolations(tree),
+      ...renderedTextViolations(frontmatter),
+      ...values.flatMap(copyViolations),
+    ]);
     return file(copyOf(source), `${frontmatter}${frontmatter ? '\n' : ''}${stringifyMarkdown(tree)}`);
   });
 }

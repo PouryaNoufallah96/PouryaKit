@@ -78,6 +78,50 @@ class PreCommitTests(unittest.TestCase):
         self.assertIn(f"FAIL  {PAGE}:3: `Retitle` names nothing in the code", refused.stdout + refused.stderr)  # git sends a hook's output to either
         self.assertEqual(self.base, self.head())
 
+    def install_biome(self, script: str) -> None:
+        self.write("website/node_modules/.bin/biome", script)
+        (self.repo / "website/node_modules/.bin/biome").chmod(0o755)
+
+    def test_a_staged_site_file_biome_refuses_is_not_committed(self) -> None:
+        self.install_biome('#!/bin/sh\necho "$@" > called.txt\nexit 1\n')
+        self.write("website/lib/rules.ts", "const a =\n  'wrapped';\n")
+        self.git("add", "website/lib/rules.ts")
+        refused = self.commit()
+        self.assertIn("pre-commit: biome check failed", refused.stderr)
+        self.assertIn("lib/rules.ts", (self.repo / "website/called.txt").read_text(encoding="utf-8"))
+        self.assertEqual(self.base, self.head())
+
+    def test_a_staged_site_file_biome_accepts_is_committed(self) -> None:
+        self.install_biome("#!/bin/sh\nexit 0\n")
+        self.write("website/lib/rules.ts", "const a = 'wrapped';\n")
+        self.git("add", "website/lib/rules.ts")
+        self.assertEqual(0, self.commit().returncode)
+        self.assertNotEqual(self.base, self.head())
+
+    def test_a_clone_with_no_site_install_says_biome_did_not_run(self) -> None:
+        self.write("website/lib/rules.ts", "const a = 'wrapped';\n")
+        self.git("add", "website/lib/rules.ts")
+        result = self.commit()
+        self.assertIn("so Biome did not run", result.stderr)
+        self.assertEqual(0, result.returncode)
+        self.assertNotEqual(self.base, self.head())
+
+    def test_a_commit_of_a_script_whose_test_fails_is_refused(self) -> None:
+        name = ".agents/scripts/test_failing.py"
+        self.write(name, "import unittest\n\nclass T(unittest.TestCase):\n    def test_it(self):\n        self.fail('red')\n")
+        self.git("add", name)
+        refused = self.commit()
+        self.assertIn("pre-commit: the tests in .agents/scripts failed", refused.stderr)
+        self.assertEqual(self.base, self.head())
+
+    def test_a_commit_of_a_script_whose_tests_pass_is_committed(self) -> None:
+        # A staged hook file runs the tests without the AI-setup check, which this throwaway repository does not hold.
+        self.write(".agents/scripts/test_passing.py", "import unittest\n\nclass T(unittest.TestCase):\n    def test_it(self):\n        pass\n")
+        self.write(".githooks/note.txt", "a change\n")
+        self.git("add", ".githooks/note.txt")
+        self.assertEqual(0, self.commit().returncode)
+        self.assertNotEqual(self.base, self.head())
+
 
 if __name__ == "__main__":
     unittest.main()

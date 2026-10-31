@@ -12,12 +12,43 @@ git diff --cached --name-only --diff-filter=AMR | python3 "$(dirname "$0")/../.a
 top=$(git rev-parse --show-toplevel)
 # A gated path staged in part would be checked as it is on disk, not as it commits: refuse it (final review of #74, R2).
 # Markdown and MDX alike: check-docs.py reads a docs site page's names from the working tree too.
-partial=$(printf '%s\n' "$staged" | grep -E '\.mdx?$|^\.gitattributes$|^skills-lock\.json$|^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$)' | while IFS= read -r path; do [ -n "$path" ] && git diff --quiet -- "$path" || echo "$path"; done)
+partial=$(printf '%s\n' "$staged" | grep -E '\.mdx?$|^\.gitattributes$|^skills-lock\.json$|^(\.claude/|\.codex/|\.agents/|\.githooks/|AGENTS\.md$|CLAUDE\.md$)' | while IFS= read -r path; do [ -n "$path" ] && git diff --quiet -- "$path" || echo "$path"; done)
 if [ -n "$partial" ]; then echo "pre-commit: staged in part, so the checks would read the working tree, not the commit; stage the whole file or stash the rest:" >&2; printf '  %s\n' $partial >&2; exit 1; fi
 # Every commit: the docs check with --staged. A change at or above a cited range needs its diagram staged too, with
 # ranges that fit the indexed file; a change below every cited range passes. The other docs rules retain the
 # working-tree boundary above. About a second.
 (cd "$top" && python3 .agents/scripts/check-docs.py --staged) || { echo "pre-commit: check-docs.py --staged failed; fix the docs or the diagram, or run it un-piped to see the lines" >&2; exit 1; }
+# The formatters CI runs, on the files this commit stages: a formatting failure otherwise waits for the release gate.
+# They read the working tree, and a clone with no site install or no restored tool says so: CI's jobs and ci-local.sh
+# are the gate on the committed tree.
+kept=$(git diff --cached --name-only --diff-filter=ACMR)
+site=$(printf '%s\n' "$kept" | sed -n 's#^website/##p')
+if [ -n "$site" ]; then
+  if [ -x "$top/website/node_modules/.bin/biome" ]; then
+    printf '%s\n' "$site" | (cd "$top/website" && xargs ./node_modules/.bin/biome check --no-errors-on-unmatched --files-ignore-unknown=true) \
+      || { echo "pre-commit: biome check failed; run pnpm --dir website lint" >&2; exit 1; }
+  else
+    echo "pre-commit: no website/node_modules, so Biome did not run" >&2
+  fi
+fi
+csharp=$(printf '%s\n' "$kept" | grep -E '\.(cs|csproj|props|targets|slnx)$' || true)
+if [ -n "$csharp" ]; then
+  if (cd "$top" && dotnet tool run csharpier --version >/dev/null 2>&1); then
+    printf '%s\n' "$csharp" | (cd "$top" && xargs dotnet tool run csharpier check) \
+      || { echo "pre-commit: csharpier check failed; run dotnet csharpier format ." >&2; exit 1; }
+  else
+    echo "pre-commit: no restored CSharpier, so the format check did not run; run dotnet tool restore" >&2
+  fi
+fi
+# The scripts' own tests, when a commit changes them: a command that chains past a failing test still cannot commit it.
+# Git exports its repository to a hook, and the tests build repositories of their own. About 30 seconds.
+if printf '%s\n' "$staged" | grep -qE '^(\.agents/scripts/|\.agents/hooks/|\.githooks/)'; then
+  if ! output=$(cd "$top" && env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE -u GIT_PREFIX python3 -m unittest discover -s .agents/scripts -p 'test_*.py' 2>&1); then
+    printf '%s\n' "$output" | tail -20 >&2
+    echo "pre-commit: the tests in .agents/scripts failed" >&2
+    exit 1
+  fi
+fi
 if printf '%s\n' "$staged" | grep -qE '^(\.claude/|\.codex/|\.agents/|AGENTS\.md$|CLAUDE\.md$|skills-lock\.json$)'; then
   (cd "$top" && python3 .agents/scripts/check-ai-setup.py) || { echo "pre-commit: check-ai-setup.py failed" >&2; exit 1; }
 fi
