@@ -1,0 +1,19 @@
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_ebdd029215ce19::t_cce988f9cf5272 7,14,23,25,75,132,211-220,224-225,297,299,301,306,310,322,324,368,371,373,387,389,391-392,398,401,410-411,418,422-427,429,434,439,450,452,476,481,488,495-497,500,512,514,522,535,537,540,553,560-561
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6adc9cec4ecc68c359251968891e1118d58f57a5",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
