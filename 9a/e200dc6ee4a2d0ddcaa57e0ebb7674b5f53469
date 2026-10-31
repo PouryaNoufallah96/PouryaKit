@@ -1,0 +1,45 @@
+website/content/docs/index.mdx
+  s_ebdd029215ce19::t_7a1d0b84738a34 24
+website/content/docs/concepts/index.mdx
+  s_ebdd029215ce19::t_10a64a8ebd8756 6
+  s_ebdd029215ce19::t_cc44b30550f3d6 11
+website/content/docs/get-started/ai-skill.mdx
+  s_ebdd029215ce19::t_4128ecceff385b 8
+website/content/docs/proving-sample.mdx
+  s_ebdd029215ce19::t_7befbb74370c9d 8
+  s_ebdd029215ce19::t_5a508ab1317fb8 11
+website/content/docs/guides/add-an-endpoint.mdx
+  s_ebdd029215ce19::t_342972b768856a 29
+website/content/docs/guides/index.mdx
+  s_ebdd029215ce19::t_2534b7067ce091 6
+website/content/docs/concepts/composition-and-startup-checks.mdx
+  s_ebdd029215ce19::t_700f9ae57fa6b3 40
+website/content/docs/guides/paged-query.mdx
+  s_ebdd029215ce19::t_9bdf7e6b26fdb9 43
+website/lib/kit-sources/site.ts
+  s_ebdd029215ce19::t_d1b80f8933cf5d 323
+  s_ebdd029215ce19::t_f809ad42929346 359
+  s_ebdd029215ce19::t_9d3c3e30ead81f 39
+  s_ebdd029215ce19::t_e4b7138c355bdd 189
+  s_ebdd029215ce19::t_ea5c494e57b040 342
+website/content/docs/templates/index.mdx
+  s_ebdd029215ce19::t_d3fdde1258ee95 11
+website/app/(home)/page.tsx
+  s_ebdd029215ce19::t_968784a55f154b 159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9ae200dc6ee4a2d0ddcaa57e0ebb7674b5f53469",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}
