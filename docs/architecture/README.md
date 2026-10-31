@@ -736,7 +736,7 @@ The `dotnet new` templates a new application starts from: a template package (`P
 
 ## Structure tests
 
-`tests/PouryaKit.ArchitectureTests` is the structure seam. It references the Proving Sample's two Hosts, `PouryaKit.Testing`, `PouryaKit.Core` and the offending fixtures, and needs no database. The Kit ships no rules package; the Kit's skill teaches a consuming project to copy the pattern ([Structure tests](../../.agents/skills/pourya-kit/references/testing.md#structure-tests)).
+`tests/PouryaKit.ArchitectureTests` is the structure seam. It references the Proving Sample's two Hosts, `PouryaKit.Testing`, `PouryaKit.Core` and the offending fixtures, and needs no database. The Kit ships no rules package and does not publish these tests; the Kit's skill states the rules a consuming project writes as its own tests ([Structure tests](../../.agents/skills/pourya-kit/references/testing.md#structure-tests)).
 
 | Test class | What it asserts |
 |---|---|

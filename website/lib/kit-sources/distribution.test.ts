@@ -6,7 +6,7 @@ import path from 'node:path';
 import { after, test } from 'node:test';
 import Slugger from 'github-slugger';
 import { visit } from 'unist-util-visit';
-import { MARKETPLACE, PLUGIN, PUBLIC_REPOSITORY } from './addresses.ts';
+import { ASSETS_URL, MARKETPLACE, PLUGIN, PUBLIC_REPOSITORY } from './addresses.ts';
 import {
   assembleTree,
   fillReadme,
@@ -22,51 +22,36 @@ import {
 } from './distribution.ts';
 import { resolveLink } from './links.ts';
 import { parseMarkdown, renderedText, sourceFrontmatter } from './markdown.ts';
-import { readPackageIds } from './packages.ts';
-import { findRoot, INVENTORY, SKILL } from './paths.ts';
+import { findRoot, SKILL } from './paths.ts';
 import { PUBLISHED_REFERENCES } from './references.ts';
 
 const root = findRoot();
 const scratch = mkdtempSync(path.join(tmpdir(), 'kit-distribution-test-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
 
-// Covers as `pnpm --dir website covers` writes them, each a few distinct bytes: the tests need no typesetting.
-const covers = path.join(scratch, 'covers');
-mkdirSync(path.join(covers, 'covers'), { recursive: true });
-writeFileSync(path.join(covers, 'kit.png'), 'kit');
-for (const id of readPackageIds(root)) writeFileSync(path.join(covers, 'covers', `${id}.png`), id);
-
-const tree = assembleTree(root, covers);
+const tree = assembleTree(root);
 const text = (files: TreeFile[], target: string) => files.find((entry) => entry.path === target)?.content.toString();
 
 // A repository holding only what the sync reads, so a test can plant a source without touching the real one.
 function fixture(name: string): string {
   const directory = path.join(scratch, name);
-  for (const source of [path.dirname(SKILL), INVENTORY, 'LICENSE', README_TEMPLATE, 'src/icon.png']) {
+  for (const source of [path.dirname(SKILL), 'LICENSE', README_TEMPLATE]) {
     cpSync(path.join(root, source), path.join(directory, source), { recursive: true });
   }
   return directory;
 }
 
-test('the tree holds the marketplace, the skill with its published references only, the covers, the README and the licence', () => {
+test('the tree holds the marketplace, the skill with its published references only, the README and the licence, and no image', () => {
   const expected = [
     '.claude-plugin/marketplace.json',
     'LICENSE',
     'README.md',
-    'assets/icon.png',
-    'assets/kit.png',
-    ...readPackageIds(root).map((id) => `assets/covers/${id}.png`),
     `skills/${PLUGIN}/SKILL.md`,
     `skills/${PLUGIN}/agents/openai.yaml`,
     ...PUBLISHED_REFERENCES.map((reference) => `skills/${PLUGIN}/references/${reference}`),
   ];
   assert.deepEqual(new Set(tree.map((entry) => entry.path)), new Set(expected));
   assert.equal(tree.length, expected.length);
-  assert.equal(text(tree, 'assets/covers/PouryaKit.Cqrs.png'), 'PouryaKit.Cqrs');
-  assert.deepEqual(
-    tree.find((entry) => entry.path === 'assets/icon.png')?.content,
-    readFileSync(path.join(root, 'src/icon.png')),
-  );
   assert.equal(text(tree, 'LICENSE'), readFileSync(path.join(root, 'LICENSE'), 'utf8'));
 });
 
@@ -85,7 +70,7 @@ test('the marketplace publishes the skill from the repository root under its nam
   const bumped = fixture('version');
   const skill = path.join(bumped, SKILL);
   writeFileSync(skill, readFileSync(skill, 'utf8').replace(/^(\s+version: )"[^"]+"$/m, '$1"9.9.9"'));
-  const copy = JSON.parse(text(assembleTree(bumped, covers), '.claude-plugin/marketplace.json') ?? '');
+  const copy = JSON.parse(text(assembleTree(bumped), '.claude-plugin/marketplace.json') ?? '');
   assert.equal(copy.plugins[0].version, '9.9.9');
 });
 
@@ -131,28 +116,28 @@ test("every relative link of the copy names a file of the copy and one of that f
 test("a source the site's rules refuse fails the sync, and so does a file of the skill it does not know", () => {
   const tracker = fixture('tracker');
   appendFileSync(path.join(tracker, '.agents/skills/pourya-kit/references/caching.md'), '\nFixed in ticket #42.\n');
-  assert.throws(() => assembleTree(tracker, covers), /references\/caching\.md.*tracker code/);
+  assert.throws(() => assembleTree(tracker), /references\/caching\.md.*tracker code/);
 
   const link = fixture('link');
   appendFileSync(
     path.join(link, '.agents/skills/pourya-kit/references/web.md'),
     '\n[source](https://github.com/PouryaNoufallah96/PouryaKit/blob/main/x.cs)\n',
   );
-  assert.throws(() => assembleTree(link, covers), /links the private repository/);
+  assert.throws(() => assembleTree(link), /links the private repository/);
 
   const description = fixture('description');
   const skill = path.join(description, SKILL);
   writeFileSync(skill, readFileSync(skill, 'utf8').replace('. Use for any code', '. Since Wave 4, use for any code'));
-  assert.throws(() => assembleTree(description, covers), /SKILL\.md.*delivery vocabulary/);
+  assert.throws(() => assembleTree(description), /SKILL\.md.*delivery vocabulary/);
 
   const unknown = fixture('unknown');
   mkdirSync(path.join(unknown, '.agents/skills/pourya-kit/scripts'));
   writeFileSync(path.join(unknown, '.agents/skills/pourya-kit/scripts/run.sh'), 'echo\n');
-  assert.throws(() => assembleTree(unknown, covers), /pourya-kit holds SKILL\.md, agents, references, scripts/);
+  assert.throws(() => assembleTree(unknown), /pourya-kit holds SKILL\.md, agents, references, scripts/);
 
   const stray = fixture('stray');
   writeFileSync(path.join(stray, '.agents/skills/pourya-kit/references/diagram.png'), 'x');
-  assert.throws(() => assembleTree(stray, covers), /diagram\.png under .* is on neither list/);
+  assert.throws(() => assembleTree(stray), /diagram\.png under .* is on neither list/);
 });
 
 test('the copy refuses what an outside agent cannot open or trust, and keeps a generated path', () => {
@@ -172,11 +157,11 @@ test('the copy refuses what an outside agent cannot open or trust, and keeps a g
   ] as const) {
     const repository = fixture(name);
     appendFileSync(path.join(repository, web), `\n${line}\n`);
-    assert.throws(() => assembleTree(repository, covers), rule, line);
+    assert.throws(() => assembleTree(repository), rule, line);
   }
   const generated = fixture('generated');
   appendFileSync(path.join(generated, web), '\n`tests/Acme.Shop.Tests` hosts the generated Host.\n');
-  assert.ok(assembleTree(generated, covers).length > 0);
+  assert.ok(assembleTree(generated).length > 0);
 });
 
 test('a private link behind a dot segment fails the sync, literal or escaped, as a link, as text and in the README', () => {
@@ -189,7 +174,7 @@ test('a private link behind a dot segment fails the sync, literal or escaped, as
   ]) {
     const repository = fixture(name);
     appendFileSync(path.join(repository, web), `\n${line}\n`);
-    assert.throws(() => assembleTree(repository, covers), /private repository/, line);
+    assert.throws(() => assembleTree(repository), /private repository/, line);
   }
   for (const [name, line] of [
     ['dots-readme', '[source](https://github.com/PouryaNoufallah96/pouryakit-pub/../PouryaKit)'],
@@ -198,30 +183,30 @@ test('a private link behind a dot segment fails the sync, literal or escaped, as
   ]) {
     const repository = fixture(name);
     appendFileSync(path.join(repository, README_TEMPLATE), `\n${line}\n`);
-    assert.throws(() => assembleTree(repository, covers), /README\.md: private repository/, line);
+    assert.throws(() => assembleTree(repository), /README\.md: private repository/, line);
   }
 });
 
 test('a title is published text: a private name or a delivery word in one fails the sync, in the README and the copy', () => {
   const name = fixture('title-name');
   appendFileSync(path.join(name, README_TEMPLATE), '\n[Docs](https://example.com "Cybernod")\n');
-  assert.throws(() => assembleTree(name, covers), /README\.md: private project \(Cybernod\)/);
+  assert.throws(() => assembleTree(name), /README\.md: private project \(Cybernod\)/);
 
   const word = fixture('title-word');
   appendFileSync(path.join(word, README_TEMPLATE), '\n![Cover](https://example.com/a.png "since Wave 4")\n');
-  assert.throws(() => assembleTree(word, covers), /README\.md: delivery vocabulary/);
+  assert.throws(() => assembleTree(word), /README\.md: delivery vocabulary/);
 
   const copy = fixture('title-copy');
   const web = path.join(copy, '.agents/skills/pourya-kit/references/web.md');
   appendFileSync(web, '\n[Docs](https://example.com "since Wave 4")\n');
-  assert.throws(() => assembleTree(copy, covers), /references\/web\.md.*delivery vocabulary/);
+  assert.throws(() => assembleTree(copy), /references\/web\.md.*delivery vocabulary/);
 
   const privateName = fixture('title-copy-name');
   appendFileSync(
     path.join(privateName, '.agents/skills/pourya-kit/references/web.md'),
     '\n![Cover](https://example.com/a.png "Cybernod")\n',
   );
-  assert.throws(() => assembleTree(privateName, covers), /references\/web\.md.*private project \(Cybernod\)/);
+  assert.throws(() => assembleTree(privateName), /references\/web\.md.*private project \(Cybernod\)/);
 });
 
 test('the README fills every name it uses from one place and refuses one it does not know', () => {
@@ -229,7 +214,7 @@ test('the README fills every name it uses from one place and refuses one it does
   assert.doesNotMatch(readme, /\{\{|\}\}/);
   assert.match(readme, /claude plugin install pourya-kit@pouryakit/);
   assert.match(readme, /codex plugin add pourya-kit@pouryakit/);
-  assert.match(readme, /raw\.githubusercontent\.com\/PouryaNoufallah96\/pouryakit-pub\/assets-v1\/assets\/kit\.png/);
+  assert.ok(readme.includes(`${ASSETS_URL}/kit.png`));
   assert.throws(() => fillReadme('see {{website}}'), /names \{\{website\}\}/);
   assert.throws(() => fillReadme('see {{ site }}'), /a \{\{ or \}\}/);
 });
@@ -246,11 +231,11 @@ test("the AI skill page's install commands name the public repository, the marke
 
 test('the regeneration check fails on a changed source, in either direction, and passes after regeneration', () => {
   const repository = fixture('regenerate');
-  const committed = parseManifest(formatManifest(manifestOf(assembleTree(repository, covers))));
-  assert.deepEqual(manifestDifferences(committed, manifestOf(assembleTree(repository, covers))), []);
+  const committed = parseManifest(formatManifest(manifestOf(assembleTree(repository))));
+  assert.deepEqual(manifestDifferences(committed, manifestOf(assembleTree(repository))), []);
 
   appendFileSync(path.join(repository, '.agents/skills/pourya-kit/references/caching.md'), '\nOne more line.\n');
-  const changed = manifestOf(assembleTree(repository, covers));
+  const changed = manifestOf(assembleTree(repository));
   assert.deepEqual(manifestDifferences(committed, changed), [`changed: skills/${PLUGIN}/references/caching.md`]);
   assert.deepEqual(manifestDifferences(parseManifest(formatManifest(changed)), changed), []);
 

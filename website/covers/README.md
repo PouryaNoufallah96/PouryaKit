@@ -15,6 +15,8 @@ The cover image of the Kit and of each package, shown at the top of its README o
 
 A new package needs an entry in `covers.json`, with its family and a tagline: one true line about it, taken from its row in the skill's Capability table or from its reference. `pnpm --dir website test` fails until `covers.json` and the inventory name the same packages, and on any string outside printable ASCII: the committed fonts hold that set, and `next/og` would fetch a glyph they lack from Google Fonts.
 
+The covers are published at the tag the READMEs pin, not on the public repository's default branch. A new or changed cover needs a new tag: raise `ASSETS_TAG` with the READMEs' cover URLs, then run `.agents/scripts/publish-public.sh <release tag> --images`, where the release tag is another new tag than the raised one.
+
 ## Making an artwork
 
 A new family needs an artwork, and an artwork is replaced only with the owner's approval of the new image. Generate it with Codex in an empty directory outside the repository, attaching `art/kit.png` as the style reference:

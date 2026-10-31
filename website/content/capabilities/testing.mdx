@@ -4,7 +4,7 @@ description: "Test against the hosted application: PostgreSQL in a container, da
 
 `PouryaKit.Testing` tests your application the way it runs. One `HostFixture` per test assembly builds the real Host with the same composition `Program` uses, starts PostgreSQL in a container, applies every Module's migrations and starts the application on it. Each test class derives from `HostTest<TFixture>`, which waits for the deliveries an earlier test caused and then empties every table, so no test sees another's data. A test sends its Operations through `Fixture.Gateway<TModule>()`, exactly as the application does, and asserts on the returned [Result](/docs/reference/glossary#result) and on the rows it reads back.
 
-The same package waits for the deliveries an Operation caused, reads and replays dead letters, fixes the time, and lets a test abandon a Host. The structure rules every Module follows come as a pattern to copy into your own architecture tests, not as a package.
+The same package waits for the deliveries an Operation caused, reads and replays dead letters, fixes the time, and lets a test abandon a Host. The structure rules every Module follows are stated for you to write as your own architecture tests: no package ships them, and the Kit's own tests are not published.
 
 <Callout type="warn" title="The fixture needs Docker">
   `HostFixture` runs PostgreSQL in a Testcontainers container, so the machine that runs the tests needs Docker. Tests that share a fixture run one at a time.
@@ -16,7 +16,7 @@ The same package waits for the deliveries an Operation caused, reads and replays
 - A test needs a particular Actor, tenant or correlation, or a fixed time.
 - You wait for the deliveries an Operation caused and assert what they did, or read and replay a dead letter.
 - You abandon a Host mid-delivery to test a crash.
-- You check, or copy into your own project, the structure rules a Module follows.
+- You check the structure rules a Module follows, or write them as tests of your own project.
 
 ## How it works
 
@@ -67,7 +67,7 @@ A test through Catalog's Gateway: a product created in an existing category comm
 | How to fix the time of Domain Events and Operations | [Time](#time) |
 | How to wait for, assert and abandon deliveries | [Deliveries](#deliveries) |
 | How to read and replay dead letters | [Dead letters](#dead-letters) |
-| Every structure rule, and how to copy it into your project | [Structure tests](#structure-tests) |
+| Every structure rule, and how to write it in your project | [Structure tests](#structure-tests) |
 
 ## Next steps
 

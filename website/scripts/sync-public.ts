@@ -1,5 +1,4 @@
-// The public repository's tree (lib/kit-sources/distribution.ts), which needs the covers typeset first
-// (`pnpm --dir website covers`). `pnpm --dir website sync-public` and then:
+// The public repository's tree (lib/kit-sources/distribution.ts). `pnpm --dir website sync-public` and then:
 //   [<directory>]                       writes the tree to website/distribution/out/, which it empties first, or to a
 //                                       directory that is absent or empty (relative to website/), then compares it
 //                                       with the manifest
