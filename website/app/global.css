@@ -90,6 +90,12 @@
   }
 }
 
+/* The docs layout fills the window. Fumadocs caps it at 97rem and gives the spare width to its outer columns, where the
+   sidebar's background stretches beside its content and leaves an empty band on the left. */
+#nd-docs-layout {
+  --fd-layout-width: 100%;
+}
+
 /* Reduced motion: no animation, transition or smooth scroll, and no view transition on a theme switch. */
 /* biome-ignore-start lint/complexity/noImportantStyles: the user's setting must override every component's own motion */
 @media (prefers-reduced-motion: reduce) {
