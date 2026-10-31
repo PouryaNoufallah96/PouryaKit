@@ -101,7 +101,10 @@ class PreCommitTests(unittest.TestCase):
     def test_a_clone_with_no_site_install_says_biome_did_not_run(self) -> None:
         self.write("website/lib/rules.ts", "const a = 'wrapped';\n")
         self.git("add", "website/lib/rules.ts")
-        self.assertIn("so Biome did not run", self.commit().stderr)
+        result = self.commit()
+        self.assertIn("so Biome did not run", result.stderr)
+        self.assertEqual(0, result.returncode)
+        self.assertNotEqual(self.base, self.head())
 
     def test_a_commit_of_a_script_whose_test_fails_is_refused(self) -> None:
         name = ".agents/scripts/test_failing.py"
