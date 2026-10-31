@@ -22,9 +22,10 @@ decision.
 ## Evidence
 
 The Spike code is `spikes/marten-two-store/` at commit `d03cc7409c9cc5e9c10520142553d473d763b68d`, reachable through tag `spike/marten-two-store`.
-It is not merged. It runs with `dotnet test spikes/marten-two-store` against `postgres:18.6` with
-`track_commit_timestamp=on` and `max_connections=300` in Testcontainers: 34 of 34 tests passed. Each test gets a database
-of its own; tests run one at a time.
+It is not merged. It was run on 2026-10-16 with `dotnet test spikes/marten-two-store` (.NET SDK 10.0.402, Microsoft
+Testing Platform, xunit.v3 4.0.1, `postgres:18.6` with `track_commit_timestamp=on` and `max_connections=300` in
+Testcontainers 4.15.0, Docker 29.8.2, macOS arm64), on the Kit at `10df372f`: 34 of 34 tests passed in about 25 s. Each
+test gets a database of its own; tests run one at a time.
 
 **Configuration.**
 

@@ -8,4 +8,4 @@ For a consuming project, use that directory's `packages/` as a local feed, map `
 
 For CI validation or a publication handoff, read [CI guidance](../../../../docs/ci.md). CI calls the same Release path with `--no-fetch` after full-history/tag checkout removes its credentials. Require the tested SHA, successful job result and original artifact manifest; PRs test the merge revision, and neither a PR receipt nor manual non-main CI can authorize publication. Keep NuGet caches, CLI homes and credentials out of retained evidence.
 
-Keep source runtime tests, package builds and hosted execution evidence distinct. The shared path does not publish. The delivered [private publisher](publication.md) has separate hosted publication and restore evidence. The Kit is published on nuget.org.
+Keep source runtime tests, package builds and hosted execution evidence distinct. The shared path does not publish. The delivered [private publisher](publication.md) has separate hosted publication and restore evidence. `0.1.0-preview.0.28` is also on nuget.org, published by hand with no workflow ([nuget.org publication](../../../../docs/private-packages.md#nugetorg-publication)).

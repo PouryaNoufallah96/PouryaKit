@@ -22,7 +22,8 @@ The Spike code is `spikes/s3-dispatcher/` at commit `cbc64ba6d99148423e1dcf4d5e7
 reachable through the tag `spike/s3-dispatcher`; it is not merged. Each option served the same Module
 from a second assembly, with internal commands, queries, handlers, validators and authorizers behind one
 public Gateway class, in a container built with `ValidateOnBuild` and `ValidateScopes`.
-`dotnet test spikes/s3-dispatcher` passed 21 of 21.
+`dotnet test spikes/s3-dispatcher` passed 21 of 21. It needs the Microsoft.Testing.Platform runner
+opt-in from the repository's root `global.json`, which is not part of the Spike commit.
 
 Behaviour did not decide it. `OwnedDispatcherTests`, `SourceGeneratedMediatorTests` (generator in the
 Host) and `GeneratorInModuleBehaviourTests` (generator in the Module) all pass

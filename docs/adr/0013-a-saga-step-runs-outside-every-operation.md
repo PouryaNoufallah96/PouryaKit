@@ -138,7 +138,7 @@ Every outcome is observed in the test it names unless the row says read or infer
   fails if that default changes; a Host that allows service location gives a step the Kit's `Operation` and its
   publisher (item 8's other test), so `PouryaKit.Messaging.Wolverine.Sagas` keeps the policy for a Host with a saga (an invariant below).
 - **The claims outlive the saga, as Receipts do.** Deleting them with the saga's state lets a late copy of the starting
-  event start the saga again (item 3's red run), the path ADR 0006's Receipts and publication records amendment records for Receipts. The Spike keeps
+  event start the saga again (item 3's red run), the path ADR 0006's amendment on Receipts and publication records describes. The Spike keeps
   them; a bounded retention is its own decision, with the same accounting of every redelivery path first.
 - **The package's references.** The Kit's storage names `Wolverine.RDBMS` and `Wolverine.Postgresql` types and Npgsql,
   which section C keeps out of `PouryaKit.Messaging.Wolverine` and gives to `PouryaKit.Messaging.Wolverine.EFCore`;

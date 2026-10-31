@@ -422,7 +422,7 @@ internal sealed class CatalogProducts : Migration
 }
 ```
 
-- A new copy declares the tenant in its `create table`: `(tenant text not null, product_id uuid not null, ..., primary key (tenant, product_id))`.
+- That is the first migration. A later one adds the `tenant` column to the copy's key, and refuses a table that already holds a copy, whose tenant cannot be recovered. A new copy declares it in its `create table`: `(tenant text not null, product_id uuid not null, ..., primary key (tenant, product_id))`.
 - A Module that subscribes to any Snapshot needs both tables in its schema, each created once; [Receipts](#receipts) says which Module needs which table and what fails without one.
 - A version row is not a Receipt: it holds, for each subscription and aggregate, the newest version applied, and is what keeps an older Snapshot from undoing a newer one or a Tombstone. The Kit removes no row from it, and nothing should.
 

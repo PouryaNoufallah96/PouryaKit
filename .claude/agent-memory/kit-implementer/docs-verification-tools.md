@@ -31,7 +31,6 @@ metadata:
 
 ## Docs settle-up package (#90, 2026-10-10)
 
-- **`check-docs.py`'s ordered-sections rule outranks a brief's placement:** the `## Pre-Wave 3 …, ticket #N` headings of `docs/acceptance.md` must run in ascending ticket order (`ORDERED_SECTIONS`), so a late-numbered package that lands after higher tickets goes between its neighbours, not at the end. A link to the new section from older rows fails until the section exists, a free slug check.
 - **A ticket whose acceptance is a literal grep** ("the key phrase finds only X and Y") also catches run records (`acceptance.md`) and the plan's other sections: reword each to a pointer at the owner, and describe the phrase in prose in your own section. A path cited inside a backticked command span (`unittest discover -s tests/releases/...`) is not a Kit path to `check-docs.py`, so a moved folder leaves no failure there: grep for it.
 - **Before cutting status text, prove each claim lives elsewhere:** a scratchpad script with one term list per claim over `references/*.md` found every README status claim in a reference; the three misses were wording ("always validated", "unit `s` ... keeps fractions", a tag table), checked by hand.
 - **A brief's docs correction can be wrong:** #94's reviewer read `NoHandlerContinuation` alone and missed the `IMissingHandler` the Kit's `UnknownMessageBehavior` registers; the brief for #90 carried that reading. Check a "False in Wolverine X" correction against the decompile and the ADRs before writing it, and report a contradiction instead of applying it.
