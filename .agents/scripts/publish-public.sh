@@ -10,7 +10,8 @@
 #
 # --images publishes a new or changed cover. Raise ASSETS_TAG and the READMEs' cover URLs first: a tag never moves, so
 # every published URL keeps its image. The run adds that tag beside the default branch, on a commit holding only assets/,
-# in the same atomic push as the release, so the branch stays small and the two land together or not at all.
+# in the same atomic push as the release, which keeps a tag of its own, so the branch stays small and the two land
+# together or not at all.
 #
 # Why each line is here (#184, #192):
 # - The push comes from a fresh clone of the public repository, never from the private checkout, which holds

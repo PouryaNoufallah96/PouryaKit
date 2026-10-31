@@ -16,7 +16,7 @@ const FEATURE = 'samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Fe
 const guarantees = [
   {
     title: 'Feature code never saves',
-    body: "A structure rule: the sample's tests hold its Modules to it. They are not published, so a project writes its own.",
+    body: "A structure rule: the sample's tests hold its Modules to it. Those tests are not published, so a project writes its own.",
     href: `${docsRoute}/capabilities/testing#structure-tests`,
   },
   {
