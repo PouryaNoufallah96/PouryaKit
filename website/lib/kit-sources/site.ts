@@ -39,7 +39,7 @@ import { describe } from './rules.ts';
 // written. The ADRs stay private and have no page, so a link to one becomes its own text.
 
 /** The folders the generator owns, relative to `website/`; it empties them before it writes. */
-export const GENERATED = ['content/docs/capabilities', 'content/docs/reference', '.generated'];
+const GENERATED = ['content/docs/capabilities', 'content/docs/reference', '.generated'];
 
 const CAPABILITIES_ROUTE = '/docs/capabilities';
 const REFERENCE_ROUTE = '/docs/reference';

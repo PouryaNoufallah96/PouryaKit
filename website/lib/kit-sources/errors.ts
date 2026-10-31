@@ -26,7 +26,7 @@ const ERROR_MEMBER =
 const CODE_CONSTANT = /((?:[ \t]*\/\/\/[^\n]*\n)*)[ \t]*public const string \w+ = "([A-Z][A-Za-z]*\.[A-Z][A-Za-z]*)";/g;
 
 /** A `///` summary as plain text: tags dropped, a `cref` or a name kept as the name it gives. */
-export function summaryText(comment: string): string {
+function summaryText(comment: string): string {
   const xml = comment
     .split('\n')
     .map((line) => line.replace(/^\s*\/\/\/ ?/, ''))
@@ -50,6 +50,31 @@ function walk(root: string, directory: string): string[] {
   });
 }
 
+function codesIn(file: string, text: string, id: string, type: string): ErrorCode[] {
+  const found: ErrorCode[] = [];
+  for (const match of text.matchAll(ERROR_MEMBER)) {
+    found.push({
+      code: match[3],
+      kind: match[2],
+      message: match[4].replace(/\\"/g, '"'),
+      summary: summaryText(match[1]),
+      type,
+      package: id,
+    });
+  }
+  for (const match of text.matchAll(CODE_CONSTANT)) {
+    found.push({ code: match[2], kind: '', message: '', summary: summaryText(match[1]), type, package: id });
+  }
+  const read = new Set(found.map((entry) => entry.code));
+  const unread = [...text.matchAll(CODE_LITERAL)].map((match) => match[1]).filter((code) => !read.has(code));
+  if (unread.length > 0) {
+    throw new Error(
+      `kit-sources: ${file} declares ${unread.join(', ')} in a shape lib/kit-sources/errors.ts does not read`,
+    );
+  }
+  return found;
+}
+
 /** Every Error code of the Kit's packages, in package and code order. */
 export function readErrorCodes(root: string, packages: string[]): ErrorCode[] {
   const codes: ErrorCode[] = [];
@@ -59,28 +84,7 @@ export function readErrorCodes(root: string, packages: string[]): ErrorCode[] {
       const type = /(?:public|internal) static class (\w+(?:Errors|ErrorCodes))\b/.exec(text)?.[1];
       // A Kit package's code is in its one namespace (ADR 0010); a template's content is application code.
       if (!type || !text.includes(`namespace ${id};`)) continue;
-      const found: ErrorCode[] = [];
-      for (const match of text.matchAll(ERROR_MEMBER)) {
-        found.push({
-          code: match[3],
-          kind: match[2],
-          message: match[4].replace(/\\"/g, '"'),
-          summary: summaryText(match[1]),
-          type,
-          package: id,
-        });
-      }
-      for (const match of text.matchAll(CODE_CONSTANT)) {
-        found.push({ code: match[2], kind: '', message: '', summary: summaryText(match[1]), type, package: id });
-      }
-      const read = new Set(found.map((entry) => entry.code));
-      const unread = [...text.matchAll(CODE_LITERAL)].map((match) => match[1]).filter((code) => !read.has(code));
-      if (unread.length > 0) {
-        throw new Error(
-          `kit-sources: ${file} declares ${unread.join(', ')} in a shape lib/kit-sources/errors.ts does not read`,
-        );
-      }
-      codes.push(...found);
+      codes.push(...codesIn(file, text, id, type));
     }
   }
   return codes.sort((a, b) => a.package.localeCompare(b.package) || a.code.localeCompare(b.code));

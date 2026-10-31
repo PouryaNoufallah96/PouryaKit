@@ -13,7 +13,7 @@ export type KitPackage = {
   readme: string;
 };
 
-export function packageSlug(id: string) {
+function packageSlug(id: string) {
   return id.toLowerCase().replaceAll('.', '-');
 }
 

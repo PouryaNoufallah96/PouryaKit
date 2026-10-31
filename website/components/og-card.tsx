@@ -1,7 +1,5 @@
 // The Open Graph card next/og renders to a PNG at build time: the dark theme's background, the accent for the site's
 // name, no gradient. next/og lays out with flexbox only, so every element with children is a flex container.
-export const ogSize = { width: 1200, height: 630 };
-
 export function OgCard({ eyebrow, title, description }: { eyebrow: string; title: string; description?: string }) {
   return (
     <div

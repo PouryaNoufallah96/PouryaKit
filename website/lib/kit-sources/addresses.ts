@@ -8,7 +8,7 @@ export const SITE_ADDRESS = 'https://pouryakit.vercel.app';
 export const PUBLIC_REPOSITORY = 'PouryaNoufallah96/pouryakit-pub';
 
 /** The public repository's tag that README image URLs pin, so a published README never shows a later image. */
-export const ASSETS_TAG = 'assets-v1';
+const ASSETS_TAG = 'assets-v1';
 
 /** The public repository's `assets/` folder at that tag: `<ASSETS_URL>/covers/<id>.png`, `/kit.png`, `/icon.png`. */
 export const ASSETS_URL = `https://raw.githubusercontent.com/${PUBLIC_REPOSITORY}/${ASSETS_TAG}/assets`;

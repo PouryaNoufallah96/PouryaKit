@@ -3,11 +3,12 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/badge';
 import { Card } from '@/components/card';
-import { CommandBlock, KitSnippet, templatesInstall } from '@/components/kit-code';
+import { CommandBlock, KitSnippet } from '@/components/kit-code';
 import { PUBLIC_REPOSITORY } from '@/lib/kit-sources/addresses.ts';
 import { findRoot } from '@/lib/kit-sources/paths.ts';
 import { skillEntries } from '@/lib/kit-sources/references.ts';
 import { docsRoute, siteDescription, siteName } from '@/lib/shared';
+import { templatesInstall } from '@/lib/templates-install';
 
 const FEATURE = 'samples/ModularMonolith/src/Modules/Catalog/Catalog/Products/Features/RenameProduct';
 

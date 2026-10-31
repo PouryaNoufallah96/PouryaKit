@@ -39,7 +39,7 @@ export const README_TEMPLATE = 'website/distribution/README.md.template';
 export const MANIFEST = 'website/distribution/manifest.sha256';
 
 /** Where `pnpm --dir website covers` writes the Kit's and the packages' covers. */
-export const COVERS = 'website/covers/out';
+const COVERS = 'website/covers/out';
 
 /** The default directory the tree is written to; the sync owns it and empties it first. */
 export const OUTPUT = 'website/distribution/out';
@@ -166,7 +166,7 @@ function marketplace(root: string): TreeFile {
 }
 
 /** The values the README template names. */
-export const README_VALUES: Record<string, string> = {
+const README_VALUES: Record<string, string> = {
   site: SITE_ADDRESS,
   repository: PUBLIC_REPOSITORY,
   assets: ASSETS_URL,
@@ -292,9 +292,7 @@ export type RemoteCheck = { branch?: string; commit?: string; problems: string[]
  * `npx skills add` and the plugin marketplace read), fetched into a temporary directory, with its complete file set and
  * every file's sha256 compared. Each problem found is returned; none means the remote publishes the reviewed tree.
  */
-export function verifyRemote(remote: string, tag: string, manifest: Manifest): RemoteCheck {
-  if (remote.startsWith('-') || tag.startsWith('-'))
-    throw new Error('kit-sources: a remote or a tag cannot start with -');
+function remoteHead(remote: string, tag: string): { branch?: string; head?: string; commit?: string } {
   let branch: string | undefined;
   let head: string | undefined;
   let tagged: string | undefined;
@@ -307,35 +305,50 @@ export function verifyRemote(remote: string, tag: string, manifest: Manifest): R
     if (ref === `refs/tags/${tag}`) tagged = object;
     if (ref === `refs/tags/${tag}^{}`) peeled = object;
   }
-  const commit = peeled ?? tagged;
-  if (!commit) return { branch, problems: [`${remote} has no tag ${tag}`] };
+  return { branch, head, commit: peeled ?? tagged };
+}
+
+function publishedTree(directory: string, commit: string): { problems: string[]; files: Manifest } {
   const problems: string[] = [];
-  if (head !== commit) {
-    problems.push(
-      `the default branch ${branch ?? '(none)'} is at ${head ?? 'no commit'}, not at ${commit}, which ${tag} tags: npx skills add and the plugin marketplace read the default branch`,
-    );
+  const files: Manifest = new Map();
+  for (const entry of git(['-C', directory, 'ls-tree', '-r', '-z', '--full-tree', commit]).toString().split('\0')) {
+    if (entry === '') continue;
+    const tab = entry.indexOf('\t');
+    const [mode, type, object] = entry.slice(0, tab).split(' ');
+    const target = entry.slice(tab + 1);
+    if (type !== 'blob' || (mode !== '100644' && mode !== '100755')) {
+      problems.push(`${target} is not a regular file (${mode} ${type})`);
+      continue;
+    }
+    files.set(target, sha256(git(['-C', directory, 'cat-file', 'blob', object])));
   }
+  return { problems, files };
+}
+
+function fetchedProblems(remote: string, tag: string, commit: string, manifest: Manifest): string[] {
   const directory = mkdtempSync(path.join(tmpdir(), 'kit-distribution-'));
   try {
     git(['init', '--quiet', directory]);
     git(['-C', directory, 'fetch', '--quiet', '--no-tags', '--depth', '1', remote, `refs/tags/${tag}`]);
     const fetched = git(['-C', directory, 'rev-parse', 'FETCH_HEAD^{commit}']).toString().trim();
-    if (fetched !== commit) problems.push(`${tag} moved from ${commit} to ${fetched} while it was read`);
-    const published: Manifest = new Map();
-    for (const entry of git(['-C', directory, 'ls-tree', '-r', '-z', '--full-tree', fetched]).toString().split('\0')) {
-      if (entry === '') continue;
-      const tab = entry.indexOf('\t');
-      const [mode, type, object] = entry.slice(0, tab).split(' ');
-      const target = entry.slice(tab + 1);
-      if (type !== 'blob' || (mode !== '100644' && mode !== '100755')) {
-        problems.push(`${target} is not a regular file (${mode} ${type})`);
-        continue;
-      }
-      published.set(target, sha256(git(['-C', directory, 'cat-file', 'blob', object])));
-    }
-    problems.push(...manifestDifferences(manifest, published));
+    const moved = fetched === commit ? [] : [`${tag} moved from ${commit} to ${fetched} while it was read`];
+    const published = publishedTree(directory, fetched);
+    return [...moved, ...published.problems, ...manifestDifferences(manifest, published.files)];
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
-  return { branch, commit, problems };
+}
+
+export function verifyRemote(remote: string, tag: string, manifest: Manifest): RemoteCheck {
+  if (remote.startsWith('-') || tag.startsWith('-'))
+    throw new Error('kit-sources: a remote or a tag cannot start with -');
+  const { branch, head, commit } = remoteHead(remote, tag);
+  if (!commit) return { branch, problems: [`${remote} has no tag ${tag}`] };
+  const drifted =
+    head === commit
+      ? []
+      : [
+          `the default branch ${branch ?? '(none)'} is at ${head ?? 'no commit'}, not at ${commit}, which ${tag} tags: npx skills add and the plugin marketplace read the default branch`,
+        ];
+  return { branch, commit, problems: [...drifted, ...fetchedProblems(remote, tag, commit, manifest)] };
 }

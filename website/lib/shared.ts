@@ -15,11 +15,23 @@ export const searchIndexRoute = '/api/search.json';
 
 // The site's own address, for absolute Open Graph URLs: SITE_URL when a deployment sets it, else the production host
 // Vercel's build sets, else the site's address, which the public repository's README links too.
+function readSiteUrl(value: string): URL {
+  try {
+    return new URL(value);
+  } catch (error) {
+    if (error instanceof TypeError) throw new Error(`the site URL is not absolute: ${value}`);
+    throw error;
+  }
+}
+
 const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-export const siteUrl = new URL(process.env.SITE_URL ?? (vercelHost ? `https://${vercelHost}` : SITE_ADDRESS));
+export const siteUrl = readSiteUrl(process.env.SITE_URL ?? (vercelHost ? `https://${vercelHost}` : SITE_ADDRESS));
 
 // The site's default Open Graph image (app/og/image.png/route.tsx).
 export const defaultImageUrl = '/og/image.png';
+
+// The Open Graph card next/og renders to a PNG at build time.
+export const ogSize = { width: 1200, height: 630 };
 
 const getMarkdownUrl = createGetUrl(docsMarkdownRoute);
 const getImageUrl = createGetUrl(docsImageRoute);

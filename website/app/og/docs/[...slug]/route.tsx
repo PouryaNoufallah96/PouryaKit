@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { ImageResponse } from 'next/og';
-import { OgCard, ogSize } from '@/components/og-card';
-import { pageImageUrl, siteName } from '@/lib/shared';
+import { OgCard } from '@/components/og-card';
+import { ogSize, pageImageUrl, siteName } from '@/lib/shared';
 import { source } from '@/lib/source';
 
 // One page's Open Graph image, written at build time as /og/docs/<slugs>/image.png for each page.

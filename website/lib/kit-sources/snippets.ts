@@ -6,7 +6,7 @@ import { visit } from 'unist-util-visit';
 import { findRoot, readSource, sourceExists } from './paths.ts';
 
 /** The code a page may quote: the Proving Sample's and the tests'. */
-export const SNIPPET_ROOTS = ['samples/ModularMonolith/', 'tests/'];
+const SNIPPET_ROOTS = ['samples/ModularMonolith/', 'tests/'];
 
 const LANGUAGES: Record<string, string> = { '.cs': 'csharp', '.json': 'json', '.proto': 'proto', '.csproj': 'xml' };
 
@@ -51,25 +51,29 @@ function attribute(node: JsxElement, name: string): string | undefined {
 export function remarkKitSnippets(options: { root?: string } = {}) {
   return (tree: Root, file: unknown) => {
     const root = options.root ?? findRoot();
-    visit(tree, (visited) => {
-      const node = visited as unknown as JsxElement;
-      if ((node.type !== 'mdxJsxFlowElement' && node.type !== 'mdxJsxTextElement') || node.name !== 'Snippet') return;
-      if (node.type === 'mdxJsxTextElement') throw new Error('kit-sources: put <Snippet> on a line of its own');
-      const source = attribute(node, 'file');
-      const region = attribute(node, 'region');
-      if (!source || !region) throw new Error('kit-sources: <Snippet> needs a file and a region');
-      const extension = path.extname(source);
-      const lang = LANGUAGES[extension] ?? extension.slice(1);
-      const meta = `title="${path.posix.basename(source)}"`;
-      const value = readSnippet(root, source, region);
-      let fence = '```';
-      while (value.includes(fence)) fence += '`';
-      // In place, as Fumadocs' include does, so the page's Markdown carries the code where the element stood.
-      const { position } = node;
-      for (const key of Object.keys(node)) delete node[key];
-      Object.assign(node, { type: 'code', lang, meta, value, position });
-      replaceSource(file as never, node as never, `${fence}${lang} ${meta}\n${value}\n${fence}`);
-      return 'skip';
-    });
+    visit(
+      tree,
+      // fallow-ignore-next-line complexity -- tested through remarkKitSnippets; the score is estimated coverage
+      (visited) => {
+        const node = visited as unknown as JsxElement;
+        if ((node.type !== 'mdxJsxFlowElement' && node.type !== 'mdxJsxTextElement') || node.name !== 'Snippet') return;
+        if (node.type === 'mdxJsxTextElement') throw new Error('kit-sources: put <Snippet> on a line of its own');
+        const source = attribute(node, 'file');
+        const region = attribute(node, 'region');
+        if (!source || !region) throw new Error('kit-sources: <Snippet> needs a file and a region');
+        const extension = path.extname(source);
+        const lang = LANGUAGES[extension] ?? extension.slice(1);
+        const meta = `title="${path.posix.basename(source)}"`;
+        const value = readSnippet(root, source, region);
+        const ticks = value.match(/`+/g)?.reduce((longest, run) => Math.max(longest, run.length), 0) ?? 0;
+        const fence = '`'.repeat(Math.max(3, ticks + 1));
+        // In place, as Fumadocs' include does, so the page's Markdown carries the code where the element stood.
+        const { position } = node;
+        for (const key of Object.keys(node)) delete node[key];
+        Object.assign(node, { type: 'code', lang, meta, value, position });
+        replaceSource(file as never, node as never, `${fence}${lang} ${meta}\n${value}\n${fence}`);
+        return 'skip';
+      },
+    );
   };
 }

@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
-import { OgCard, ogSize } from '@/components/og-card';
-import { siteDescription, siteName } from '@/lib/shared';
+import { OgCard } from '@/components/og-card';
+import { ogSize, siteDescription, siteName } from '@/lib/shared';
 
 // The site's default Open Graph image, written once at build time as /og/image.png; a docs page names its own.
 export const dynamic = 'force-static';

@@ -57,6 +57,19 @@ test('a region named twice fails', () => {
   }
 });
 
+test('a region whose body contains a fence is wrapped in a longer one', async () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'kit-snippet-'));
+  try {
+    mkdirSync(path.join(fixture, 'tests'), { recursive: true });
+    writeFileSync(path.join(fixture, 'tests/A.cs'), '#region a\n```\nx\n```\n#endregion\n');
+    const processor = remark().use(remarkMdx).use(remarkKitSnippets, { root: fixture });
+    const file = await processor.process('<Snippet file="tests/A.cs" region="a" />\n');
+    assert.match(String(file), /^````csharp title="A.cs"\n```\nx\n```\n````\n$/);
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
 test('<Snippet> becomes a code block titled with the file name', async () => {
   const processor = remark().use(remarkMdx).use(remarkKitSnippets, { root });
   const tree = (await processor.run(

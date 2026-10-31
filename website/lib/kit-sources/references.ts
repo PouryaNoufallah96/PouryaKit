@@ -68,7 +68,8 @@ export function publishedReferences(root: string): string[] {
       `kit-sources: ${unlisted.join(', ')} under ${REFERENCES} is on neither list in lib/kit-sources/references.ts; add a reference to PUBLISHED_REFERENCES to publish it, or to MAINTAINER_GUIDES, and move any other file out`,
     );
   }
-  const missing = [...PUBLISHED_REFERENCES].filter((file) => !present.includes(file));
+  const presentNames = new Set(present);
+  const missing = PUBLISHED_REFERENCES.filter((file) => !presentNames.has(file));
   if (missing.length > 0)
     throw new Error(`kit-sources: published references missing from ${REFERENCES}: ${missing.join(', ')}`);
   return [...PUBLISHED_REFERENCES];

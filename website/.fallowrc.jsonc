@@ -1,0 +1,63 @@
+{
+  // MDX the generator and Fumadocs read from disk. Nothing imports these files.
+  "ignorePatterns": ["content/**"],
+  // Next calls generateStaticParams on a route handler by name. The Next plugin accepts it on page.tsx and misses route.ts.
+  "ignoreExports": [
+    { "file": "app/**/route.ts", "exports": ["generateStaticParams"] },
+    { "file": "app/**/route.tsx", "exports": ["generateStaticParams"] }
+  ],
+  // Each of these is under the cyclomatic and cognitive limits. The score is fallow's estimated coverage
+  // (CRAP = CC² + CC when it sees no direct test). Splitting them, or standing up a React test runner, would make the code worse.
+  "health": {
+    "thresholdOverrides": [
+      {
+        "files": ["lib/kit-sources/rules.ts"],
+        "functions": ["repositoryOf"],
+        "maxCrap": 40,
+        "reason": "One host grammar, tested through privateRepositoryReferences. Splitting the branches would scatter it."
+      },
+      {
+        "files": ["lib/kit-sources/readmes.ts"],
+        "functions": ["openingViolations"],
+        "maxCrap": 50,
+        "reason": "The README opening checklist, tested through readmeViolations. Cyclomatic 12 and cognitive 7; the score is estimated coverage."
+      },
+      {
+        "files": ["lib/kit-sources/links.ts"],
+        "functions": ["rewriteLink"],
+        "maxCrap": 40,
+        "reason": "One link rewrite, tested through rewriteLinks. Cyclomatic 11 and cognitive 9; the score is estimated coverage."
+      },
+      {
+        "files": ["scripts/covers.ts"],
+        "functions": ["setLines"],
+        "maxCrap": 50,
+        "reason": "A line-budget helper in a script that renders covers when imported. Cyclomatic 6; the score is estimated coverage."
+      },
+      {
+        "files": ["scripts/sync-public.ts"],
+        "functions": ["write"],
+        "maxCrap": 40,
+        "reason": "The CLI writer. Importing the script runs it. Cyclomatic 5; the score is estimated coverage."
+      },
+      {
+        "files": ["components/card.tsx"],
+        "functions": ["Card"],
+        "maxCrap": 40,
+        "reason": "A presentational card. Cyclomatic 5; the site has no React component test runner."
+      },
+      {
+        "files": ["components/provider.tsx"],
+        "functions": ["isThemeHotKey"],
+        "maxCrap": 40,
+        "reason": "A three-line hotkey predicate. Exporting it from the client component would reintroduce only-export-components."
+      }
+    ],
+    // export-check.test.ts changes with rules.ts and rules.test.ts because a content rule is tested as a
+    // grammar and again as it shows up in the built pages. export-check.ts already imports rules.ts. An import
+    // from one test file to the other would exist only for this report.
+    "changeCoupling": {
+      "minDegree": 0.75
+    }
+  }
+}

@@ -8,3 +8,8 @@ allowBuilds:
 # binaries are LGPL-3.0-or-later.
 ignoredOptionalDependencies:
   - sharp
+
+# Tailwind 4.3.3 pins lightningcss 1.32.0, which warns on Fumadocs' ::highlight(fd-search) search marker.
+# 1.33.0 parses that pseudo-element, so the production CSS build stays quiet.
+overrides:
+  lightningcss: 1.33.0

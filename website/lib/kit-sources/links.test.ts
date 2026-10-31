@@ -45,6 +45,11 @@ test('a link into the repository with no page becomes its own text, and a link t
   assert.equal(rewrite('[Wolverine](https://wolverinefx.net/)'), '[Wolverine](https://wolverinefx.net/)');
 });
 
+test('a percent-encoded anchor is decoded, and a malformed one fails', () => {
+  assert.equal(rewrite('[trust](security.md#continua%74ions)'), '[trust](/docs/capabilities/security#continuations)');
+  assert.throws(() => rewrite('[x](security.md#100%off)'), /security\.md#100%off has a malformed anchor/);
+});
+
 test('a link to the private repository fails, and so does an anchor the target page does not have', () => {
   assert.throws(
     () => rewrite('[source](https://github.com/PouryaNoufallah96/PouryaKit/blob/main/x.cs)'),

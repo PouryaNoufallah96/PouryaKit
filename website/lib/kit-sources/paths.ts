@@ -9,7 +9,6 @@ export const PACKAGES = 'src';
 export const INVENTORY = 'scripts/packaging/inventory.json';
 
 // The site's own files, relative to the repository root.
-export const WEBSITE = 'website';
 export const CAPABILITY_TOPS = 'website/content/capabilities';
 
 /** The repository root: the closest directory above `start` that holds the Kit skill. */
@@ -47,9 +46,4 @@ export function isDirectory(root: string, relative: string): boolean {
 
 export function listDirectory(root: string, relative: string): string[] {
   return readdirSync(resolveInside(root, relative)).sort();
-}
-
-/** A repository path in the POSIX form the route map keys use. */
-export function posix(relative: string): string {
-  return relative.split(path.sep).join('/');
 }

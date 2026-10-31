@@ -169,7 +169,7 @@ export function addressViolations(text: string, javascript = false): Violation[]
  * other white space, a no-break space included. A blank line is a block's end, and stays one, so a phrase never runs from
  * one block into the next, such as a table's cells.
  */
-export function softSpaced(text: string): string {
+function softSpaced(text: string): string {
   return text
     .replace(/[^\S\n]*\n(?:[^\S\n]*\n)+[^\S\n]*/g, '\n\n')
     .replace(/[^\S\n]*(?<!\n)\n(?!\n)[^\S\n]*/g, ' ')

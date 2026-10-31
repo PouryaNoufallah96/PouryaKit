@@ -99,7 +99,7 @@ function sectionsOf(nodes: RootContent[]): Map<string, RootContent[]> {
   return sections;
 }
 
-function shapeViolations(id: string, tree: Root, text: string): string[] {
+function openingViolations(id: string, tree: Root, text: string): { violations: string[]; matched: boolean } {
   const written = (node?: RootContent) =>
     node ? text.slice(node.position?.start.offset, node.position?.end.offset) : undefined;
   const [cover, badges, title, intro] = tree.children;
@@ -116,13 +116,15 @@ function shapeViolations(id: string, tree: Root, text: string): string[] {
   const expected = SECTIONS.map((section) => `## ${section}`);
   if (names.join('\n') !== expected.join('\n')) {
     violations.push(`its sections are ${names.join(', ')}, not ${expected.join(', ')}`);
-    return violations;
+    return { violations, matched: false };
   }
   // The one paragraph: the first section's heading comes right after it.
   if (tree.children[4]?.type !== 'heading') violations.push('its title is followed by more than one paragraph');
+  return { violations, matched: true };
+}
 
-  const sections = sectionsOf(tree.children.slice(4));
-  const install = sections.get('Install') ?? [];
+function installViolations(id: string, install: RootContent[]): string[] {
+  const violations: string[] = [];
   const command = install[0];
   if (command?.type !== 'code' || command.lang !== 'bash' || command.value !== installOf(id)) {
     violations.push(`its Install section does not open with the command ${installOf(id)}`);
@@ -133,28 +135,54 @@ function shapeViolations(id: string, tree: Root, text: string): string[] {
       .some((node) => writesLink(node, `${SITE_ADDRESS}/docs/get-started/install-templates`));
     if (!named) violations.push("its Install section does not link the site's install page");
   } else if (install.length !== 1) violations.push('its Install section holds more than the command');
+  return violations;
+}
 
-  const when = sections.get('When to use it') ?? [];
+function whenViolations(when: RootContent[]): string[] {
+  const violations: string[] = [];
   if (when[0]?.type !== 'list') violations.push('its When to use it section does not open with a list');
   if (!when.some((node) => writesLink(node, NUGET_PACKAGES))) {
     violations.push('its When to use it section names no package it pairs with');
   }
+  return violations;
+}
 
-  const fences = (sections.get('Quick start') ?? []).filter((node) => node.type === 'code');
+function quickStartViolations(id: string, nodes: RootContent[]): string[] {
+  const fences = nodes.filter((node) => node.type === 'code');
   if (id !== TEMPLATES && !fences.some((node) => node.lang === 'csharp')) {
-    violations.push('its Quick start section holds no C#');
+    return ['its Quick start section holds no C#'];
   }
-  if (id === TEMPLATES && fences.length === 0) violations.push('its Quick start section holds no command');
+  if (id === TEMPLATES && fences.length === 0) return ['its Quick start section holds no command'];
+  return [];
+}
 
-  const [list, ...alerts] = sections.get('What you get') ?? [];
+function whatYouGetViolations(nodes: RootContent[]): string[] {
+  const [list, ...alerts] = nodes;
+  const violations: string[] = [];
   if (list?.type !== 'list') violations.push('its What you get section does not open with a list');
   if (alerts.length < 1 || alerts.length > 2 || !alerts.every(alertOf)) {
     violations.push('its What you get section does not end in one or two alerts, [!TIP] or [!WARNING]');
   }
-
-  const learn = sections.get('Learn more') ?? [];
-  if (learn.length !== 1 || learn[0].type !== 'list') violations.push('its Learn more section is not one list');
   return violations;
+}
+
+function learnMoreViolations(learn: RootContent[]): string[] {
+  if (learn.length !== 1 || learn[0]?.type !== 'list') return ['its Learn more section is not one list'];
+  return [];
+}
+
+function shapeViolations(id: string, tree: Root, text: string): string[] {
+  const opening = openingViolations(id, tree, text);
+  if (!opening.matched) return opening.violations;
+  const sections = sectionsOf(tree.children.slice(4));
+  return [
+    ...opening.violations,
+    ...installViolations(id, sections.get('Install') ?? []),
+    ...whenViolations(sections.get('When to use it') ?? []),
+    ...quickStartViolations(id, sections.get('Quick start') ?? []),
+    ...whatYouGetViolations(sections.get('What you get') ?? []),
+    ...learnMoreViolations(sections.get('Learn more') ?? []),
+  ];
 }
 
 function writesLink(node: RootContent, prefix: string): boolean {
@@ -195,19 +223,24 @@ function linkViolations(tree: Root, ids: ReadonlySet<string>): string[] {
 
 function codeViolations(tree: Root, code: ReadonlySet<string>): string[] {
   const violations: string[] = [];
-  visit(tree, 'code', (node) => {
-    if (!FENCES.includes(node.lang ?? ''))
-      violations.push(`a code block is ${node.lang ?? 'unlabelled'}, not bash or csharp`);
-    if (node.lang === 'bash' && node.value.includes('--version')) {
-      violations.push('a command names a version, which stales once the next version ships this README');
-    }
-    if (node.lang !== 'csharp') return;
-    for (const line of node.value.split('\n').map((text) => text.trim())) {
-      if (line !== '' && !line.startsWith('//') && !code.has(line)) {
-        violations.push(`this line of C# is in no file of ${CODE_ROOTS.join(', ')}: ${line}`);
+  visit(
+    tree,
+    'code',
+    // fallow-ignore-next-line complexity -- tested through readmeViolations; the score is estimated coverage
+    (node) => {
+      if (!FENCES.includes(node.lang ?? ''))
+        violations.push(`a code block is ${node.lang ?? 'unlabelled'}, not bash or csharp`);
+      if (node.lang === 'bash' && node.value.includes('--version')) {
+        violations.push('a command names a version, which stales once the next version ships this README');
       }
-    }
-  });
+      if (node.lang !== 'csharp') return;
+      for (const line of node.value.split('\n').map((text) => text.trim())) {
+        if (line !== '' && !line.startsWith('//') && !code.has(line)) {
+          violations.push(`this line of C# is in no file of ${CODE_ROOTS.join(', ')}: ${line}`);
+        }
+      }
+    },
+  );
   return violations;
 }
 

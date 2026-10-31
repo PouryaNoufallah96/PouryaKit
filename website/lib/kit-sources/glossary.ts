@@ -5,7 +5,7 @@ export type GlossaryEntry = { term: string; body: string; line: number };
 export type GlossarySection = { title: string; entries: GlossaryEntry[] };
 
 /** The entries the site never publishes: how the Kit was delivered, not how it is used. Each must match one entry. */
-export const EXCLUDED_ENTRIES = [
+const EXCLUDED_ENTRIES = [
   { section: 'Delivery of the Kit', term: 'Wave' },
   { section: 'Delivery of the Kit', term: 'Phase' },
   { section: 'Delivery of the Kit', term: 'Spike' },
