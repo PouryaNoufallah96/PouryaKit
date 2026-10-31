@@ -63,7 +63,7 @@ public async Task A_category_counts_a_new_product_in_the_same_commit_and_a_faile
 }
 ```
 
-A Gateway call without a context runs as the test Actor with no tenant, and a tenant-scoped Module refuses it. Catalog is tenant-scoped, so the test above sends through an extension in the Kit's own test project that supplies a tenant. Yours needs no such extension: give a tenant-scoped Module a context that names one, and pass it to the Gateway's own methods:
+A Gateway call without a context runs as the test Actor with no tenant, and a tenant-scoped Module refuses it. The test above sends through an extension in the Kit's own tests that supplies a tenant. In your project, give a tenant-scoped Module a context that names one, and pass it to the Gateway's own methods:
 
 ```csharp
 var context = new OperationContext(GatewayTestExtensions.TestActor, tenant);
