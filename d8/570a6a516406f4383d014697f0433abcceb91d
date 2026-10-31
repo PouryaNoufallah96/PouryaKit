@@ -1,0 +1,43 @@
+docs/agents/ai-setup.md
+  s_ebdd029215ce19::t_a3b1507d59bae8 76,78,100,109,140,142,186,217,221,232,240,242-244,248,257
+docs/agents/spikes.md
+  s_ebdd029215ce19::t_d73f409918a6ea 14
+.claude/agents/kit-implementer.md
+  s_ebdd029215ce19::t_2e94d05e7b4b3d 36,68,70
+docs/agents/issue-tracker.md
+  s_ebdd029215ce19::t_7de210fdd3465d 11
+  s_ebdd029215ce19::t_a0c7f3f772fbc8 38
+docs/agents/domain.md
+  s_ebdd029215ce19::t_0cc8517dffbe2c 7-8
+docs/agents/brief-template.md
+  s_ebdd029215ce19::t_08df793e06fa9a 10,40,53,58,62,83,98,107,110,112
+docs/agents/running-a-spec.md
+  s_ebdd029215ce19::t_05b9cf9d864b50 12-13,27,31-35,38,43
+.codex/agents/kit-implementer.toml
+  s_ebdd029215ce19::t_2e94d05e7b4b3d 35,67,69
+AGENTS.md
+  s_ebdd029215ce19::t_9660ed507f9adc 72
+  s_ebdd029215ce19::t_c239ff289c9f67 107
+  s_ebdd029215ce19::t_c24e80f8b09483 93
+  s_ebdd029215ce19::t_8f7abf140ac05a 70
+  s_ebdd029215ce19::t_2df29e3ea8592e 71
+  s_ebdd029215ce19::t_c6953f73277b65 68
+.claude/rules/website.md
+  s_ebdd029215ce19::t_2e94d05e7b4b3d 13-15,20,25,35,40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d8570a6a516406f4383d014697f0433abcceb91d",
+  "prompts": {},
+  "sessions": {
+    "s_ebdd029215ce19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "80160123-5e97-4bc1-94e2-0b32b7a21bc0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
