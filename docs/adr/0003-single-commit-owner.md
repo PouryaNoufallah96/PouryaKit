@@ -13,8 +13,8 @@ may change published state after snapshots are built. Whole-operation retries mu
 
 ## Amendment (2026-10-06, Wave 1 as built)
 
-The decision above stands. Tickets #9 to #11 and #18 fixed its details, which stored versions, Snapshots and Feature
-code now depend on.
+The decision above stands. Its details, which stored versions, Snapshots and Feature
+code now depend on, are as follows.
 
 - **The sequence as built** (`src/PouryaKit.Persistence.EFCore/EfUnitOfWork.cs`): begin the transaction; run the
   command; on a failed Result or a rollback-only Operation, roll back; drain the Domain Events; check rollback-only
@@ -56,11 +56,10 @@ code now depend on.
   `PersistencePreparationTests.A_page_moved_to_another_folder_advances_and_stamps_both_folders_once`,
   `PersistencePreparationTests.Changing_a_part_of_an_aggregate_the_operation_did_not_load_throws_and_writes_nothing`).
 
-## Amendment (2026-10-08, tickets #66 and #67: a write no Unit of Work would commit is refused)
+## Amendment (2026-10-08: a write no Unit of Work would commit is refused)
 
 The decision above stands. Since only the Unit of Work commits, a write made where no Unit of Work runs is never
-saved, and before these tickets it was lost without a word: the scope kept it and dropped it. The owner decided both
-points below on 2026-10-08. The 2026-10-06 amendment's "Code that only reads" bullet stays as written and still holds
+saved. The 2026-10-06 amendment's "Code that only reads" bullet stays as written and still holds
 for code that only reads; where it and this amendment differ, this one holds: `Operation.MayChangeState` alone no
 longer decides whether the repository writes, because it is true in a scope that runs no command at all.
 
@@ -71,7 +70,7 @@ longer decides whether the repository writes, because it is true in a scope that
   Event Handlers, a delivery's Notification Handler or Integration Event Handler and a delayed command's run, each of
   which the Kit runs inside a command of its own, all run inside the window. It is false before the Operation begins,
   in a begun scope that sends no command, in a query sent on its own, in the outermost command's authorizers and
-  validator, and once the Unit of Work has ended. Ticket #66 made it public and the owner keeps it, because a Kit
+  validator, and once the Unit of Work has ended. It is public because a Kit
   package outside `PouryaKit.Cqrs` must be able to refuse a write that no Unit of Work would commit, and
   [ADR 0007](0007-operation-context-set-by-the-scope-opener.md) keeps Cqrs's `InternalsVisibleTo` to the trusted
   restore alone (`TrustedRestoreTests`). `Operation` already exposes `MayChangeState`, `Module` and `Context` the same
@@ -80,10 +79,10 @@ longer decides whether the repository writes, because it is true in a scope that
   that names who may write, when it is made while no Unit of Work is active. Each write below checks `MayChangeState`
   first, so code that only reads keeps the message that names its own mistake. The Kit applies the rule in three
   places:
-  - `IDelayedCommands.Schedule` (#66): a command scheduled outside a Unit of Work would never be written to the Outbox
+  - `IDelayedCommands.Schedule`: a command scheduled outside a Unit of Work would never be written to the Outbox
     (`DelayedCommandTests.Scheduling_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_stores_nothing`,
     `DelayedCommandTests.Scheduling_in_a_scope_of_an_application_without_modules_that_runs_no_unit_of_work_throws`).
-  - `IRepository.AddAsync` and `Remove` (#67): the DbContext would track the change and nothing would save it
+  - `IRepository.AddAsync` and `Remove`: the DbContext would track the change and nothing would save it
     (`RepositoryTests.A_repository_write_in_a_scope_of_a_host_of_modules_that_runs_no_unit_of_work_throws_and_saves_nothing`,
     `SingleModuleTests.A_repository_write_in_a_scope_that_runs_no_unit_of_work_throws_and_saves_nothing`). Every other
     member of the repository reads and needs no Unit of Work, so a query sent on its own reads through it as before.
@@ -102,16 +101,14 @@ longer decides whether the repository writes, because it is true in a scope that
   `IUnitOfWork.DbContext`, stay unguarded, because the structure test closes them to a Module
   (`FeatureCodeTests.A_module_that_saves_commits_writes_in_bulk_or_runs_a_kit_step_is_rejected`). A Host's own
   assembly is not judged by that test, so code there can still reach them.
-  *The final audit of Wave 2 (2026-10-08) narrowed the first case: a Module of a Host of Modules cannot reach it,
-  because an endpoint's scope names no Module and resolving a repository there throws, the Gateway opens and
-  disposes its own scope around one dispatch, and the structure test rejects a Module that begins an Operation. It
-  stays open in an application without Modules, where an endpoint or a service can take a repository itself. No
-  structure rule was added: the Kit's structure tests judge Modules of a Host of Modules, where it would refuse
-  nothing, and a service that a handler calls is a legitimate consumer it would refuse
-  ([#68](https://github.com/PouryaNoufallah96/PouryaKit/issues/68)). The owner keeps a Host's own access to the
-  write seams as it is.*
-  *Ticket #68 (2026-10-09) ran the first case in an application without Modules. Where the scope sends no command,
-  the change is lost without a word, as written: it is dropped and nothing throws
+  *A Module of a Host of Modules cannot reach the first case: an endpoint's scope names no Module and resolving a
+  repository there throws, the Gateway opens and disposes its own scope around one dispatch, and the structure test
+  rejects a Module that begins an Operation. It stays open in an application without Modules, where an endpoint or a
+  service can take a repository itself. No structure rule was added: the Kit's structure tests judge Modules of a Host
+  of Modules, where it would refuse nothing, and a service that a handler calls is a legitimate consumer it would
+  refuse.*
+  *In an application without Modules, where the scope sends no command, the change is lost without a word, as written:
+  it is dropped and nothing throws
   (`SingleModuleTests.A_change_to_a_loaded_aggregate_in_a_scope_that_sends_no_command_is_dropped_without_a_word`). A
   query sent after the change is not refused, and the change is still dropped: the tracked-state comparison's
   baseline is the query's start, which already holds the change
@@ -119,10 +116,9 @@ longer decides whether the repository writes, because it is true in a scope that
   But a command the same scope sends after the change, and that succeeds, saves it: its commit saves the whole
   DbContext, so the change is committed by a command that never made it
   (`SingleModuleTests.A_change_to_a_loaded_aggregate_is_saved_by_the_commit_of_a_command_sent_after_it`). The three
-  tests change a value; none raises a Domain Event. The owner decided on 2026-10-09 to judge the monolith
-  template's own files, its Composition Root, its endpoints, the Host's `Program.cs` and the smoke test both
-  templates share (since 2026-10-10, ticket #87, also the Host's `AppHost.cs`, which now holds the composition
-  `Program.cs` held): read as text, none of them takes a repository, as a parameter, a field or a local of
+  tests change a value; none raises a Domain Event. The monolith template's own files are judged: its Composition
+  Root, its endpoints, the Host's `Program.cs` and `AppHost.cs` (which now holds the composition `Program.cs` held) and
+  the smoke test both templates share; read as text, none of them takes a repository, as a parameter, a field or a local of
   `IRepository<,>` or of an interface the Proving Sample derives from it, or from a service provider
   (`TemplateTests.None_of_the_monoliths_own_files_takes_a_repository`; the rule's summary lists what text cannot
   show). The template's business code is the Proving Sample's and this rule does not judge it, so it never has to
@@ -140,13 +136,13 @@ longer decides whether the repository writes, because it is true in a scope that
   - *A guard in the repository's constructor or its read members*: a query's handler injects the repository and reads
     through it with no Unit of Work, and so does a specific repository built in a scope that runs no command.
 
-## Amendment (2026-10-10, ticket #81: the Unit of Work's DbContext is reached through a static accessor)
+## Amendment (2026-10-10: the Unit of Work's DbContext is reached through a static accessor)
 
-The decision above stands, and so does the #66 and #67 amendment. Only the shape of one of the Kit's write seams
+The decision above stands, and so does the amendment on a write no Unit of Work would commit. Only the shape of one of the Kit's write seams
 changes. The DbContext an EF Core Unit of Work saves and commits was an extension property on `IUnitOfWork`, the
 amendment's `IUnitOfWork.DbContext`. Every repository has `PouryaKit.Persistence.EFCore` and an `IUnitOfWork` in scope,
 so code completion offered Feature code the DbContext this decision reserves for the Unit of Work, and only the
-structure test caught a call, after compilation (spec #74, finding A5).
+structure test caught a call, after compilation.
 
 - **Now** `EfUnitOfWorkDbContext.Of(unitOfWork)`, a plain static accessor in the same package and namespace, which no
   completion on `IUnitOfWork` lists. Its Kit callers, the Receipts and the idempotency store, are unchanged otherwise.
@@ -154,12 +150,12 @@ structure test caught a call, after compilation (spec #74, finding A5).
   names the offending Module's call of `EfUnitOfWorkDbContext.Of`, red with the accessor taken off the rule's Kit
   steps.
 
-## Amendment (2026-10-10, ticket #85: a Snapshot never carries a value the database generates)
+## Amendment (2026-10-10: a Snapshot never carries a value the database generates)
 
 The decision above stands. The Snapshot step builds each Snapshot from the prepared state, before the save, so a value
 the database writes during the save is not in it: a default value SQL or a computed column on a property a mapper reads
 would commit one value and publish another, against this decision's intent that what an Operation publishes is the
-state it commits (spec #74, finding P1).
+state it commits.
 
 - **Refused at commit, beside the temporary key.** `SnapshotStep.Build` refuses a non-key property whose value the
   database generates, a default value SQL, a computed column or a `ValueGenerated` other than `Never` that no
@@ -168,21 +164,21 @@ state it commits (spec #74, finding P1).
   `InvalidOperationException` names the entity and the property, and nothing commits. The graph is read from the model
   once per DbContext type. The Kit's own conventions, Guid version 7 keys and Kit-set versions and audit fields, never
   meet it, and keys stay allowed.
-  *Corrected on 2026-10-10 (ticket #92, final review R1): the graph is read once per model, the `IModel` instance the
+  *Corrected on 2026-10-10: the graph is read once per model, the `IModel` instance the
   DbContext exposes, not once per DbContext type. EF lets one DbContext type carry several models, one given with
   `UseModel` or one per model cache key, and a read cached by type gave a second model the first one's aggregate roots
   and generated properties, so the second model's refusals could be skipped. `SnapshotStep` keeps the read in a
   `ConditionalWeakTable` keyed by that model, which holds an entry only as long as the model. Proven by
   `SnapshotTests.A_snapshot_is_refused_by_the_model_its_dbcontext_uses_when_one_dbcontext_type_has_two_models`, red
   with the type key.*
-  *Refined on 2026-10-10 (ticket #100): the read keeps the properties whose values the database may generate, and
+  *Refined on 2026-10-10: the read keeps the properties whose values the database may generate, and
   whether a client-side value generator sets one for good is asked of the committing DbContext's
   `IValueGeneratorSelector` at each commit. Two contexts given one model can replace the selector differently, and the
   first one's answer was kept for both. The selector caches what it selects: 1,000 builds of a Snapshot whose aggregate
   has such a property took about 22 ms before and after. Proven by
   `SnapshotTests.A_snapshot_is_refused_by_the_value_generator_selector_its_dbcontext_uses_when_two_share_a_model`, red
   with the selector's answer cached.*
-  *Extended on 2026-10-11 (ticket #105, the first review round of PR #103): a child's key is checked too, so the
+  *Extended on 2026-10-11: a child's key is checked too, so the
   refusal is no longer of non-key properties alone, and "keys stay allowed" holds for the aggregate's own keys only.
   Every key was left out, so a child whose key an identity column numbers was published with the key its entity held before the
   save, while its row committed the database's number. The aggregate's own keys stay left out, its primary key
@@ -201,7 +197,7 @@ state it commits (spec #74, finding P1).
   committed the database's. `SnapshotTests.A_snapshot_of_an_aggregate_whose_value_a_client_side_generator_sets_carries_the_value_committed`
   shows a client-side generator's value is not refused.
 
-## Amendment (2026-10-16, ticket #120: each write model has one commit owner)
+## Amendment (2026-10-16: each write model has one commit owner)
 
 The decision above stands, for each write model: each write model has one commit owner; the EF Unit of Work owns rows
 and commits through the EF outbox; the Marten Unit of Work owns a Stream and commits through Wolverine's Marten outbox;
@@ -209,5 +205,4 @@ no Operation commits through both. A Module declares one write model, and the Un
 registers, which `AddPouryaKitModules` keys by the Module, decides every Operation of that Module in the order above.
 The steps that read EF Core's tracked rows, preparing persistence and building the Snapshots of the changed aggregates,
 are the EF Unit of Work's; the Marten Unit of Work appends the Domain Events it drained to each Stream at the version it
-read. The spike that proved it on Marten 9.46.0 and WolverineFx.Marten 6.48.3, the commit shape and the invariants for
-the package tickets are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).
+read. The commit shape and the invariants are in [ADR 0011](0011-each-write-model-has-one-commit-owner.md).
