@@ -37,6 +37,8 @@ def run(command, *, cwd=ROOT, env=None, log=None, expect_failure=False):
 
 
 TEST_TOTAL = re.compile(r"^\s*(total|failed|succeeded|skipped): (\d+)\s*$", re.MULTILINE)
+# A hosted runner's test output is coloured, so a totals line can open with one of these.
+COLOUR_CODE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def test_totals(output):
@@ -44,7 +46,7 @@ def test_totals(output):
     of the testing platform's output (total, failed, succeeded, skipped, one per line). The log that holds them is
     evidence `validate.py` removes after a PASS, and two sessions lost the count with it (Wave 3 sessions 5 and 6)."""
     totals = {"total": 0, "failed": 0, "succeeded": 0, "skipped": 0}
-    for name, count in TEST_TOTAL.findall(output):
+    for name, count in TEST_TOTAL.findall(COLOUR_CODE.sub("", output)):
         totals[name] += int(count)
     if totals["total"] == 0:
         raise RuntimeError("The Release test run printed no `Test run summary` totals; the output format changed or no test ran.")

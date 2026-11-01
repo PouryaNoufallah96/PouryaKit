@@ -375,6 +375,20 @@ class TestTotalsTests(unittest.TestCase):
         )
         self.assertEqual("Release tests total 72, succeeded 69, failed 0, skipped 3", test_totals(output))
 
+    def test_a_hosted_runs_colour_codes_do_not_hide_its_totals(self) -> None:
+        """A hosted runner's summary, as it printed it: a colour code can open any line of the block."""
+        output = (
+            "\x1b[32mTest run summary: Passed!\n"
+            "  tests/A/bin/Release/net10.0/A.dll (net10.0|x64) passed (9m 39s 114ms)\n"
+            "\n"
+            "\x1b[m  total: 1395\n"
+            "  failed: 0\n"
+            "\x1b[32m  succeeded: 1392\n"
+            "\x1b[m  skipped: 3\n"
+            "  duration: 9m 40s 032ms\n"
+        )
+        self.assertEqual("Release tests total 1395, succeeded 1392, failed 0, skipped 3", test_totals(output))
+
     def test_an_output_without_totals_is_refused(self) -> None:
         with self.assertRaises(RuntimeError):
             test_totals("Build succeeded.\n")
