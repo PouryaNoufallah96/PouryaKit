@@ -1,0 +1,19 @@
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_8a6140ef730126::t_1769445ebffd62 1491
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d6bc94c2829cbe09b62db735bee152d1679dbe1e",
+  "prompts": {},
+  "sessions": {
+    "s_8a6140ef730126": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c5f19e-e260-4fc8-adb3-df02e49afdc9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
