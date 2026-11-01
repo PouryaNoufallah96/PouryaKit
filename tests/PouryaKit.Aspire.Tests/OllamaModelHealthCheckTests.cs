@@ -12,6 +12,9 @@ public sealed class OllamaModelHealthCheckTests
 {
     private static readonly TimeSpan Within = TimeSpan.FromMilliseconds(200);
 
+    // The row that goes on to pull needs /api/show answered first, and a loaded runner's first request can outlast Within.
+    private static readonly TimeSpan ForAnAnswer = TimeSpan.FromSeconds(5);
+
     [Theory]
     [InlineData(
         false,
@@ -46,7 +49,7 @@ public sealed class OllamaModelHealthCheckTests
             new EndpointReference(resource, "http"),
             "qwen2.5:0.5b",
             new Clients(),
-            Within,
+            answersShow ? ForAnAnswer : Within,
             Within
         );
         // Long past both deadlines: a check that waits for this has none of its own.

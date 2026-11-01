@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Local reproduction of CI's jobs on the checked-out commit while hosted runs are unavailable (docs/ci.md): every
-# `run:` step of the `ai-setup` job, of the package validation job except the two evidence.py steps, which read
-# the Actions run, and of the `website` job. Each step's full output is kept, so a failure can be read afterwards (Wave 3 session 5 lost one to a
+# `run:` step of the `ai-setup` job, of the package validation job except the hosted runner's disk step and the two
+# evidence.py steps, which read the Actions run, and of the `website` job. Each step's full output is kept, so a failure can be read afterwards (Wave 3 session 5 lost one to a
 # `tail -3`), and the PASS line carries the Release test totals, so nothing is lost when the evidence directory goes.
 # Usage: .agents/scripts/ci-local.sh <evidence directory outside the checkout> [> <log>]. Never a CI result: report it
 # as a local reproduction.

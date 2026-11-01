@@ -49,6 +49,12 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
 
+      # One private NuGet cache per consumer outgrows the disk a hosted runner leaves free.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift
+          df -h /
+
       - name: Check CI evidence and history boundaries
         run: |
           python3 -m unittest discover -s scripts/ci -p 'test_*.py'
