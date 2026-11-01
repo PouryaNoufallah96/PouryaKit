@@ -134,8 +134,8 @@
         },
         {
           "path": ".github/workflows/package-validation.yml",
-          "line": 52,
-          "end_line": 72,
+          "line": 58,
+          "end_line": 78,
           "label": "script tests, revision, validate.py"
         }
       ]
@@ -325,8 +325,8 @@
       "sources": [
         {
           "path": ".github/workflows/package-validation.yml",
-          "line": 74,
-          "end_line": 90,
+          "line": 80,
+          "end_line": 96,
           "label": "collect, upload, 90-day retention"
         },
         {
