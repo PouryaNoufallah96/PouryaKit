@@ -1,0 +1,25 @@
+docs/private-packages.md
+  s_8a6140ef730126::t_f2b7ee4daadc61 83,85
+docs/packages.md
+  s_8a6140ef730126::t_4689a60ce07317 48
+website/content/docs/get-started/install-templates.sh
+  s_8a6140ef730126::t_fbf12f85a58098 1
+.agents/skills/pourya-kit/references/packages.md
+  s_8a6140ef730126::t_f14f234f592c47 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0715b3e9ece19faf769dd7fb5b2d335d126ff72",
+  "prompts": {},
+  "sessions": {
+    "s_8a6140ef730126": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c5f19e-e260-4fc8-adb3-df02e49afdc9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
