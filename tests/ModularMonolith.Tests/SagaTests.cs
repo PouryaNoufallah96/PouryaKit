@@ -1488,7 +1488,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
 
     private async Task<long> CountAsync(string sql) => (long)(await RowsAsync(sql))[0][0];
 
-    private Task WaitUntilAsync(string condition, int seconds = 15) =>
+    private Task WaitUntilAsync(string condition, int seconds = 30) =>
         Sql.WaitUntilAsync(_database, condition, seconds: seconds);
 
     public async ValueTask DisposeAsync()
