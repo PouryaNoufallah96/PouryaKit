@@ -1,0 +1,41 @@
+docs/architecture/diagrams/execution-core.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_8a6140ef730126::t_2c6aa4c9cbb863 11
+docs/architecture/diagrams/ci-and-publication.html
+  s_8a6140ef730126::t_2c6aa4c9cbb863 4985
+docs/architecture/diagrams/commit-sequence.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/delivery.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/http-command.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/delayed-and-recurring-commands.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/host-start.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/kit-context.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/module-boundaries.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_8a6140ef730126::t_d231acacdeee45 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "46ace9e2dc257b011ae8042d4341c54aea4b1b6d",
+  "prompts": {},
+  "sessions": {
+    "s_8a6140ef730126": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c5f19e-e260-4fc8-adb3-df02e49afdc9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
