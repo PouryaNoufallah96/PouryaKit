@@ -214,8 +214,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs",
-          "line": 36,
-          "end_line": 70,
+          "line": 35,
+          "end_line": 69,
           "label": "metadata, graph, SourceLink, set"
         },
         {
@@ -273,8 +273,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs",
-          "line": 72,
-          "end_line": 113,
+          "line": 71,
+          "end_line": 112,
           "label": "consumer closures and licences"
         },
         {
