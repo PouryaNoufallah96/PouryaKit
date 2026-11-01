@@ -1,1 +1,1 @@
-dotnet new install PouryaKit.Templates@0.1.0-preview.1
+dotnet new install PouryaKit.Templates@0.1.0-preview.2
