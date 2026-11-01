@@ -1,0 +1,20 @@
+tests/PouryaKit.Aspire.Tests/OllamaModelHealthCheckTests.cs
+  s_8a6140ef730126::t_c9ff7fd811b072 15-17
+  s_8a6140ef730126::t_645dc6b6f2a745 52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "985fa80fa61ba9036f593ea828e450e4a44ff63b",
+  "prompts": {},
+  "sessions": {
+    "s_8a6140ef730126": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c5f19e-e260-4fc8-adb3-df02e49afdc9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
