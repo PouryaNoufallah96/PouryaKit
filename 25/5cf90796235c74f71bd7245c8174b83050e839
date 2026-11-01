@@ -1,0 +1,19 @@
+docs/packages.md
+  s_8a6140ef730126::t_88d6c588e4f0f2 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "255cf90796235c74f71bd7245c8174b83050e839",
+  "prompts": {},
+  "sessions": {
+    "s_8a6140ef730126": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c5f19e-e260-4fc8-adb3-df02e49afdc9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
