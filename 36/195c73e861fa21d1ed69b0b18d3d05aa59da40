@@ -1,0 +1,31 @@
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_8a6140ef730126::t_d8521e34bbb9b3 25
+  s_8a6140ef730126::t_48a4c322e4d79f 61
+  s_8a6140ef730126::t_e48b2d002dc531 74-78
+docs/packages.md
+  s_8a6140ef730126::t_b94eec98e4fb9b 19
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_8a6140ef730126::t_1f5a027dbf2de3 217-218,276-277
+Directory.Build.targets
+  s_8a6140ef730126::t_8707c5f7334936 5,7
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_8a6140ef730126::t_a8a7cdaad9916e 130
+website/content/docs/index.mdx
+  s_8a6140ef730126::t_66aebb5d90c260 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "36195c73e861fa21d1ed69b0b18d3d05aa59da40",
+  "prompts": {},
+  "sessions": {
+    "s_8a6140ef730126": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "24c5f19e-e260-4fc8-adb3-df02e49afdc9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
