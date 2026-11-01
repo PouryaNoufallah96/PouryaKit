@@ -11,7 +11,7 @@ Inside a Module, your code is [Features](/docs/reference/glossary#feature). A Fe
 
 The packages are grouped into [Capabilities](/docs/reference/glossary#capability): one or a few packages each, such as Messaging, Web or File storage. A Host references the ones it uses.
 
-The packages are MIT-licensed. The Kit's source repository is private, so the source link on a package's nuget.org page does not open.
+The packages are MIT-licensed. The Kit's source repository is private, so a package's nuget.org page has no working source link.
 
 <Callout type="warn" title="Feature code never commits">
   The Unit of Work writes the [Outbox](/docs/reference/glossary#outbox), saves and commits, and sends what it wrote only after the commit. A handler returns its Result and leaves all of it to the Unit of Work; the [structure tests](/docs/capabilities/testing#structure-tests) refuse code that saves or commits by itself.

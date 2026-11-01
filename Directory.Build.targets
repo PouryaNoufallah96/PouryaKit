@@ -2,9 +2,9 @@
   <PropertyGroup Condition="'$(IsKitPackage)' == 'true'">
     <Authors>Pourya Nofallah</Authors>
     <PackageProjectUrl>https://pouryakit.vercel.app</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/PouryaNoufallah96/PouryaKit</RepositoryUrl>
+    <!-- The source repository is private: a package names its commit, and no address a reader could not open. -->
     <RepositoryType>git</RepositoryType>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PublishRepositoryUrl>false</PublishRepositoryUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>

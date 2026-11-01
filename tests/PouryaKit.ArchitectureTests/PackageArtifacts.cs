@@ -18,7 +18,6 @@ internal sealed record PackageEvidence(
 
 internal static class PackageArtifacts
 {
-    internal const string RepositoryUrl = "https://github.com/PouryaNoufallah96/PouryaKit";
     private static readonly Guid SourceLinkId = new("CC110556-A091-4D38-9FEC-25AB9A351A6A");
 
     public static IEnumerable<string> Violations(string evidenceFile)
@@ -128,7 +127,7 @@ internal static class PackageArtifacts
             .SingleOrDefault(element => element.Name.LocalName == "repository");
         if (
             repository?.Attribute("type")?.Value != "git"
-            || repository?.Attribute("url")?.Value != RepositoryUrl
+            || repository?.Attribute("url") is not null
             || repository?.Attribute("commit")?.Value != evidence.Commit
         )
             yield return $"{name} has invalid repository/source commit metadata.";

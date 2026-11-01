@@ -22,7 +22,7 @@ public sealed class PackageArtifactTests
               <readme>README.md</readme>
               <icon>icon.png</icon>
               <license type="file">LICENSE</license>
-              <repository type="git" url="{PackageArtifacts.RepositoryUrl}" commit="{Commit}" />
+              <repository type="git" commit="{Commit}" />
               <dependencies><group><dependency id="PouryaKit.Domain" version="{Version}" /></group></dependencies>
             </metadata></package>
             """
@@ -58,6 +58,7 @@ public sealed class PackageArtifactTests
     [Theory]
     [InlineData("version", "has the wrong version")]
     [InlineData("repository", "has invalid repository/source commit metadata")]
+    [InlineData("address", "has invalid repository/source commit metadata")]
     [InlineData("LICENSE", "does not embed the Kit's MIT license")]
     [InlineData("dependency", "has a Kit dependency with a different version")]
     public void Invalid_release_metadata_is_rejected(string defect, string expected)
@@ -70,6 +71,11 @@ public sealed class PackageArtifactTests
             archive.GetEntry(defect)!.Delete();
         else if (defect == "version")
             nuspec.Descendants("version").Single().Value = "0.9.0-preview.1";
+        else if (defect == "address")
+            nuspec
+                .Descendants("repository")
+                .Single()
+                .SetAttributeValue("url", "https://github.com/example/private");
         else
             nuspec
                 .Descendants(defect)
