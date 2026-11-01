@@ -1,0 +1,20 @@
+website/components/search.tsx
+  s_22ea2604e01204::t_3cd5f228b1614e 14,20-23
+  s_22ea2604e01204::t_a865db4a0aab35 34-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "20507e6f7c23e9deced0029931c2bc21a47769f1",
+  "prompts": {},
+  "sessions": {
+    "s_22ea2604e01204": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "784700d8-a976-4917-8d18-73cb722a5855",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
