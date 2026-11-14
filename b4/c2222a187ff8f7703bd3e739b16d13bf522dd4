@@ -1,0 +1,247 @@
+scripts/packaging/consumers/PouryaKit.Grpc.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 10-14
+tests/ModularMonolith.Tests/Fixtures/DeliveryProbes.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 158-163,165-170
+src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 40-41
+tests/ModularMonolith.Tests/WebTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 105-106,542-544
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 1008-1009
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 30-31,239-240
+tests/PouryaKit.ArchitectureTests/DapperWriteTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 40-41
+src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 170,180-184,201
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 56-58,99-101,103-104,260-266,353-359,361,394-400,424-425,428-429,474-480,503-507,559-566,620-626,628
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 137-145,147,372-376,401-412,444-449,525-534,727-731,756-760,779-787,859-870,923-927
+tests/ModularMonolith.Tests/MessageStoreWithoutEfTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 98-99
+src/PouryaKit.Cqrs/Composition/CompositionCheckRunner.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 16
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 37-38,44-45,47-48,56-57,59-60,63-64,344-346
+tests/ModularMonolith.Tests/Stub/ProductPagesProbe.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 36-37,39-40,42-43
+tests/ModularMonolith.Tests/DapperTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 278-279
+src/PouryaKit.Messaging.Wolverine.EFCore/EfReceipts.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 53
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 367-368,372-373
+tests/ModularMonolith.Tests/CompositionCheckTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 623-624,642-643
+tests/ModularMonolith.Tests/TypeKeyTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 28-32,34-38
+src/PouryaKit.Cqrs/Composition/IModuleServices.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 83
+tests/ModularMonolith.Tests/CrossProcessTracingTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 69-76,78
+tests/ModularMonolith.Tests/SnapshotIdentityTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 21-27,38-49
+tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 82-83,196-197,287-293
+tests/ModularMonolith.Tests/Fixtures/HostProcess.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 27
+samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 45
+scripts/packaging/consumers/PouryaKit.Messaging.Wolverine.Sagas.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 7-8
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 191,314,375-376,503-504
+src/PouryaKit.Messaging.Wolverine/Subscriptions/SnapshotMappers.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 83-90
+src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 87-88
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 276-277
+tests/ModularMonolith.Tests/StrictWireWritingTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 106-112
+src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 30-35,42-43,64-65,89
+tests/PouryaKit.ArchitectureTests/TypeLookupTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 35-36
+tests/PouryaKit.ArchitectureTests/SampleNamespaceTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 34-35
+src/PouryaKit.ReverseProxy/LivenessProbe.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 31
+src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 87
+src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 43-44,56-57,69-70,290,386
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 59-63
+src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 114-127,129,131
+tests/ModularMonolith.Tests/ReportModuleTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 63-67
+tests/PouryaKit.ArchitectureTests/CoreTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 21-22
+tests/PouryaKit.Cqrs.Tests/IdempotencyTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 44-45,47-48,79-80
+docs/architecture/diagrams/http-command.sequence.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 77-78,103-104,117-118,123-124,129-130,150
+src/PouryaKit.Templates/content/monolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 67-70
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 166-167,189-190,299-300,445-446,469-470,538-539
+src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 112-114
+src/PouryaKit.Messaging.Wolverine/Composition/UnregisteredNotificationHandlersCheck.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 14-18
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 84-86,89-90,92-96,275-277,280-281,329-346
+tests/ModularMonolith.Tests/WebConventionTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 125-126
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 92-94,96-112,114,285-286
+src/PouryaKit.Cqrs/Operations/Operation.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 212-213,258-259
+tests/ModularMonolith.Tests/SecurityTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 177-178,318-325,327,422-423
+.config/dotnet-tools.json
+  s_56c78af6bca6cd::t_0d56c2ca2783a7 6
+tests/ModularMonolith.Tests/McpTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 288-289
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 87-88,94,140,145-146
+tests/ModularMonolith.Tests/IdempotencyRetentionTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 150-151,190-193,296-301,315-320
+tests/ModularMonolith.Tests/ReverseProxyTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 152-153
+tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 64-65,76-77,112-113,174-175,177-178
+src/PouryaKit.Grpc/Services/GrpcEndpointRouteBuilderExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 56
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 584-589
+tests/PouryaKit.Cqrs.Tests/QueryCacheTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 34-35,42-43,66-67
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 305-306,311-312
+tests/ModularMonolith.Tests/Stub/StubReadOnlyState.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 110
+src/PouryaKit.Cqrs/Paging/FilterField.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 16-17,19-27,29-37,39-42,44-45,48-56
+src/PouryaKit.Testing/HostFixture.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 110-111,204-205
+src/PouryaKit.Persistence.EFCore/PouryaKitModelConvention.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 224-228
+tests/ModularMonolith.Tests/SameNamedTypeTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 30-31,33-34,50-51,53-54
+src/PouryaKit.Messaging.Wolverine.EFCore/ReceiptTable.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 30-34
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyTable.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 52-59
+tests/ModularMonolith.Tests/LedgerTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 208-209,211-213
+tests/ModularMonolith.Tests/Stub/StubRealtime.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 33-34
+src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 71-72
+docs/architecture/diagrams/host-start.workflow.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 206-207,236-237,248-249,267
+tests/ModularMonolith.Tests/CodeGenerationTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 30-31
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 84-91,622-623,650-651,669-674,679-683,903-904
+samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 51-52
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 119-123
+scripts/packaging/consumers/PouryaKit.AI.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 33-34
+tests/ModularMonolith.Tests/OutgoingHttpTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 47-57,269-270
+tests/PouryaKit.Security.Tests/PasswordHashingTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 250-251
+tests/PouryaKit.Domain.Tests/TypedIdTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 110-111
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 71-72,106,111-112,173-174,236,275-276
+docs/architecture/diagrams/delivery.sequence.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 116
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 32,100,224,258
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 387-388,455-456,607-608,639-640,852-859,1123-1124,1126-1127,1136-1137,1139-1140,1144-1145,1178-1179,1530-1534
+src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 66-70
+src/PouryaKit.Messaging.Wolverine/WireNaming.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 26-27
+tests/ModularMonolith.Tests/Fixtures/AppFixture.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 43-47
+tests/PouryaKit.Cqrs.Tests/PageTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 74-75,116-120
+tests/PouryaKit.ArchitectureTests/ModuleRules.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 565-566
+src/PouryaKit.Persistence.Dapper/DapperServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 65-76
+src/PouryaKit.Reporting/Fonts/RobotoFontResolver.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 25
+tests/ModularMonolith.Tests/StreamTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 86-87,133-142,627-631,638-640,651-657,664-666
+scripts/packaging/consumers/PouryaKit.Web.OpenApi.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 19-20
+tests/PouryaKit.ArchitectureTests/FeatureCodeTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 211-212,214-215
+scripts/packaging/consumers/PouryaKit.Security.JwtBearer.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 16-21
+src/PouryaKit.Modularity/GatewayProcessor.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 18-19,31-32,44-45
+tests/ModularMonolith.Tests/AiTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 65-81,83,90-94,485-486
+samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 59-62
+src/PouryaKit.Messaging.Wolverine.EFCore/SnapshotVersionTable.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 32-36
+src/PouryaKit.Persistence.EFCore/PageExpressions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 94-95
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 69-70
+tests/ModularMonolith.Tests/Fixtures/MailFixture.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 64-65
+src/PouryaKit.Domain/TypedIdJsonConverterFactory.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 19
+tests/ModularMonolith.Tests/Sagas/ProbesModule.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 22-23,25-26,28-29
+tests/ModularMonolith.Tests/Sagas/ShippingModule.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 19-23,27-28,30-31,33-34
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 143-144,302-306,365-366,446-447,488-489,551-555,570-574,579-583
+tests/ModularMonolith.Tests/TrustedPeerTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 67-72
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 462-463,466-467
+src/PouryaKit.Persistence.Marten/StreamServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 53-54
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_e7e6eaff33e4e3 465,499
+tests/ModularMonolith.Tests/AgentRunTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 107-108,571-572,613-614,786-787,967-972,974-975,977-979,1018-1034,1036,1076-1077
+tests/ModularMonolith.Tests/GatewayTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 125-126
+tests/ModularMonolith.Tests/ObservabilityTests.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 41-42,144-145,153-154,275-276,281-282,290-291,306-310,325-327,352-354,401-402,440-441
+src/PouryaKit.Cqrs/Composition/OperationTypes.cs
+  s_56c78af6bca6cd::t_2cc218c06d2d9d 51-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4c2222a187ff8f7703bd3e739b16d13bf522dd4",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
