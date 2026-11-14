@@ -1,0 +1,32 @@
+samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj
+  s_56c78af6bca6cd::t_a69688f9417edc 1
+.agents/skills/pourya-kit/references/aspire.md
+  s_56c78af6bca6cd::t_bf587c25ad9b21 17
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_3dc9bebb5932b1 51
+  s_56c78af6bca6cd::t_0256ce978139af 225
+Directory.Packages.props
+  s_56c78af6bca6cd::t_9f602eed1b2d74 8-11,81
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_45b5ae79cfd4bf 7
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_a536054ba2cbbb 283
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_56c78af6bca6cd::t_6a8a5fe6804e99 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "580bad810a6528e78d0bf52218dbd7e48d0f2eb5",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
