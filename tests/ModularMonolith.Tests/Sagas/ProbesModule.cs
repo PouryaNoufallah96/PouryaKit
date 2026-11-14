@@ -19,20 +19,14 @@ public sealed class ProbesModule : IModuleDefinition
         module.PublishSnapshot<Shelf, ShelfSnapshotV1, ShelfSnapshotMapper>(
             "probes.shelf-snapshot.v1"
         );
-        module.AddPouryaKitSaga<ContextProbeSaga>(
-            "probes.context",
-            "probes.context",
-            saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+        module.AddPouryaKitSaga<ContextProbeSaga>("probes.context", "probes.context", saga =>
+            saga.Input<OrderPlacedV1>(placed => placed.OrderId)
         );
-        module.AddPouryaKitSaga<SnapshotProbeSaga>(
-            "probes.snapshot",
-            "probes.snapshot",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        module.AddPouryaKitSaga<SnapshotProbeSaga>("probes.snapshot", "probes.snapshot", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
         );
-        module.AddPouryaKitSaga<CascadeProbeSaga>(
-            "probes.cascade",
-            "probes.cascade",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        module.AddPouryaKitSaga<CascadeProbeSaga>("probes.cascade", "probes.cascade", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
         );
     }
 }

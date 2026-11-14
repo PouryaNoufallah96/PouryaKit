@@ -7,14 +7,11 @@ using PouryaKit.Grpc;
 // Kit validates when the Host starts, a declared service, and a failed Result answered as its status with the trailer.
 var services = new ServiceCollection();
 services.AddPouryaKitGrpcClient<StockClient>("stock");
-services.Configure<PouryaKitGrpcClientOptions>(
-    "stock",
-    options =>
-    {
-        options.Address = new Uri("https://stock.example");
-        options.Deadline = TimeSpan.FromSeconds(5);
-    }
-);
+services.Configure<PouryaKitGrpcClientOptions>("stock", options =>
+{
+    options.Address = new Uri("https://stock.example");
+    options.Deadline = TimeSpan.FromSeconds(5);
+});
 services.AddPouryaKitGrpcService<StockService>();
 using var provider = services.BuildServiceProvider();
 var client = provider.GetRequiredService<StockClient>();

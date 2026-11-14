@@ -109,11 +109,9 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         );
 
         Assert.Equal("modular-monolith", options.ServiceName);
-        Assert.Contains(
-            queues,
-            queue =>
-                queue.GetProperty("name").GetString() == "modular-monolith"
-                && queue.GetProperty("consumers").GetInt32() > 0
+        Assert.Contains(queues, queue =>
+            queue.GetProperty("name").GetString() == "modular-monolith"
+            && queue.GetProperty("consumers").GetInt32() > 0
         );
         Assert.Equal(
             [

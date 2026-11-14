@@ -247,11 +247,8 @@ public sealed class PasswordHashingTests
     {
         var calls = CallsIn(Hasher().GetType()).ToList();
 
-        Assert.Contains(
-            calls,
-            call =>
-                call.DeclaringType == typeof(CryptographicOperations)
-                && call.Name == "FixedTimeEquals"
+        Assert.Contains(calls, call =>
+            call.DeclaringType == typeof(CryptographicOperations) && call.Name == "FixedTimeEquals"
         );
         Assert.DoesNotContain(calls, call => call.Name == "SequenceEqual");
     }

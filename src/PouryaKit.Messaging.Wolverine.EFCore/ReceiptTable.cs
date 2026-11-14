@@ -27,10 +27,11 @@ public static class ReceiptTable
                     message_id = table.Column<Guid>(type: "uuid", nullable: false),
                 },
                 constraints: table =>
-                    table.PrimaryKey(
-                        $"pk_{Name}",
-                        receipt => new { receipt.subscription, receipt.message_id }
-                    )
+                    table.PrimaryKey($"pk_{Name}", receipt => new
+                    {
+                        receipt.subscription,
+                        receipt.message_id,
+                    })
             );
 
         /// <summary>Drops the Receipt table from <paramref name="schema"/>, the Module's own.</summary>

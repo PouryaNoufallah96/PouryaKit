@@ -60,13 +60,11 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
             .Reports.LaidOut.Where(context => context.CorrelationId == request.CorrelationId)
             .ToList();
         Assert.NotEmpty(laidOut);
-        Assert.All(
-            laidOut,
-            context =>
-                Assert.Equal(
-                    (Actor.Person("ada"), Tenant, true),
-                    (context.Actor, context.Tenant, context.IsTrustedContinuation)
-                )
+        Assert.All(laidOut, context =>
+            Assert.Equal(
+                (Actor.Person("ada"), Tenant, true),
+                (context.Actor, context.Tenant, context.IsTrustedContinuation)
+            )
         );
     }
 

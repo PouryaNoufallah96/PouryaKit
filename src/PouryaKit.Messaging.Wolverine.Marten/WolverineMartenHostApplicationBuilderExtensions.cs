@@ -84,10 +84,8 @@ public static class WolverineMartenHostApplicationBuilderExtensions
                         }
                         else
                         {
-                            builder.Services.AddKeyedScoped<IReceipts>(
-                                module,
-                                (scope, _) =>
-                                    new MartenReceipts(scope.GetRequiredService<IUnitOfWork>())
+                            builder.Services.AddKeyedScoped<IReceipts>(module, (scope, _) =>
+                                new MartenReceipts(scope.GetRequiredService<IUnitOfWork>())
                             );
                         }
 

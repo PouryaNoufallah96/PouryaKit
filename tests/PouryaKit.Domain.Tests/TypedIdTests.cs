@@ -107,10 +107,8 @@ public class TypedIdTests
             JsonSerializer.Serialize(order, fromDefaults),
             StringComparison.Ordinal
         );
-        Assert.Single(
-            fromWebDefaults.Converters,
-            converter =>
-                converter.GetType().FullName == "PouryaKit.Domain.TypedIdJsonConverterFactory"
+        Assert.Single(fromWebDefaults.Converters, converter =>
+            converter.GetType().FullName == "PouryaKit.Domain.TypedIdJsonConverterFactory"
         );
     }
 

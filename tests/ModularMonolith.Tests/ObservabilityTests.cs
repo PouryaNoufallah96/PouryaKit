@@ -38,10 +38,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         var upstream = await CreateProductAsync(product);
 
         var trace = telemetry.Of(upstream.TraceId);
-        var createProduct = Assert.Single(
-            trace,
-            activity =>
-                Tag(activity, OperationTelemetry.OperationTag) == nameof(CreateProductCommand)
+        var createProduct = Assert.Single(trace, activity =>
+            Tag(activity, OperationTelemetry.OperationTag) == nameof(CreateProductCommand)
         );
         var publishing = DeliveryOperation(Publishing, upstream.TraceId);
         var inventory = DeliveryOperation(Inventory, upstream.TraceId);
@@ -143,9 +141,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         );
 
         var trace = telemetry.Of(upstream.TraceId);
-        var openQuote = Assert.Single(
-            trace,
-            activity => Tag(activity, OperationTelemetry.OperationTag) == nameof(OpenQuoteCommand)
+        var openQuote = Assert.Single(trace, activity =>
+            Tag(activity, OperationTelemetry.OperationTag) == nameof(OpenQuoteCommand)
         );
         var expiry = DeliveryOperation(ExpireQuote, upstream.TraceId);
         Assert.Equal(openQuote.SpanId, expiry.ParentSpanId);
@@ -153,10 +150,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.Equal(
             expiry.SpanId,
             Assert
-                .Single(
-                    trace,
-                    activity =>
-                        Tag(activity, OperationTelemetry.OperationTag) == nameof(ExpireQuoteCommand)
+                .Single(trace, activity =>
+                    Tag(activity, OperationTelemetry.OperationTag) == nameof(ExpireQuoteCommand)
                 )
                 .ParentSpanId
         );
@@ -277,18 +272,14 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
                 Assert.Equal(nameof(StubModule), Tag(activity, OperationTelemetry.ModuleTag))
         );
         // A nested command is a child of the command that sent it; every outermost one, of the request.
-        var nesting = Assert.Single(
-            trace,
-            activity =>
-                Tag(activity, OperationTelemetry.OperationTag) == nameof(PostNoteThenNestCommand)
+        var nesting = Assert.Single(trace, activity =>
+            Tag(activity, OperationTelemetry.OperationTag) == nameof(PostNoteThenNestCommand)
         );
         Assert.Equal(
             nesting.SpanId,
             Assert
-                .Single(
-                    trace,
-                    activity =>
-                        Tag(activity, OperationTelemetry.OperationTag) == nameof(NestedNoteCommand)
+                .Single(trace, activity =>
+                    Tag(activity, OperationTelemetry.OperationTag) == nameof(NestedNoteCommand)
                 )
                 .ParentSpanId
         );
@@ -296,10 +287,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
         Assert.Contains(trace, activity => activity.Events.Any(e => e.Name == "exception"));
 
         // The duration of each, in seconds with the fraction kept, with the activity's tags.
-        var written = Assert.Single(
-            telemetry.Durations,
-            duration =>
-                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
+        var written = Assert.Single(telemetry.Durations, duration =>
+            (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
         );
         Assert.InRange(written.Seconds, double.Epsilon, 30);
         Assert.NotEqual(Math.Floor(written.Seconds), written.Seconds);
@@ -314,13 +303,11 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             written.Tags
         );
         // The thrown WriteNoteThenFailCommand's own measurement, not any delivery that threw elsewhere in the process.
-        Assert.Single(
-            telemetry.Durations,
-            duration =>
-                (string?)duration.Tags[OperationTelemetry.OperationTag]
-                    == nameof(WriteNoteThenFailCommand)
-                && (string?)duration.Tags[OperationTelemetry.ModuleTag] == nameof(StubModule)
-                && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Threw
+        Assert.Single(telemetry.Durations, duration =>
+            (string?)duration.Tags[OperationTelemetry.OperationTag]
+                == nameof(WriteNoteThenFailCommand)
+            && (string?)duration.Tags[OperationTelemetry.ModuleTag] == nameof(StubModule)
+            && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Threw
         );
     }
 
@@ -335,12 +322,9 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             .SendAsync(new WriteNoteCommand("metered"), TestContext.Current.CancellationToken);
 
         Assert.True(written.IsSuccess);
-        Assert.Contains(
-            telemetry.Durations,
-            duration =>
-                (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
-                && (string?)duration.Tags[OperationTelemetry.OutcomeTag]
-                    == OperationTelemetry.Succeeded
+        Assert.Contains(telemetry.Durations, duration =>
+            (string?)duration.Tags[OperationTelemetry.OperationTag] == nameof(WriteNoteCommand)
+            && (string?)duration.Tags[OperationTelemetry.OutcomeTag] == OperationTelemetry.Succeeded
         );
     }
 
@@ -365,11 +349,9 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
             );
         }
 
-        Assert.Contains(
-            telemetry.Of(upstream.TraceId),
-            activity =>
-                Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand)
-                && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
+        Assert.Contains(telemetry.Of(upstream.TraceId), activity =>
+            Tag(activity, OperationTelemetry.OperationTag) == nameof(WriteNoteCommand)
+            && Tag(activity, OperationTelemetry.OutcomeTag) == OperationTelemetry.Succeeded
         );
     }
     #endregion
@@ -416,9 +398,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
 
         Assert.True(written.IsSuccess);
         Assert.NotEmpty(owners);
-        Assert.All(
-            owners,
-            owner => Assert.Same(Fixture.Host.Services.GetRequiredService<IMeterFactory>(), owner)
+        Assert.All(owners, owner =>
+            Assert.Same(Fixture.Host.Services.GetRequiredService<IMeterFactory>(), owner)
         );
     }
 
@@ -456,9 +437,8 @@ public sealed class ObservabilityTests(AppFixture app) : HostTest<AppFixture>(ap
 
     // The Operation activity of the one delivery to subscription in trace, as current when it recorded its Receipt.
     private static Activity DeliveryOperation(string subscription, ActivityTraceId trace) =>
-        Assert.Single(
-            DeliveryProbes.ActivitiesOf(subscription).OfType<Activity>(),
-            activity => activity.TraceId == trace
+        Assert.Single(DeliveryProbes.ActivitiesOf(subscription).OfType<Activity>(), activity =>
+            activity.TraceId == trace
         );
 
     // The span the delivery's envelope named as its parent: Wolverine's span's parent when that span is the delivery's.

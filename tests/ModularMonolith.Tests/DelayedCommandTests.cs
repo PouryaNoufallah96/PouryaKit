@@ -116,18 +116,11 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         // Every attempt continued the Operation that opened the quote: its Actor, tenant and correlation, caused by it.
         var contexts = DeliveryProbes.ContextsOf(ExpireQuote, envelope);
         Assert.NotEmpty(contexts);
-        Assert.All(
-            contexts,
-            context =>
-                Assert.Equal(
-                    (
-                        opening.Actor,
-                        opening.Tenant,
-                        opening.CorrelationId,
-                        (Guid?)opening.OperationId
-                    ),
-                    (context.Actor, context.Tenant, context.CorrelationId, context.CausationId)
-                )
+        Assert.All(contexts, context =>
+            Assert.Equal(
+                (opening.Actor, opening.Tenant, opening.CorrelationId, (Guid?)opening.OperationId),
+                (context.Actor, context.Tenant, context.CorrelationId, context.CausationId)
+            )
         );
     }
 

@@ -95,9 +95,8 @@ public sealed class MessageStoreWithoutEfTests(AppFixture app)
             "Development",
             $"--ConnectionStrings:app={connectionString}",
         ]);
-        builder.UsePouryaKitMessageStore(
-            "app",
-            (wolverine, store) => wolverine.PersistMessagesWithPostgresql(store, Schema)
+        builder.UsePouryaKitMessageStore("app", (wolverine, store) =>
+            wolverine.PersistMessagesWithPostgresql(store, Schema)
         );
         builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
             store.Durability = DurabilityMode.Solo

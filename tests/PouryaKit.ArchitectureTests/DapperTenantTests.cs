@@ -27,10 +27,8 @@ public sealed class DapperTenantTests
     private static IModel LedgerModel()
     {
         var options = new DbContextOptionsBuilder()
-            .UseNpgsql(
-                "Host=localhost;Database=architecture-tests",
-                npgsql =>
-                    npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "offending")
+            .UseNpgsql("Host=localhost;Database=architecture-tests", npgsql =>
+                npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "offending")
             )
             .UseSnakeCaseNamingConvention()
             .Options;
@@ -238,9 +236,8 @@ public sealed class DapperTenantTests
             )
         );
         // The rule judged Catalog's reads: GetProduct's, and ListProducts' SELECT and COUNT; a migration's SQL is not a read.
-        var catalog = Assert.Single(
-            Sample.TenantScopedModules,
-            module => module.GetName().Name == "Catalog"
+        var catalog = Assert.Single(Sample.TenantScopedModules, module =>
+            module.GetName().Name == "Catalog"
         );
         Assert.Equal(
             ["GetProductQueryHandler", "ListProductsQueryHandler", "ListProductsQueryHandler"],

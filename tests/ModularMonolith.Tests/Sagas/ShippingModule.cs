@@ -16,32 +16,22 @@ public sealed class ShippingModule : IModuleDefinition
         module.Publish<OrderFulfilledV1>("shipping.order-fulfilled.v1");
         module.Publish<OrderCancelledV1>("shipping.order-cancelled.v1");
         #region fulfilment-saga-declaration
-        module.AddPouryaKitSaga<FulfilmentSaga>(
-            Fulfilment,
-            systemActor: Fulfilment,
-            saga =>
-                saga.Input<OrderPlacedV1>(placed => placed.OrderId)
-                    .Input<PaymentReceivedV1>(paid => paid.OrderId)
-                    .Input<PaymentReceivedV2>(paid => paid.OrderId)
-                    .Timeout<FulfilmentTimeout>()
+        module.AddPouryaKitSaga<FulfilmentSaga>(Fulfilment, systemActor: Fulfilment, saga =>
+            saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+                .Input<PaymentReceivedV1>(paid => paid.OrderId)
+                .Input<PaymentReceivedV2>(paid => paid.OrderId)
+                .Timeout<FulfilmentTimeout>()
         );
         #endregion
         // Two sagas of one event: each its own chain, on its own queue.
-        module.AddPouryaKitSaga<ReferenceSaga>(
-            "shipping.reference",
-            "shipping.reference",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        module.AddPouryaKitSaga<ReferenceSaga>("shipping.reference", "shipping.reference", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
         );
-        module.AddPouryaKitSaga<ReminderSaga>(
-            "shipping.reminder",
-            "shipping.reminder",
-            saga =>
-                saga.Input<ReferenceOpenedV1>(opened => opened.Reference).Timeout<ReminderTimeout>()
+        module.AddPouryaKitSaga<ReminderSaga>("shipping.reminder", "shipping.reminder", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference).Timeout<ReminderTimeout>()
         );
-        module.AddPouryaKitSaga<TallySaga>(
-            "shipping.tally",
-            "shipping.tally",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        module.AddPouryaKitSaga<TallySaga>("shipping.tally", "shipping.tally", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
         );
     }
 }

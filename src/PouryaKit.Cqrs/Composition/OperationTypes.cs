@@ -48,9 +48,8 @@ public static class OperationTypes
     public static string KeyName(Type operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
-        return KeyNames.GetOrAdd(
-            operation,
-            static type => $"{type.FullName}, {type.Assembly.GetName().Name}"
+        return KeyNames.GetOrAdd(operation, static type =>
+            $"{type.FullName}, {type.Assembly.GetName().Name}"
         );
     }
 

@@ -56,12 +56,10 @@ public sealed class CatalogModule : IModuleDefinition
         // Another Host asks for a product over gRPC, through the same Gateway as the HTTP endpoints.
         module.AddPouryaKitGrpcService<ProductGrpcService>();
         // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
-        module.AddPouryaKitApiVersions(
-            "/catalog",
-            versions =>
-                versions
-                    .HasDeprecatedApiVersion(new ApiVersion(1, 0))
-                    .HasApiVersion(new ApiVersion(2, 0))
+        module.AddPouryaKitApiVersions("/catalog", versions =>
+            versions
+                .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+                .HasApiVersion(new ApiVersion(2, 0))
         );
     }
 }

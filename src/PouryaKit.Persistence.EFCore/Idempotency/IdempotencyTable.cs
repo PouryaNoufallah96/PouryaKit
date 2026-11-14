@@ -49,18 +49,14 @@ public static class IdempotencyTable
                         nullable: false
                     ),
                 },
-                constraints: table =>
-                    table.PrimaryKey(
-                        $"pk_{Name}",
-                        key => new
-                        {
-                            key.tenant,
-                            key.actor_kind,
-                            key.actor_id,
-                            key.command,
-                            key.request_id,
-                        }
-                    )
+                constraints: table => table.PrimaryKey($"pk_{Name}", key => new
+                    {
+                        key.tenant,
+                        key.actor_kind,
+                        key.actor_id,
+                        key.command,
+                        key.request_id,
+                    })
             );
             migrationBuilder.CreateIndex(
                 name: $"ix_{Name}_reserved_at",

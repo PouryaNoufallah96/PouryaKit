@@ -91,10 +91,8 @@ public sealed class PageExpressions<TAggregate>
             )
             : new PageExpressions<TAggregate>(
                 this,
-                _orderBy.Add(
-                    sortKey,
-                    (query, descending) =>
-                        descending ? query.OrderByDescending(key) : query.OrderBy(key)
+                _orderBy.Add(sortKey, (query, descending) =>
+                    descending ? query.OrderByDescending(key) : query.OrderBy(key)
                 ),
                 _thenBy,
                 _filters

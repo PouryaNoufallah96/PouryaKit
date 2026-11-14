@@ -62,40 +62,36 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
         Assert.Equal($"It is the {name}.", answered.Value);
         var calls = SeenBy(ai.Host, run);
         Assert.Equal(2, calls.Count);
-        Assert.All(
-            calls,
-            call =>
-                Assert.Equal(
-                    (
-                        run.Actor,
-                        run.Tenant,
-                        run.CorrelationId,
-                        (Guid?)run.OperationId,
-                        (string?)null,
-                        true
-                    ),
-                    (
-                        call.Actor,
-                        call.Tenant,
-                        call.CorrelationId,
-                        call.CausationId,
-                        call.RequestId,
-                        call.IsTrustedContinuation
-                    )
+        Assert.All(calls, call =>
+            Assert.Equal(
+                (
+                    run.Actor,
+                    run.Tenant,
+                    run.CorrelationId,
+                    (Guid?)run.OperationId,
+                    (string?)null,
+                    true
+                ),
+                (
+                    call.Actor,
+                    call.Tenant,
+                    call.CorrelationId,
+                    call.CausationId,
+                    call.RequestId,
+                    call.IsTrustedContinuation
                 )
+            )
         );
         Assert.Equal(
             3,
             calls.Select(call => call.OperationId).Append(run.OperationId).Distinct().Count()
         );
         // What each call answered reached the model: the product, as Catalog's GetProduct returns it.
-        Assert.All(
-            ai.Stub.ToolResultsOf(1),
-            result =>
-                Assert.Equal(
-                    name,
-                    JsonDocument.Parse(result).RootElement.GetProperty("name").GetString()
-                )
+        Assert.All(ai.Stub.ToolResultsOf(1), result =>
+            Assert.Equal(
+                name,
+                JsonDocument.Parse(result).RootElement.GetProperty("name").GetString()
+            )
         );
     }
 
@@ -486,11 +482,8 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
         ];
 
     private AIFunction GetProductTool(OperationContext run) =>
-        Catalog.Tool(
-            "GetProduct",
-            "Finds one product by its id.",
-            run,
-            (ProductToFind product) => new GetProductQuery(product.ProductId)
+        Catalog.Tool("GetProduct", "Finds one product by its id.", run, (ProductToFind product) =>
+            new GetProductQuery(product.ProductId)
         );
 
     private static async Task<(Guid Product, string Name)> CreateProductAsync(

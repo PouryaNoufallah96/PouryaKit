@@ -15,10 +15,8 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
     )
     {
         ArgumentNullException.ThrowIfNull(command);
-        return RunAsync(
-            command,
-            context,
-            dispatcher => dispatcher.SendAsync(command, cancellationToken)
+        return RunAsync(command, context, dispatcher =>
+            dispatcher.SendAsync(command, cancellationToken)
         );
     }
 
@@ -30,10 +28,8 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(command);
-        return RunAsync(
-            command,
-            context,
-            dispatcher => dispatcher.SendAsync(command, cancellationToken)
+        return RunAsync(command, context, dispatcher =>
+            dispatcher.SendAsync(command, cancellationToken)
         );
     }
 
@@ -45,10 +41,8 @@ internal sealed class GatewayProcessor<TModule>(IServiceScopeFactory scopes, Hos
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(query);
-        return RunAsync(
-            query,
-            context,
-            dispatcher => dispatcher.QueryAsync(query, cancellationToken)
+        return RunAsync(query, context, dispatcher =>
+            dispatcher.QueryAsync(query, cancellationToken)
         );
     }
 

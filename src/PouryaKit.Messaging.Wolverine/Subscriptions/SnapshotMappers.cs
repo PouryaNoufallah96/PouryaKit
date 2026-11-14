@@ -80,16 +80,14 @@ internal sealed class SnapshotMappers(
                 .Where(snapshot => snapshot.Aggregate.IsInstanceOfType(aggregate))
                 .Select(snapshot =>
                 {
-                    var mapping = Mappings.GetOrAdd(
-                        snapshot,
-                        declared =>
-                            (Mapping)
-                                Activator.CreateInstance(
-                                    typeof(Mapping<,>).MakeGenericType(
-                                        declared.Aggregate,
-                                        declared.Snapshot
-                                    )
-                                )!
+                    var mapping = Mappings.GetOrAdd(snapshot, declared =>
+                        (Mapping)
+                            Activator.CreateInstance(
+                                typeof(Mapping<,>).MakeGenericType(
+                                    declared.Aggregate,
+                                    declared.Snapshot
+                                )
+                            )!
                     );
                     // SnapshotStep compares the prepared batch once; this scope guards each mapper's write entry
                     // points from its construction on, without copying the whole tracker again for each aggregate.

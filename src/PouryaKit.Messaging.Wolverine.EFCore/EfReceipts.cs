@@ -50,8 +50,7 @@ internal sealed class EfReceipts(IUnitOfWork unitOfWork) : IReceipts
         CancellationToken cancellationToken
     )
     {
-        var dbContext =
-            EfUnitOfWorkDbContext.Of(unitOfWork)
+        var dbContext = EfUnitOfWorkDbContext.Of(unitOfWork)
             ?? throw new InvalidOperationException(
                 $"Receipts are kept in the EF Core Unit of Work's transaction, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
             );

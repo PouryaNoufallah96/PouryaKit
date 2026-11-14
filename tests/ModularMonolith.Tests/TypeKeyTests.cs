@@ -25,26 +25,17 @@ public sealed class TypeKeyTests(AppFixture app) : HostTest<AppFixture>(app)
         // The cache key names the UI culture the query runs in (ticket #125); the test's own flow sets it.
         CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
 
-        await RunAsync(
-            services,
-            context with
-            {
-                RequestId = "type-key",
-            },
-            dispatcher =>
-                dispatcher.SendAsync(
-                    new NameHandlingAssemblyCommand(),
-                    TestContext.Current.CancellationToken
-                )
+        await RunAsync(services, context with { RequestId = "type-key" }, dispatcher =>
+            dispatcher.SendAsync(
+                new NameHandlingAssemblyCommand(),
+                TestContext.Current.CancellationToken
+            )
         );
-        await RunAsync(
-            services,
-            context,
-            dispatcher =>
-                dispatcher.QueryAsync(
-                    new HandlingAssemblyQuery("lamp"),
-                    TestContext.Current.CancellationToken
-                )
+        await RunAsync(services, context, dispatcher =>
+            dispatcher.QueryAsync(
+                new HandlingAssemblyQuery("lamp"),
+                TestContext.Current.CancellationToken
+            )
         );
 
         Assert.Equal(

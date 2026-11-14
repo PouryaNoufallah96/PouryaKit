@@ -27,9 +27,8 @@ public sealed class CodeGenerationTests(AppFixture app)
         ]);
         // The Unit of Work the Kit's deliveries record their Receipts in: the Kit's container is validated when it is built.
         builder.Services.UsePouryaKitPostgres<StubDbContext>(connectionName: "app", schema: "stub");
-        builder.UsePouryaKitWolverine(
-            connectionName: "app",
-            configure: wolverine => wolverine.Discovery.IncludeType<PingedHandler>()
+        builder.UsePouryaKitWolverine(connectionName: "app", configure: wolverine =>
+            wolverine.Discovery.IncludeType<PingedHandler>()
         );
         using var host = builder.Build();
 

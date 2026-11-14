@@ -149,9 +149,8 @@ public sealed class ReverseProxyTests(AppFixture app, BrokerFixture broker)
         var spans = await SpansAsync(telemetry, trace, caller);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var operation = Assert.Single(
-            spans,
-            span => span.Source.Name == OperationTelemetry.SourceName
+        var operation = Assert.Single(spans, span =>
+            span.Source.Name == OperationTelemetry.SourceName
         );
         List<Activity> ancestors = [];
         for (

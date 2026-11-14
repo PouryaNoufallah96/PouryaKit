@@ -29,10 +29,11 @@ public static class SnapshotVersionTable
                     version = table.Column<long>(type: "bigint", nullable: false),
                 },
                 constraints: table =>
-                    table.PrimaryKey(
-                        $"pk_{Name}",
-                        applied => new { applied.subscription, applied.aggregate_id }
-                    )
+                    table.PrimaryKey($"pk_{Name}", applied => new
+                    {
+                        applied.subscription,
+                        applied.aggregate_id,
+                    })
             );
 
         /// <summary>Drops the Snapshot version table from <paramref name="schema"/>, the Module's own.</summary>

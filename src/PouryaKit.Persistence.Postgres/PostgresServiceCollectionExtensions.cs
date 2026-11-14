@@ -37,13 +37,8 @@ public static class PostgresServiceCollectionExtensions
 
             services.AddDbContext<TDbContext>(options =>
                 options
-                    .UseNpgsql(
-                        $"Name=ConnectionStrings:{connectionName}",
-                        npgsql =>
-                            npgsql.MigrationsHistoryTable(
-                                HistoryRepository.DefaultTableName,
-                                schema
-                            )
+                    .UseNpgsql($"Name=ConnectionStrings:{connectionName}", npgsql =>
+                        npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, schema)
                     )
                     .UseSnakeCaseNamingConvention()
             );

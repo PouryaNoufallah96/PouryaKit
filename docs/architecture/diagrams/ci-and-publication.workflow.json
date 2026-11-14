@@ -302,14 +302,14 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 165,
-          "end_line": 170,
+          "line": 161,
+          "end_line": 166,
           "label": "generated tests use HostFixture"
         },
         {
           "path": "src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 141,
-          "end_line": 156,
+          "line": 139,
+          "end_line": 154,
           "label": "the service's tests start RabbitMQ first"
         }
       ]

@@ -29,7 +29,7 @@
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
           "line": 28,
-          "end_line": 92,
+          "end_line": 87,
           "label": "hosts ModularMonolith.Host"
         },
         {
@@ -97,7 +97,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs",
           "line": 15,
-          "end_line": 89,
+          "end_line": 88,
           "label": "the Host's one report kind"
         },
         {
@@ -221,7 +221,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 30,
-          "end_line": 66,
+          "end_line": 64,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {
@@ -255,7 +255,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
           "line": 23,
-          "end_line": 55,
+          "end_line": 54,
           "label": "three subscriptions; a recurring command"
         },
         {

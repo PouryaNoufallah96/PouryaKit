@@ -462,7 +462,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs",
           "line": 39,
-          "end_line": 119,
+          "end_line": 117,
           "label": "one store, keyed Marten Receipts"
         }
       ]
@@ -496,7 +496,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs",
           "line": 33,
-          "end_line": 104,
+          "end_line": 102,
           "label": "a step claimed in its own transaction"
         }
       ]

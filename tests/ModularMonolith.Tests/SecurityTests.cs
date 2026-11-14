@@ -174,9 +174,8 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
             );
 
         Assert.Equal(Actor.Person("ada"), served.Value.Actor);
-        Assert.DoesNotContain(
-            builder.Services,
-            descriptor => descriptor.ServiceType == typeof(IActorPermissions)
+        Assert.DoesNotContain(builder.Services, descriptor =>
+            descriptor.ServiceType == typeof(IActorPermissions)
         );
     }
 
@@ -316,18 +315,16 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(0L, await StampsOfAsync(text));
         var seen = Fixture.Host.Services.GetRequiredService<StampAuthorizations>().For(text);
         Assert.NotEmpty(seen);
-        Assert.All(
-            seen,
-            context =>
-                Assert.Equal(
-                    (raising.Actor, raising.Tenant, raising.CorrelationId, true),
-                    (
-                        context.Actor,
-                        context.Tenant,
-                        context.CorrelationId,
-                        context.IsTrustedContinuation
-                    )
+        Assert.All(seen, context =>
+            Assert.Equal(
+                (raising.Actor, raising.Tenant, raising.CorrelationId, true),
+                (
+                    context.Actor,
+                    context.Tenant,
+                    context.CorrelationId,
+                    context.IsTrustedContinuation
                 )
+            )
         );
     }
 
@@ -422,9 +419,8 @@ public sealed class SecurityTests(AppFixture app) : HostTest<AppFixture>(app)
             ),
         ];
 
-        Assert.All(
-            refused,
-            result => Assert.Equal(PermissionErrors.Denied, Assert.Single(result.Errors))
+        Assert.All(refused, result =>
+            Assert.Equal(PermissionErrors.Denied, Assert.Single(result.Errors))
         );
         Assert.Equal(0L, await StampsOfAsync(text));
     }

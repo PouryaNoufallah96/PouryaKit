@@ -113,7 +113,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine/OperationContextHeaderExtensions.cs",
           "line": 57,
-          "end_line": 106,
+          "end_line": 105,
           "label": "a trusted continuation, trace parent"
         }
       ]

@@ -111,28 +111,24 @@ public sealed class HostTests(App app) : HostTest<App>(app)
     public void The_host_does_not_build_when_a_declared_permission_has_no_registered_check()
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            App.ComposeHost(
-                Environments.Development,
-                Fixture.ConnectionString,
-                builder =>
+            App.ComposeHost(Environments.Development, Fixture.ConnectionString, builder =>
+            {
+                foreach (
+                    var check in builder
+                        .Services.Where(descriptor =>
+                            !descriptor.IsKeyedService
+                            && descriptor.ServiceType.IsGenericType
+                            && descriptor.ServiceType.GetGenericTypeDefinition()
+                                == typeof(IAuthorizer<>)
+                            && descriptor.ImplementationType?.Assembly
+                                == typeof(RequiresPermissionAttribute).Assembly
+                        )
+                        .ToList()
+                )
                 {
-                    foreach (
-                        var check in builder
-                            .Services.Where(descriptor =>
-                                !descriptor.IsKeyedService
-                                && descriptor.ServiceType.IsGenericType
-                                && descriptor.ServiceType.GetGenericTypeDefinition()
-                                    == typeof(IAuthorizer<>)
-                                && descriptor.ImplementationType?.Assembly
-                                    == typeof(RequiresPermissionAttribute).Assembly
-                            )
-                            .ToList()
-                    )
-                    {
-                        builder.Services.Remove(check);
-                    }
+                    builder.Services.Remove(check);
                 }
-            )
+            })
         );
 
         Assert.Contains(

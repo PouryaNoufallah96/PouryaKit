@@ -384,9 +384,8 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
             await ClaimedAsync(sagaId, "orders.payment-received.v1")
         );
         var fulfilled = Assert
-            .Single(
-                BillingLog.Of(order),
-                delivery => delivery.Subscription == "billing.order-fulfilled"
+            .Single(BillingLog.Of(order), delivery =>
+                delivery.Subscription == "billing.order-fulfilled"
             )
             .Context;
         Assert.Equal(
@@ -453,9 +452,8 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         Assert.Equal(timeout, await ClaimedAsync(sagaId, timeoutType));
         var step = SagaStorage.StepId(Fulfilment, sagaId, timeoutType, timeout);
         var cancelled = Assert
-            .Single(
-                BillingLog.Of(order),
-                delivery => delivery.Subscription == "billing.order-cancelled"
+            .Single(BillingLog.Of(order), delivery =>
+                delivery.Subscription == "billing.order-cancelled"
             )
             .Context;
         Assert.Equal(
@@ -606,9 +604,8 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         await WaitUntilAsync(
             "exists (select from billing.pouryakit_receipts where subscription = 'billing.order-fulfilled')"
         );
-        var fulfilled = Assert.Single(
-            BillingLog.Of(order),
-            delivery => delivery.Subscription == "billing.order-fulfilled"
+        var fulfilled = Assert.Single(BillingLog.Of(order), delivery =>
+            delivery.Subscription == "billing.order-fulfilled"
         );
         Assert.Equal((trace.ToString(), TraceState), (fulfilled.TraceId, fulfilled.TraceState));
     }
@@ -639,9 +636,8 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
             )
         );
         Assert.Equal(0L, await CountAsync("select count(*) from wolverine.wolverine_dead_letters"));
-        Assert.DoesNotContain(
-            BillingLog.Of(order),
-            delivery => delivery.Subscription == "billing.order-cancelled"
+        Assert.DoesNotContain(BillingLog.Of(order), delivery =>
+            delivery.Subscription == "billing.order-cancelled"
         );
     }
 
@@ -853,19 +849,14 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     {
         var environment = await broker.CreateEnvironmentAsync();
         await Sql.RowsAsync(environment.Catalog, ModuleTables);
-        await StartBrokerHostAsync(
-            environment.Inventory,
-            environment.Broker,
-            "shipping",
-            builder =>
-            {
-                builder.AddPouryaKitModules(modules => modules.Add<ShippingModule>());
-                builder.Services.Receive<OrderPlacedV1>("orders.order-placed.v1");
-                builder.Services.Receive<PaymentReceivedV1>("orders.payment-received.v1");
-                builder.Services.Receive<PaymentReceivedV2>("orders.payment-received.v2");
-                builder.Services.Receive<ReferenceOpenedV1>("orders.reference-opened.v1");
-            }
-        );
+        await StartBrokerHostAsync(environment.Inventory, environment.Broker, "shipping", builder =>
+        {
+            builder.AddPouryaKitModules(modules => modules.Add<ShippingModule>());
+            builder.Services.Receive<OrderPlacedV1>("orders.order-placed.v1");
+            builder.Services.Receive<PaymentReceivedV1>("orders.payment-received.v1");
+            builder.Services.Receive<PaymentReceivedV2>("orders.payment-received.v2");
+            builder.Services.Receive<ReferenceOpenedV1>("orders.reference-opened.v1");
+        });
         var orders = await StartBrokerHostAsync(
             environment.Catalog,
             environment.Broker,
@@ -1129,15 +1120,11 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                         saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
                     ),
                     "table" => builder
-                        .Services.AddPouryaKitSaga<QueueSaga>(
-                            "tests.twin",
-                            "tests.twin",
-                            saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+                        .Services.AddPouryaKitSaga<QueueSaga>("tests.twin", "tests.twin", saga =>
+                            saga.Input<OrderPlacedV1>(placed => placed.OrderId)
                         )
-                        .AddPouryaKitSaga<TwinSaga>(
-                            "tests-twin",
-                            "tests.twin",
-                            saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+                        .AddPouryaKitSaga<TwinSaga>("tests-twin", "tests.twin", saga =>
+                            saga.Input<OrderPlacedV1>(placed => placed.OrderId)
                         ),
                     "digit" => builder.Services.AddPouryaKitSaga<QueueSaga>(
                         "2fa.enrolment",
@@ -1146,22 +1133,16 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
                     ),
                     "input" => builder
                         .Services.Receive<PlacedV1>("order-placed.v1")
-                        .AddPouryaKitSaga<QueueSaga>(
-                            "orders",
-                            "tests.orders",
-                            saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+                        .AddPouryaKitSaga<QueueSaga>("orders", "tests.orders", saga =>
+                            saga.Input<OrderPlacedV1>(placed => placed.OrderId)
                         )
-                        .AddPouryaKitSaga<TwinSaga>(
-                            "orders.orders",
-                            "tests.orders",
-                            saga => saga.Input<PlacedV1>(placed => placed.Id)
+                        .AddPouryaKitSaga<TwinSaga>("orders.orders", "tests.orders", saga =>
+                            saga.Input<PlacedV1>(placed => placed.Id)
                         ),
                     _ => builder
                         .Services.ReceiveSnapshot<ShelfSnapshotV1>("probes.shelf-snapshot.v1")
-                        .AddPouryaKitSaga<QueueSaga>(
-                            "tests.snapshot",
-                            "tests.snapshot",
-                            saga => saga.Input<ShelfSnapshotV1>(shelf => shelf.ShelfId)
+                        .AddPouryaKitSaga<QueueSaga>("tests.snapshot", "tests.snapshot", saga =>
+                            saga.Input<ShelfSnapshotV1>(shelf => shelf.ShelfId)
                         ),
                 };
             })
@@ -1194,10 +1175,8 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
             ]);
             builder
                 .Services.Receive<OrderPlacedV1>("orders.order-placed.v1")
-                .AddPouryaKitSaga<QueueSaga>(
-                    "tests.marten",
-                    "tests.marten",
-                    saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+                .AddPouryaKitSaga<QueueSaga>("tests.marten", "tests.marten", saga =>
+                    saga.Input<OrderPlacedV1>(placed => placed.OrderId)
                 );
             builder.UsePouryaKitMarten(connectionName: "app");
             using var host = builder.Build();
@@ -1548,15 +1527,11 @@ public sealed class TwinsModule : IModuleDefinition
 {
     public void Configure(ModuleBuilder module)
     {
-        module.AddPouryaKitSaga<TwinSaga>(
-            "tests.twin",
-            "tests.twin",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        module.AddPouryaKitSaga<TwinSaga>("tests.twin", "tests.twin", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
         );
-        module.AddPouryaKitSaga<Twins.TwinSaga>(
-            "tests.other-twin",
-            "tests.other-twin",
-            saga => saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
+        module.AddPouryaKitSaga<Twins.TwinSaga>("tests.other-twin", "tests.other-twin", saga =>
+            saga.Input<ReferenceOpenedV1>(opened => opened.Reference)
         );
     }
 }

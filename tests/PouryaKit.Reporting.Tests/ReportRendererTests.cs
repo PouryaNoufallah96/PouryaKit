@@ -79,13 +79,8 @@ public sealed class ReportRendererTests
         {
             var fonts = page.Resources.Elements.GetDictionary("/Font")!;
             Assert.NotEmpty(fonts.Elements.Keys);
-            Assert.All(
-                fonts.Elements.Keys,
-                key =>
-                    Assert.True(
-                        Embedded(fonts.Elements.GetDictionary(key)!),
-                        $"{key} is not embedded."
-                    )
+            Assert.All(fonts.Elements.Keys, key =>
+                Assert.True(Embedded(fonts.Elements.GetDictionary(key)!), $"{key} is not embedded.")
             );
         }
     }
@@ -198,11 +193,8 @@ public sealed class ReportRendererTests
                     (IReadOnlyList<string>)
                         [
                             .. row.Select(cell =>
-                                Regex.Replace(
-                                    cell,
-                                    "_x([0-9A-Fa-f]{4})_",
-                                    hex =>
-                                        ((char)Convert.ToInt32(hex.Groups[1].Value, 16)).ToString()
+                                Regex.Replace(cell, "_x([0-9A-Fa-f]{4})_", hex =>
+                                    ((char)Convert.ToInt32(hex.Groups[1].Value, 16)).ToString()
                                 )
                             ),
                         ]
@@ -292,15 +284,13 @@ public sealed class ReportRendererTests
                 )
         );
 
-        Assert.All(
-            renders,
-            render =>
-                Assert.Equal(
-                    3,
-                    PdfReader
-                        .Open(new MemoryStream(render.Value.Content), PdfDocumentOpenMode.Import)
-                        .PageCount
-                )
+        Assert.All(renders, render =>
+            Assert.Equal(
+                3,
+                PdfReader
+                    .Open(new MemoryStream(render.Value.Content), PdfDocumentOpenMode.Import)
+                    .PageCount
+            )
         );
     }
 

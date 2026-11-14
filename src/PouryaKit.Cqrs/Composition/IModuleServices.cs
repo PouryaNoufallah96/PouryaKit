@@ -80,8 +80,7 @@ public interface IModuleServices : IServiceCollection
     private static TService? Route<TService>(IServiceProvider services)
         where TService : class
     {
-        var module =
-            services.GetRequiredService<Operation>().Module
+        var module = services.GetRequiredService<Operation>().Module
             ?? throw new InvalidOperationException(
                 $"{typeof(TService).Name} was needed in a scope whose Operation names no Module. Send the Operation through IGatewayProcessor<TModule>, or begin the scope's Operation with its Module."
             );

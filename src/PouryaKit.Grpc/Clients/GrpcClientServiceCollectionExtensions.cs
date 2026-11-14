@@ -56,13 +56,11 @@ public static class GrpcClientServiceCollectionExtensions
             );
             services.AddSingleton(new GrpcClient(name, typeof(TClient)));
             return services
-                .AddGrpcClient<TClient>(
-                    name,
-                    (provider, client) =>
-                        client.Address = provider
-                            .GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>()
-                            .Get(name)
-                            .Address
+                .AddGrpcClient<TClient>(name, (provider, client) =>
+                    client.Address = provider
+                        .GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>()
+                        .Get(name)
+                        .Address
                 )
                 .AddInterceptor(provider => new OperationContextInterceptor(
                     provider

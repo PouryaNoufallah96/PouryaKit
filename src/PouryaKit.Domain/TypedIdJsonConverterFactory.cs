@@ -16,8 +16,7 @@ internal sealed class TypedIdJsonConverterFactory : JsonConverterFactory
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var valueType =
-            TypedId.GetValueType(typeToConvert)
+        var valueType = TypedId.GetValueType(typeToConvert)
             ?? throw new ArgumentException(
                 $"{typeToConvert.Name} is not a typed ID.",
                 nameof(typeToConvert)

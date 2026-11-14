@@ -13,8 +13,7 @@ internal sealed class CompositionCheckRunner(IServiceProvider services) : IHoste
 {
     public Task StartingAsync(CancellationToken cancellationToken)
     {
-        var composition =
-            services.GetService<HostComposition>()
+        var composition = services.GetService<HostComposition>()
             ?? throw new InvalidOperationException(
                 services.GetService<CompositionChecksInstalled>() is null
                     ? "The Kit's composition checks were never installed in this Host, so its container was not validated when it was built and none of its composition or startup checks ran. Call AddPouryaKitCompositionChecks() on the Host builder; AddPouryaKitModules and UsePouryaKitWolverine call it."

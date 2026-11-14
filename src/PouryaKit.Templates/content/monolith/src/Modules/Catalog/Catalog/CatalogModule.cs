@@ -64,12 +64,10 @@ public static class CatalogModule
             // Another Host asks for a product over gRPC, through the same dispatcher as the HTTP endpoints.
             services.AddPouryaKitGrpcService<ProductGrpcService>();
             // v2 adds renaming a product; v1 is deprecated, and the Host configures its sunset.
-            services.AddPouryaKitApiVersions(
-                "/catalog",
-                versions =>
-                    versions
-                        .HasDeprecatedApiVersion(new ApiVersion(1, 0))
-                        .HasApiVersion(new ApiVersion(2, 0))
+            services.AddPouryaKitApiVersions("/catalog", versions =>
+                versions
+                    .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+                    .HasApiVersion(new ApiVersion(2, 0))
             );
             return services;
         }

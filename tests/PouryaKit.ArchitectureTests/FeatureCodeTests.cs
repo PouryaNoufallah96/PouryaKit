@@ -208,21 +208,11 @@ public sealed class FeatureCodeTests
             .EnvelopeStorageIn("OffendingDbContext", context.GetService<IDesignTimeModel>().Model)
             .ToList();
 
-        Assert.Contains(
-            violations,
-            violation =>
-                violation.Contains(
-                    "wolverine.wolverine_incoming_envelopes",
-                    StringComparison.Ordinal
-                )
+        Assert.Contains(violations, violation =>
+            violation.Contains("wolverine.wolverine_incoming_envelopes", StringComparison.Ordinal)
         );
-        Assert.Contains(
-            violations,
-            violation =>
-                violation.Contains(
-                    "wolverine.wolverine_outgoing_envelopes",
-                    StringComparison.Ordinal
-                )
+        Assert.Contains(violations, violation =>
+            violation.Contains("wolverine.wolverine_outgoing_envelopes", StringComparison.Ordinal)
         );
     }
 

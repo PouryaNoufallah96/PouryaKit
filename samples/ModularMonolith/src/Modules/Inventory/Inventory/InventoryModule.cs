@@ -48,9 +48,8 @@ public sealed class InventoryModule : IModuleDefinition
         module.AddPouryaKitEndpoints("/inventory");
         // 2.0, Catalog's current version: a Host's documents and sunsets go by version number, so in a Host beside Catalog a
         // 1.0 here would share Catalog's deprecated 1.0, leave its document undeprecated and announce its sunset here.
-        module.AddPouryaKitApiVersions(
-            "/inventory",
-            versions => versions.HasApiVersion(new ApiVersion(2, 0))
+        module.AddPouryaKitApiVersions("/inventory", versions =>
+            versions.HasApiVersion(new ApiVersion(2, 0))
         );
     }
 }

@@ -64,15 +64,12 @@ public sealed class TrustedPeerTests(AppFixture app) : HostTest<AppFixture>(app)
             ],
             seen.Select(context => context.Actor)
         );
-        Assert.All(
-            seen,
-            context =>
-            {
-                Assert.Null(context.Tenant);
-                Assert.Equal(context.OperationId, context.CorrelationId);
-                Assert.Null(context.CausationId);
-            }
-        );
+        Assert.All(seen, context =>
+        {
+            Assert.Null(context.Tenant);
+            Assert.Equal(context.OperationId, context.CorrelationId);
+            Assert.Null(context.CausationId);
+        });
     }
 
     // Final structural review R1 (ADR 0007's continuation trust amendment): the peer's request is a trusted continuation, so the

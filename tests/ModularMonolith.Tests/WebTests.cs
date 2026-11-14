@@ -102,9 +102,8 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
                     (error.GetProperty("code").GetString(), error.GetProperty("target").GetString())
                 )
         );
-        Assert.All(
-            problem.GetProperty("errors").EnumerateArray(),
-            error => Assert.NotEmpty(error.GetProperty("message").GetString()!)
+        Assert.All(problem.GetProperty("errors").EnumerateArray(), error =>
+            Assert.NotEmpty(error.GetProperty("message").GetString()!)
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from catalog.products"));
     }
@@ -540,12 +539,9 @@ public sealed class WebTests(AppFixture app) : HostTest<AppFixture>(app)
 
         var problem = await ProblemAsync(response, HttpStatusCode.InternalServerError);
         Assert.DoesNotContain("claim", problem.GetRawText());
-        Assert.Contains(
-            Fixture.Logs.Entries,
-            entry =>
-                entry.Category == "PouryaKit.Web.UnexpectedExceptionHandler"
-                && entry.Exception?.Message.Contains($"no {ClaimTypes.NameIdentifier} claim")
-                    == true
+        Assert.Contains(Fixture.Logs.Entries, entry =>
+            entry.Category == "PouryaKit.Web.UnexpectedExceptionHandler"
+            && entry.Exception?.Message.Contains($"no {ClaimTypes.NameIdentifier} claim") == true
         );
     }
 

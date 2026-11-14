@@ -61,8 +61,8 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
     /// <summary>Every mail Papercut has received with the subject <paramref name="subject"/>, read through its API.</summary>
     public async Task<IReadOnlyList<ReceivedMail>> MailsAsync(string subject)
     {
-        var api =
-            _api ?? throw new InvalidOperationException("Papercut starts in InitializeAsync.");
+        var api = _api
+            ?? throw new InvalidOperationException("Papercut starts in InitializeAsync.");
         var listed = await api.GetFromJsonAsync<MailList>(
             "/api/messages",
             TestContext.Current.CancellationToken

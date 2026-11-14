@@ -66,9 +66,8 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
             ],
             deliveries.OrderBy(delivery => delivery.Subscription, StringComparer.Ordinal)
         );
-        Assert.Single(
-            Fixture.Logs.Entries,
-            entry => entry.Message == $"New in the catalog: Lamp ({product})"
+        Assert.Single(Fixture.Logs.Entries, entry =>
+            entry.Message == $"New in the catalog: Lamp ({product})"
         );
     }
     #endregion
