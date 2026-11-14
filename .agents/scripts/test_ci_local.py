@@ -29,11 +29,14 @@ class CiLocalTests(unittest.TestCase):
             self.assertIn(step, LOCAL, f"ci-local.sh does not run {step}")
 
     def test_one_node_version_names_every_setup_node_step_the_local_run_and_the_site(self) -> None:
-        versions = re.findall(r'^\s+node-version: "?([^"\s]+)"?$', JOBS, re.M)
-        self.assertEqual(len(re.findall(r"uses: actions/setup-node@", JOBS)), len(versions))
-        self.assertEqual(1, len(set(versions)), f"ci.yml's setup-node steps name {versions}")
-        self.assertIn(f'jobs run Node {versions[0]}"', LOCAL)
-        self.assertEqual(f">={versions[0]}", SITE["engines"]["node"])
+        node = re.search(r"CI's ai-setup and website jobs run Node (\d+)\"", LOCAL).group(1)
+        parts = re.split(r"^  ([a-z][a-z-]*):$", JOBS, flags=re.M)
+        jobs = dict(zip(parts[1::2], parts[2::2]))
+        step = rf'- uses: actions/setup-node@\S+\n\s+with:\n\s+node-version: "{node}"\n'
+        for job in ("ai-setup", "website"):
+            self.assertRegex(jobs[job], step, f"the {job} job sets up no Node {node}")
+        self.assertEqual(len(re.findall(r"uses: actions/setup-node@", JOBS)), len(re.findall(step, JOBS)))
+        self.assertEqual(f">={node}", SITE["engines"]["node"])
 
     def test_the_commands_of_the_reusable_package_job_are_reproduced(self) -> None:
         # The two evidence.py steps read the Actions run, which a local run does not have.
