@@ -1,8 +1,10 @@
 .claude/agent-memory/kit-implementer/MEMORY.md
   s_56c78af6bca6cd::t_7c51161e484db4 29
+  s_56c78af6bca6cd::t_cae8dc5220a582 29
 .claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
   s_56c78af6bca6cd::t_7107229a0e5251 20
   s_56c78af6bca6cd::t_7c51161e484db4 1-19,21-24
+  s_56c78af6bca6cd::t_57cc67f2089383 1-19,21-24
 ---
 {
   "schema_version": "authorship/3.0.0",
