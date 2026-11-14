@@ -1,0 +1,53 @@
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 10
+docs/architecture/diagrams/host-start.workflow.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 11
+docs/architecture/diagrams/http-command.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 11
+docs/architecture/diagrams/module-boundaries.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 10
+docs/architecture/diagrams/http-command.sequence.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 15
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 10
+docs/architecture/diagrams/commit-sequence.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/ci-and-publication.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 10
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/delivery.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/host-start.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+docs/architecture/diagrams/delivery.sequence.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 18
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_6fe0f640a57d98 10
+docs/architecture/diagrams/execution-core.html
+  s_56c78af6bca6cd::t_6fe0f640a57d98 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bf483ac7f1a683a6448fc6f6c18e5fcfaa76ff08",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
