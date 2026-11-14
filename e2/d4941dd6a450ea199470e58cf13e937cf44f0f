@@ -95,6 +95,8 @@ tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
   s_56c78af6bca6cd::t_b4d0380da22758 117
 scripts/packaging/test_validation.py
   s_56c78af6bca6cd::t_610b545cf3c4bf 371,373,382
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_56c78af6bca6cd::t_bab588dd8a6a08 10
 ---
 {
   "schema_version": "authorship/3.0.0",
