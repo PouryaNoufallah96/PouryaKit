@@ -33,7 +33,7 @@ jobs:
       # The check hashes the vendored skills in JavaScript's string order (check-skills-lock.mjs).
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          node-version: "26"
 
       - run: python3 .agents/scripts/check-ai-setup.py
       - run: python3 .agents/scripts/check-docs.py
@@ -79,7 +79,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          node-version: "26"
 
       - run: pnpm --dir website install --frozen-lockfile
       - run: pnpm --dir website check-licences

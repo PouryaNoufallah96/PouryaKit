@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
 LOCAL = (ROOT / ".agents/scripts/ci-local.sh").read_text(encoding="utf-8")
 PACKAGE_JOB = (ROOT / ".github/workflows/package-validation.yml").read_text(encoding="utf-8")
+SITE = json.loads((ROOT / "website/package.json").read_text(encoding="utf-8"))
 JOBS = WORKFLOW[WORKFLOW.index("\njobs:\n") :]
 
 
@@ -25,6 +27,13 @@ class CiLocalTests(unittest.TestCase):
         self.assertIn("pnpm --dir website lint", steps)
         for step in steps:
             self.assertIn(step, LOCAL, f"ci-local.sh does not run {step}")
+
+    def test_one_node_version_names_every_setup_node_step_the_local_run_and_the_site(self) -> None:
+        versions = re.findall(r'^\s+node-version: "?([^"\s]+)"?$', JOBS, re.M)
+        self.assertEqual(len(re.findall(r"uses: actions/setup-node@", JOBS)), len(versions))
+        self.assertEqual(1, len(set(versions)), f"ci.yml's setup-node steps name {versions}")
+        self.assertIn(f'jobs run Node {versions[0]}"', LOCAL)
+        self.assertEqual(f">={versions[0]}", SITE["engines"]["node"])
 
     def test_the_commands_of_the_reusable_package_job_are_reproduced(self) -> None:
         # The two evidence.py steps read the Actions run, which a local run does not have.
