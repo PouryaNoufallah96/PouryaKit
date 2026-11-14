@@ -1,0 +1,23 @@
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_56c78af6bca6cd::t_2d74da2df8f4b6 165-166,168-169,171,173,175-177,179-190
+  s_56c78af6bca6cd::t_78a394790cf414 45-47,49-55,71-77,79-83,89-92
+  s_56c78af6bca6cd::t_d057595f51ca3d 779
+  s_56c78af6bca6cd::t_f7c226208342ca 164
+  s_56c78af6bca6cd::t_908d175da0de40 780-785,789-790,792-801,803,805-822,824-835
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "78f272e722fad115547062e52079bc9f514dc714",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
