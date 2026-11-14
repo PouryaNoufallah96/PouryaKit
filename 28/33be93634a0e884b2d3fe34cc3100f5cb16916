@@ -1,0 +1,21 @@
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_56c78af6bca6cd::t_57cc67f2089383 1-23
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_cae8dc5220a582 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2833be93634a0e884b2d3fe34cc3100f5cb16916",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
