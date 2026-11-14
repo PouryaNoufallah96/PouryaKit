@@ -26,14 +26,16 @@ internal sealed class Subscriptions : IWireNames
         "system"
     );
 
-    private readonly Dictionary<string, Subscription> _byName = new(
-        StringComparer.OrdinalIgnoreCase
-    );
+    private readonly Dictionary<string, Subscription> _byName =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
+    ];
 
     // The wire name of every Domain Event delivered as a Notification and of every Integration Event published.
-    private readonly Dictionary<string, Type> _typeByWireName = new(
-        StringComparer.OrdinalIgnoreCase
-    );
+    private readonly Dictionary<string, Type> _typeByWireName =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
+    ];
     private readonly Dictionary<Type, Publication> _publications = [];
 
     // Every published Snapshot contract, by its type.

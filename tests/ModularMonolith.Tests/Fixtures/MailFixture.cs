@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Builder;
 using Npgsql;
 using PouryaKit.Testing;

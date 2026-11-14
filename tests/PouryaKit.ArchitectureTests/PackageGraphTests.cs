@@ -309,7 +309,7 @@ public sealed class PackageGraphTests
 
         Assert.Equal(
             [
-                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions]; section C allows [Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions].",
+                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection]; section C allows [Microsoft.Extensions.DependencyInjection].",
             ],
             PackageGraph.Violations(
                 cqrs with
@@ -325,13 +325,11 @@ public sealed class PackageGraphTests
     {
         var nuspec = XDocument.Parse(
             """
-            <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net10.0">
+            <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net11.0">
               <dependency id="PouryaKit.Core" version="0.1.0-preview.1" />
               <dependency id="PouryaKit.Cqrs" version="0.1.0-preview.1" />
               <dependency id="Dapper" version="2.1.89" />
               <dependency id="Npgsql" version="10.0.3" />
-              <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="10.0.12" />
-              <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="10.0.12" />
             </group></dependencies></metadata></package>
             """
         );

@@ -357,7 +357,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 21,
-          "end_line": 222,
+          "end_line": 196,
           "label": "the allowed references"
         },
         {
@@ -384,8 +384,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 71,
-          "end_line": 82,
+          "line": 54,
+          "end_line": 65,
           "label": "only the Messaging.Wolverine packages"
         },
         {

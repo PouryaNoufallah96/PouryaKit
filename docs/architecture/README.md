@@ -104,7 +104,7 @@ Seams later packages build on:
 
 ## PouryaKit.Cqrs
 
-The execution core every Operation passes through. It references `PouryaKit.Domain`, `PouryaKit.Core`, whose `ImplementingTypes` finds its handlers, authorizers and Domain Event Handlers, `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions`, and `Microsoft.Extensions.DependencyInjection` for the Host's validated container and `Microsoft.Extensions.Hosting.Abstractions` for its Host entry and the check runner, and no other package (ADR 0002: no mediator).
+The execution core every Operation passes through. It references `PouryaKit.Domain`, `PouryaKit.Core`, whose `ImplementingTypes` finds its handlers, authorizers and Domain Event Handlers, and `Microsoft.Extensions.DependencyInjection` for the Host's validated container, and no other package (ADR 0002: no mediator); the dependency-injection, logging and Hosting abstractions, for its Host entry and the check runner, come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -245,7 +245,7 @@ Each call takes the key the caller chooses and a `CancellationToken`, and return
 
 ## PouryaKit.Storage.S3
 
-The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as MinIO. It references `PouryaKit.Storage`, which holds its composition check, `AWSSDK.S3` 4.0.104.6, which brings `AWSSDK.Core`, both Apache-2.0, and `Microsoft.Extensions.Options` (MIT).
+The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as MinIO. It references `PouryaKit.Storage`, which holds its composition check, and `AWSSDK.S3` 4.0.104.6, which brings `AWSSDK.Core`, both Apache-2.0; its options come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -256,7 +256,7 @@ The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as M
 
 ## PouryaKit.Storage.AzureBlob
 
-The Azure Blob Storage provider of `IFileStorage`, for Azure Blob Storage and Azurite. It references `PouryaKit.Storage`, `Azure.Storage.Blobs` 12.30.1 (MIT; it brings `Azure.Core` and `Azure.Storage.Common`, MIT), `Microsoft.Extensions.Options` (MIT), and two licence floors over what `Azure.Storage.Blobs` brings without a licence expression: `Apache.Arrow` 23.0.0 (Apache-2.0) and `System.Security.Cryptography.ProtectedData` 10.0.13 (MIT). No `Azure.Identity`.
+The Azure Blob Storage provider of `IFileStorage`, for Azure Blob Storage and Azurite. It references `PouryaKit.Storage`, `Azure.Storage.Blobs` 12.30.1 (MIT; it brings `Azure.Core` and `Azure.Storage.Common`, MIT), and two licence floors over what `Azure.Storage.Blobs` brings without a licence expression: `Apache.Arrow` 23.0.0 (Apache-2.0) and `System.Security.Cryptography.ProtectedData` 11.0.0 (MIT); its options come with the .NET 11 shared framework. No `Azure.Identity`.
 
 | Concern | Types |
 |---|---|
@@ -278,7 +278,7 @@ A Notification Handler sends, after its Operation committed, so a rolled-back Op
 
 ## PouryaKit.Email.MailKit
 
-The Email Capability's one provider. It references `PouryaKit.Email`, `PouryaKit.Cqrs` for its composition check, `MailKit` 4.18.2 (MIT; it brings `MimeKit` and a cryptography library, MIT) and `Microsoft.Extensions.Options`.
+The Email Capability's one provider. It references `PouryaKit.Email`, `PouryaKit.Cqrs` for its composition check, and `MailKit` 4.18.2 (MIT; it brings `MimeKit` and a cryptography library, MIT); its options come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -289,7 +289,7 @@ The Email Capability's one provider. It references `PouryaKit.Email`, `PouryaKit
 
 ## PouryaKit.ReverseProxy
 
-The Reverse proxy, for a Host of its own process in front of a system's Hosts. It references no Kit package, so no Operation can run in it, which `PackageGraphTests` checks; it references the ASP.NET Core shared framework, `Yarp.ReverseProxy` 2.3.0 and `Microsoft.Extensions.ServiceDiscovery.Yarp` 10.11.0, both MIT.
+The Reverse proxy, for a Host of its own process in front of a system's Hosts. It references no Kit package, so no Operation can run in it, which `PackageGraphTests` checks; it references the ASP.NET Core shared framework, `Yarp.ReverseProxy` 2.3.0 and `Microsoft.Extensions.ServiceDiscovery.Yarp` 11.0.0, both MIT.
 
 | Concern | Types |
 |---|---|
@@ -310,7 +310,7 @@ Optional server-sent events from Notification Handlers. It references `PouryaKit
 
 ## PouryaKit.Reporting
 
-The optional renderer of the Reporting Capability; the report Module that stores and schedules report jobs is [`PouryaKit.Reporting.Module`](#pouryakitreportingmodule). It references `PouryaKit.Domain` alone, and these libraries: `PDFsharp-MigraDoc` 6.2.4 (MIT, the last MIT release of PDFsharp: 6.5.0 is AGPL-3.0-only), `DocumentFormat.OpenXml` 3.5.1 (MIT) and `CsvHelper` 33.1.0 (`MS-PL OR Apache-2.0`), with `System.Security.Cryptography.Pkcs` 10.0.13, a security floor over the 8.0.1 PDFsharp asks for. `PackageGraphTests` keeps QuestPDF, ClosedXML, every AWS and Azure package and `PouryaKit.Storage` out of its closure.
+The optional renderer of the Reporting Capability; the report Module that stores and schedules report jobs is [`PouryaKit.Reporting.Module`](#pouryakitreportingmodule). It references `PouryaKit.Domain` alone, and these libraries: `PDFsharp-MigraDoc` 6.2.4 (MIT, the last MIT release of PDFsharp: 6.5.0 is AGPL-3.0-only), `DocumentFormat.OpenXml` 3.5.1 (MIT) and `CsvHelper` 33.1.0 (`MS-PL OR Apache-2.0`), with `System.Security.Cryptography.Pkcs` 11.0.0, a security floor over the 8.0.1 PDFsharp asks for. `PackageGraphTests` keeps QuestPDF, ClosedXML, every AWS and Azure package and `PouryaKit.Storage` out of its closure.
 
 | Concern | Types |
 |---|---|
@@ -334,7 +334,7 @@ Everything else is internal, in the one namespace `PouryaKit.Reporting.Module`: 
 
 ## PouryaKit.AI
 
-The AI Capability's chat client, embedding generator, Gateway tool, agents and MCP clients. It references `PouryaKit.Cqrs`, `PouryaKit.Modularity`, `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.OpenAI` 10.11.0, which bring the `OpenAI` client (MIT), the Microsoft Agent Framework's `Microsoft.Agents.AI` and `Microsoft.Agents.AI.Workflows` 1.26.0 (MIT), the official MCP C# SDK's client, `ModelContextProtocol.Core` 2.3.0 (Apache-2.0), `Microsoft.Extensions.Http` and `Microsoft.Extensions.Options`; `PackageGraphTests` keeps `OllamaSharp`, `Azure.AI.OpenAI` and every resilience package out of its closure.
+The AI Capability's chat client, embedding generator, Gateway tool, agents and MCP clients. It references `PouryaKit.Cqrs`, `PouryaKit.Modularity`, `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.OpenAI` 11.0.0, which bring the `OpenAI` client (MIT), the Microsoft Agent Framework's `Microsoft.Agents.AI` and `Microsoft.Agents.AI.Workflows` 1.26.0 (MIT), the official MCP C# SDK's client, `ModelContextProtocol.Core` 2.3.0 (Apache-2.0), and `Microsoft.Extensions.Http`; its options come with the .NET 11 shared framework; `PackageGraphTests` keeps `OllamaSharp`, `Azure.AI.OpenAI` and every resilience package out of its closure.
 
 | Concern | Types |
 |---|---|
@@ -379,7 +379,7 @@ Optional JWT bearer authentication for a Host whose callers present tokens from 
 
 ## PouryaKit.Modularity
 
-Modules in one Host and one container. It references `PouryaKit.Cqrs` and `Microsoft.Extensions.Hosting.Abstractions`.
+Modules in one Host and one container. It references `PouryaKit.Cqrs` and no package: the Hosting abstractions come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -417,7 +417,7 @@ The repository adds, removes and finds by ID, and finds, lists, checks and count
 
 ## PouryaKit.Persistence.EFCore
 
-EF Core behind the Unit of Work and the repository. It references `PouryaKit.Cqrs`, `PouryaKit.Persistence`, `PouryaKit.Core` for its typed-ID lookup, `Microsoft.EntityFrameworkCore.Relational`, `Ardalis.Specification.EntityFrameworkCore` and `Microsoft.Extensions.Hosting.Abstractions` for the idempotency key cleanup's background service.
+EF Core behind the Unit of Work and the repository. It references `PouryaKit.Cqrs`, `PouryaKit.Persistence`, `PouryaKit.Core` for its typed-ID lookup, `Microsoft.EntityFrameworkCore.Relational` and `Ardalis.Specification.EntityFrameworkCore`; the idempotency key cleanup's background service takes the Hosting abstractions from the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -462,7 +462,7 @@ PostgreSQL for a Module's DbContext. It references `PouryaKit.Persistence.EFCore
 
 ## PouryaKit.Persistence.Dapper
 
-Dapper reads in plain SQL. It references `PouryaKit.Cqrs` (for the Page types; Domain through it), `PouryaKit.Core` for its typed-ID lookup, `Dapper`, `Npgsql`, `Microsoft.Extensions.Configuration.Abstractions` and `Microsoft.Extensions.DependencyInjection.Abstractions`, and no EF Core package.
+Dapper reads in plain SQL. It references `PouryaKit.Cqrs` (for the Page types; Domain through it), `PouryaKit.Core` for its typed-ID lookup, `Dapper` and `Npgsql`, and no EF Core package; the configuration and dependency-injection abstractions come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -651,7 +651,7 @@ Seams later packages build on:
 
 ## PouryaKit.Web.OpenApi
 
-Optional API versions, OpenAPI documents and the Scalar reference. It references `PouryaKit.Web`, the ASP.NET Core shared framework and these MIT packages: `Asp.Versioning.Http` and `Asp.Versioning.OpenApi` 10.2.3 (which bring `Asp.Versioning.Mvc.ApiExplorer` and `Asp.Versioning.Mvc` 10.2.1), `Microsoft.AspNetCore.OpenApi` 10.0.13 (which brings `Microsoft.OpenApi` 2.x) and `Scalar.AspNetCore` 2.18.3. No Swagger generator is in its closure.
+Optional API versions, OpenAPI documents and the Scalar reference. It references `PouryaKit.Web`, the ASP.NET Core shared framework and these MIT packages: `Asp.Versioning.Http` and `Asp.Versioning.OpenApi` 10.2.3 (which bring `Asp.Versioning.Mvc.ApiExplorer` and `Asp.Versioning.Mvc` 10.2.1), `Microsoft.AspNetCore.OpenApi` 10.0.15 (which brings `Microsoft.OpenApi` 2.x) and `Scalar.AspNetCore` 2.18.3. No Swagger generator is in its closure.
 
 | Concern | Types |
 |---|---|

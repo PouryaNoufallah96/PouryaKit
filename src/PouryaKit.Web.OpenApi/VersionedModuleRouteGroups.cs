@@ -12,7 +12,7 @@ internal sealed class VersionedModuleRouteGroups(
     IServiceProvider services
 ) : IModuleRouteGroups
 {
-    private readonly HashSet<string> _mapped = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _mapped = [with(StringComparer.OrdinalIgnoreCase)];
 
     public IReadOnlyList<IEndpointRouteBuilder> Map(
         string routePrefix,

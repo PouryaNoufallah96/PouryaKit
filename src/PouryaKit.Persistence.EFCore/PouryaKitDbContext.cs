@@ -41,7 +41,7 @@ public abstract class PouryaKitDbContext : DbContext
 
     // Every entity a query of this DbContext materialized and tracked since. One detached, or cleared from the change
     // tracker, and then tracked again was attached, as is any other tracked entity that is not added.
-    private readonly HashSet<object> _loaded = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<object> _loaded = [with(ReferenceEqualityComparer.Instance)];
 
     /// <summary>
     /// Creates the DbContext with <paramref name="options"/> and the cascade timings the Unit of Work's soft delete

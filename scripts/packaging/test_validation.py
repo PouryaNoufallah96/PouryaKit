@@ -368,9 +368,9 @@ class TestTotalsTests(unittest.TestCase):
 
     def test_totals_are_summed_over_every_projects_summary_block(self) -> None:
         output = (
-            "Test run summary: Passed! - tests/A/bin/Release/net10.0/A.dll (net10.0|arm64)\n"
+            "Test run summary: Passed! - tests/A/bin/Release/net11.0/A.dll (net11.0|arm64)\n"
             "  total: 62\n  failed: 0\n  succeeded: 62\n  skipped: 0\n  duration: 2s 744ms\n"
-            "Test run summary: Passed! - tests/B/bin/Release/net10.0/B.dll (net10.0|arm64)\n"
+            "Test run summary: Passed! - tests/B/bin/Release/net11.0/B.dll (net11.0|arm64)\n"
             "  total: 10\n  failed: 0\n  succeeded: 7\n  skipped: 3\n  duration: 1s 1ms\n"
         )
         self.assertEqual("Release tests total 72, succeeded 69, failed 0, skipped 3", test_totals(output))
@@ -379,7 +379,7 @@ class TestTotalsTests(unittest.TestCase):
         """A hosted runner's summary, as it printed it: a colour code can open any line of the block."""
         output = (
             "\x1b[32mTest run summary: Passed!\n"
-            "  tests/A/bin/Release/net10.0/A.dll (net10.0|x64) passed (9m 39s 114ms)\n"
+            "  tests/A/bin/Release/net11.0/A.dll (net11.0|x64) passed (9m 39s 114ms)\n"
             "\n"
             "\x1b[m  total: 1395\n"
             "  failed: 0\n"

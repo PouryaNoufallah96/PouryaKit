@@ -78,7 +78,7 @@ internal static class PersistencePreparation
                     Aggregates: AggregatesOf(
                             entry,
                             holders,
-                            new HashSet<object>(ReferenceEqualityComparer.Instance)
+                            [with(ReferenceEqualityComparer.Instance)]
                         )
                         .ToList()
                 )
@@ -238,7 +238,7 @@ internal static class PersistencePreparation
             if (!_byKey.TryGetValue(foreignKey.PrincipalKey, out var byValues))
             {
                 // Every entry that has the key, whatever its derived type: keys to sibling derived types share it.
-                byValues = new(Comparer);
+                byValues = [with(Comparer)];
                 foreach (
                     var entry in entries.Where(entry =>
                         foreignKey.PrincipalKey.DeclaringEntityType.IsAssignableFrom(entry.Metadata)

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
