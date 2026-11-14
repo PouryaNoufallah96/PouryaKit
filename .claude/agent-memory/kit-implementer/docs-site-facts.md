@@ -106,5 +106,13 @@ metadata:
 - **A README fence may quote a template's literal form:** the sample names constants (`BrokerConnection`, `TenantClaim`) a reader cannot resolve, while the templates' content holds the same call with literals, and `codeLines` reads it. `Client` in a test has no such twin: name it in prose.
 - **Judging bot threads:** most claims about a Kit guarantee already have the true sentence in the skill, so read the skill's section first; a fix is then the skill's own words. Check the check before believing a build-time claim is conditional: `CompositionCheckRunner` fails any Kit Host that never installed the checks.
 
+## Dependency bumps and Node 26 (#211, 2026-11-15; pnpm 12.18.0, next 16.4.6, Fumadocs 16.19.0, Tailwind 4.3.5, Node 24.21.0 local)
+
+- **`pnpm outdated` honours `minimumReleaseAge` (1440 minutes by default)**: `pnpm view <pkg> dist-tags.latest` named fumadocs 16.19.3, fumadocs-mdx 15.6.2 and lucide-react 1.73.0, all under a day old, which `outdated` hid and an install would refuse. Pin what `outdated` reports; `pnpm view <pkg> time --json` shows the ages. A brief's version list goes stale within a day (postcss 8.5.32 became 8.5.33).
+- **pnpm's stable channel is the `latest` dist-tag**: 12.19 to 12.21 were published only under `next-12`. Changing `packageManager` makes the global pnpm fetch and run that version, and the lockfile's first document follows it.
+- **pnpm 12 neither refuses nor warns on the root's `engines.node`** (`>=26` on Node 24, install and run, 12.5.1 and 12.18.0), so the gates run on an older local Node; the build's TypeScript passed with `@types/node` 26.
+- **Tailwind 4.3.5's `@tailwindcss/node` pins `lightningcss` 1.33.0 itself**: the override for 4.3.3 went, the lockfile kept only 1.33.0 and the build log stayed free of `::highlight` warnings.
+- **CI's Linux closure** by the recipe above: 290 packages, 0 problems. `ci.yml`'s `node-version` of the `ai-setup` job sits in ci-and-publication's cited range 18-40, so a same-line edit needs the interim pin to the base, then the pin to the code commit.
+
 **Why:** each cost a probe or a failed run in #186, #187, #189, #190 or #194.
 **How to apply:** for any ticket under `website/` (#187 content pipeline, #189 pages, #190 covers, #194 the public tree that copies the covers, #191 package READMEs that link its assets). Related: [[merge-ci-and-workflow-tooling-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
