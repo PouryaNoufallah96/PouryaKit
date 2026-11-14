@@ -1,0 +1,116 @@
+src/PouryaKit.Persistence.EFCore/PouryaKitDbContext.cs
+  s_56c78af6bca6cd::t_2c9af32f74d1cf 44
+docs/architecture/diagrams/commit-sequence.workflow.json
+  s_56c78af6bca6cd::t_51e4afbe7c821a 10
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_56c78af6bca6cd::t_cdfcc31c3811a2 36-40
+src/PouryaKit.Templates/content/shared/Directory.Build.props
+  s_56c78af6bca6cd::t_210a3c0b7430c1 3
+src/PouryaKit.Persistence.EFCore/UnitOfWork/PersistencePreparation.cs
+  s_56c78af6bca6cd::t_2c9af32f74d1cf 81,241
+src/PouryaKit.AI/McpServerConnections.cs
+  s_56c78af6bca6cd::t_6f8122617421aa 22-25
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_56c78af6bca6cd::t_ee24830d472422 238,241,291,333,336,439,479
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_c12439cfab2a22 594
+  s_56c78af6bca6cd::t_9a594b8fcdbf64 63,90,117-118,151-152,184-185,212-213,246,279-280,341-342,369-370,403,414-415,436-437,469-470,491-492,525-526,592-593,626-627,660,693,726-727,760-761,772-773,794-795,828-829,862
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_56c78af6bca6cd::t_cdfcc31c3811a2 31-35
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_9a594b8fcdbf64 73-74,95,128-129,162-163,184-185,218-219,252-253,292-293,342-343,375-376,397-398,431,452-453,486-487
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_9a594b8fcdbf64 360,387-388
+global.json
+  s_56c78af6bca6cd::t_891389835a10e1 3
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_56c78af6bca6cd::t_cdfcc31c3811a2 26-29
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_56c78af6bca6cd::t_fc7a01313937e5 312
+  s_56c78af6bca6cd::t_fa067a3c514958 328
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_b6ac1bb8db193d 259
+  s_56c78af6bca6cd::t_2d7ef98bd00a42 313
+  s_56c78af6bca6cd::t_411b5fec59f00e 248
+  s_56c78af6bca6cd::t_38bca3ec1e0cd8 337
+  s_56c78af6bca6cd::t_5984c06ba6a37e 654
+  s_56c78af6bca6cd::t_aa48c7081ebad4 292
+  s_56c78af6bca6cd::t_34ed7c09d2ed29 465
+  s_56c78af6bca6cd::t_cebb104edd4947 281
+  s_56c78af6bca6cd::t_c6b38274b43f8a 420
+  s_56c78af6bca6cd::t_317832609e60f7 107
+  s_56c78af6bca6cd::t_4d060bcf8d50ae 382
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_56c78af6bca6cd::t_0668b1e665f602 51
+  s_56c78af6bca6cd::t_4ff5d13eb57fea 105
+  s_56c78af6bca6cd::t_4aea83d08c7cd0 28,30,33,36
+  s_56c78af6bca6cd::t_8e2ea2252f48a0 110
+Directory.Build.props
+  s_56c78af6bca6cd::t_530124a75ebd4a 3
+tests/PouryaKit.ArchitectureTests/DapperTenantTests.cs
+  s_56c78af6bca6cd::t_6f8122617421aa 17-22,25-28
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_9b899f8023ee7e 874
+  s_56c78af6bca6cd::t_fb1abfa655bcb2 876
+  s_56c78af6bca6cd::t_b3ebf005276240 695-697
+  s_56c78af6bca6cd::t_4fe02cf7d774fe 260
+  s_56c78af6bca6cd::t_77707352948a93 869
+  s_56c78af6bca6cd::t_8a672b58cfed6a 280
+  s_56c78af6bca6cd::t_fd056fa4c33d2a 257
+  s_56c78af6bca6cd::t_6a63ec4559e53a 281
+  s_56c78af6bca6cd::t_719cf1cb4befdb 870
+  s_56c78af6bca6cd::t_0bc6297cdb46b8 259
+  s_56c78af6bca6cd::t_3a2ca3a5d0e1c9 285
+  s_56c78af6bca6cd::t_3d0a01abe0500f 303-304
+  s_56c78af6bca6cd::t_086fd3e0641070 286
+  s_56c78af6bca6cd::t_77a06963daf582 262
+  s_56c78af6bca6cd::t_32958e8da6b5b9 275
+  s_56c78af6bca6cd::t_2490cb1549cadf 276
+docs/packages.md
+  s_56c78af6bca6cd::t_bc7b303ad2f9a8 19
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_9a594b8fcdbf64 305-306
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_56c78af6bca6cd::t_6f8122617421aa 29-32,35-38
+Directory.Packages.props
+  s_56c78af6bca6cd::t_cdfcc31c3811a2 33-48,64-65
+tests/PouryaKit.ArchitectureTests/RestoredPackage.cs
+  s_56c78af6bca6cd::t_2c9af32f74d1cf 131
+.config/dotnet-tools.json
+  s_56c78af6bca6cd::t_be8e80e412192f 13
+scripts/packaging/validate.py
+  s_56c78af6bca6cd::t_a05e8131d41d60 106
+  s_56c78af6bca6cd::t_3a3e8a36f83116 18
+src/PouryaKit.Reporting.Module/Jobs/ReportJob.cs
+  s_56c78af6bca6cd::t_2c9af32f74d1cf 65
+src/PouryaKit.Web.OpenApi/VersionedModuleRouteGroups.cs
+  s_56c78af6bca6cd::t_2c9af32f74d1cf 15
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_9a594b8fcdbf64 65-66,330-331,454
+.claude/rules/kit-code.md
+  s_56c78af6bca6cd::t_aad179003927c0 22
+tests/PouryaKit.ArchitectureTests/PackageArtifacts.cs
+  s_56c78af6bca6cd::t_ee24830d472422 252,255
+.agents/scripts/publish-nuget.sh
+  s_56c78af6bca6cd::t_efd7981f6cb058 117
+.github/workflows/package-publication.yml
+  s_56c78af6bca6cd::t_b4d0380da22758 117
+scripts/packaging/test_validation.py
+  s_56c78af6bca6cd::t_610b545cf3c4bf 371,373,382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0d9f9d2ef4175bcf6086c0c2e1b92c84a7ab83b9",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
