@@ -1,0 +1,21 @@
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_e77c6eabc665c9 11
+docs/architecture/diagrams/ci-and-publication.html
+  s_56c78af6bca6cd::t_e77c6eabc665c9 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c54939107b283a13408fdfe8087b7349c8f74031",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
