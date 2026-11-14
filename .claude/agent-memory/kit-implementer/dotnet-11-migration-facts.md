@@ -1,0 +1,24 @@
+---
+name: dotnet-11-migration-facts
+description: The .NET 11 retarget (SDK 11.0.100, net11.0, C# 15) - what SDK 11 forces in the build, CSharpier 1.4.0's reformat and the diagrams it moves, the shared framework's Microsoft.Extensions packages, and the held EF Core and OpenAPI line
+metadata:
+  type: project
+---
+
+Check the merged code before relying on a note. Each section names its ticket, its date and the versions it was verified on.
+
+## The retarget (#208, 2026-11-15; SDK 11.0.100, Microsoft.NETCore.App 11.0.0, CSharpier 1.4.0)
+
+- **`global.json` decides the SDK**: SDK 10.0.402 and 11.0.100 sit side by side under mise's `dotnet-root`; after the pin moves, `dotnet --version` in the worktree prints 11.0.100 at once, no restore or install. Never run `mise install`.
+- **NU1510 is a build error here** (warnings as errors): `Microsoft.NETCore.App` 11.0.0 ships `Microsoft.Extensions.Options`, `.Primitives` and the Caching, Configuration, DependencyInjection, Diagnostics, FileProviders, Hosting and Logging abstractions (10.0.x shipped none), so a `PackageReference` to one fails restore. `Microsoft.Extensions.DependencyInjection`, `.Hosting`, `.Http` and the other implementations are not in it and stay referenced. The build stops at the first projects that fail, so the next diagnostics (IDE0005, IDE0028) appear only after the NU1510 lines go.
+- **SDK 11 adds `System.Net.Http.Json` to the implicit usings of net11.0**: every explicit `using System.Net.Http.Json;` fails IDE0005. Template content is outside the solution, so the build never flags its two (`CrossModuleTests.cs`, the shared `HostTests.cs`): grep for them.
+- **IDE0028 now rewrites a comparer or copy-source constructor to `[with(...)]`**: `dotnet format style PouryaKit.slnx --diagnostics IDE0005 IDE0028` fixed exactly the build's 29 files; CSharpier then re-lays the eight `with` sites. Read each: in this tree every site kept its comparer or copied source; none was the `new(n)` plus `AddRange` shape whose fix drops the capacity.
+- **CSharpier 1.4.0 re-lays 105 files** (a last lambda argument stays on the call line; `??` breaks before the operator). Proof it is layout only: compare each changed file with all whitespace removed against HEAD (`scratchpad/p208/layoutonly.py`); three files differ only by a trailing comma in a re-laid initialiser.
+- **A reformat moves diagram citations like any edit**: nine diagrams needed re-ranged sources in the reformat commit and a pin commit after it. A difflib line map from HEAD to the working file, with each range's whitespace-stripped text compared before and after (`scratchpad/p208/remap208.py <worktree> [--write]`), flagged one range whose first line `??` merged (Dispatcher.cs) and was right. A citation whose numbers do not move but whose lines changed (PersistencePreparation.cs 18-160) still needs its diagram staged: `repin-diagram.py … --pin-only` to HEAD as the interim change, then the real pin.
+- **The produced nuspecs prove the removals**: `dotnet pack src/<id>/<id>.csproj -c Release -o <scratch>` and read `<id>.nuspec` from the nupkg (`scratchpad/p208/nuspecs.py`); the eight packages list no removed dependency and a `net11.0` group. `PackageGraphTests.Produced_nuspecs…` uses a literal nuspec, red once the Dapper row changed; `validate.py`'s artifact step runs `PackageGraph.Violations` on the real ones.
+- **Held on the 10 line, consumed from net11.0**: EF Core Relational and Design, `Microsoft.AspNetCore.OpenApi` and `dotnet-ef` 10.0.15 (their nuspecs carry a `net10.0` group only), Npgsql 10.0.3, its EF provider, EFCore.NamingConventions 10.0.1 and `Asp.Versioning.*` 10.2.3: restore and build clean, no NU1608.
+- **The integration branch moved after my pins** (#211 re-pinned ci-and-publication mid-ticket): instead of `git rebase`, whose replayed pin commits conflict and pin commits the rebase orphans, stop any running validation (it refuses a checkout that changes), `git checkout -B ticket-<n> <new tip>`, `git cherry-pick` each code commit, re-pin after each with `repin-diagram.py`, and resolve the interim pin's conflict by writing the new HEAD as its revision. `git diff <old commit> <replayed commit> --stat` then shows only the tip's files and revision lines. The memory index's union merge doubles a line the tip changed: keep the tip's.
+- **Docs that restate a moved pin**: section C's rows and the I.3 rows carry dated `*… until 2026-11-15*` notes in the style #167 and #207 used; the architecture document's sentences change in place; `docs/packages.md` states the `net11.0` assembly the artifact check reads.
+
+**Why:** the retarget touched about 170 files; each of these cost a probe or a second run.
+**How to apply:** for any later step of the .NET 11 move (#209 to #217), a new package on SDK 11, or a CSharpier bump. Related: [[templates-packaging-and-publication-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
