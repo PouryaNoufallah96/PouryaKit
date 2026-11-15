@@ -582,7 +582,7 @@ each amendment above keeps the version it was read on.
   leaves out by its full name.
 - **The release notes, 6.53.0 to 6.64.0** (`JasperFx/wolverine` releases). None states a breaking API change. Two
   changes reach the Kit's dead letters, 6.54.0's archive and replay history and 6.63.0's refusal to dead-letter a
-  delivery its inbox shows handled; ADR 0006's WolverineFx 6.64.0 amendment records them. The EF Core half of that
+  delivery its inbox shows handled; ADR 0006's amendment on dead letters on WolverineFx 6.64.0 records them. The EF Core half of that
   6.63.0 change, which treats a commit that applied but reported an error as handled, is in
   `EfCoreEnvelopeTransaction`'s commit of a handler transaction that marked its inbox row handled; the Unit of Work
   commits its own transaction, so it does not reach it. 6.63.0's other durability fixes, such as envelope ids that no
