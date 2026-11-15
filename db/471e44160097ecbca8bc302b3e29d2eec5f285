@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_3529354fc6f9e2::t_c639d3b0f505cb 83
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_3529354fc6f9e2::t_a848d0d8805fe6 49-56
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_1f06abe4e4c473 3,9,29
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3529354fc6f9e2::t_f266478ba318cc 146-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "db471e44160097ecbca8bc302b3e29d2eec5f285",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
