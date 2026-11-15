@@ -26,6 +26,8 @@ Every third-party pin in `Directory.Packages.props` is its newest stable version
 |---|---|---|---|---|
 | `PDFsharp-MigraDoc` | 6.2.4 | 6.5.0 | 6.2.4 is its last MIT release: 6.5.0 and later are `AGPL-3.0-only`, which `LicenceTests` refuses (ADR 0002) | Nothing: a permanent ceiling, unless the PDF renderer is replaced |
 | `Microsoft.EntityFrameworkCore.Relational` and `.Design`, and the `dotnet-ef` tool | 10.0.15 | 11.0.0 | `Npgsql.EntityFrameworkCore.PostgreSQL` has no stable 11, and its 10.0.3 and `EFCore.NamingConventions` 10.0.1 each require EF Core below 11 | A stable `Npgsql.EntityFrameworkCore.PostgreSQL` 11 |
+| `Microsoft.AspNetCore.OpenApi` | 10.0.15 | 11.0.0 | 11.0.0 requires `Microsoft.OpenApi` 3.11 or later, and `Asp.Versioning.OpenApi` 10.2.3, its newest, requires `Microsoft.OpenApi` below 3; `PouryaKit.Web.OpenApi` references both | `PouryaKit.Web.OpenApi` no longer referencing `Asp.Versioning.OpenApi`, or a release of it that accepts `Microsoft.OpenApi` 3 |
+| `OpenTelemetry.Instrumentation.Runtime` | 1.20.1 | 1.21.0 | The service defaults' runtime metrics are moving to .NET's own `System.Runtime` meter, which needs no package | The service defaults reading the `System.Runtime` meter, which removes the package |
 
 ## Clean consumers
 

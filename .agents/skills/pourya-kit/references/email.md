@@ -58,7 +58,7 @@ internal sealed class WelcomeCustomerNotificationHandler(IEmailSender email)
 
 - `SendAsync` succeeds once the mail server has accepted the mail.
 - It fails with `EmailErrors.InvalidAddress` (`Email.InvalidAddress`, target `To`), sending nothing, when the recipient is not one mailbox address with a domain, such as `ada@example.com` or `Ada <ada@example.com>`.
-- An address is sent as written. A domain in Unicode (`ada@bücher.example`) or in its punycode form (`ada@xn--bcher-kva.example`) is accepted, and the mail's `To` header names it in punycode either way; since MailKit 5 the envelope recipient keeps a punycode domain as written instead of decoding it, which names the same mailbox.
+- A domain in Unicode (`ada@bücher.example`) or in its punycode form (`ada@xn--bcher-kva.example`) is accepted, and the mail's `To` header names it in punycode either way. Since MailKit 5 the envelope recipient of an address written in punycode keeps it as written instead of decoding it, which names the same mailbox.
 - It throws MailKit's exception when the server cannot be reached, refuses the login or refuses the mail. Either way the delivery is retried and, once its retries are spent, set aside as a dead letter with the reason ([messaging.md](messaging.md)).
 
 ## What the Kit guarantees

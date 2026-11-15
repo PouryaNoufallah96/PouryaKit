@@ -23,8 +23,8 @@ public sealed class VectorSearchTests(AppFixture app, VectorFixture vectors)
     private const string OllamaProbe = "POURYAKIT_OLLAMA_PROBE";
     private const string OllamaImage = "ollama/ollama:0.40.16";
 
-    // AiTests' chat model, qwen2.5:0.5b, serves no embeddings on this Ollama: its runner answers 501, "This server does not
-    // support embeddings", so the probe pulls an embedding model.
+    // AiTests' chat model, qwen2.5:0.5b, served no embeddings when this probe was written: its runner answered 501, "This
+    // server does not support embeddings", so the probe pulls an embedding model.
     private const string OllamaModel = "all-minilm:22m";
 
     private static readonly Actor Ada = Actor.Person("ada");

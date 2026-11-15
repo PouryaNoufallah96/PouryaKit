@@ -245,7 +245,7 @@ Each call takes the key the caller chooses and a `CancellationToken`, and return
 
 ## PouryaKit.Storage.S3
 
-The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as MinIO. It references `PouryaKit.Storage`, which holds its composition check, and `AWSSDK.S3` 4.1.0, which brings `AWSSDK.Core` and the SDK's numerics extension, all Apache-2.0; its options come with the .NET 11 shared framework.
+The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as MinIO. It references `PouryaKit.Storage`, which holds its composition check, and `AWSSDK.S3` 4.1.0, which brings `AWSSDK.Core` and the SDK's numerics extension, all Apache-2.0, and `System.IO.Hashing` (MIT); its options come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
