@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "93866a339305c1731c0479b660dd4c61fac3f94a",
+      "revision": "b6a5be5576a3d08dfd2bbb427b8c626ad9322c04",
       "link_mode": "web"
     }
   },
@@ -361,8 +361,8 @@
         },
         {
           "path": "src/PouryaKit.Email.MailKit/MailKitEmailSender.cs",
-          "line": 26,
-          "end_line": 41,
+          "line": 27,
+          "end_line": 42,
           "label": "a connection per send"
         }
       ]

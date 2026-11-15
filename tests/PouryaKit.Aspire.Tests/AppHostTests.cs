@@ -64,9 +64,9 @@ public sealed class AppHostTests
         Assert.Equal(Declared, Names(builder.Resources));
         Assert.Equal(
             [
-                ("broker", "docker.io/library/rabbitmq:4.3.6", "/var/lib/rabbitmq"),
-                ("cache", "docker.io/library/redis:8.10.1", "/data"),
-                ("postgres", "docker.io/library/postgres:18.6", "/var/lib/postgresql"),
+                ("broker", "docker.io/library/rabbitmq:4.4.0", "/var/lib/rabbitmq"),
+                ("cache", "docker.io/library/redis:8.10.3", "/data"),
+                ("postgres", "docker.io/library/postgres:18.7", "/var/lib/postgresql"),
             ],
             builder
                 .Resources.OfType<ContainerResource>()
@@ -153,7 +153,10 @@ public sealed class AppHostTests
         var ollama = builder
             .Resources.OfType<ContainerResource>()
             .Single(container => container.Name == "ollama");
-        Assert.Equal(("ollama", "docker.io/ollama/ollama:0.40.6", "/root/.ollama"), Pinned(ollama));
+        Assert.Equal(
+            ("ollama", "docker.io/ollama/ollama:0.40.16", "/root/.ollama"),
+            Pinned(ollama)
+        );
         Assert.Equal(
             ["ollama_model"],
             ollama.Annotations.OfType<HealthCheckAnnotation>().Select(check => check.Key)
@@ -316,7 +319,7 @@ public sealed class AppHostTests
     {
         Assert.SkipUnless(
             Environment.GetEnvironmentVariable(OllamaProbe) == "1",
-            $"The local agent's start test runs only with {OllamaProbe}=1: it pulls ollama/ollama:0.40.6 and the model qwen2.5:0.5b."
+            $"The local agent's start test runs only with {OllamaProbe}=1: it pulls ollama/ollama:0.40.16 and the model qwen2.5:0.5b."
         );
         // A first run pulls a 7 GB image and the model.
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(

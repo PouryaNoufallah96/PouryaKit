@@ -144,7 +144,7 @@ public sealed class App : HostFixture, IAsyncLifetime
         RandomNumberGenerator.GetBytes(32)
     );
 
-    private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4.3.6").Build();
+    private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4.4.0").Build();
 
     // The Host joins the broker as it is composed, so the broker starts first; then HostFixture starts PostgreSQL and the Host.
     async ValueTask IAsyncLifetime.InitializeAsync()

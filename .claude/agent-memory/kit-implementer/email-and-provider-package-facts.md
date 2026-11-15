@@ -31,5 +31,11 @@ metadata:
 - **Removing a test an older acceptance row names** fails `check-docs.py` (`names no test`) unless it goes in `REMOVED_TESTS` in the script; a bare backticked method name without its class passes, so the row can say the test was removed and point to the replacement.
 - **A one-provider check fails every count but one** (#151, Codex): zero means the provider registered and a later `RemoveAll<T>()` (in `Microsoft.Extensions.DependencyInjection.Extensions`) took it out; a bare Host validates nothing that resolves the contract, so only the check catches it. The next provider's check copies the `registered.Count switch { 1 => [], 0 => [...], _ => [...] }` shape.
 
+## MailKit 5 and Papercut 8 (#209, 2026-11-15; MailKit 5.0.0, MimeKit.Core 5.0.0, papercut-smtp 8.0.2, Testcontainers.Papercut 4.16.0)
+
+- **MailKit 5.0.0 brings `MimeKit.Core` 5.0.0 alone**: no `MimeKit`, no BouncyCastle, no `System.Security.Cryptography.Pkcs` (read `obj/project.assets.json`). `SendAsync(MimeMessage, …)` is an extension in the `MailKit` namespace: one `using MailKit;`.
+- **Punycode, measured through the Host with the Papercut version held constant**: both spellings (`ada@bücher.example`, `ada@xn--bcher-kva.example`) are accepted, and the `To` header is `ada@xn--bcher-kva.example` on 4.18.2 and 5.0.0. Only the envelope (RCPT TO) of the punycode spelling changed: 4.18.2 sent the decoded Unicode form (Papercut offers SMTPUTF8), 5.0.0 sends it as written. The session kept 5's behaviour (no IDNA code in the Kit); the test pins acceptance and the header, not the envelope.
+- **Papercut records the envelope recipients as a `Bcc` header** of the stored message; `GET /api/messages/{id}/raw` returns the stored text with LF line ends. `GET /api/messages` takes `limit=10` by default on 7.8.0 and 8.0.2; 8.x answers `If-None-Match` with 304. 8.0.2 runs unchanged under `Testcontainers.Papercut` 4.16.0. Isolate a provider bump from a test-server bump: move one, probe, then the other.
+
 **Why:** each cost a build or a full run in #124 or #147.
 **How to apply:** for the next provider package (Storage, Localization, AI), any new container module, and any change to what a Stub Notification Handler needs. Related: [[templates-packaging-and-publication-facts]], [[dotnet-and-test-conventions]], [[docs-verification-tools]].

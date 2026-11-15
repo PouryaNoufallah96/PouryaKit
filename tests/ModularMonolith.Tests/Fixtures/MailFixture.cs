@@ -13,7 +13,7 @@ namespace ModularMonolith.Tests.Fixtures;
 public sealed class MailFixture(AppFixture app) : IAsyncLifetime
 {
     private readonly PapercutContainer _papercut = new PapercutBuilder(
-        "changemakerstudiosus/papercut-smtp:7.8.0"
+        "changemakerstudiosus/papercut-smtp:8.0.2"
     ).Build();
     private HttpClient? _api;
     private WebApplication? _host;
@@ -80,6 +80,22 @@ public sealed class MailFixture(AppFixture app) : IAsyncLifetime
         }
 
         return mails;
+    }
+
+    /// <summary>The one mail Papercut has received with the subject <paramref name="subject"/>, as the text it received.</summary>
+    public async Task<string> RawAsync(string subject)
+    {
+        var api = _api
+            ?? throw new InvalidOperationException("Papercut starts in InitializeAsync.");
+        var listed = await api.GetFromJsonAsync<MailList>(
+            "/api/messages",
+            TestContext.Current.CancellationToken
+        );
+        var summary = Assert.Single(listed!.Messages, summary => summary.Subject == subject);
+        return await api.GetStringAsync(
+            $"/api/messages/{Uri.EscapeDataString(summary.Id)}/raw",
+            TestContext.Current.CancellationToken
+        );
     }
 
     /// <summary>Waits until Papercut holds <paramref name="count"/> mails with <paramref name="subject"/>; fails after 30 s.</summary>

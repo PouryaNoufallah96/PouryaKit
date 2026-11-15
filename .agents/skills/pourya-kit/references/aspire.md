@@ -158,10 +158,10 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
 
 | Call | Resource | Image | Volume target |
 |---|---|---|---|
-| `AddPouryaKitPostgres(name)` | `PostgresServerResource` | `docker.io/library/postgres:18.6` | `/var/lib/postgresql` |
-| `AddPouryaKitRedis(name)` | `RedisResource` | `docker.io/library/redis:8.10.1` | `/data` |
-| `AddPouryaKitRabbitMq(name)` | `RabbitMQServerResource` | `docker.io/library/rabbitmq:4.3.6`, no management plugin | `/var/lib/rabbitmq` |
-| `AddPouryaKitOllama(name, model)` | `ContainerResource`, healthy once it serves `model` | `docker.io/ollama/ollama:0.40.6` | `/root/.ollama` |
+| `AddPouryaKitPostgres(name)` | `PostgresServerResource` | `docker.io/library/postgres:18.7` | `/var/lib/postgresql` |
+| `AddPouryaKitRedis(name)` | `RedisResource` | `docker.io/library/redis:8.10.3` | `/data` |
+| `AddPouryaKitRabbitMq(name)` | `RabbitMQServerResource` | `docker.io/library/rabbitmq:4.4.0`, no management plugin | `/var/lib/rabbitmq` |
+| `AddPouryaKitOllama(name, model)` | `ContainerResource`, healthy once it serves `model` | `docker.io/ollama/ollama:0.40.16` | `/root/.ollama` |
 
 - Each call but Ollama's is Aspire's own `AddPostgres`, `AddRedis` or `AddRabbitMQ` with the image pinned (`WithImage`) and `WithDataVolume()`, so it returns Aspire's resource builder and anything Aspire offers on it still applies; Ollama's is `AddContainer` with a volume Aspire names the same way.
 - The tags are the ones the Kit's tests run. Aspire's own defaults float on a minor version (`18.3`, `8.6`, `4.3`).

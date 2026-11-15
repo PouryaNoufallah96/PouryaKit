@@ -641,7 +641,7 @@ public sealed class TemplateTests
             [
                 $"modular does not hold the placeholder {token} that packing replaces with the Kit's version.",
                 "modular pins PouryaKit.Web at 0.1.0; every Kit package has $(PouryaKitVersion).",
-                "modular pins xunit.v3 at 4.0.0; the Kit has 4.0.2.",
+                "modular pins xunit.v3 at 4.0.0; the Kit has 4.0.3.",
             ],
             VersionDifferences(Modular, changed.ToString(), kit, token)
         );

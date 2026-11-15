@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using CsvHelper;
@@ -157,6 +156,44 @@ public sealed class ReportRendererTests
         Assert.Equal(expected, Records(_renderer.Render(notes, ReportFormat.Csv).Value));
     }
 
+    // The bytes the Kit wrote on CsvHelper 33, pinned so a CsvHelper release cannot change a file a consumer already parses.
+    [Fact]
+    public void The_csv_quotes_an_empty_field_an_edge_space_a_quote_a_separator_and_a_line_break_and_no_other_field()
+    {
+        var edges = new ReportLayout(
+            "Edges",
+            new ReportTable(
+                [
+                    new("Empty"),
+                    new("Leading"),
+                    new("Trailing"),
+                    new("Tab"),
+                    new("Quote"),
+                    new("Comma"),
+                    new("Line"),
+                    new("Return"),
+                    new("Number"),
+                ],
+                [
+                    ["", " a", "a ", "a\t", "say \"hi\"", "a,b", "a\nb", "a\rb", "\t5"],
+                ]
+            )
+        );
+
+        var report = _renderer.Render(edges, ReportFormat.Csv).Value;
+
+        // A number keeps its leading tab: it is not escaped as a formula, nor quoted.
+        byte[] expected =
+        [
+            .. Encoding.UTF8.Preamble,
+            .. Encoding.UTF8.GetBytes(
+                "Empty,Leading,Trailing,Tab,Quote,Comma,Line,Return,Number\r\n"
+                    + "\"\",\" a\",\"a \",a\t,\"say \"\"hi\"\"\",\"a,b\",\"a\nb\",\"a\rb\",\t5\r\n"
+            ),
+        ];
+        Assert.Equal(expected, report.Content);
+    }
+
     [Fact]
     public void The_spreadsheet_encodes_escape_like_text_and_control_characters_so_they_read_back_verbatim()
     {
@@ -296,16 +333,15 @@ public sealed class ReportRendererTests
 
     private static List<IReadOnlyList<string>> Records(RenderedReport report)
     {
-        using var csv = new CsvReader(
+        // The reader would take the first record as a header and guess the separator.
+        using var csv = CsvReader.Create(
             new StreamReader(new MemoryStream(report.Content)),
-            CultureInfo.InvariantCulture
+            new CsvReaderOptions { Separator = ',', HasHeader = false }
         );
         var records = new List<IReadOnlyList<string>>();
         while (csv.Read())
         {
-            records.Add([
-                .. Enumerable.Range(0, csv.Parser.Count).Select(index => csv.GetField(index)!),
-            ]);
+            records.Add([.. Enumerable.Range(0, csv.FieldCount).Select(csv.GetString)]);
         }
 
         return records;
