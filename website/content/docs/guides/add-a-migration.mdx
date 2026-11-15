@@ -48,7 +48,7 @@ dotnet ef migrations add Initial \
 
 ### Fill a migration for a table outside the model
 
-The Receipt table, the [Snapshot](/docs/reference/glossary#snapshot) version table and the idempotency key table are not in the Module's model, so their migration is empty and the model snapshot stays as it was. Fill its `Up` and `Down` with the Kit's call and the Module's schema:
+The Receipt table, the [Snapshot](/docs/reference/glossary#snapshot) version table and the idempotency key table are not in the Module's model, so their migration's `Up` and `Down` are empty and the model snapshot changes only in the id of the latest migration (and, the first time over a snapshot an earlier EF Core wrote, in its layout and product version). Fill its `Up` and `Down` with the Kit's call and the Module's schema:
 
 <Snippet file="samples/ModularMonolith/src/Modules/Catalog/Catalog/Infrastructure/Data/Migrations/20261005180000_Receipts.cs" region="receipts-migration" />
 
