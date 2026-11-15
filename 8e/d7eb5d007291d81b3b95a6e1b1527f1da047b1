@@ -1,0 +1,21 @@
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_56c78af6bca6cd::t_07468a942fb4b2 1
+  s_56c78af6bca6cd::t_a4df8153d34900 398-399,410-412,416,421-422
+  s_56c78af6bca6cd::t_34458097dd8eb6 567
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ed7eb5d007291d81b3b95a6e1b1527f1da047b1",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
