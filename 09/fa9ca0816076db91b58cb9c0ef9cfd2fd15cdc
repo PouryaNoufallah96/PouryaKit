@@ -1,0 +1,22 @@
+docs/packages.md
+  s_3529354fc6f9e2::t_eba2b948f877be 31
+  s_3529354fc6f9e2::t_af0a272c994f3c 39
+docs/agents/brief-template.md
+  s_3529354fc6f9e2::t_f092733cdd6866 40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09fa9ca0816076db91b58cb9c0ef9cfd2fd15cdc",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
