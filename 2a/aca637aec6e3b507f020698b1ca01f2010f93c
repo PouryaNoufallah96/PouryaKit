@@ -1,0 +1,23 @@
+.agents/skills/pourya-kit/references/realtime.md
+  s_3529354fc6f9e2::t_babee30e396f28 89
+docs/adr/0012-realtime-through-postgresql-notifications.md
+  s_3529354fc6f9e2::t_8e60951c612052 76-78,85-89
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_72fd74ea0991e4 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2aaca637aec6e3b507f020698b1ca01f2010f93c",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
