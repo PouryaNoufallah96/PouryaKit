@@ -1,0 +1,21 @@
+docs/architecture/diagrams/http-command.html
+  s_56c78af6bca6cd::t_1796da024454ab 4985
+docs/architecture/diagrams/http-command.sequence.json
+  s_56c78af6bca6cd::t_1796da024454ab 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "40546388d68b57a5c5892204577bbca98392bf42",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
