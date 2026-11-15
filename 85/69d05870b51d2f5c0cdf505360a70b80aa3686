@@ -1,0 +1,127 @@
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_21c4ad94f2e185 654
+  s_23f639dcb049df::t_38d5ce0690fc18 232,248,281,313,322,337,673
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_f235692caf41f6 869
+  s_56c78af6bca6cd::t_f2450f18c9f646 275,280,282,285-286,871,885,887-888,893
+.agents/skills/pourya-kit/references/ai.md
+  s_56c78af6bca6cd::t_487445afb1fa4b 329,365
+.agents/skills/pourya-kit/references/aspire.md
+  s_56c78af6bca6cd::t_5ce420398cd7b6 161-164
+.agents/skills/pourya-kit/references/email.md
+  s_56c78af6bca6cd::t_b852117b336156 61,78
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_56c78af6bca6cd::t_257c6ed90a5bc7 85
+.agents/skills/pourya-kit/references/rabbitmq.md
+  s_56c78af6bca6cd::t_69857fcf1d50d4 141
+.agents/skills/pourya-kit/references/reporting.md
+  s_56c78af6bca6cd::t_4322f851fa8603 104,116
+.agents/skills/pourya-kit/references/storage.md
+  s_56c78af6bca6cd::t_b47b0aec4ce091 116
+.agents/skills/pourya-kit/references/templates.md
+  s_56c78af6bca6cd::t_59db8adaa0affa 90,102
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_21a09b861c3998 6,20,24,29
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_56c78af6bca6cd::t_2e9c2aef913961 23-29
+.claude/agent-memory/kit-implementer/email-and-provider-package-facts.md
+  s_56c78af6bca6cd::t_fd925d1b176997 34-39
+.claude/agent-memory/kit-implementer/merge-ci-and-workflow-tooling-facts.md
+  s_56c78af6bca6cd::t_93e4b8b975ec28 50-54
+.claude/agent-memory/kit-implementer/pdf-and-file-rendering-facts.md
+  s_56c78af6bca6cd::t_5c3c611d1eb5ce 23-30
+Directory.Packages.props
+  s_56c78af6bca6cd::t_00918c0e646695 15,18,25-29,31-32,49-50,53-56,60,80-81
+docs/architecture/diagrams/ci-and-publication.html
+  s_56c78af6bca6cd::t_908447d788d981 4985
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_9cfe9d2172e609 11
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_f616d720497746 10
+docs/architecture/diagrams/host-start.html
+  s_56c78af6bca6cd::t_9d15450df10789 4985
+docs/architecture/diagrams/host-start.workflow.json
+  s_56c78af6bca6cd::t_bad72397b79883 11
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_cd888b2fad3e00 10,364-365
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_29f384e93c7979 10
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_56c78af6bca6cd::t_79f8b1702b07ff 10
+docs/architecture/diagrams/proving-sample-and-templates.html
+  s_56c78af6bca6cd::t_f8eef38461764c 4985
+scripts/packaging/composition_proof.py
+  s_56c78af6bca6cd::t_940bd6cc06ccb2 28-29
+src/PouryaKit.Aspire/AspireDistributedApplicationBuilderExtensions.cs
+  s_56c78af6bca6cd::t_a32eab3064a088 18-21
+src/PouryaKit.Email.MailKit/MailKitEmailSender.cs
+  s_56c78af6bca6cd::t_16b06c21ebf4aa 2
+src/PouryaKit.Reporting/Csv/CsvReport.cs
+  s_56c78af6bca6cd::t_4e163aa7caceed 12-13,18,20,33,40,48
+src/PouryaKit.Reporting/PouryaKit.Reporting.csproj
+  s_56c78af6bca6cd::t_73dc6a0cc3c2ba 9-10
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_56c78af6bca6cd::t_b21e1d143dbd6c 34-35,41-44,50
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_56c78af6bca6cd::t_c3a58b4c44a7c2 29-30,36-39,45
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_56c78af6bca6cd::t_34b47a88c68145 24-25,30-33,40
+src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs
+  s_56c78af6bca6cd::t_5c11c11254c06c 147
+src/PouryaKit.Testing/HostFixture.cs
+  s_56c78af6bca6cd::t_cf7c03cbf8902e 33
+tests/ModularMonolith.Tests/AiTests.cs
+  s_56c78af6bca6cd::t_564c059606e728 34
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_56c78af6bca6cd::t_6aa85b23bba66e 596
+tests/ModularMonolith.Tests/EmailTests.cs
+  s_56c78af6bca6cd::t_2747b75f253220 116-141
+tests/ModularMonolith.Tests/Fixtures/BrokerFixture.cs
+  s_56c78af6bca6cd::t_718b168ad47211 31,36
+tests/ModularMonolith.Tests/Fixtures/MailFixture.cs
+  s_56c78af6bca6cd::t_df4c5f7d9cc3e0 16,85-100
+tests/ModularMonolith.Tests/Fixtures/ReportFixture.cs
+  s_56c78af6bca6cd::t_71cc9f8eb607c1 35
+tests/ModularMonolith.Tests/Fixtures/StreamFixture.cs
+  s_56c78af6bca6cd::t_1c8a2e5fe7b0ba 22
+tests/ModularMonolith.Tests/VectorSearchTests.cs
+  s_56c78af6bca6cd::t_cc843b2e945c9b 24,26-27
+tests/PouryaKit.ArchitectureTests/TemplateTests.cs
+  s_56c78af6bca6cd::t_e5b271938b186f 644
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_56c78af6bca6cd::t_1c0d5d2ffa286c 67-69,156-159,322
+tests/PouryaKit.Reporting.Tests/ReportRendererTests.cs
+  s_56c78af6bca6cd::t_6c927bdabbc7fa 159-196,336-337,339,344
+tests/PouryaKit.Storage.Tests/S3StoreFixture.cs
+  s_56c78af6bca6cd::t_b9fad0afafd6e0 20
+website/content/docs/get-started/first-host.mdx
+  s_56c78af6bca6cd::t_fce97e15f457bb 39
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_824999c773c991 6-7,13,15,23,26,30,32
+docs/packages.md
+  s_23f639dcb049df::t_1ccdcadecaab7c 21-30,75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8569d05870b51d2f5c0cdf505360a70b80aa3686",
+  "prompts": {},
+  "sessions": {
+    "s_23f639dcb049df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a88534a1ac2228d6b",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    },
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
