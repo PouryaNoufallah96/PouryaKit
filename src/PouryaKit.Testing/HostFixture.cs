@@ -261,7 +261,11 @@ public abstract class HostFixture : IAsyncLifetime
             {
                 var dbContext = (DbContext)
                     scope.ServiceProvider.GetRequiredService(options.ContextType);
-                await dbContext.Database.MigrateAsync(cancellationToken);
+                // A Module before its first migration has none to apply, and EF Core refuses to migrate it.
+                if (dbContext.Database.GetMigrations().Any())
+                {
+                    await dbContext.Database.MigrateAsync(cancellationToken);
+                }
             }
         }
 

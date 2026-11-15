@@ -64,3 +64,28 @@ internal sealed class HoldChangeCommandHandler(
         return changed;
     }
 }
+
+// Locks a product's row in the Operation's transaction with plain SQL and changes nothing in it, so its version stays as
+// another Operation loaded it: two Operations that each lock one product and rename the other deadlock in their saves.
+internal sealed record LockProductCommand(Guid Product) : Command;
+
+internal sealed class LockProductCommandHandler(IUnitOfWorkConnection unitOfWork)
+    : CommandHandler<LockProductCommand>
+{
+    public override async Task<Result> Handle(
+        LockProductCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        var (connection, transaction) = unitOfWork.Join();
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "select from catalog.products where id = @Product for update",
+                new { command.Product },
+                transaction,
+                cancellationToken: cancellationToken
+            )
+        );
+        return Result.Success();
+    }
+}

@@ -110,7 +110,10 @@ internal sealed class EfUnitOfWork(
             await dbContext.SaveChangesAsync(cancellationToken);
             return null;
         }
-        catch (DbUpdateConcurrencyException)
+        // EF Core's own conflict, a row the save expected to change and did not, carries no inner exception. A provider
+        // may report a database error as one too, with that error inside, as PostgreSQL's provider does a deadlock or a
+        // serialization failure: it stays an exception, as any other error the Unit of Work does not map.
+        catch (DbUpdateConcurrencyException exception) when (exception.InnerException is null)
         {
             return UnitOfWorkErrors.ConcurrencyConflict;
         }
