@@ -413,7 +413,7 @@ def validate(output, *, fetch=True):
                 cwd=solution.parent, env=env, log=output / f"consumer-{name}-restore.log")
             run(["dotnet", "build", solution, "-c", "Release", "--no-restore"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-build.log")
             test_project = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
-            result = run(["dotnet", "test", "--project", test_project, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
+            result = run(["dotnet", "test", "--project", test_project, "-c", "Release", "--no-build", "--timeout", "45m"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
             passed = re.search(r"succeeded: (\d+)", result)
             failed = re.search(r"failed: (\d+)", result)
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":
