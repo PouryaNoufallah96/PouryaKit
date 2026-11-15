@@ -1,0 +1,37 @@
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 29,87
+.claude/agent-memory/kit-implementer/grpc-facts.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 29
+.claude/agent-memory/kit-implementer/email-and-provider-package-facts.md
+  s_3529354fc6f9e2::t_c991dd111f7edb 11
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 27,70
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_3529354fc6f9e2::t_ca05b2a35a1503 37-43
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 13,125,134
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_841a86c8000775 29
+.claude/agent-memory/kit-implementer/dotnet-and-test-conventions.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 18,29,91
+.claude/agent-memory/kit-implementer/core-json-and-architecture-test-facts.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 23,28,81
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_3529354fc6f9e2::t_f0c9a3cab502db 17,88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c12e85c055935cba7c9d51a464e762777afd5a9",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
