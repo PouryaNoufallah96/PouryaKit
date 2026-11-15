@@ -15,7 +15,7 @@ metadata:
 - `nuget.config` clears sources to nuget.org only: with central package management plus TreatWarningsAsErrors, a second source without mapping turns NU1507 into a restore error.
 - xUnit analyzer xUnit1051 is an error under TreatWarningsAsErrors: any test call to a method taking a CancellationToken must pass `TestContext.Current.CancellationToken`.
 - Ticket #7 (2026-10-05): Cqrs and Validation test projects reference `Microsoft.Extensions.DependencyInjection` (10.0.12, test-only, recorded as a deviation) to build a strict container; logging in tests is an own `ILogger<>` open-generic stand-in or `NullLogger<>`, never `Microsoft.Extensions.Logging`.
-- CI's setup-dotnet reads global.json; `rollForward: latestPatch` keeps the pin's feature band (`10.0.4xx` on 10.0.402, `11.0.1xx` on 11.0.100, which hosted CI had not yet run on 2026-11-15), `latestFeature` would float to any patch of the major.
+- CI's setup-dotnet reads global.json; `rollForward: latestPatch` keeps the pin's feature band (`10.0.4xx` on 10.0.402, `11.0.1xx` on 11.0.100, which hosted CI had not yet run on 2026-11-15), `latestFeature` would float to any band of that `major.minor` (any 11.0 now).
 - `Assert.Throws<T>(() => { ...; throw ...; })` binds the `Func<Task>` overload (CS0619 under xunit.v3); pass a `static void` local function instead.
 - **xUnit truncates a long string list in a failure.** To see a rule's full output once, temporarily `Assert.Fail(string.Join("\n", list))`, then restore from a scratchpad copy.
 - An `AsyncLocal` write inside an awaited async method never flows back to the caller, so asserting `DomainClock.Current` after awaiting the dispatcher cannot fail; test binding restore synchronously (`tests/ModularMonolith.Tests/TestClockTests.cs`).
