@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
@@ -138,8 +139,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     }
 
     // Policies the Host states on Asp.Versioning's own options, not through the Kit's sunsets: a deprecation policy of
-    // 1.0 beside its configured sunset, and a sunset of 2.0 with no date. A link to anything but an HTML page is in the
-    // extension only.
+    // 1.0 beside its configured sunset, and a sunset of 2.0 with no date, whose link names a media, a language and an
+    // extension attribute. A link to anything but an HTML page is in the extension only.
     [Fact]
     public async Task A_versions_deprecation_and_sunset_policies_reach_its_document_the_deprecations_first()
     {
@@ -160,11 +161,18 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                         .Link($"{deprecation}.json")
                         .Type("application/json")
                         .Title("Deprecation");
-                    versioning
-                        .Policies.Sunset(new ApiVersion(2, 0))
-                        .Link("https://example.com/catalog/api-v2-sunset")
-                        .Title("Sunset of 2.0")
-                        .Type("text/html");
+                    var sunset = new LinkHeaderValue(
+                        new Uri("https://example.com/catalog/api-v2-sunset"),
+                        "sunset"
+                    )
+                    {
+                        Title = "Sunset of 2.0",
+                        Type = "text/html",
+                        Media = "screen",
+                    };
+                    sunset.Languages.Add("en");
+                    sunset.Extensions.Add("x-audience", "partners");
+                    versioning.Policies.Sunset(new ApiVersion(2, 0)).Per(new SunsetPolicy(sunset));
                 })
         );
         await host.StartAsync(TestContext.Current.CancellationToken);
@@ -184,6 +192,10 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.Equal(
             "\n\n### Links\n\n- [Sunset of 2.0](https://example.com/catalog/api-v2-sunset)",
             v2.GetProperty("info").GetProperty("description").GetString()
+        );
+        Assert.Equal(
+            """{"links":[{"title":"Sunset of 2.0","type":"text/html","rel":"sunset","url":"https://example.com/catalog/api-v2-sunset","media":"screen","lang":["en"],"x-audience":"partners"}]}""",
+            JsonSerializer.Serialize(v2.GetProperty("x-api-versioning"))
         );
     }
 
@@ -273,6 +285,45 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             ApiVersionHeadersOf(v2)
         );
+    }
+
+    // An endpoint may bind a query parameter of the same name as the version header, which stays as the endpoint binds it.
+    [Fact]
+    public async Task A_query_parameter_named_api_version_stays_unconstrained_beside_the_version_header()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs()
+        );
+        host.MapGet("/query-named-version", ([FromQuery(Name = "api-version")] string named) =>
+                named
+            )
+            .WithApiVersionSet(
+                host.NewApiVersionSet()
+                    .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+                    .HasApiVersion(new ApiVersion(2, 0))
+                    .Build()
+            );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var client = Unversioned(AppFixture.ClientOf(host));
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        foreach (var (document, version) in new[] { (v1, "1.0"), (v2, "2.0") })
+        {
+            Assert.Equal(
+                $$$"""[{"name":"api-version","in":"query","required":true,"schema":{"type":"string"}},{"name":"api-version","in":"header","description":"The requested API version","required":true,"schema":{"enum":["{{{version}}}"],"type":"string"}}]""",
+                JsonSerializer.Serialize(
+                    document
+                        .GetProperty("paths")
+                        .GetProperty("/query-named-version")
+                        .GetProperty("get")
+                        .GetProperty("parameters")
+                )
+            );
+        }
     }
 
     [Fact]

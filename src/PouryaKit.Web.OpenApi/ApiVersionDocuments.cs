@@ -144,7 +144,9 @@ internal sealed class ApiVersionDocuments(IApiVersionDescriptionProvider version
     }
 
     // A deprecated version's operations are deprecated. The API version parameter of the header reader admits only the
-    // document's version and says what it is; the URL segment's is substituted into the path.
+    // document's version and says what it is; the URL segment's is substituted into the path. It is matched by name and
+    // by location, which the framework names after the binding source, since the endpoint may bind a parameter of that
+    // name elsewhere, such as its query.
     private static void Describe(OpenApiOperation operation, ApiDescription api)
     {
         operation.Deprecated |= api.IsDeprecated;
@@ -158,6 +160,7 @@ internal sealed class ApiVersionDocuments(IApiVersionDescriptionProvider version
                     }
                 && operation.Parameters?.FirstOrDefault(parameter =>
                     parameter.Name == described.Name
+                    && parameter.In?.ToString() == described.Source.Id
                 )
                     is OpenApiParameter { Schema: OpenApiSchema schema } parameter
             )
@@ -198,6 +201,24 @@ internal sealed class ApiVersionDocuments(IApiVersionDescriptionProvider version
 
         json["rel"] = link.RelationType.Value;
         json["url"] = link.LinkTarget.ToString();
+        if (link.Media.HasValue)
+        {
+            json["media"] = link.Media.Value;
+        }
+
+        // Upstream parsed each language tag as JSON, so a tag such as en failed the document; here a tag is a string.
+        if (link.Languages.Count > 0)
+        {
+            json["lang"] = new JsonArray([
+                .. link.Languages.Select(language => JsonValue.Create(language.Value)),
+            ]);
+        }
+
+        foreach (var (name, value) in link.Extensions)
+        {
+            json[name.ToString()] = value.ToString();
+        }
+
         return json;
     }
 }
