@@ -1,0 +1,23 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_2857844cf38f8c 4
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_56c78af6bca6cd::t_59606fd62381bb 162
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_56c78af6bca6cd::t_6d275874f72593 121-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04868805c0dd7aa74a9a0cf0886721855e0225bd",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
