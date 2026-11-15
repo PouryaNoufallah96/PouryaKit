@@ -1,0 +1,23 @@
+tests/ModularMonolith.Tests/IntegrationEventWiringTests.cs
+  s_3529354fc6f9e2::t_b6dd15df9e963e 56-61
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_3529354fc6f9e2::t_7e9982fd6c99a7 19-21,27-28
+  s_3529354fc6f9e2::t_d944e807b710c7 126-128,130
+  s_3529354fc6f9e2::t_ad283e778b1fc2 129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7f26dab86b3f41605d6da110fbafda3893ed4e78",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
