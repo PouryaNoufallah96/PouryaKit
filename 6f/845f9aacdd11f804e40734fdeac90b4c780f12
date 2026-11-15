@@ -1,0 +1,35 @@
+docs/architecture/diagrams/host-start.workflow.json
+  s_3529354fc6f9e2::t_87b63ebffc9e8f 208
+  s_3529354fc6f9e2::t_13e70c7e6a83cd 413,415-416,419-421,424-425,429,431-433
+  s_3529354fc6f9e2::t_6c7dc54a50e120 469,473
+  s_3529354fc6f9e2::t_7449cca1f0081e 248-250
+  s_3529354fc6f9e2::t_2bfa39fc071b20 102
+  s_3529354fc6f9e2::t_2699e4f408d688 62
+tests/ModularMonolith.Tests/MisconfiguredHostTests.cs
+  s_3529354fc6f9e2::t_ea017652a94281 492-493
+  s_3529354fc6f9e2::t_23db1a07251445 524
+  s_3529354fc6f9e2::t_a13c5d795217a8 538-539
+  s_3529354fc6f9e2::t_383bd023707417 568
+docs/architecture/README.md
+  s_3529354fc6f9e2::t_d0bd03045e17b1 564
+  s_3529354fc6f9e2::t_6d493341157d54 132
+  s_3529354fc6f9e2::t_e0d29429db4a9a 586
+.claude/rules/kit-code.md
+  s_3529354fc6f9e2::t_f5c6c7eceba64c 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f845f9aacdd11f804e40734fdeac90b4c780f12",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
