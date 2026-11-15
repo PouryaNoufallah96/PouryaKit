@@ -3,6 +3,7 @@ using ModularMonolith.Tests.Stub;
 using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Testing;
+using Wolverine.Persistence.Durability.DeadLetterManagement;
 using Wolverine.Runtime;
 
 namespace ModularMonolith.Tests;
@@ -118,7 +119,9 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         );
 
         // The same delivery set aside once more, as Wolverine sets one aside, and replayed again: it is handed out, and
-        // its Receipt stops the handler.
+        // its Receipt stops the handler. Wolverine sets aside no delivery its inbox still shows handled, so the handled
+        // row goes first, as when its retention ends, which leaves the Receipt the only guard.
+        await store.Inbox.DeleteIncomingEnvelopeAsync(setAside);
         await store.Inbox.MoveToDeadLetterStorageAsync(
             setAside,
             new InvalidOperationException("Set aside once more.")
@@ -153,6 +156,41 @@ public sealed class FailingDeliveryTests(AppFixture app) : HostTest<AppFixture>(
         );
 
         Assert.EndsWith("is not a dead letter, so there is nothing to replay.", thrown.Message);
+    }
+
+    [Fact]
+    public async Task Replaying_an_archived_dead_letter_fails_because_wolverine_leaves_it_out_of_a_replay()
+    {
+        var text = Unique();
+        Circulation.Fail(Circulation.Archive, text);
+        await Fixture.WaitForDeliveriesAsync(
+            () => CirculateAsync(new NoteToCirculateDomainEvent(text)),
+            TestContext.Current.CancellationToken
+        );
+        var deadLetter = Assert.Single(
+            await Fixture.DeadLettersAsync(TestContext.Current.CancellationToken)
+        );
+        // Archived as an operator archives one: Wolverine still finds it by its id.
+        Assert.Equal(
+            1,
+            (
+                await Fixture
+                    .Host.Services.GetRequiredService<IWolverineRuntime>()
+                    .Storage.DeadLetters.ArchiveMatchingAsync(
+                        new DeadLetterEnvelopeQuery([deadLetter.Id]),
+                        TestContext.Current.CancellationToken
+                    )
+            ).Affected
+        );
+
+        var thrown = await Assert.ThrowsAsync<DeliveryAssertionException>(() =>
+            Fixture.ReplayAsync(deadLetter, TestContext.Current.CancellationToken)
+        );
+
+        Assert.EndsWith(
+            "is archived, and Wolverine leaves an archived dead letter out of a replay, so there is nothing to replay.",
+            thrown.Message
+        );
     }
 
     [Fact]

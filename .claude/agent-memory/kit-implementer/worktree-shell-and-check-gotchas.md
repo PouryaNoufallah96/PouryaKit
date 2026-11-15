@@ -118,5 +118,10 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - A harness-made worktree refuses any `git -C <main checkout>`, and an Edit whose path names the main checkout ("Edit the worktree copy"). Neither is worth working around: a refused Edit wrote nothing. `git` joined by `;` to a `pnpm` line and piped into `grep` was refused as too complex: run git on its own line.
 
+## Upstream clones and long waits in an isolated worktree (#210, 2026-11-15)
+
+- **An upstream clone in the scratchpad:** `git -C <absolute clone path> <command>` alone on its line passes; the same with `cd <clone> &&`, a relative `-C`, or a pipe into another git is refused as unverifiable. Write a scratchpad Python script for several `git diff`/`git show` calls.
+- **A foreground Bash call moves to the background after about 180 s** whatever its `timeout`, and a subagent cannot end its turn to wait: run the long job with `run_in_background`, then wait in slices of `sh <waiter> & sleep 160; <read the log>` (a `sleep` with a following command passes), or arm `Monitor` on the log.
+
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].
