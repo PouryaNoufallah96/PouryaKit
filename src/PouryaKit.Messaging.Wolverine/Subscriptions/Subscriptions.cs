@@ -16,15 +16,16 @@ internal sealed class Subscriptions : IWireNames
     // which 6.46.0 created and TransportConstants still names, and holds "agents" in memory; none of them is a
     // subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a name a later Wolverine
     // reserves fails the Host's start too.
-    private static readonly FrozenSet<string> ReservedQueues = FrozenSet.Create(
-        StringComparer.OrdinalIgnoreCase,
+    private static readonly FrozenSet<string> ReservedQueues =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
         "agents",
         "default",
         "durable",
         "replies",
         "scheduled",
-        "system"
-    );
+        "system",
+    ];
 
     private readonly Dictionary<string, Subscription> _byName =
     [
@@ -122,11 +123,11 @@ internal sealed class Subscriptions : IWireNames
     /// </summary>
     public void Add(IReadOnlyList<Subscription> subscriptions, List<string> problems)
     {
-        Dictionary<string, Subscription> byName = new(_byName, StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, Type> typeByWireName = new(
-            _typeByWireName,
-            StringComparer.OrdinalIgnoreCase
-        );
+        Dictionary<string, Subscription> byName = [with(_byName, StringComparer.OrdinalIgnoreCase)];
+        Dictionary<string, Type> typeByWireName =
+        [
+            with(_typeByWireName, StringComparer.OrdinalIgnoreCase),
+        ];
         foreach (var subscription in subscriptions)
         {
             // An Integration Event's wire name is declared where it is published. A derived subscription name starts

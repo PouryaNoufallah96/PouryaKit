@@ -53,6 +53,12 @@ public sealed class IntegrationEventWiringTests
                     .Publish<TwinV1>("Modular-Monolith.Tests.Note-To-Share"),
             "have the wire name Modular-Monolith.Tests.Note-To-Share, ignoring case"
         ),
+        ["a Domain Event's wire name, already published"] = (
+            s =>
+                s.Publish<TwinV1>("Modular-Monolith.Tests.Note-To-Share")
+                    .AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly),
+            "have the wire name modular-monolith.tests.note-to-share, ignoring case"
+        ),
         ["a Notification Handler's subscription name"] = (
             s =>
                 s.AddPouryaKitNotificationHandlers(typeof(StubModule).Assembly)
