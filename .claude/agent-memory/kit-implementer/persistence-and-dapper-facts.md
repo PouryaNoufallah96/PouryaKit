@@ -147,6 +147,11 @@ Check the merged code before relying on a design note. Each section names its ti
 
 - **A deterministic deadlock in `SaveChanges`:** `ConflictTests`' race harness with two Operations, each sending the Stub's `LockProductCommand` (plain-SQL `select … for update` on one product's row, changing nothing, so the other's version token still matches) and then renaming the other product; released together, the two saves' UPDATEs wait on each other and PostgreSQL aborts one with 40P01 after `deadlock_timeout`. Locking with a write that changes the row would give a real version conflict and pass for the wrong reason. Assert the outcome by walking `InnerException` to the `PostgresException`: EF Core 10 and 11 wrap it in different layers. The Unit of Work now maps only a `DbUpdateConcurrencyException` with no inner exception ([[dotnet-11-migration-facts]]).
 
+## The PostgreSQL version the provider targets (#220, 2026-11-15; provider 11.0.0-rc.3)
+
+- **The provider's default target is internal:** `NpgsqlOptionsExtension.DefaultPostgresVersion = new Version(16, 0)` (decompiled from the pinned dll; its XML doc says nothing), read when no `SetPostgresVersion` is called; the 11.0 release notes say 16 by default, 14 before. The Kit calls none. Neither name is in the Kit's code, so a backticked one fails `check-docs.py`'s names rule: say it in prose. WebFetch of npgsql.org returns a summariser's fragments; the decompile is the primary source.
+- **"The tests run 18.7" needs an exception:** `VectorFixture` runs `pgvector/pgvector:0.8.7-pg18`, a floating PostgreSQL 18 minor (18.6 in this machine's image, `docker image inspect … --format "{{json .Config.Env}}"` shows `PG_VERSION`). The owner's rule for such a fact: the provider's default and what the Kit tests on, never a minimum, "requires" or "supported".
+
 ## Number sequences: cancellation (#146, 2026-10-16; Npgsql 10.0.3)
 
 - **Cheapest cancellation shape:** `HoldChangeCommand` with an unreleased `Hold`, run with a linked `CancellationTokenSource`'s token; wait for `Changed`, cancel, and the handler's `Released.Task.WaitAsync(ct)` throws, so the Unit of Work rolls back. Assert `ThrowsAnyAsync<OperationCanceledException>`.

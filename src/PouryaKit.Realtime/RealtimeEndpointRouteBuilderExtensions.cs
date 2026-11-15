@@ -1,3 +1,4 @@
+using System.Net.ServerSentEvents;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -24,6 +25,8 @@ public static class RealtimeEndpointRouteBuilderExtensions
         /// last until the connection ends. A request that names no Channel, or a blank one, is answered 400 before
         /// <paramref name="admits"/> runs, and one naming a Channel <paramref name="admits"/> refuses for the Actor 403,
         /// both as problem responses, before anything is streamed. A client a full buffer of 256 events behind is disconnected.
+        /// Its 200 is declared as a <c>text/event-stream</c> of <see cref="SseItem{T}"/> items whose data is a string, so
+        /// the OpenAPI documents describe the stream.
         /// </summary>
         public RouteHandlerBuilder MapPouryaKitRealtime(
             string pattern,
@@ -34,7 +37,7 @@ public static class RealtimeEndpointRouteBuilderExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
             ArgumentNullException.ThrowIfNull(admits);
 
-            return routes.MapGet(
+            var endpoint = routes.MapGet(
                 pattern,
                 (
                     OperationContext context,
@@ -70,6 +73,9 @@ public static class RealtimeEndpointRouteBuilderExtensions
                         );
                 }
             );
+            // The handler returns a refusal or the stream as IResult, so the framework cannot read the stream result's
+            // own response metadata: this is the 200 that ServerSentEventsResult<string> declares.
+            return endpoint.Produces<SseItem<string>>(StatusCodes.Status200OK, "text/event-stream");
         }
     }
 }
