@@ -178,58 +178,70 @@ public sealed class IndependentDeliveryTests(AppFixture app) : HostTest<AppFixtu
     {
         var text = Unique();
         var circulated = new NoteToCirculateDomainEvent(text);
-        var dying = AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs);
+        // The dying Host is disposed before the new one starts: a stopped Host keeps its connection pools open until
+        // then, where a killed process leaves none open.
+        await using (
+            var dying = AppFixture.ComposeHost(
+                "Development",
+                Fixture.ConnectionString,
+                Fixture.Logs
+            )
+        )
+        {
+            await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
+            var hold = DeliveryProbes.HoldAfterReceipt(Circulation.Archive);
+            try
+            {
+                await CirculateAsync(
+                    dying.Services.GetRequiredService<IGatewayProcessor<StubModule>>(),
+                    circulated
+                );
+                // The archive's delivery is inside its transaction, its Receipt written; the ledger's is handled.
+                await hold.Held;
+                await Fixture.WaitUntilAsync(
+                    $"exists (select 1 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Ledger}/' and status = 'Handled')",
+                    "The ledger's delivery was never handled."
+                );
+
+                // The Host dies: its database sessions end, which rolls the held delivery back, and Wolverine's quick
+                // stop neither drains nor gives up what the Host holds.
+                Assert.Equal(
+                    [
+                        [true],
+                    ],
+                    await Fixture.RowsAsync(
+                        "select pg_terminate_backend(pid) from pg_stat_activity where state = 'idle in transaction' and query like '%pouryakit_receipts%'"
+                    )
+                );
+                (
+                    (WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()
+                ).StopMode = StopMode.Quick;
+                await dying.StopAsync(TestContext.Current.CancellationToken);
+            }
+            finally
+            {
+                // The held delivery never continues, as in a process that was killed.
+                hold.Abandon();
+            }
+        }
+
+        // Read after the disposal, so what the new Host finds is what a killed process leaves.
+        Assert.Equal(
+            [
+                ["Incoming", true],
+            ],
+            await Fixture.RowsAsync(
+                $"select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Archive}/'"
+            )
+        );
+
         await using var replacing = AppFixture.ComposeHost(
             "Development",
             Fixture.ConnectionString,
             Fixture.Logs
         );
-        await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
-        var hold = DeliveryProbes.HoldAfterReceipt(Circulation.Archive);
-        try
-        {
-            await CirculateAsync(
-                dying.Services.GetRequiredService<IGatewayProcessor<StubModule>>(),
-                circulated
-            );
-            // The archive's delivery is inside its transaction, its Receipt written; the ledger's is handled.
-            await hold.Held;
-            await Fixture.WaitUntilAsync(
-                $"exists (select 1 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Ledger}/' and status = 'Handled')",
-                "The ledger's delivery was never handled."
-            );
-
-            // The Host dies: its database sessions end, which rolls the held delivery back, and Wolverine's quick stop
-            // neither drains nor gives up what the Host holds.
-            Assert.Equal(
-                [
-                    [true],
-                ],
-                await Fixture.RowsAsync(
-                    "select pg_terminate_backend(pid) from pg_stat_activity where state = 'idle in transaction' and query like '%pouryakit_receipts%'"
-                )
-            );
-            ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode =
-                StopMode.Quick;
-            await dying.StopAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(
-                [
-                    ["Incoming", true],
-                ],
-                await Fixture.RowsAsync(
-                    $"select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{Circulation.Archive}/'"
-                )
-            );
-
-            await HostFixture.StartHostAsync(replacing, TestContext.Current.CancellationToken);
-            await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
-        }
-        finally
-        {
-            // The held delivery never continues, as in a process that was killed.
-            hold.Abandon();
-            await dying.DisposeAsync();
-        }
+        await HostFixture.StartHostAsync(replacing, TestContext.Current.CancellationToken);
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
 
         // The ledger was delivered once. The archive was attempted in the dying Host, then recovered: by the new Host,
         // and sometimes in the same moment by the fixture's own Host, which runs on the same store as the same Solo
