@@ -37,6 +37,10 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
     private const string StockItems = "inventory.product-created";
     private const string ProductCategories = "inventory.product-categories";
     private const string CatalogProducts = "inventory.catalog-products";
+
+    // Inventory's recurring command comes due at every whole UTC hour (BrokerFixture's cadence, counted from the Unix
+    // epoch), so only a test that spans one also finds its Receipt: a count that kept it would pass a thousand runs, fail one.
+    private const string ReconcileStock = "inventory.reconcile-stock";
     private const string PublishProductCreated = "catalog.product-created.publish-product-created";
     private static readonly string HostQueue = $"rabbitmq://queue/{InventoryHost.ServiceName}";
 
@@ -338,7 +342,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
         // Every copy is stored and applied while each broker envelope still waits to be marked handled.
         await BrokerEnvironment.WaitUntilAsync(
             environment.Inventory,
-            $"(select count(*) from inventory.pouryakit_receipts) = 4 and (select count(*) from pg_stat_activity where wait_event = 'advisory') > 0 and not exists (select from wolverine.wolverine_incoming_envelopes where received_at = '{HostQueue}' and status = 'Handled')",
+            $"(select count(*) from inventory.pouryakit_receipts where subscription <> '{ReconcileStock}') = 4 and (select count(*) from pg_stat_activity where wait_event = 'advisory') > 0 and not exists (select from wolverine.wolverine_incoming_envelopes where received_at = '{HostQueue}' and status = 'Handled')",
             "The copies were not all applied before the broker envelopes were marked handled."
         );
         await BrokerEnvironment.KillAsync(inventory);
@@ -377,7 +381,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
             ],
             await Sql.RowsAsync(
                 environment.Inventory,
-                "select subscription, count(*) from inventory.pouryakit_receipts group by 1 order by 1"
+                $"select subscription, count(*) from inventory.pouryakit_receipts where subscription <> '{ReconcileStock}' group by 1 order by 1"
             )
         );
         Assert.Equal(1L, await StockItemsAsync(environment, product));
@@ -688,7 +692,7 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
         await BrokerEnvironment.CreateProductAsync(catalog, Guid.CreateVersion7(), "Lamp");
         await BrokerEnvironment.WaitUntilAsync(
             environment.Inventory,
-            "(select count(*) from inventory.pouryakit_receipts) = 4",
+            $"(select count(*) from inventory.pouryakit_receipts where subscription <> '{ReconcileStock}') = 4",
             "Inventory.Host did not apply every message."
         );
         await BrokerEnvironment.WaitUntilSettledAsync(environment.Inventory);
