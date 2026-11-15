@@ -1,0 +1,29 @@
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3529354fc6f9e2::t_68d5924acd8873 258-259
+docs/architecture/README.md
+  s_3529354fc6f9e2::t_2f04e48914db62 699
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3529354fc6f9e2::t_68d5924acd8873 531-532,537-538
+docs/architecture/diagrams/host-start.workflow.json
+  s_3529354fc6f9e2::t_68d5924acd8873 381-382,387-388
+src/PouryaKit.Testing/HostFixture.cs
+  s_3529354fc6f9e2::t_0c33929d72bf7b 34-36
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_3529354fc6f9e2::t_68d5924acd8873 300
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eb6089432d6ceda71c4f6aa06a50d6a68a5a6483",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
