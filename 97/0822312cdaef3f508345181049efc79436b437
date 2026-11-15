@@ -1,0 +1,34 @@
+tests/ModularMonolith.Tests/NotificationTests.cs
+  s_3529354fc6f9e2::t_11473142c4df8c 399-401
+tests/ModularMonolith.Tests/RecurringCommandTests.cs
+  s_3529354fc6f9e2::t_960e6fc7a98a98 309-310,312
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_3529354fc6f9e2::t_fed662633d9e9a 74-75,77
+tests/ModularMonolith.Tests/DelayedCommandTests.cs
+  s_3529354fc6f9e2::t_502a1ae9bb46a7 10
+  s_3529354fc6f9e2::t_6b047eb0ae5e4b 43-50,52-63
+  s_3529354fc6f9e2::t_2a7c2c3592b1b6 81-83,85-86,88-96
+  s_3529354fc6f9e2::t_40f79d3eef1b7b 87
+tests/ModularMonolith.Tests/IntegrationEventTests.cs
+  s_3529354fc6f9e2::t_4865d2b77e8212 221-222
+  s_3529354fc6f9e2::t_e4855a93cd475c 241-244
+  s_3529354fc6f9e2::t_dd5f4838a43ff1 258-262
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_3529354fc6f9e2::t_df24e5241402f4 753-758
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "970822312cdaef3f508345181049efc79436b437",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
