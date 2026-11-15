@@ -31,6 +31,18 @@ dotnet_diagnostic.IDE0290.severity = warning
 dotnet_diagnostic.IDE0032.severity = warning
 # System.Threading.Lock
 dotnet_diagnostic.IDE0330.severity = warning
+# Labeled break and continue (C# 15), in place of a flag or goto that leaves nested loops
+dotnet_diagnostic.IDE0410.severity = warning
+# The .NET 11 SDK's rules for shapes the Kit writes: JsonElement.Parse, not JsonDocument.Parse(...).RootElement (CA2026);
+# a Task.Delay cancelled once Task.WhenAny returns (CA2027); no Regex.IsMatch before Regex.Match (CA2028); one
+# Path.Combine or Path.Join, not nested ones (CA1877); a read-only span or memory parameter when nothing writes it
+# (CA1517); no AsParallel in a foreach (CA1876)
+dotnet_diagnostic.CA2026.severity = warning
+dotnet_diagnostic.CA2027.severity = warning
+dotnet_diagnostic.CA2028.severity = warning
+dotnet_diagnostic.CA1877.severity = warning
+dotnet_diagnostic.CA1517.severity = warning
+dotnet_diagnostic.CA1876.severity = warning
 # Unnecessary using directives. The analyzer runs in a build only where the documentation file is generated
 # (GenerateDocumentationFile in Directory.Build.props).
 dotnet_diagnostic.IDE0005.severity = warning

@@ -1,8 +1,9 @@
 namespace PouryaKit.Web;
 
 /// <summary>
-/// Whether the Host compresses its responses, with ASP.NET Core's response compression (Brotli or gzip, as the caller's
-/// <c>Accept-Encoding</c> asks, for its default content types, JSON included). Off by default.
+/// Whether the Host compresses its responses, with ASP.NET Core's response compression (Zstandard, Brotli or gzip, as
+/// the caller's <c>Accept-Encoding</c> asks, for its default content types, JSON included, with <c>Vary:
+/// Accept-Encoding</c> on every response of those types, compressed or not). Off by default.
 /// </summary>
 public sealed class PouryaKitCompressionOptions
 {

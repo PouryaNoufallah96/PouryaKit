@@ -1428,7 +1428,7 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
         var rows = await RowsAsync(
             $"select body::text from {schema}.{table}_saga where id = '{sagaId}'"
         );
-        return rows.Count == 0 ? null : JsonDocument.Parse((string)rows[0][0]).RootElement.Clone();
+        return rows.Count == 0 ? null : JsonElement.Parse((string)rows[0][0]);
     }
 
     private async Task<int?> PaidAsync(string tenant, Guid order) =>

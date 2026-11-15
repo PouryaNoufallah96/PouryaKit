@@ -29,13 +29,13 @@
         {
           "path": "src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs",
           "line": 7,
-          "end_line": 51,
+          "end_line": 47,
           "label": "issuer and keys: configured or Authority"
         },
         {
           "path": "src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs",
-          "line": 15,
-          "end_line": 33,
+          "line": 14,
+          "end_line": 32,
           "label": "standard JWT bearer; Host fails to start"
         }
       ]
@@ -192,8 +192,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 166,
-          "end_line": 180,
+          "line": 171,
+          "end_line": 185,
           "label": "/alive always; /health in Development"
         },
         {
@@ -220,14 +220,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 91,
-          "end_line": 118,
+          "line": 96,
+          "end_line": 123,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 136,
-          "end_line": 153,
+          "line": 141,
+          "end_line": 158,
           "label": "Serilog's OTLP sink when set"
         },
         {

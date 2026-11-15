@@ -489,7 +489,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
         var page = await client.GetAsync("/scalar/", TestContext.Current.CancellationToken);
         var html = await page.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var sources = JsonDocument.Parse(Sources().Match(html).Groups[1].Value).RootElement;
+        var sources = JsonElement.Parse(Sources().Match(html).Groups[1].Value);
 
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
         Assert.Equal("text/html", page.Content.Headers.ContentType?.MediaType);

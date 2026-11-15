@@ -130,8 +130,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 166,
-          "end_line": 180,
+          "line": 171,
+          "end_line": 185,
           "label": "/alive always; /health in Development"
         },
         {
@@ -322,20 +322,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 45,
-          "end_line": 77,
+          "line": 46,
+          "end_line": 80,
           "label": "the service defaults recipes"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj",
           "line": 5,
-          "end_line": 24,
+          "end_line": 23,
           "label": "EF Core Relational, OpenTelemetry, Serilog"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 123,
-          "end_line": 131,
+          "line": 128,
+          "end_line": 136,
           "label": "liveness and readiness checks"
         }
       ]

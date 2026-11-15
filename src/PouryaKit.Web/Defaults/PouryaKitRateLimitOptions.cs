@@ -8,7 +8,8 @@ namespace PouryaKit.Web;
 /// continues. A request no Actor resolves for, such as an anonymous call to an endpoint outside every Module, shares one partition. No header but a
 /// trusted peer's context headers, and never <c>Host</c> or <c>X-Forwarded-For</c>, chooses a partition. A request beyond the limit waits in its partition's queue of
 /// <see cref="QueueLimit"/> requests, oldest first, until the next window, or answers 429 as a problem response when
-/// the queue is full. The limits are counted in each Host process. Off by default.
+/// the queue is full, with a <c>Retry-After</c> header of the seconds left in the window. The limits are counted in each
+/// Host process. Off by default.
 /// </summary>
 /// <remarks>
 /// When enabled, the Host fails when it starts unless <see cref="PermitLimit"/> is at least 1, <see cref="Window"/> is

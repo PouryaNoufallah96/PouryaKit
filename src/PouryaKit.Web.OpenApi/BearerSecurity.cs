@@ -31,11 +31,7 @@ internal sealed class BearerSecurity(
             return;
         }
 
-        var policy = await AuthorizationPolicy.CombineAsync(
-            policies,
-            metadata.OfType<IAuthorizeData>(),
-            metadata.OfType<AuthorizationPolicy>()
-        );
+        var policy = await AuthorizationPolicy.CombineAsync(policies, metadata);
         if (policy is null)
         {
             return;

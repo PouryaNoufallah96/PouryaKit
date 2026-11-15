@@ -22,8 +22,8 @@ internal sealed partial class MartenIdempotencyKeyCleanup(
 {
     private PeriodicTimer? _timer;
 
-    // The timer starts with the Host, not in ExecuteAsync, which .NET 10 runs on the thread pool: a tick due after the
-    // Host started is never missed.
+    // The timer starts with the Host, not in ExecuteAsync, which BackgroundService runs on the thread pool: a tick due
+    // after the Host started is never missed.
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
         if (options.Value.Retention != Timeout.InfiniteTimeSpan)

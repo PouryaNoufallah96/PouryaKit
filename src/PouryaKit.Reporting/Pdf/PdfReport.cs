@@ -68,7 +68,11 @@ internal static class PdfReport
         {
             section.AddParagraph(
                 text.Text,
-                text is ReportHeading ? StyleNames.Heading2 : StyleNames.Normal
+                text switch
+                {
+                    ReportHeading => StyleNames.Heading2,
+                    ReportParagraph => StyleNames.Normal,
+                }
             );
         }
 

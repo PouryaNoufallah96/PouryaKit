@@ -193,7 +193,7 @@
           "path": "scripts/packaging/validate.py",
           "line": 379,
           "end_line": 380,
-          "label": "Release build, tests without rebuild"
+          "label": "Release build, tests: no rebuild, 45m cap"
         }
       ]
     },

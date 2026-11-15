@@ -567,7 +567,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         }
 
         // What the tool's Operation ran with, as it answered the model: the occurrence's system Actor, continued.
-        var call = JsonDocument.Parse(stub.ToolResultsOf(1)[0]).RootElement;
+        var call = JsonElement.Parse(stub.ToolResultsOf(1)[0]);
         var occurrence = Assert.Single(DeliveryProbes.ContextsOf(Digest), context =>
             context.OperationId == call.GetProperty("causationId").GetGuid()
         );
@@ -643,7 +643,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         else
         {
             var denied = Assert.Single(
-                JsonDocument.Parse(answered).RootElement.GetProperty("errors").EnumerateArray()
+                JsonElement.Parse(answered).GetProperty("errors").EnumerateArray()
             );
             Assert.Equal(PermissionErrors.Denied.Code, denied.GetProperty("code").GetString());
         }

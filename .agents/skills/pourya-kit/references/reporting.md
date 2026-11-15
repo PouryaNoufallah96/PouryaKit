@@ -69,7 +69,7 @@ internal static class SalesReport
 internal sealed record SalesLine(string Product, int Quantity, decimal Amount);
 ```
 
-- `ReportLayout(Title, Table)`: `Introduction` (`ReportHeading` and `ReportParagraph`, in order), `PageHeader`, `PageFooter` and `Branding` are optional.
+- `ReportLayout(Title, Table)`: `Introduction` (`ReportHeading` and `ReportParagraph`, in order), `PageHeader`, `PageFooter` and `Branding` are optional. `ReportText` is a `closed` record: those two are its only kinds, and an application cannot declare a third.
 - `ReportTable(Columns, Rows)`: each `ReportColumn` has a header and an alignment, `Left` by default; each row has exactly one cell per column.
 - `ReportBranding`: `Logo`, a PNG or JPEG image, and `Accent`, a `ReportColor`, dark grey by default, for the title and the table's header row.
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Security.Claims;
@@ -15,7 +16,7 @@ using static ModularMonolith.Tests.Fixtures.ProblemResponses;
 namespace ModularMonolith.Tests;
 
 // The Host's configured CORS policies, response compression and rate limit per Actor, each on a Host composed with its
-// own configuration and served through the whole pipeline.
+// own configuration and served through the whole pipeline, and ASP.NET Core's CSRF protection on the shared Host's.
 public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
 {
     private const string AllowedOrigin = "https://app.example";
@@ -127,29 +128,71 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
             TestContext.Current.CancellationToken
         );
         var compressed = await https.SendAsync(
-            Gzip("/catalog/products"),
+            Compressed("/catalog/products", "gzip"),
+            TestContext.Current.CancellationToken
+        );
+        var zstd = await https.SendAsync(
+            Compressed("/catalog/products", "zstd"),
             TestContext.Current.CancellationToken
         );
         var uncompressed = await unconfigured.SendAsync(
-            Gzip("/catalog/products"),
+            Compressed("/catalog/products", "gzip"),
             TestContext.Current.CancellationToken
         );
 
         Assert.Empty(plain.Content.Headers.ContentEncoding);
+        // The response a cache must not reuse for a caller that asks another encoding, compressed or not.
+        Assert.Contains("Accept-Encoding", plain.Headers.Vary);
+        var body = await plain.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.Equal("gzip", Assert.Single(compressed.Content.Headers.ContentEncoding));
         Assert.Contains("Accept-Encoding", compressed.Headers.Vary);
-        await using var gzip = new GZipStream(
-            await compressed.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
-            CompressionMode.Decompress
-        );
-        using var decompressed = new StreamReader(gzip);
-        Assert.Equal(
-            await plain.Content.ReadAsStringAsync(TestContext.Current.CancellationToken),
-            await decompressed.ReadToEndAsync(TestContext.Current.CancellationToken)
-        );
+        await using (
+            var gzip = new GZipStream(
+                await compressed.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+                CompressionMode.Decompress
+            )
+        )
+        {
+            Assert.Equal(body, await ReadToEndAsync(gzip));
+        }
+
+        Assert.Equal("zstd", Assert.Single(zstd.Content.Headers.ContentEncoding));
+        await using (
+            var zstandard = new ZstandardStream(
+                await zstd.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+                CompressionMode.Decompress
+            )
+        )
+        {
+            Assert.Equal(body, await ReadToEndAsync(zstandard));
+        }
+
         // A Host that configures nothing compresses nothing.
         Assert.Equal(HttpStatusCode.OK, uncompressed.StatusCode);
         Assert.Empty(uncompressed.Content.Headers.ContentEncoding);
+    }
+
+    // A browser on another site posts JSON with its fetch metadata: ASP.NET Core's CSRF protection marks it, and only an
+    // endpoint that reads a form enforces that mark, so a JSON endpoint serves it as any other request.
+    [Fact]
+    public async Task A_cross_site_post_of_json_is_served()
+    {
+        using var ada = Fixture.Client("ada", AppFixture.TestTenant);
+        var category = Guid.CreateVersion7();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/catalog/categories")
+        {
+            Content = JsonContent.Create(new { categoryId = category, name = "Cross-site" }),
+        };
+        request.Headers.Add("Origin", "https://evil.example");
+        request.Headers.Add("Sec-Fetch-Site", "cross-site");
+
+        var created = await ada.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, created.StatusCode);
+        Assert.Equal(
+            category,
+            await created.Content.ReadFromJsonAsync<Guid>(TestContext.Current.CancellationToken)
+        );
     }
 
     [Fact]
@@ -344,8 +387,32 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
 
         // One is refused at once, while the other still waits in the queue; it is served when the window ends.
         Assert.False(waiting.IsCompleted);
-        await ProblemAsync(await answered, HttpStatusCode.TooManyRequests);
+        var refused = await answered;
+        await ProblemAsync(refused, HttpStatusCode.TooManyRequests);
+        Assert.InRange(RetryAfterSeconds(refused), 1, 3);
         Assert.Equal(HttpStatusCode.OK, (await waiting).StatusCode);
+    }
+
+    // A refusal names the seconds left in its window as the limiter counts them, not the window's length.
+    [Fact]
+    public async Task A_refusal_tells_the_caller_in_retry_after_the_seconds_left_in_its_window()
+    {
+        await using var host = Compose(
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
+        host.MapGet("/limited", () => "served");
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var ada = AppFixture.ClientOf(host, "ada");
+
+        var first = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken);
+        var refused = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.False(first.Headers.Contains("Retry-After"));
+        await ProblemAsync(refused, HttpStatusCode.TooManyRequests);
+        // At least the second and a half waited is gone from the 600, and less than a minute unless the run stalled.
+        Assert.InRange(RetryAfterSeconds(refused), 540, 599);
     }
 
     // The limiter partitions the request by the Actor of the Operation Context the endpoint then begins its Operation
@@ -417,11 +484,17 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         return request;
     }
 
-    private static HttpRequestMessage Gzip(string path)
+    private static HttpRequestMessage Compressed(string path, string encoding)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.AcceptEncoding.ParseAdd("gzip");
+        request.Headers.AcceptEncoding.ParseAdd(encoding);
         return request;
+    }
+
+    private static async Task<string> ReadToEndAsync(Stream decompressing)
+    {
+        using var reader = new StreamReader(decompressing);
+        return await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
     }
 
     // A call that continues an Operation of the person actorId, as a peer Host sends it, with correlationId when given.
@@ -449,6 +522,13 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
 
     private static string? Header(HttpResponseMessage response, string name) =>
         response.Headers.TryGetValues(name, out var values) ? string.Join(',', values) : null;
+
+    // Retry-After as a whole number of seconds, the form the Kit writes.
+    private static int RetryAfterSeconds(HttpResponseMessage response) =>
+        int.Parse(
+            Assert.Single(response.Headers.GetValues("Retry-After")),
+            CultureInfo.InvariantCulture
+        );
 
     private static async Task AssertNoCorsPermissionAsync(HttpClient client, string origin)
     {

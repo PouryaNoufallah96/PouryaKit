@@ -263,6 +263,22 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Contains(failure, Assert.Single(thrown.Failures));
     }
 
+    // The Kit checks its own bearer scheme's options; a scheme the application adds under another name is its own.
+    [Fact]
+    public async Task A_bearer_scheme_the_application_adds_under_another_name_is_not_held_to_the_kits_checks()
+    {
+        await using var host = await StartHostAsync(builder =>
+            builder.Services.AddAuthentication().AddJwtBearer("partner")
+        );
+
+        var partner = host
+            .Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
+            .Get("partner");
+
+        // Inbound claims mapped, no audience and no signing key: each one a failure on the Kit's scheme.
+        Assert.True(partner.MapInboundClaims);
+    }
+
     [Fact]
     public async Task A_host_that_resolves_its_signing_keys_from_the_configuration_resolver_alone_verifies_signatures()
     {

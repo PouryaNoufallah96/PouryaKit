@@ -14,7 +14,7 @@ namespace PouryaKit.Web;
 //
 // The Error entry here is the HTTP-level record of the request that failed. The dispatcher also logs an exception a
 // handler throws, but an exception raised outside an Operation (authentication, binding, an endpoint) has only this
-// one, and since .NET 10 the exception handler middleware no longer logs an exception a handler handled. A request the
+// one, and the exception handler middleware does not log an exception an IExceptionHandler handled. A request the
 // client aborted is not an error: the middleware's own aborted-request path answers it with 499 before any handler runs.
 internal sealed partial class UnexpectedExceptionHandler(ILogger<UnexpectedExceptionHandler> logger)
     : IExceptionHandler

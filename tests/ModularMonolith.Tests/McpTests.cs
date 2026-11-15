@@ -509,14 +509,14 @@ public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<Mcp
 
     private static bool IsRunning(int id)
     {
-        try
-        {
-            using var process = Process.GetProcessById(id);
-            return !process.HasExited;
-        }
-        catch (ArgumentException)
+        if (!Process.TryGetProcessById(id, out var process))
         {
             return false;
+        }
+
+        using (process)
+        {
+            return !process.HasExited;
         }
     }
 
