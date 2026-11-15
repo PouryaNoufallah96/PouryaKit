@@ -202,8 +202,9 @@ class TemplateConsumerTests(unittest.TestCase):
                          [command[:7] for command in commands if command[:2] == ["dotnet", "new"] and command[2] != "install"])
         self.assertEqual([solutions[name] / f"{generated}.slnx" for name, (_, generated) in templates.items()],
                          [command[2] for command in commands if command[:2] == ["dotnet", "build"] and command[2] != "PouryaKit.slnx"])
-        self.assertEqual([solutions[name] / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj" for name, (_, generated) in templates.items()],
-                         [command[3] for command in commands if command[:3] == ["dotnet", "test", "--project"]])
+        self.assertEqual([["dotnet", "test", "--project", solutions[name] / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj", "-c", "Release",
+                           "--no-build", "--timeout", "45m"] for name, (_, generated) in templates.items()],
+                         [command for command in commands if command[:3] == ["dotnet", "test", "--project"]])
         self.assertEqual([solutions[name] / "src" / f"{generated}.Host" for name, (_, generated) in templates.items()],
                          [call.args[0] for call in production.call_args_list])
 
