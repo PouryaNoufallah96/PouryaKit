@@ -78,7 +78,7 @@ internal static class PackageGraph
             ["PouryaKit.Web"],
             [
                 "Asp.Versioning.Http",
-                "Asp.Versioning.OpenApi",
+                "Asp.Versioning.Mvc.ApiExplorer",
                 "Microsoft.AspNetCore.OpenApi",
                 "Scalar.AspNetCore",
             ],

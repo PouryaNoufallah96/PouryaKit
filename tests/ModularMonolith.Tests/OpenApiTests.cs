@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi;
 using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Testing;
@@ -136,6 +137,56 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.False(v2.TryGetProperty("x-api-versioning", out _));
     }
 
+    // Policies the Host states on Asp.Versioning's own options, not through the Kit's sunsets: a deprecation policy of
+    // 1.0 beside its configured sunset, and a sunset of 2.0 with no date. A link to anything but an HTML page is in the
+    // extension only.
+    [Fact]
+    public async Task A_versions_deprecation_and_sunset_policies_reach_its_document_the_deprecations_first()
+    {
+        const string deprecation = "https://example.com/catalog/api-v1-deprecation";
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+                builder.Services.Configure<ApiVersioningOptions>(versioning =>
+                {
+                    versioning
+                        .Policies.Deprecate(new ApiVersion(1, 0))
+                        .Link(deprecation)
+                        .Type("text/html");
+                    versioning
+                        .Policies.Deprecate(new ApiVersion(1, 0))
+                        .Link($"{deprecation}.json")
+                        .Type("application/json")
+                        .Title("Deprecation");
+                    versioning
+                        .Policies.Sunset(new ApiVersion(2, 0))
+                        .Link("https://example.com/catalog/api-v2-sunset")
+                        .Title("Sunset of 2.0")
+                        .Type("text/html");
+                })
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var client = Unversioned(AppFixture.ClientOf(host));
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        Assert.Equal(
+            $"This API version is deprecated. Its sunset date is {ConfiguredSunset}.\n\n### Links\n\n- {deprecation}\n\n- {ConfiguredSunsetLink}\n",
+            v1.GetProperty("info").GetProperty("description").GetString()
+        );
+        Assert.Equal(
+            $$"""{"links":[{"type":"text/html","rel":"deprecation","url":"{{deprecation}}"},{"title":"Deprecation","type":"application/json","rel":"deprecation","url":"{{deprecation}}.json"},{"type":"text/html","rel":"sunset","url":"{{ConfiguredSunsetLink}}"}]}""",
+            JsonSerializer.Serialize(v1.GetProperty("x-api-versioning"))
+        );
+        Assert.Equal(
+            "\n\n### Links\n\n- [Sunset of 2.0](https://example.com/catalog/api-v2-sunset)",
+            v2.GetProperty("info").GetProperty("description").GetString()
+        );
+    }
+
     [Fact]
     public async Task Each_supported_version_has_a_document_of_the_operations_it_serves()
     {
@@ -198,6 +249,29 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             parameter =>
                 parameter.GetProperty("name").GetString() == "api-version"
                 && parameter.GetProperty("in").GetString() == "header"
+        );
+    }
+
+    // A v1 client that sends 2.0 on an unversioned path reaches another contract, so each document refuses the other's.
+    [Fact]
+    public async Task The_api_version_header_of_each_document_admits_its_own_version_alone_and_says_what_it_is()
+    {
+        using var client = Unversioned(Fixture.Client());
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        Assert.Equal(
+            [
+                """{"name":"api-version","in":"header","description":"The requested API version","required":true,"schema":{"enum":["1.0"],"type":"string"}}""",
+            ],
+            ApiVersionHeadersOf(v1)
+        );
+        Assert.Equal(
+            [
+                """{"name":"api-version","in":"header","description":"The requested API version","required":true,"schema":{"enum":["2.0"],"type":"string"}}""",
+            ],
+            ApiVersionHeadersOf(v2)
         );
     }
 
@@ -343,8 +417,100 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
-    // Asp.Versioning appends its document delegate on every call; the Kit's second call adds none, so each transformer
-    // runs once.
+    // A document the Host adds itself states the Idempotency-Key and the bearer scheme its own way; the Kit's transformers
+    // would add a second key and a second requirement to it.
+    [Fact]
+    public async Task A_document_the_host_adds_itself_keeps_its_parameters_and_security_as_the_host_wrote_them()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.AddOpenApi("host", document =>
+                {
+                    document.AddOperationTransformer(
+                        (operation, context, _) =>
+                        {
+                            if (
+                                context
+                                    .Description.ActionDescriptor.EndpointMetadata.OfType<IdempotencyKeyRequirement>()
+                                    .Any()
+                            )
+                            {
+                                operation.Parameters ??= [];
+                                operation.Parameters.Add(
+                                    new OpenApiParameter
+                                    {
+                                        Name = IdempotencyKeyRequirement.Header,
+                                        In = ParameterLocation.Header,
+                                        Required = true,
+                                        Description = "The key as the Host states it.",
+                                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                                    }
+                                );
+                                operation.Security ??= [];
+                                operation.Security.Add(
+                                    new OpenApiSecurityRequirement
+                                    {
+                                        [
+                                            new OpenApiSecuritySchemeReference(
+                                                "Bearer",
+                                                context.Document
+                                            )
+                                        ] = [],
+                                    }
+                                );
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    );
+                    document.AddDocumentTransformer(
+                        (openApi, _, _) =>
+                        {
+                            openApi.Components ??= new OpenApiComponents();
+                            openApi.Components.SecuritySchemes ??=
+                                new Dictionary<string, IOpenApiSecurityScheme>();
+                            openApi.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+                            {
+                                Type = SecuritySchemeType.Http,
+                                Scheme = "bearer",
+                                BearerFormat = "JWT",
+                            };
+                            return Task.CompletedTask;
+                        }
+                    );
+                })
+        );
+        host.MapPost("/host-owned", () => "owned")
+            .RequireIdempotencyKey()
+            .RequireAuthorization(
+                new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
+                }
+            );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = Unversioned(AppFixture.ClientOf(host));
+
+        var owned = await DocumentAsync(anonymous, "host");
+
+        var operation = owned.GetProperty("paths").GetProperty("/host-owned").GetProperty("post");
+        Assert.Equal(
+            """[{"name":"Idempotency-Key","in":"header","description":"The key as the Host states it.","required":true,"schema":{"type":"string"}}]""",
+            JsonSerializer.Serialize(operation.GetProperty("parameters"))
+        );
+        Assert.Equal(
+            """[{"Bearer":[]}]""",
+            JsonSerializer.Serialize(operation.GetProperty("security"))
+        );
+        Assert.Equal(
+            """{"Bearer":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}}""",
+            JsonSerializer.Serialize(owned.GetProperty("components").GetProperty("securitySchemes"))
+        );
+    }
+
+    // The documents' transformers are registered once however often the Host calls it, so each runs once.
     [Fact]
     public async Task A_second_registration_of_the_api_versions_and_documents_adds_nothing()
     {
@@ -508,6 +674,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                 TestContext.Current.CancellationToken
             );
             Assert.Equal(version, document.GetProperty("info").GetProperty("version").GetString());
+            Assert.Equal("3.2.0", document.GetProperty("openapi").GetString());
         }
     }
 
@@ -681,6 +848,18 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                 .Cast<JsonElement?>()
                 .SingleOrDefault()
             : null;
+
+    // Each distinct api-version parameter of the document's operations, as compact JSON.
+    private static IEnumerable<string> ApiVersionHeadersOf(JsonElement document) =>
+        Operations(document)
+            .SelectMany(operation =>
+                operation.Body.TryGetProperty("parameters", out var parameters)
+                    ? parameters.EnumerateArray()
+                    : []
+            )
+            .Where(parameter => parameter.GetProperty("name").GetString() == "api-version")
+            .Select(parameter => JsonSerializer.Serialize(parameter))
+            .Distinct();
 
     private static bool RequiresBearer(JsonElement operation) =>
         operation.TryGetProperty("security", out var security)
