@@ -81,7 +81,7 @@ dotnet test --project tests/Acme.Shop.Tests/Acme.Shop.Tests.csproj
 
 <Accordions>
   <Accordion title="DeliveryAssertionException">
-    `WaitForDeliveriesAsync` was given an Operation that stored no delivery at all, so a test that waits never passes on nothing. `ReplayAsync` throws it for a delivery that is not a dead letter.
+    `WaitForDeliveriesAsync` was given an Operation that stored no delivery at all, so a test that waits never passes on nothing. `ReplayAsync` throws it unless Wolverine replays exactly that dead letter, such as for a delivery that is not a dead letter, or one that is archived, which Wolverine leaves out of a replay.
   </Accordion>
   <Accordion title="TimeoutException">
     Deliveries were still pending when the wait's limit passed. A failing delivery stays pending through every retry, so check whether a handler keeps failing. [Deliveries](/docs/capabilities/testing#deliveries) gives the limit.

@@ -378,14 +378,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 229,
-          "end_line": 249,
+          "line": 246,
+          "end_line": 266,
           "label": "StartHostAsync migrates, then starts"
         },
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 253,
-          "end_line": 258,
+          "line": 270,
+          "end_line": 275,
           "label": "InitializeAsync starts it the same way"
         }
       ]

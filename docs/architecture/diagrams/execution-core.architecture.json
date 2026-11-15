@@ -528,14 +528,14 @@
         },
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 228,
-          "end_line": 250,
+          "line": 245,
+          "end_line": 267,
           "label": "migrates every DbContext, starts"
         },
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
-          "line": 359,
-          "end_line": 378,
+          "line": 376,
+          "end_line": 395,
           "label": "reads the stored deliveries"
         }
       ]
