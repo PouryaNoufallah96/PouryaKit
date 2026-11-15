@@ -1,0 +1,21 @@
+tests/ModularMonolith.Tests/IndependentDeliveryTests.cs
+  s_3529354fc6f9e2::t_b6422b9cef9fcb 181-223,225-227,229-237,243-244
+  s_3529354fc6f9e2::t_4320cb424cb4dd 224
+  s_3529354fc6f9e2::t_78efe70e33c203 228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00e8cca511b9ce9c3b89d4bedca902a75f53cd09",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
