@@ -47,5 +47,10 @@ metadata:
 - **Python shadowing:** a helper named `offence` beside a later `for offence in offences:` in the same function raised `UnboundLocalError` in the comprehension above it; name helpers apart from loop variables.
 - **A flake in `SinceTests.test_the_validation_runs_unless_every_committed_uncommitted_and_untracked_change_is_exempt`** (unchanged by #185): errors three times in about ten runs from a zsh loop, none in 120 runs from a Python driver; its `git` helper takes no `GIT_CONFIG_GLOBAL` isolation, the git-ai class `scripts/ci/test_evidence.py` fixed. Rerun before blaming a change.
 
+## Merging a moved tip with diagram conflicts through the hooks (#209 fix round, 2026-11-15)
+
+- The merger docs commit the merge with `--no-verify`, which the guard blocks. `check-docs.py --staged` judges a staged diagram's cited files against its revision only where the file is unchanged against HEAD (this branch), so set each conflicted diagram's revision to this branch's own code commit, not the tip's: the tip's changes then show against HEAD and pass. A diagram whose merged source equals HEAD's is not staged, so its tip-side files fail: pin it to HEAD with `repin-diagram.py … --pin-only` as the interim change. Then the merge commits through the hooks and the pin commit follows to the merge sha.
+- A first `validate.py` run failed only on Docker timeouts (Npgsql connect, AppHost start, a port another process answered with 404) while the same tree passed verify and a second run: rerun once and report both.
+
 **Why:** these took probes during the retro packages and the kit-review rework (retro item 1); the CI log path decides how long the orchestrator waits.
 **How to apply:** when a merge proof, a CI failure or a `gh` log download is part of the work; when a brief says to verify a workflow with `node --check`, run that direct check first and report its runtime and result, and use the wrapped check as a fallback if the runtime rejects the workflow body's top-level `return`. Related: [[worktree-shell-and-check-gotchas]].
