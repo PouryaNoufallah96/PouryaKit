@@ -1,0 +1,46 @@
+docs/architecture/README.md
+  s_3529354fc6f9e2::t_35635ecf8592b9 309
+.agents/skills/pourya-kit/references/openapi.md
+  s_3529354fc6f9e2::t_8d885097976a69 147
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_6c2777792c8229 9
+  s_3529354fc6f9e2::t_2c313905155e3a 5
+  s_3529354fc6f9e2::t_4bfd1f04468102 14
+.agents/skills/pourya-kit/references/realtime.md
+  s_3529354fc6f9e2::t_4a9f843ddf0502 72
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_3529354fc6f9e2::t_83789c3b8598cb 415-434,437,446-451
+  s_3529354fc6f9e2::t_e2512672b156d5 435-436,438-445
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3529354fc6f9e2::t_794721ab52afee 150-154
+src/PouryaKit.Realtime/RealtimeEndpointRouteBuilderExtensions.cs
+  s_3529354fc6f9e2::t_cc4017d386d34e 1
+  s_3529354fc6f9e2::t_900c4220854805 28-29
+  s_3529354fc6f9e2::t_ddd58c75920127 78
+  s_3529354fc6f9e2::t_b7bf52ef0e38a8 76-77
+  s_3529354fc6f9e2::t_f01b4210663f7a 40
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_3529354fc6f9e2::t_fb29391ffa2aac 177-178,180-182
+  s_3529354fc6f9e2::t_7db7fc81a0a756 179
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_3529354fc6f9e2::t_07b51fc644189c 174-177
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_a1658a7d519ab3 24
+  s_3529354fc6f9e2::t_05d409a6870a99 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1eaf2a20913e5c65e2fdd2c20006f22f9ad7c514",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": null
+    }
+  }
+}
