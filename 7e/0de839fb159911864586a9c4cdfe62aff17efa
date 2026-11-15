@@ -1,0 +1,21 @@
+docs/architecture/diagrams/host-start.workflow.json
+  s_3529354fc6f9e2::t_8dc69c371457db 11
+docs/architecture/diagrams/host-start.html
+  s_3529354fc6f9e2::t_8dc69c371457db 4985,4990,5016,5019,5022,5032-5043,5053-5059,5100-5104,5108-5110,5115-5117,5121-5123,5128-5130,5134-5136,5141-5143,5146-5148,5151-5155,5161-5162,5167-5169,5175-5177,5202-5204,5207-5212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7e0de839fb159911864586a9c4cdfe62aff17efa",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
