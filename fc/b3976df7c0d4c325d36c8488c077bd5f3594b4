@@ -1,0 +1,98 @@
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_56c78af6bca6cd::t_b61e4caf43a191 570-598
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_0e6db6a92403f4 10
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_56c78af6bca6cd::t_0bb72be61c1057 3
+  s_56c78af6bca6cd::t_b37f5474f0a9b6 139-146
+Directory.Packages.props
+  s_56c78af6bca6cd::t_c9ce2c13705c0a 30,74-79
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_56c78af6bca6cd::t_a8e70dceec83b7 119
+src/PouryaKit.Testing/HostFixture.cs
+  s_56c78af6bca6cd::t_a0421ed0da6371 61-63
+  s_56c78af6bca6cd::t_3a4ec84d6e37fc 3
+  s_56c78af6bca6cd::t_0d4bb3e5910331 146-148
+  s_56c78af6bca6cd::t_463b4512c2adef 171-173,182-188,191-199
+.agents/skills/pourya-kit/references/messaging.md
+  s_56c78af6bca6cd::t_7a09815d4acda6 684
+  s_56c78af6bca6cd::t_ee0961db8d6789 685
+docs/architecture/diagrams/host-start.workflow.json
+  s_56c78af6bca6cd::t_c8bd6446437a07 381-382,387-388
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_56c78af6bca6cd::t_c9ce2c13705c0a 39
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_56999f7220f3ac 11
+tests/ModularMonolith.Tests/FailingDeliveryTests.cs
+  s_56c78af6bca6cd::t_9e20ddaebfe225 122-124
+  s_56c78af6bca6cd::t_26076ea8efa096 6
+  s_56c78af6bca6cd::t_91b30a6565a595 162-195
+  s_56c78af6bca6cd::t_9a05700d982b28 161
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_c8bd6446437a07 531-532,537-538
+website/content/docs/guides/test-a-feature.mdx
+  s_56c78af6bca6cd::t_add8cc2d829570 84
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_56c78af6bca6cd::t_77dd53065ae7cb 109
+  s_56c78af6bca6cd::t_44a741bdfd9998 102-103
+src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj
+  s_56c78af6bca6cd::t_64b664076d87bc 8
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_56c78af6bca6cd::t_c9ce2c13705c0a 44
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_5b79e06b02791e 698
+  s_56c78af6bca6cd::t_e4ed046df9771b 484,557,560,590,600,612
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_56c78af6bca6cd::t_64b664076d87bc 164
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_56c78af6bca6cd::t_08d5b28a6f8688 1220-1254
+.agents/skills/pourya-kit/references/stream.md
+  s_56c78af6bca6cd::t_a8e70dceec83b7 3
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_c8bd6446437a07 258-259
+tests/ModularMonolith.Tests/StoredDeliveriesSchemaTests.cs
+  s_56c78af6bca6cd::t_c7bf784e98fe08 125
+  s_56c78af6bca6cd::t_35c60c34480a74 52-53
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_56c78af6bca6cd::t_64b664076d87bc 51
+.agents/skills/pourya-kit/references/testing.md
+  s_56c78af6bca6cd::t_04b43bde2cf2e7 181
+  s_56c78af6bca6cd::t_7ea5764aeec981 182
+  s_56c78af6bca6cd::t_e1020b28029393 142
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_0e6db6a92403f4 10
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_56c78af6bca6cd::t_124477b6b92564 383-391
+  s_56c78af6bca6cd::t_1702a22732a846 392-395
+src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs
+  s_56c78af6bca6cd::t_64b664076d87bc 11
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_56c78af6bca6cd::t_5307783c7a0a33 336-341
+  s_56c78af6bca6cd::t_000e2d1db8559a 329-335,342-346
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_c8bd6446437a07 299-300
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_f2db09ae691d13 288-289,291,823-824,882,884
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_56c78af6bca6cd::t_64b664076d87bc 15,360
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_56c78af6bca6cd::t_c9ce2c13705c0a 49
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_b9419328bfb513 15,17,31,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fcb3976df7c0d4c325d36c8488c077bd5f3594b4",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
