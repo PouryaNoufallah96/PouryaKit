@@ -318,6 +318,37 @@ public sealed class PackageGraphTests
         );
     }
 
+    // EF Core's release candidate asks for runtime libraries at their release candidate too, as minimums a stable version
+    // satisfies (#215). The rule admits only the provider and EF Core's own packages it pins.
+    [Fact]
+    public void A_closure_with_a_prerelease_outside_the_temporary_ef_core_set_is_rejected()
+    {
+        var efCore = Restored("PouryaKit.Persistence.EFCore");
+        // Allowed as restored, until the stable provider ships: EF Core's own release candidate.
+        Assert.Contains(efCore.Packages, arrived =>
+            arrived.Id == "Microsoft.EntityFrameworkCore"
+            && arrived.Version.Contains('-', StringComparison.Ordinal)
+        );
+
+        Assert.Equal(
+            [
+                "PouryaKit.Persistence.EFCore's closure holds Microsoft.Extensions.Logging 11.0.0-rc.3.26522.148, a prerelease outside the temporary EF Core set.",
+            ],
+            PackageGraph.Violations(
+                efCore with
+                {
+                    Packages =
+                    [
+                        .. efCore.Packages.Where(arrived =>
+                            arrived.Id != "Microsoft.Extensions.Logging"
+                        ),
+                        Arrived("Microsoft.Extensions.Logging", "11.0.0-rc.3.26522.148"),
+                    ],
+                }
+            )
+        );
+    }
+
     [Fact]
     public void The_sample_hosts_run_without_the_optional_localization()
     {

@@ -5,7 +5,7 @@ namespace PouryaKit.ArchitectureTests;
 /// <summary>
 /// Plan section C, "Allowed references", as amended on 2026-10-05 and by G.4, as the checks a restored Kit package must
 /// pass: its direct references are exactly the table's, and its full closure keeps out what the table keeps out and
-/// holds no EF Core package of an older major than the Kit's.
+/// holds no EF Core package of an older major than the Kit's, and no prerelease but the temporary EF Core set.
 /// </summary>
 internal static class PackageGraph
 {
@@ -43,6 +43,9 @@ internal static class PackageGraph
             [
                 "Microsoft.EntityFrameworkCore.Relational",
                 "Ardalis.Specification.EntityFrameworkCore",
+                // Stable floors over the release candidate EF Core asks for at least, while it is one (#215).
+                "Microsoft.Extensions.Caching.Memory",
+                "Microsoft.Extensions.Logging",
             ]
         ),
         ["PouryaKit.Persistence.Postgres"] = new(
@@ -65,6 +68,9 @@ internal static class PackageGraph
                 "Microsoft.EntityFrameworkCore.Design",
                 "WolverineFx.EntityFrameworkCore",
                 "WolverineFx.Postgresql",
+                // Stable floors over the prereleases EF Core Design's release candidate asks for at least (#215).
+                "Microsoft.CodeAnalysis.Analyzers",
+                "Microsoft.Extensions.DependencyModel",
             ]
         ),
         ["PouryaKit.Messaging.Wolverine.RabbitMq"] = new(
@@ -381,9 +387,35 @@ internal static class PackageGraph
         {
             yield return $"{package.Name}'s closure holds {arrived.Id} {arrived.Version}, below EF Core {EfCoreMajor}.";
         }
+
+        // A prerelease only where no stable version serves (#215).
+        foreach (
+            var arrived in package
+                .RuntimePackages.Where(arrived =>
+                    arrived.Version.Contains('-', StringComparison.Ordinal)
+                    && !TemporaryPrereleases.Contains(arrived.Id)
+                )
+                .OrderBy(arrived => arrived.Id, StringComparer.Ordinal)
+        )
+        {
+            yield return $"{package.Name}'s closure holds {arrived.Id} {arrived.Version}, a prerelease outside the temporary EF Core set.";
+        }
     }
 
     private const int EfCoreMajor = 11;
+
+    // The prereleases the Kit takes while no stable PostgreSQL provider for EF Core 11 exists (docs/packages.md,
+    // "Temporary prerelease dependencies"): the provider, and EF Core's own packages at the release candidate it pins
+    // exactly. Empty it when the stable provider ships.
+    private static readonly HashSet<string> TemporaryPrereleases =
+    [
+        "Microsoft.EntityFrameworkCore",
+        "Microsoft.EntityFrameworkCore.Abstractions",
+        "Microsoft.EntityFrameworkCore.Analyzers",
+        "Microsoft.EntityFrameworkCore.Design",
+        "Microsoft.EntityFrameworkCore.Relational",
+        "Npgsql.EntityFrameworkCore.PostgreSQL",
+    ];
 
     // By id, EF Core's own packages only, and by major: 11.0.0-rc.3 is EF Core 11, though it sorts below 11.0.0.
     private static bool IsEfCoreBelowTheKitsMajor(PackageLicence arrived) =>

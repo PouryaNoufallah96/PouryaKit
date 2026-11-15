@@ -62,8 +62,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 126,
-          "end_line": 130,
+          "line": 132,
+          "end_line": 136,
           "label": "references no Kit package: runs no Operation"
         },
         {
@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 259,
-          "end_line": 264,
+          "line": 265,
+          "end_line": 270,
           "label": "no Kit package references Redis"
         }
       ]
@@ -451,7 +451,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 24,
-          "end_line": 209,
+          "end_line": 215,
           "label": "their allowed references"
         }
       ]
