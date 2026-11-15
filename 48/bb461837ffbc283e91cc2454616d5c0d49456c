@@ -1,0 +1,117 @@
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 19
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 121-124
+  s_56c78af6bca6cd::t_76de6c832207c4 125
+.agents/skills/pourya-kit/references/testing.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 142,181-182
+src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 11
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 383-395
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_7608c412032960 10
+docs/architecture/diagrams/host-start.html
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 4985
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 48
+src/PouryaKit.Web.OpenApi/ApiVersionDocuments.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 1-224
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 570-598
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 15,360
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 484,557,560,590,600,612,654,663-665,669,699
+src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 8
+src/PouryaKit.Web.OpenApi/PouryaKit.Web.OpenApi.csproj
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 11
+src/PouryaKit.Web.OpenApi/WebOpenApiEndpointRouteBuilderExtensions.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 28-31
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 5-8
+tests/ModularMonolith.Tests/StoredDeliveriesSchemaTests.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 52-53,125
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 10,258-259
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 51
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 160-167
+  s_56c78af6bca6cd::t_76de6c832207c4 168,171
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 329-346
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 13,16,141-201,267-328,471-564,728,903-913
+  s_56c78af6bca6cd::t_a8c9076c762c96 914
+src/PouryaKit.Testing/HostFixture.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 3,61-63,146-148,171-173,182-188,191-199
+.agents/skills/pourya-kit/references/openapi.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 3,12,137-138,142-143
+docs/architecture/diagrams/module-boundaries.html
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 4985
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 10
+website/content/docs/guides/test-a-feature.mdx
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 84
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 531-532,537-538
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 119
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 3,139-145
+  s_56c78af6bca6cd::t_9ace0e21311e13 146
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 11
+  s_56c78af6bca6cd::t_d0dc17ffb84424 4,14
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 4985
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 43
+tests/ModularMonolith.Tests/FailingDeliveryTests.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 6,122-124,161-193
+  s_56c78af6bca6cd::t_494ee310b6a6ab 194-195
+src/PouryaKit.Web.OpenApi/README.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 52
+docs/architecture/diagrams/host-start.workflow.json
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 11,381-382,387-388
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 38
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 3,34-36,50,81-91
+.agents/skills/pourya-kit/references/stream.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 3
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 1220-1254
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 273,288-289,291,823-824,869,882,884
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_4d630bc06f3cb9 15,17,21,31,33
+Directory.Packages.props
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 13,30,34,73-78
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 299-300
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 81,164
+.agents/skills/pourya-kit/references/messaging.md
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 684-685
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_56c78af6bca6cd::t_ee1e88ddc4b5d1 102-103,109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "48bb461837ffbc283e91cc2454616d5c0d49456c",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
