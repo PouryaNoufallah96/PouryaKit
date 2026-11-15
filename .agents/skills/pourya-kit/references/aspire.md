@@ -14,7 +14,7 @@
 An AppHost project uses the `Aspire.AppHost.Sdk` and references the Hosts and the Reverse proxy it runs, and the package. This is the Proving Sample's AppHost project:
 
 ```xml
-<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>pouryakit-modular-monolith-apphost</UserSecretsId>

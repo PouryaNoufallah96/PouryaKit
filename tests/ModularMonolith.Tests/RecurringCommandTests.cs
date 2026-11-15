@@ -40,23 +40,19 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     public async Task ReconcileStock_runs_under_its_system_actor_and_the_occurrence_a_dying_host_stored_runs_after_a_restart()
     {
         var connectionString = await NewDatabaseAsync();
-        await using var dying = Compose(connectionString, TimeSpan.FromSeconds(3));
-        await using var starting = Compose(connectionString, TimeSpan.FromSeconds(3));
-        await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
-        await Sql.WaitUntilAsync(
-            connectionString,
-            "exists (select from inventory.stock_reconciliations)"
-        );
         object[] stored;
         DateTime died;
-        try
+        // Each Host is disposed before the next one starts: a stopped Host keeps its connection pools open until then,
+        // where a killed process leaves none open.
+        await using (var dying = Compose(connectionString, TimeSpan.FromSeconds(3)))
         {
-            using (
-                var committed = DeliveryProbes.HoldAfterCommit(
-                    typeof(InventoryModule),
-                    ReconcileStock
-                )
-            )
+            await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
+            await Sql.WaitUntilAsync(
+                connectionString,
+                "exists (select from inventory.stock_reconciliations)"
+            );
+            var committed = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), ReconcileStock);
+            try
             {
                 // An occurrence committed its reconciliation and the next occurrence, and is not yet acknowledged.
                 await committed.Held;
@@ -72,17 +68,28 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 ).StopMode = StopMode.Quick;
                 await dying.StopAsync(TestContext.Current.CancellationToken);
                 died = (DateTime)(await Sql.RowsAsync(connectionString, "select now()"))[0][0];
+            }
+            finally
+            {
+                // The held delivery never continues, as in a process that was killed.
+                committed.Abandon();
+            }
+        }
 
-                await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
+        await using (var starting = Compose(connectionString, TimeSpan.FromSeconds(3)))
+        {
+            await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
+            try
+            {
                 await Sql.WaitUntilAsync(
                     connectionString,
                     $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{stored[0]}' and status = 'Handled')"
                 );
             }
-        }
-        finally
-        {
-            await starting.StopAsync(TestContext.Current.CancellationToken);
+            finally
+            {
+                await starting.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
         // The occurrence stored before the Host died ran after the restart, under the system Actor, with its Receipt.
@@ -154,27 +161,33 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     public async Task A_starting_host_stores_the_first_occurrence_only_when_none_waits()
     {
         var connectionString = await NewDatabaseAsync();
-        await using var first = Compose(connectionString, TimeSpan.FromHours(1));
-        await using var second = Compose(connectionString, TimeSpan.FromHours(1));
-
-        await HostFixture.StartHostAsync(first, TestContext.Current.CancellationToken);
-        var waiting = await Sql.RowsAsync(
-            connectionString,
-            $"select id, execution_time > now() and execution_time <= now() + interval '1 hour' and date_trunc('hour', execution_time) = execution_time from wolverine.wolverine_incoming_envelopes where {OnQueue}"
-        );
-        await first.StopAsync(TestContext.Current.CancellationToken);
-        await HostFixture.StartHostAsync(second, TestContext.Current.CancellationToken);
-        List<object[]> afterSecond;
-        try
+        // Each Host is disposed before the next one starts: a stopped Host keeps its connection pools open until then.
+        List<object[]> waiting;
+        await using (var first = Compose(connectionString, TimeSpan.FromHours(1)))
         {
-            afterSecond = await Sql.RowsAsync(
+            await HostFixture.StartHostAsync(first, TestContext.Current.CancellationToken);
+            waiting = await Sql.RowsAsync(
                 connectionString,
-                $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue}"
+                $"select id, execution_time > now() and execution_time <= now() + interval '1 hour' and date_trunc('hour', execution_time) = execution_time from wolverine.wolverine_incoming_envelopes where {OnQueue}"
             );
+            await first.StopAsync(TestContext.Current.CancellationToken);
         }
-        finally
+
+        List<object[]> afterSecond;
+        await using (var second = Compose(connectionString, TimeSpan.FromHours(1)))
         {
-            await second.StopAsync(TestContext.Current.CancellationToken);
+            await HostFixture.StartHostAsync(second, TestContext.Current.CancellationToken);
+            try
+            {
+                afterSecond = await Sql.RowsAsync(
+                    connectionString,
+                    $"select id from wolverine.wolverine_incoming_envelopes where {OnQueue}"
+                );
+            }
+            finally
+            {
+                await second.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
         // The first start stored the next whole hour; the second found it waiting and stored nothing.
@@ -763,52 +776,63 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     {
         var connectionString = await NewDatabaseAsync();
         var text = $"kind {Guid.CreateVersion7()}";
-        await using var delayed = Compose(
-            connectionString,
-            TimeSpan.FromHours(1),
-            builder =>
-                builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
-                    KindChanged,
-                    typeof(StubModule)
-                )
-        );
-        await using var recurring = Compose(
-            connectionString,
-            TimeSpan.FromHours(1),
-            builder =>
-                builder
-                    .Services.AddPouryaKitRecurringCommand(
+        // Each Host is disposed before the next one starts: a stopped Host keeps its connection pools open until then.
+        await using (
+            var delayed = Compose(
+                connectionString,
+                TimeSpan.FromHours(1),
+                builder =>
+                    builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
                         KindChanged,
-                        systemActor: "stub.kind-changer",
-                        occurrence => new WriteKindChangedNoteCommand($"recurring {occurrence:O}"),
                         typeof(StubModule)
                     )
-                    .Configure(options => options.Every = TimeSpan.FromHours(1))
-        );
-        await HostFixture.StartHostAsync(delayed, TestContext.Current.CancellationToken);
-        Assert.True(
-            (
-                await delayed
-                    .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
-                    .SendAsync(
-                        new ScheduleKindChangedNoteCommand(text),
-                        TestContext.Current.CancellationToken
-                    )
-            ).IsSuccess
-        );
-        await delayed.StopAsync(TestContext.Current.CancellationToken);
-
-        await HostFixture.StartHostAsync(recurring, TestContext.Current.CancellationToken);
-        try
+            )
+        )
         {
-            await Sql.WaitUntilAsync(
-                connectionString,
-                $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/')"
+            await HostFixture.StartHostAsync(delayed, TestContext.Current.CancellationToken);
+            Assert.True(
+                (
+                    await delayed
+                        .Services.GetRequiredService<IGatewayProcessor<StubModule>>()
+                        .SendAsync(
+                            new ScheduleKindChangedNoteCommand(text),
+                            TestContext.Current.CancellationToken
+                        )
+                ).IsSuccess
             );
+            await delayed.StopAsync(TestContext.Current.CancellationToken);
         }
-        finally
+
+        await using (
+            var recurring = Compose(
+                connectionString,
+                TimeSpan.FromHours(1),
+                builder =>
+                    builder
+                        .Services.AddPouryaKitRecurringCommand(
+                            KindChanged,
+                            systemActor: "stub.kind-changer",
+                            occurrence => new WriteKindChangedNoteCommand(
+                                $"recurring {occurrence:O}"
+                            ),
+                            typeof(StubModule)
+                        )
+                        .Configure(options => options.Every = TimeSpan.FromHours(1))
+            )
+        )
         {
-            await recurring.StopAsync(TestContext.Current.CancellationToken);
+            await HostFixture.StartHostAsync(recurring, TestContext.Current.CancellationToken);
+            try
+            {
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_dead_letters where received_at = 'local://{KindChanged}/')"
+                );
+            }
+            finally
+            {
+                await recurring.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
         // Refused before it began any Operation: no Receipt, no note, no attempt under the system Actor.
