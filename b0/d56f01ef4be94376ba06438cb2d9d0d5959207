@@ -1,0 +1,23 @@
+tests/ModularMonolith.Tests/RabbitMqDeliveryTests.cs
+  s_3529354fc6f9e2::t_036dfc1d3f2643 42
+  s_3529354fc6f9e2::t_af86ab86e47cc2 40-41,43
+  s_3529354fc6f9e2::t_11d17a66a69f18 345
+  s_3529354fc6f9e2::t_f828188de28e2d 384
+  s_3529354fc6f9e2::t_5b7ef921827e81 695
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0d56f01ef4be94376ba06438cb2d9d0d5959207",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
