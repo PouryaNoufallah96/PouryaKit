@@ -1,0 +1,31 @@
+docs/packages.md
+  s_56c78af6bca6cd::t_90f3c4772b1866 29-30
+tests/ModularMonolith.Tests/VectorSearchTests.cs
+  s_56c78af6bca6cd::t_8b4f9edf497fa7 26-27
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_0ccf480725bbb1 280
+.agents/skills/pourya-kit/references/ai.md
+  s_56c78af6bca6cd::t_c0a70459f14701 329
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_ea7b26320301e8 6,13
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_e26e0bdfc68034 248
+.agents/skills/pourya-kit/references/email.md
+  s_56c78af6bca6cd::t_d436ba94922406 61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1e06c3a6983f925314b7c3948e2507fd82423b4a",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
