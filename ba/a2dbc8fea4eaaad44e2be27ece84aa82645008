@@ -1,0 +1,101 @@
+docs/adr/0013-a-saga-step-runs-outside-every-operation.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 383-395
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_06414e7a1a80fa 258-259
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_56c78af6bca6cd::t_06414e7a1a80fa 44
+Directory.Packages.props
+  s_56c78af6bca6cd::t_06414e7a1a80fa 74-79
+  s_56c78af6bca6cd::t_592f313200fa7a 30
+.agents/skills/pourya-kit/references/messaging.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 684-685
+docs/adr/0011-each-write-model-has-one-commit-owner.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 329-346
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4985
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 484,557,560,590,600,612,698
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_56c78af6bca6cd::t_06414e7a1a80fa 39
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 164
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 570-598
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 119
+docs/architecture/diagrams/host-start.workflow.json
+  s_56c78af6bca6cd::t_06414e7a1a80fa 381-382,387-388
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_06414e7a1a80fa 10
+docs/architecture/diagrams/module-boundaries.html
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4985
+src/PouryaKit.Messaging.Wolverine.Sagas/Routing/SagaRouteSource.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 11
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 288-289,291,823-824,882,884
+src/PouryaKit.Testing/HostFixture.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 3,61-63,146-148,171-173,182-188,191-199
+src/PouryaKit.Persistence.Marten/PouryaKit.Persistence.Marten.csproj
+  s_56c78af6bca6cd::t_06414e7a1a80fa 8
+docs/architecture/diagrams/kit-context.html
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4985
+src/PouryaKit.Messaging.Wolverine/Subscriptions/Subscriptions.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 15,360
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_ce0b297685a1a4 10
+src/PouryaKit.Testing/StoredDeliveries.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 102-103,109
+.agents/skills/pourya-kit/references/stream.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 3
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_06414e7a1a80fa 531-532,537-538
+.agents/skills/pourya-kit/references/testing.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 142,181-182
+docs/architecture/diagrams/host-start.html
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4985
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_043e3ded97a59a 15
+  s_56c78af6bca6cd::t_06414e7a1a80fa 17,31,33
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_06414e7a1a80fa 299-300
+tests/ModularMonolith.Tests/StoredDeliveriesSchemaTests.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 52-53,125
+docs/architecture/diagrams/ci-and-publication.html
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4985
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_56c78af6bca6cd::t_06414e7a1a80fa 49
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 51
+tests/ModularMonolith.Tests/FailingDeliveryTests.cs
+  s_56c78af6bca6cd::t_06414e7a1a80fa 6,122-124,161-193
+  s_56c78af6bca6cd::t_d2af55b6c62a99 194-195
+website/content/docs/guides/test-a-feature.mdx
+  s_56c78af6bca6cd::t_06414e7a1a80fa 84
+.claude/agent-memory/kit-implementer/worktree-shell-and-check-gotchas.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 121-125
+docs/architecture/diagrams/execution-core.html
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4985
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 3,139-145
+  s_56c78af6bca6cd::t_746a680fa10452 146
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 4,11
+docs/adr/0006-independent-delivery-through-a-routed-queue-per-subscription.md
+  s_56c78af6bca6cd::t_06414e7a1a80fa 1220-1254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "baa2dbc8fea4eaaad44e2be27ece84aa82645008",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
