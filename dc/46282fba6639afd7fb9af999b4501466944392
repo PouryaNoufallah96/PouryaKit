@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_56c78af6bca6cd::t_4be5656c2e61b2 23-25,27-29
+  s_56c78af6bca6cd::t_604242a12255bc 26
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_56c78af6bca6cd::t_bf0ff682260685 160-162,164-166
+  s_56c78af6bca6cd::t_0387f9da1475c4 163
+  s_56c78af6bca6cd::t_4e75a9dd4ff0df 3
+  s_56c78af6bca6cd::t_1a93d9c024a5db 167
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_4e75a9dd4ff0df 14,16,29
+.claude/agent-memory/kit-implementer/caching-and-idempotency-facts.md
+  s_56c78af6bca6cd::t_d752f33ee38d52 84-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dc46282fba6639afd7fb9af999b4501466944392",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
