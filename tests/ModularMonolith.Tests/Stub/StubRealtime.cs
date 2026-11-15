@@ -30,10 +30,8 @@ internal sealed class StubRealtime : IEndpoint
 {
     public void Map(IEndpointRouteBuilder routes)
     {
-        routes.MapPouryaKitRealtime(
-            "/realtime",
-            (actor, channel) =>
-                channel == StubChannels.Notes || channel == StubChannels.InboxOf(actor.Id)
+        routes.MapPouryaKitRealtime("/realtime", (actor, channel) =>
+            channel == StubChannels.Notes || channel == StubChannels.InboxOf(actor.Id)
         );
         routes.MapPost(
             "/realtime/notes/{text}",

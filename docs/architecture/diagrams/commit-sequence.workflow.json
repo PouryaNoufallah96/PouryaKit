@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a7353a2b3cc57dec4c963c011973d0ee6c282f6c",
+      "revision": "e2d4941dd6a450ea199470e58cf13e937cf44f0f",
       "link_mode": "web"
     },
     "legend": {
@@ -84,14 +84,14 @@
       "sources": [
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/Dispatcher.cs",
-          "line": 301,
-          "end_line": 333,
+          "line": 297,
+          "end_line": 329,
           "label": "reserve, handle, record in the transaction"
         },
         {
           "path": "src/PouryaKit.Persistence.EFCore/Idempotency/EfIdempotencyStore.cs",
           "line": 22,
-          "end_line": 79,
+          "end_line": 73,
           "label": "the key on the Unit of Work's transaction"
         },
         {
@@ -137,13 +137,13 @@
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs",
           "line": 40,
-          "end_line": 85,
+          "end_line": 83,
           "label": "rounds, depth guard, stops on failure"
         },
         {
           "path": "src/PouryaKit.Cqrs/Pipeline/DomainEventDrain.cs",
-          "line": 100,
-          "end_line": 122,
+          "line": 98,
+          "end_line": 120,
           "label": "one handler at a time, by name"
         }
       ]

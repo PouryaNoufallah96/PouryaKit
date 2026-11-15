@@ -84,8 +84,7 @@ public static class OperationContextHeaderExtensions
         };
         envelope.Headers.TryGetValue(OperationContextHeaders.Tenant, out var tenant);
         envelope.Headers.TryGetValue(OperationContextHeaders.TraceState, out var traceState);
-        var parent =
-            envelope.ParentId
+        var parent = envelope.ParentId
             ?? envelope.Headers.GetValueOrDefault(OperationContextHeaders.TraceParent);
         ActivityContext.TryParse(parent, traceState, isRemote: true, out var traceParent);
         return (

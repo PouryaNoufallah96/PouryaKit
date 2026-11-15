@@ -81,24 +81,19 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         var delivery = Assert.IsType<Activity>(
             Assert.Single(DeliveryProbes.ActivitiesOf(StockItems).Skip(earlier))
         );
-        Assert.Contains(
-            exported.Activities,
-            activity =>
-                activity.Source.Name == OperationTelemetry.SourceName
-                && activity.SpanId == delivery.SpanId
+        Assert.Contains(exported.Activities, activity =>
+            activity.Source.Name == OperationTelemetry.SourceName
+            && activity.SpanId == delivery.SpanId
         );
         // Each command the delivery's Operation sends to its database is a span of Npgsql's own source, under the Operation's.
-        Assert.Contains(
-            exported.Activities,
-            activity => activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId
+        Assert.Contains(exported.Activities, activity =>
+            activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId
         );
-        Assert.Contains(
-            exported.Durations,
-            duration =>
-                (duration.Module, duration.Operation, duration.Outcome)
-                    == ("InventoryModule", "Deliver", OperationTelemetry.Succeeded)
-                && duration.Count > 0
-                && duration.Sum > 0
+        Assert.Contains(exported.Durations, duration =>
+            (duration.Module, duration.Operation, duration.Outcome)
+                == ("InventoryModule", "Deliver", OperationTelemetry.Succeeded)
+            && duration.Count > 0
+            && duration.Sum > 0
         );
         // The histogram's own bucket boundaries, which the exporter takes with no view of the Host's.
         Assert.All(exported.Durations, duration => Assert.Equal(SecondScale, duration.Boundaries));
@@ -277,16 +272,13 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
                 Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher"
             )
             .ToList();
-        Assert.Contains(
-            dispatched,
-            logged =>
-                logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
-                && Scalar(logged, "Operation") == "Deliver"
+        Assert.Contains(dispatched, logged =>
+            logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
+            && Scalar(logged, "Operation") == "Deliver"
         );
         // The Operation's log scope: the delivery's own id, the correlation of the CreateProduct it continues, its Module.
-        var delivery = Assert.Single(
-            DeliveryProbes.ContextsOf(StockItems),
-            context => context.CorrelationId == created.CorrelationId
+        var delivery = Assert.Single(DeliveryProbes.ContextsOf(StockItems), context =>
+            context.CorrelationId == created.CorrelationId
         );
         Assert.Contains(
             ("Deliver", delivery.OperationId, created.CorrelationId, "InventoryModule"),
@@ -334,28 +326,24 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         var received = _downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
         Assert.Equal(3, received.Count);
-        Assert.All(
-            received,
-            request =>
-                Assert.Equal(
-                    new Dictionary<string, string>
-                    {
-                        [OperationContextHeaders.ActorId] = "ada",
-                        [OperationContextHeaders.ActorKind] = nameof(ActorKind.Person),
-                        [OperationContextHeaders.Tenant] = "acme",
-                        [OperationContextHeaders.CorrelationId] = Context.CorrelationId.ToString(),
-                        [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
-                    },
-                    request
-                        .Headers!.Where(header =>
-                            header.Key.StartsWith("pouryakit-", StringComparison.OrdinalIgnoreCase)
-                        )
-                        .ToDictionary(
-                            header => header.Key.ToLowerInvariant(),
-                            header => string.Join(",", header.Value)
-                        )
-                )
-        );
+        Assert.All(received, request => Assert.Equal(
+                new Dictionary<string, string>
+                {
+                    [OperationContextHeaders.ActorId] = "ada",
+                    [OperationContextHeaders.ActorKind] = nameof(ActorKind.Person),
+                    [OperationContextHeaders.Tenant] = "acme",
+                    [OperationContextHeaders.CorrelationId] = Context.CorrelationId.ToString(),
+                    [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
+                },
+                request
+                    .Headers!.Where(header =>
+                        header.Key.StartsWith("pouryakit-", StringComparison.OrdinalIgnoreCase)
+                    )
+                    .ToDictionary(
+                        header => header.Key.ToLowerInvariant(),
+                        header => string.Join(",", header.Value)
+                    )
+            ));
     }
 
     // The unnamed client's pipeline would be the defaults' own ("-standard"), so its replay policy would become that of

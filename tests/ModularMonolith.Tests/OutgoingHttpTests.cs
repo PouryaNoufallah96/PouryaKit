@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Net.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -44,21 +43,17 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var attempts = Journal();
         Assert.Equal(3, attempts.Count);
-        Assert.All(
-            attempts,
-            attempt =>
-                Assert.Equal(
-                    new Dictionary<string, string>
-                    {
-                        [OperationContextHeaders.ActorId] = "ada",
-                        [OperationContextHeaders.ActorKind] = nameof(ActorKind.Person),
-                        [OperationContextHeaders.Tenant] = "acme",
-                        [OperationContextHeaders.CorrelationId] = Context.CorrelationId.ToString(),
-                        [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
-                    },
-                    ContextHeaders(attempt)
-                )
-        );
+        Assert.All(attempts, attempt => Assert.Equal(
+                new Dictionary<string, string>
+                {
+                    [OperationContextHeaders.ActorId] = "ada",
+                    [OperationContextHeaders.ActorKind] = nameof(ActorKind.Person),
+                    [OperationContextHeaders.Tenant] = "acme",
+                    [OperationContextHeaders.CorrelationId] = Context.CorrelationId.ToString(),
+                    [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
+                },
+                ContextHeaders(attempt)
+            ));
     }
 
     [Fact]
@@ -270,9 +265,8 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
 
         var received = Journal();
         Assert.Equal(2, received.Count);
-        Assert.All(
-            received,
-            request => Assert.DoesNotContain("authorization", Headers(request).Keys)
+        Assert.All(received, request =>
+            Assert.DoesNotContain("authorization", Headers(request).Keys)
         );
         Assert.Equal(
             sent.Select(context =>

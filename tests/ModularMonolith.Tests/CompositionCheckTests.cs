@@ -620,9 +620,8 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
             ],
             composition.Modules
         );
-        Assert.All(
-            composition.Modules,
-            module => Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module))
+        Assert.All(composition.Modules, module =>
+            Assert.Equal([module.Assembly], composition.FeatureAssembliesOf(module))
         );
         Assert.Empty(composition.FeatureAssembliesOf(null));
     }
@@ -640,9 +639,8 @@ public sealed class CompositionCheckTests(AppFixture app) : HostTest<AppFixture>
 
         using var host = builder.Build();
 
-        Assert.Contains(
-            host.Services.GetServices<ICompositionCheck>(),
-            check => check is OneProviderCheck<IEmbeddingGenerator<string, Embedding<float>>>
+        Assert.Contains(host.Services.GetServices<ICompositionCheck>(), check =>
+            check is OneProviderCheck<IEmbeddingGenerator<string, Embedding<float>>>
         );
     }
 

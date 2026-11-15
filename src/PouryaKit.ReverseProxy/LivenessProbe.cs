@@ -28,8 +28,7 @@ internal sealed class LivenessProbe : IProxyConfigFilter
                         Enabled = active.Enabled ?? true,
                         Path = active.Path ?? Path,
                     },
-                    AvailableDestinationsPolicy =
-                        healthCheck.AvailableDestinationsPolicy
+                    AvailableDestinationsPolicy = healthCheck.AvailableDestinationsPolicy
                         ?? HealthCheckConstants.AvailableDestinations.HealthyAndUnknown,
                 },
             }

@@ -32,9 +32,8 @@ public sealed class TypeLookupTests
                 .SelectMany(TypeListings)
         );
         // Core itself is where the types are listed, and the rule sees it.
-        var core = Assert.Single(
-            Sample.KitPackages,
-            package => package.GetName().Name == "PouryaKit.Core"
+        var core = Assert.Single(Sample.KitPackages, package =>
+            package.GetName().Name == "PouryaKit.Core"
         );
         Assert.Equal(
             ["PouryaKit.Core.ImplementingTypes calls Assembly.GetTypes."],

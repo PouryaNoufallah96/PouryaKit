@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a7353a2b3cc57dec4c963c011973d0ee6c282f6c",
+      "revision": "e2d4941dd6a450ea199470e58cf13e937cf44f0f",
       "link_mode": "web"
     }
   },
@@ -60,7 +60,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 48,
+          "line": 37,
           "label": "references Domain, Ardalis.Specification"
         },
         {
@@ -87,7 +87,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 43,
+          "line": 35,
           "label": "references Cqrs, FluentValidation"
         },
         {
@@ -114,8 +114,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 32,
-          "end_line": 42,
+          "line": 29,
+          "end_line": 34,
           "label": "references Core and Domain"
         },
         {
@@ -148,8 +148,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 49,
-          "end_line": 56,
+          "line": 38,
+          "end_line": 44,
           "label": "references Core, Cqrs, Persistence"
         },
         {
@@ -181,14 +181,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 57,
-          "end_line": 60,
+          "line": 45,
+          "end_line": 48,
           "label": "references Persistence.EFCore"
         },
         {
           "path": "src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs",
           "line": 28,
-          "end_line": 51,
+          "end_line": 46,
           "label": "schema, history table, AddPouryaKitEfCore"
         }
       ]
@@ -209,8 +209,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 85,
-          "end_line": 88,
+          "line": 68,
+          "end_line": 71,
           "label": "references Security"
         },
         {
@@ -243,7 +243,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 84,
+          "line": 67,
           "label": "references Core and Cqrs"
         },
         {
@@ -276,8 +276,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 61,
-          "end_line": 69,
+          "line": 49,
+          "end_line": 52,
           "label": "references Core and Cqrs"
         },
         {
@@ -311,7 +311,7 @@
         {
           "path": "src/PouryaKit.Persistence.Postgres/PostgresServiceCollectionExtensions.cs",
           "line": 28,
-          "end_line": 51,
+          "end_line": 46,
           "label": "a DbContext per Module schema"
         },
         {
@@ -338,8 +338,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 94,
-          "end_line": 103,
+          "line": 77,
+          "end_line": 86,
           "label": "references Web; optional"
         },
         {
@@ -366,14 +366,14 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 89,
-          "end_line": 93,
+          "line": 72,
+          "end_line": 76,
           "label": "references Core and Cqrs"
         },
         {
           "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
-          "line": 197,
-          "end_line": 211,
+          "line": 199,
+          "end_line": 212,
           "label": "begins each request's Operation"
         },
         {
@@ -400,7 +400,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 83,
+          "line": 66,
           "label": "references Cqrs"
         },
         {
@@ -411,8 +411,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 264,
-          "end_line": 271,
+          "line": 238,
+          "end_line": 245,
           "label": "no exporter"
         }
       ]
@@ -433,8 +433,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 75,
-          "end_line": 78,
+          "line": 58,
+          "end_line": 61,
           "label": "its row"
         }
       ]
@@ -466,8 +466,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 272,
-          "end_line": 277,
+          "line": 246,
+          "end_line": 251,
           "label": "never Redis"
         }
       ]
@@ -488,8 +488,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 44,
-          "end_line": 47,
+          "line": 36,
+          "end_line": 36,
           "label": "references Cqrs"
         },
         {
@@ -500,8 +500,8 @@
         },
         {
           "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
-          "line": 67,
-          "end_line": 75,
+          "line": 61,
+          "end_line": 69,
           "label": "dispatches each Gateway call"
         }
       ]
@@ -522,8 +522,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 106,
-          "end_line": 119,
+          "line": 89,
+          "end_line": 102,
           "label": "references Modularity, Postgres, W.EFCore"
         },
         {
@@ -589,9 +589,9 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 122,
-          "end_line": 125,
-          "label": "references Storage, AWSSDK.S3, Options"
+          "line": 105,
+          "end_line": 105,
+          "label": "references Storage and AWSSDK.S3"
         },
         {
           "path": "src/PouryaKit.Storage.S3/S3StorageServiceCollectionExtensions.cs",
@@ -623,8 +623,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 128,
-          "end_line": 136,
+          "line": 108,
+          "end_line": 111,
           "label": "references Storage, Azure.Storage.Blobs"
         },
         {
@@ -657,7 +657,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 121,
+          "line": 104,
           "label": "references Cqrs and Domain"
         },
         {
@@ -690,7 +690,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 137,
+          "line": 112,
           "label": "references Cqrs, the ASP.NET Core framework"
         },
         {
@@ -723,8 +723,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 144,
-          "end_line": 148,
+          "line": 119,
+          "end_line": 123,
           "label": "references Web, gRPC server, client factory"
         },
         {
@@ -757,8 +757,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 151,
-          "end_line": 159,
+          "line": 126,
+          "end_line": 134,
           "label": "references no Kit package"
         },
         {
@@ -769,8 +769,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 364,
-          "end_line": 370,
+          "line": 338,
+          "end_line": 344,
           "label": "Aspire in no other package"
         }
       ]
@@ -791,8 +791,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 165,
-          "end_line": 174,
+          "line": 140,
+          "end_line": 149,
           "label": "references Domain and the three libraries"
         },
         {
@@ -825,8 +825,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 176,
-          "end_line": 187,
+          "line": 151,
+          "end_line": 161,
           "label": "Cqrs, Modularity, OpenAI, Agent Framework"
         },
         {
@@ -859,7 +859,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 189,
+          "line": 163,
           "label": "references AI and Persistence.Postgres"
         },
         {

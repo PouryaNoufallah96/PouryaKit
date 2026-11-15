@@ -63,13 +63,11 @@ public static class SagaStorage
                 (IDatabaseSagaSchema<TId, TSaga>)
                     Schemas
                         .GetOrCreateValue(database)
-                        .GetOrAdd(
-                            typeof(TSaga),
-                            _ =>
-                                factory(
-                                    new SagaTableDefinition(typeof(TSaga), saga.Table),
-                                    database.Settings
-                                )
+                        .GetOrAdd(typeof(TSaga), _ =>
+                            factory(
+                                new SagaTableDefinition(typeof(TSaga), saga.Table),
+                                database.Settings
+                            )
                         );
             var input =
                 envelope.Message is ISagaInput delivered

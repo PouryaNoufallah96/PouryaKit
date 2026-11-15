@@ -128,7 +128,7 @@ internal sealed record RestoredPackage(
         var resolved = target
             .EnumerateObject()
             .ToDictionary(library => library.Name.Split('/')[0], StringComparer.OrdinalIgnoreCase);
-        HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> seen = [with(StringComparer.OrdinalIgnoreCase)];
         Queue<string> next = new([shipped.Name]);
         List<PackageLicence> packages = [];
         HashSet<string> projects = [];

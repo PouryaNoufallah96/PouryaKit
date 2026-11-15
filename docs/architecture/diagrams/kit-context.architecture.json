@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a7353a2b3cc57dec4c963c011973d0ee6c282f6c",
+      "revision": "e2d4941dd6a450ea199470e58cf13e937cf44f0f",
       "link_mode": "web"
     }
   },
@@ -62,8 +62,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 138,
-          "end_line": 142,
+          "line": 113,
+          "end_line": 117,
           "label": "references no Kit package: runs no Operation"
         },
         {
@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 272,
-          "end_line": 277,
+          "line": 246,
+          "end_line": 251,
           "label": "no Kit package references Redis"
         }
       ]
@@ -451,7 +451,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
           "line": 21,
-          "end_line": 222,
+          "end_line": 196,
           "label": "their allowed references"
         }
       ]

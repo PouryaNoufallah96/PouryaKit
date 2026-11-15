@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using Catalog;
 using Catalog.Categories.Features.CreateCategory;
@@ -89,34 +88,29 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         Dictionary<string, object> claims =
             flaw == "no subject" ? new() { ["name"] = "ada" } : new() { ["sub"] = "ada" };
-        var token = TestIssuer.Token(
-            claims,
-            descriptor =>
+        var token = TestIssuer.Token(claims, descriptor =>
+        {
+            switch (flaw)
             {
-                switch (flaw)
-                {
-                    case "a wrong signature":
-                        descriptor.SigningCredentials = TestIssuer.Untrusted();
-                        break;
-                    case "a wrong issuer":
-                        descriptor.Issuer = "https://another-issuer.test";
-                        break;
-                    case "a wrong audience":
-                        descriptor.Audience = "another-api";
-                        break;
-                    case "no audience":
-                        descriptor.Audience = null;
-                        break;
-                    case "an expired lifetime":
-                        // Beyond the five minutes of clock skew the handler allows.
-                        descriptor.IssuedAt = descriptor.NotBefore = DateTime.UtcNow.AddMinutes(
-                            -30
-                        );
-                        descriptor.Expires = DateTime.UtcNow.AddMinutes(-10);
-                        break;
-                }
+                case "a wrong signature":
+                    descriptor.SigningCredentials = TestIssuer.Untrusted();
+                    break;
+                case "a wrong issuer":
+                    descriptor.Issuer = "https://another-issuer.test";
+                    break;
+                case "a wrong audience":
+                    descriptor.Audience = "another-api";
+                    break;
+                case "no audience":
+                    descriptor.Audience = null;
+                    break;
+                case "an expired lifetime":
+                    // Beyond the five minutes of clock skew the handler allows.
+                    descriptor.IssuedAt = descriptor.NotBefore = DateTime.UtcNow.AddMinutes(-30);
+                    descriptor.Expires = DateTime.UtcNow.AddMinutes(-10);
+                    break;
             }
-        );
+        });
         await using var host = await StartHostAsync();
         using var client = ClientOf(host, token);
 
@@ -287,9 +281,8 @@ public sealed class JwtBearerTests(AppFixture app) : HostTest<AppFixture>(app)
         using var trusted = ClientOf(host, TestIssuer.Token(new() { ["sub"] = "ada" }));
         using var untrusted = ClientOf(
             host,
-            TestIssuer.Token(
-                new() { ["sub"] = "ada" },
-                descriptor => descriptor.SigningCredentials = TestIssuer.Untrusted()
+            TestIssuer.Token(new() { ["sub"] = "ada" }, descriptor =>
+                descriptor.SigningCredentials = TestIssuer.Untrusted()
             )
         );
 

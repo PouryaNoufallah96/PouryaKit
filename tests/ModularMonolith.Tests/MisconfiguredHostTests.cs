@@ -364,15 +364,13 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         string failure
     )
     {
-        var services = new ServiceCollection().AddPouryaKitApiVersions(
-            "/plain",
-            versions => versions.HasApiVersion(new ApiVersion(1, 0))
+        var services = new ServiceCollection().AddPouryaKitApiVersions("/plain", versions =>
+            versions.HasApiVersion(new ApiVersion(1, 0))
         );
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            services.AddPouryaKitApiVersions(
-                routePrefix,
-                versions => versions.HasApiVersion(new ApiVersion(1, 0))
+            services.AddPouryaKitApiVersions(routePrefix, versions =>
+                versions.HasApiVersion(new ApiVersion(1, 0))
             )
         );
 

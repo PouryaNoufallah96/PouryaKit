@@ -81,17 +81,14 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             Assert.Contains("has no Operation Context", unsent.Message, StringComparison.Ordinal);
             Assert.Equal(HttpStatusCode.OK, http.StatusCode);
             // Every call carries the client's deadline, and no bearer token: only the test's own peer credentials.
-            Assert.All(
-                [.. fromFirst, .. fromSecond],
-                sent =>
-                {
-                    Assert.InRange(Timeout(sent), Deadline - TimeSpan.FromSeconds(5), Deadline);
-                    Assert.Equal(
-                        $"{TestAuthentication.SchemeName} {AppFixture.TrustedPeer}",
-                        sent.Headers.Authorization?.ToString()
-                    );
-                }
-            );
+            Assert.All([.. fromFirst, .. fromSecond], sent =>
+            {
+                Assert.InRange(Timeout(sent), Deadline - TimeSpan.FromSeconds(5), Deadline);
+                Assert.Equal(
+                    $"{TestAuthentication.SchemeName} {AppFixture.TrustedPeer}",
+                    sent.Headers.Authorization?.ToString()
+                );
+            });
             Assert.Equal(2, fromFirst.Count + fromSecond.Count);
         }
     }
@@ -622,9 +619,8 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             builder =>
             {
                 AddClient(builder.Services, new Uri("http://catalog.local"));
-                builder.Services.Configure<PouryaKitGrpcClientOptions>(
-                    Client,
-                    options => options.Deadline = TimeSpan.Zero
+                builder.Services.Configure<PouryaKitGrpcClientOptions>(Client, options =>
+                    options.Deadline = TimeSpan.Zero
                 );
             }
         );
@@ -651,9 +647,8 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
                 new Http2(Fixture.Host.GetTestServer().CreateHandler())
             )
             .AddHttpMessageHandler(() => new AsTrustedPeer(sent));
-        services.Configure<PouryaKitGrpcClientOptions>(
-            Client,
-            options => options.Deadline = TimeSpan.MaxValue
+        services.Configure<PouryaKitGrpcClientOptions>(Client, options =>
+            options.Deadline = TimeSpan.MaxValue
         );
         await using var provider = services.BuildServiceProvider();
         var options = new CallOptions(
@@ -671,28 +666,21 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
     // A Host of the application whose Catalog client calls the peer Host's in-memory server, authenticated as the peer the
     // Hosts trust; the requests it sends are recorded.
     private WebApplication ComposeHost(Func<IHost> peer, List<HttpRequestMessage> sent) =>
-        AppFixture.ComposeHost(
-            "Development",
-            Fixture.ConnectionString,
-            Fixture.Logs,
-            builder =>
-                AddClient(builder.Services, new Uri("http://peer.local"))
-                    .ConfigurePrimaryHttpMessageHandler(() =>
-                        new Http2(peer().GetTestServer().CreateHandler())
-                    )
-                    .AddHttpMessageHandler(() => new AsTrustedPeer(sent))
+        AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, builder =>
+            AddClient(builder.Services, new Uri("http://peer.local"))
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                    new Http2(peer().GetTestServer().CreateHandler())
+                )
+                .AddHttpMessageHandler(() => new AsTrustedPeer(sent))
         );
 
     private static IHttpClientBuilder AddClient(IServiceCollection services, Uri address)
     {
-        services.Configure<PouryaKitGrpcClientOptions>(
-            Client,
-            options =>
-            {
-                options.Address = address;
-                options.Deadline = Deadline;
-            }
-        );
+        services.Configure<PouryaKitGrpcClientOptions>(Client, options =>
+        {
+            options.Address = address;
+            options.Deadline = Deadline;
+        });
         return services.AddPouryaKitGrpcClient<ProductService.ProductServiceClient>(Client);
     }
 
@@ -912,8 +900,8 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             CancellationToken cancellationToken
         )
         {
-            request.Headers.Authorization =
-                credentials ?? new(TestAuthentication.SchemeName, AppFixture.TrustedPeer);
+            request.Headers.Authorization = credentials
+                ?? new(TestAuthentication.SchemeName, AppFixture.TrustedPeer);
             sent.Add(request);
             return base.SendAsync(request, cancellationToken);
         }

@@ -285,9 +285,8 @@ public sealed class McpTests(AppFixture app, McpFixture mcp) : IClassFixture<Mcp
         );
 
         var process = Assert.Single(starts.Processes);
-        Assert.All(
-            await Task.WhenAll(listings.Select(ProcessIdAsync)),
-            reached => Assert.Equal(process, reached)
+        Assert.All(await Task.WhenAll(listings.Select(ProcessIdAsync)), reached =>
+            Assert.Equal(process, reached)
         );
     }
 

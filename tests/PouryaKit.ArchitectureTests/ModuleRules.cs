@@ -562,10 +562,8 @@ internal static partial class ModuleRules
     {
         var holderTable = StoreOf(holder);
         var pairs = columns
-            .Zip(
-                holderColumns,
-                (column, holderColumn) =>
-                    (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))
+            .Zip(holderColumns, (column, holderColumn) =>
+                (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))
             )
             .ToList();
         return pairs.All(pair => pair is (not null, not null))

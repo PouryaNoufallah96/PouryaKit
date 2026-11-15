@@ -27,24 +27,20 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
         ArgumentNullException.ThrowIfNull(key);
         for (var attempt = 1; attempt <= ReserveAttempts; attempt++)
         {
-            var reserved = await ExecuteAsync(
-                IdempotencyStatements.Reserve,
-                (database, sql) =>
-                    database.ExecuteSqlRawAsync(
-                        sql,
-                        [.. Values(key), timeProvider.GetUtcNow()],
-                        cancellationToken
-                    )
+            var reserved = await ExecuteAsync(IdempotencyStatements.Reserve, (database, sql) =>
+                database.ExecuteSqlRawAsync(
+                    sql,
+                    [.. Values(key), timeProvider.GetUtcNow()],
+                    cancellationToken
+                )
             );
             if (reserved == 1)
             {
                 return null;
             }
 
-            var recorded = await ExecuteAsync(
-                IdempotencyStatements.Read,
-                (database, sql) =>
-                    database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
+            var recorded = await ExecuteAsync(IdempotencyStatements.Read, (database, sql) =>
+                database.SqlQueryRaw<string?>(sql, Values(key)).ToListAsync(cancellationToken)
             );
             if (recorded is [var response])
             {
@@ -65,10 +61,8 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
     {
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(response);
-        var recorded = await ExecuteAsync(
-            IdempotencyStatements.Record,
-            (database, sql) =>
-                database.ExecuteSqlRawAsync(sql, [.. Values(key), response], cancellationToken)
+        var recorded = await ExecuteAsync(IdempotencyStatements.Record, (database, sql) =>
+            database.ExecuteSqlRawAsync(sql, [.. Values(key), response], cancellationToken)
         );
         if (recorded != 1)
         {
@@ -92,8 +86,7 @@ internal sealed class EfIdempotencyStore(IUnitOfWork unitOfWork, TimeProvider ti
         Func<DatabaseFacade, string, Task<T>> run
     )
     {
-        var dbContext =
-            EfUnitOfWorkDbContext.Of(unitOfWork)
+        var dbContext = EfUnitOfWorkDbContext.Of(unitOfWork)
             ?? throw new InvalidOperationException(
                 $"Idempotency keys are kept in the EF Core Unit of Work's transaction, but the scope's Unit of Work is {unitOfWork.GetType().Name}."
             );

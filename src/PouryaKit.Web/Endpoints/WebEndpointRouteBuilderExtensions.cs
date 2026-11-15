@@ -167,8 +167,7 @@ public static class WebEndpointRouteBuilderExtensions
             );
         }
 
-        var run =
-            endpoint.RequestDelegate
+        var run = endpoint.RequestDelegate
             ?? throw new InvalidOperationException(
                 $"{endpoint.DisplayName} has no request delegate to run."
             );
@@ -178,8 +177,11 @@ public static class WebEndpointRouteBuilderExtensions
         // included. Whether the endpoint's command opts in with [Idempotent] is known only when it is dispatched (ADR 0002).
         if (requiresIdempotencyKey)
         {
-            var methods =
-                endpoint.Metadata.OfType<IHttpMethodMetadata>().LastOrDefault()?.HttpMethods ?? [];
+            var methods = endpoint
+                .Metadata.OfType<IHttpMethodMetadata>()
+                .LastOrDefault()
+                ?.HttpMethods
+                ?? [];
             if (methods.Count == 0)
             {
                 throw new InvalidOperationException(
@@ -196,8 +198,7 @@ public static class WebEndpointRouteBuilderExtensions
         }
         endpoint.RequestDelegate = httpContext =>
         {
-            var context =
-                HttpCallerContext.Resolve(httpContext, options, peers)
+            var context = HttpCallerContext.Resolve(httpContext, options, peers)
                 ?? throw Unresolved(httpContext, options);
             httpContext.RequestServices.BeginOperation(
                 requiresIdempotencyKey

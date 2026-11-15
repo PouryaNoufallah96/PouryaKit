@@ -18,9 +18,8 @@ public sealed class CoreTests
     [Fact]
     public void Core_exposes_its_three_helpers_and_no_other_public_type()
     {
-        var core = Assert.Single(
-            Sample.KitPackages,
-            package => package.GetName().Name == "PouryaKit.Core"
+        var core = Assert.Single(Sample.KitPackages, package =>
+            package.GetName().Name == "PouryaKit.Core"
         );
 
         Assert.Equal(Helpers, PublicTypes(core));

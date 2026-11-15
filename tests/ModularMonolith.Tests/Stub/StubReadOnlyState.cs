@@ -107,8 +107,7 @@ internal sealed class ReadFolderQueryHandler(IRepository<Folder, FolderId> folde
         CancellationToken cancellationToken
     )
     {
-        var folder =
-            query.Held
+        var folder = query.Held
             ?? (await folders.FindAsync(new FolderId(query.FolderId), cancellationToken))!;
         ChangeFolderRead.Apply(folder, query.Change);
         if (query.ReadAlso is { } readAlso)

@@ -53,8 +53,7 @@ public static class GrpcEndpointRouteBuilderExtensions
     // message body.
     private static void AnswerRefusalsAsStatus(EndpointBuilder endpoint)
     {
-        var run =
-            endpoint.RequestDelegate
+        var run = endpoint.RequestDelegate
             ?? throw new InvalidOperationException(
                 $"{endpoint.DisplayName} has no request delegate to run."
             );

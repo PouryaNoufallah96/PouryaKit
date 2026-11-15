@@ -107,8 +107,8 @@ public abstract class HostFixture : IAsyncLifetime
     )
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var store =
-            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
+        var store = Deliveries()
+            ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
 
         var outcome = await operation();
@@ -201,8 +201,8 @@ public abstract class HostFixture : IAsyncLifetime
     )
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var store =
-            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
+        var store = Deliveries()
+            ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
         using var handedOut = new SentEnvelopes(
             Host.Services.GetRequiredService<IWolverineRuntime>()

@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net10.0/PouryaKit.ArchitectureTests.dll"
+ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net11.0/PouryaKit.ArchitectureTests.dll"
 # The projects a template generates: package content, not projects of this repository.
 TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
 # --since: the only paths whose change cannot reach a package, a template or this validation, because nothing that is
@@ -103,7 +103,7 @@ def inventory_controls(expected, evaluated, output):
 def consumer_config(folder, packages):
     (folder / "global.json").write_text((ROOT / "global.json").read_text())
     (folder / "Directory.Build.props").write_text(
-        '<Project><PropertyGroup><TargetFramework>net10.0</TargetFramework><LangVersion>latest</LangVersion>'
+        '<Project><PropertyGroup><TargetFramework>net11.0</TargetFramework>'
         '<Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>'
         '<TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>\n')
     (folder / "Directory.Build.targets").write_text("<Project />\n")

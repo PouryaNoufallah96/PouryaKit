@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
@@ -122,9 +121,8 @@ public sealed class WebConventionTests(AppFixture app) : HostTest<AppFixture>(ap
             "grace",
             await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)
         );
-        Assert.Single(
-            host.Services.GetRequiredService<EndpointDataSource>().Endpoints,
-            endpoint => endpoint is RouteEndpoint { RoutePattern.RawText: "/plain/actor" }
+        Assert.Single(host.Services.GetRequiredService<EndpointDataSource>().Endpoints, endpoint =>
+            endpoint is RouteEndpoint { RoutePattern.RawText: "/plain/actor" }
         );
     }
 

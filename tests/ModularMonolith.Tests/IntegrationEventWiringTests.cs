@@ -273,9 +273,8 @@ public sealed class IntegrationEventWiringTests
             "Tests.Review.Twin",
             typeof(CatalogModule)
         );
-        Assert.Single(
-            services,
-            descriptor => descriptor.ServiceType == typeof(TwinIntegrationEventHandler)
+        Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(TwinIntegrationEventHandler)
         );
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>

@@ -8,7 +8,7 @@
     "locale": "en",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "0ff33e6a915dfec56370c8349d13804ea0e1f257",
+      "revision": "e2d4941dd6a450ea199470e58cf13e937cf44f0f",
       "provider": "github",
       "link_mode": "web"
     },
@@ -302,14 +302,14 @@
         },
         {
           "path": "src/PouryaKit.Templates/content/shared/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 165,
-          "end_line": 170,
+          "line": 160,
+          "end_line": 165,
           "label": "generated tests use HostFixture"
         },
         {
           "path": "src/PouryaKit.Templates/content/service/tests/ModularMonolith.Tests/HostTests.cs",
-          "line": 141,
-          "end_line": 156,
+          "line": 139,
+          "end_line": 154,
           "label": "the service's tests start RabbitMQ first"
         }
       ]

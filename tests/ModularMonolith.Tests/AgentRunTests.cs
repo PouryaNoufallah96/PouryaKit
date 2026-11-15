@@ -104,9 +104,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 
         Assert.Equal("Looked it up.", answer);
         Assert.True(parts.Count > 1, "The answer arrived whole, not streamed.");
-        Assert.All(
-            ai.Stub.Requests,
-            request => Assert.True(request.GetProperty("stream").GetBoolean())
+        Assert.All(ai.Stub.Requests, request =>
+            Assert.True(request.GetProperty("stream").GetBoolean())
         );
         AssertEachCallContinues(run, calls: AiFixture.MaximumIterations);
         Assert.Equal(
@@ -569,9 +568,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 
         // What the tool's Operation ran with, as it answered the model: the occurrence's system Actor, continued.
         var call = JsonDocument.Parse(stub.ToolResultsOf(1)[0]).RootElement;
-        var occurrence = Assert.Single(
-            DeliveryProbes.ContextsOf(Digest),
-            context => context.OperationId == call.GetProperty("causationId").GetGuid()
+        var occurrence = Assert.Single(DeliveryProbes.ContextsOf(Digest), context =>
+            context.OperationId == call.GetProperty("causationId").GetGuid()
         );
         Assert.Equal(Actor.System(DigestAgent), occurrence.Actor);
         Assert.Equal(
@@ -612,11 +610,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
                 Instructions,
                 tools:
                 [
-                    stub.Tool(
-                        "ReadStampLedger",
-                        "Reads the stamp ledger.",
-                        run,
-                        (NoArguments _) => new ReadStampLedgerQuery()
+                    stub.Tool("ReadStampLedger", "Reads the stamp ledger.", run, (NoArguments _) =>
+                        new ReadStampLedgerQuery()
                     ),
                 ]
             );
@@ -788,9 +783,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
             TestContext.Current.CancellationToken
         );
         Assert.Equal($"It is the {name}.", answered.Value);
-        Assert.DoesNotContain(
-            ai.Stub.Requests,
-            request => request.GetRawText().Contains(CardNumber, StringComparison.Ordinal)
+        Assert.DoesNotContain(ai.Stub.Requests, request =>
+            request.GetRawText().Contains(CardNumber, StringComparison.Ordinal)
         );
     }
 
@@ -970,25 +964,19 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 
         // The call to the model is a chat span inside function invocation's, which the command's activity holds.
         var trace = exported.Of(upstream.TraceId);
-        var command = Assert.Single(
-            trace,
-            activity =>
-                activity.Source.Name == OperationTelemetry.SourceName
-                && Equals(
-                    activity.GetTagItem(OperationTelemetry.OperationTag),
-                    nameof(AskAboutProductsCommand)
-                )
+        var command = Assert.Single(trace, activity =>
+            activity.Source.Name == OperationTelemetry.SourceName
+            && Equals(
+                activity.GetTagItem(OperationTelemetry.OperationTag),
+                nameof(AskAboutProductsCommand)
+            )
         );
-        var invocation = Assert.Single(
-            trace,
-            activity =>
-                activity.Source.Name == ChatSource && activity.OperationName == "orchestrate_tools"
+        var invocation = Assert.Single(trace, activity =>
+            activity.Source.Name == ChatSource && activity.OperationName == "orchestrate_tools"
         );
-        var call = Assert.Single(
-            trace,
-            activity =>
-                activity.Source.Name == ChatSource
-                && activity.OperationName.StartsWith("chat ", StringComparison.Ordinal)
+        var call = Assert.Single(trace, activity =>
+            activity.Source.Name == ChatSource
+            && activity.OperationName.StartsWith("chat ", StringComparison.Ordinal)
         );
         Assert.Equal(
             (command.SpanId, invocation.SpanId),
@@ -1027,27 +1015,25 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     {
         var seen = SeenBy(ai.Host, run);
         Assert.Equal(calls, seen.Count);
-        Assert.All(
-            seen,
-            call =>
-                Assert.Equal(
-                    (
-                        run.Actor,
-                        run.Tenant,
-                        run.CorrelationId,
-                        (Guid?)run.OperationId,
-                        (string?)null,
-                        true
-                    ),
-                    (
-                        call.Actor,
-                        call.Tenant,
-                        call.CorrelationId,
-                        call.CausationId,
-                        call.RequestId,
-                        call.IsTrustedContinuation
-                    )
+        Assert.All(seen, call =>
+            Assert.Equal(
+                (
+                    run.Actor,
+                    run.Tenant,
+                    run.CorrelationId,
+                    (Guid?)run.OperationId,
+                    (string?)null,
+                    true
+                ),
+                (
+                    call.Actor,
+                    call.Tenant,
+                    call.CorrelationId,
+                    call.CausationId,
+                    call.RequestId,
+                    call.IsTrustedContinuation
                 )
+            )
         );
         Assert.Equal(
             calls + 1,
@@ -1087,11 +1073,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         IGatewayProcessor<CatalogModule> catalog,
         OperationContext run
     ) =>
-        catalog.Tool(
-            "GetProduct",
-            "Finds one product by its id.",
-            run,
-            (ProductToFind product) => new GetProductQuery(product.ProductId)
+        catalog.Tool("GetProduct", "Finds one product by its id.", run, (ProductToFind product) =>
+            new GetProductQuery(product.ProductId)
         );
 
     private WebApplication GuardedHost(Guardrail guardrail) =>

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Asp.Versioning;
@@ -163,9 +162,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             CatalogOperations(v1).Select(operation => operation.Name)
         );
-        Assert.All(
-            CatalogOperations(v1),
-            operation => Assert.True(operation.Body.GetProperty("deprecated").GetBoolean())
+        Assert.All(CatalogOperations(v1), operation =>
+            Assert.True(operation.Body.GetProperty("deprecated").GetBoolean())
         );
         Assert.Equal("2.0", v2.GetProperty("info").GetProperty("version").GetString());
         Assert.Equal(
@@ -187,9 +185,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             CatalogOperations(v2).Select(operation => operation.Name)
         );
-        Assert.All(
-            CatalogOperations(v2),
-            operation => Assert.False(operation.Body.TryGetProperty("deprecated", out _))
+        Assert.All(CatalogOperations(v2), operation =>
+            Assert.False(operation.Body.TryGetProperty("deprecated", out _))
         );
         // An unversioned path takes its version from the header.
         Assert.Contains(
@@ -298,10 +295,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         // The fixture's default scheme is its test scheme, not a JWT bearer one.
         var v2 = await DocumentAsync(client, "v2");
 
-        Assert.All(
-            Operations(v2),
-            operation =>
-                Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name)
+        Assert.All(Operations(v2), operation =>
+            Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name)
         );
         Assert.False(
             v2.TryGetProperty("components", out var components)
@@ -446,9 +441,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         await using var host = PlainHost(services =>
         {
             services.AddPouryaKitOpenApi();
-            services.AddPouryaKitApiVersions(
-                "/plians",
-                versions => versions.HasApiVersion(new ApiVersion(1, 0))
+            services.AddPouryaKitApiVersions("/plians", versions =>
+                versions.HasApiVersion(new ApiVersion(1, 0))
             );
         });
 
@@ -471,9 +465,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             services =>
             {
                 services.AddPouryaKitOpenApi();
-                services.AddPouryaKitApiVersions(
-                    "/plians",
-                    versions => versions.HasApiVersion(new ApiVersion(1, 0))
+                services.AddPouryaKitApiVersions("/plians", versions =>
+                    versions.HasApiVersion(new ApiVersion(1, 0))
                 );
             },
             installChecks: false
@@ -541,9 +534,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             PlainHost(services =>
-                services.AddPouryaKitApiVersions(
-                    "/plain",
-                    versions => versions.HasApiVersion(new ApiVersion(1, 0))
+                services.AddPouryaKitApiVersions("/plain", versions =>
+                    versions.HasApiVersion(new ApiVersion(1, 0))
                 )
             )
         );

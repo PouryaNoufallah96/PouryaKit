@@ -25,33 +25,21 @@ internal static class PackageGraph
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Email"] = new(["PouryaKit.Domain"], []),
         // Cqrs is for its composition check (#147).
-        ["PouryaKit.Email.MailKit"] = new(
-            ["PouryaKit.Cqrs", "PouryaKit.Email"],
-            ["MailKit", "Microsoft.Extensions.Options"]
-        ),
+        ["PouryaKit.Email.MailKit"] = new(["PouryaKit.Cqrs", "PouryaKit.Email"], ["MailKit"]),
         // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
-        // which takes the container's implementation and the Hosting abstractions from Modularity.
+        // which takes the container's implementation from Modularity; the .NET 11 shared framework holds the abstractions.
         ["PouryaKit.Cqrs"] = new(
             ["PouryaKit.Core", "PouryaKit.Domain"],
-            [
-                "Microsoft.Extensions.DependencyInjection",
-                "Microsoft.Extensions.DependencyInjection.Abstractions",
-                "Microsoft.Extensions.Hosting.Abstractions",
-                "Microsoft.Extensions.Logging.Abstractions",
-            ]
+            ["Microsoft.Extensions.DependencyInjection"]
         ),
         ["PouryaKit.Validation"] = new(["PouryaKit.Cqrs"], ["FluentValidation"]),
-        ["PouryaKit.Modularity"] = new(
-            ["PouryaKit.Cqrs"],
-            ["Microsoft.Extensions.Hosting.Abstractions"]
-        ),
+        ["PouryaKit.Modularity"] = new(["PouryaKit.Cqrs"], []),
         ["PouryaKit.Persistence"] = new(["PouryaKit.Domain"], ["Ardalis.Specification"]),
         ["PouryaKit.Persistence.EFCore"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Persistence"],
             [
                 "Microsoft.EntityFrameworkCore.Relational",
                 "Ardalis.Specification.EntityFrameworkCore",
-                "Microsoft.Extensions.Hosting.Abstractions",
             ]
         ),
         ["PouryaKit.Persistence.Postgres"] = new(
@@ -60,12 +48,7 @@ internal static class PackageGraph
         ),
         ["PouryaKit.Persistence.Dapper"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs"],
-            [
-                "Dapper",
-                "Npgsql",
-                "Microsoft.Extensions.Configuration.Abstractions",
-                "Microsoft.Extensions.DependencyInjection.Abstractions",
-            ]
+            ["Dapper", "Npgsql"]
         ),
         ["PouryaKit.Messaging"] = new(["PouryaKit.Domain"], []),
         ["PouryaKit.Messaging.Wolverine"] = new(
@@ -119,20 +102,12 @@ internal static class PackageGraph
         ),
         // Storage references Cqrs for the one-provider composition check both providers register through it (#128).
         ["PouryaKit.Storage"] = new(["PouryaKit.Cqrs", "PouryaKit.Domain"], []),
-        ["PouryaKit.Storage.S3"] = new(
-            ["PouryaKit.Storage"],
-            ["AWSSDK.S3", "Microsoft.Extensions.Options"]
-        ),
+        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3"]),
         // Apache.Arrow and System.Security.Cryptography.ProtectedData are licence floors over the versions Azure.Storage.Blobs
         // 12.30.1 brings, which declare no licence expression (#128).
         ["PouryaKit.Storage.AzureBlob"] = new(
             ["PouryaKit.Storage"],
-            [
-                "Azure.Storage.Blobs",
-                "Microsoft.Extensions.Options",
-                "Apache.Arrow",
-                "System.Security.Cryptography.ProtectedData",
-            ]
+            ["Azure.Storage.Blobs", "Apache.Arrow", "System.Security.Cryptography.ProtectedData"]
         ),
         ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
         ["PouryaKit.ReverseProxy"] = new(
@@ -181,7 +156,6 @@ internal static class PackageGraph
                 "Microsoft.Extensions.AI",
                 "Microsoft.Extensions.AI.OpenAI",
                 "Microsoft.Extensions.Http",
-                "Microsoft.Extensions.Options",
                 "ModelContextProtocol.Core",
             ]
         ),

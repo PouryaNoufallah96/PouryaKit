@@ -249,10 +249,10 @@ internal static class PackageArtifacts
         string? version = null
     )
     {
-        var assembly = archive.GetEntry($"lib/net10.0/{name}.dll");
+        var assembly = archive.GetEntry($"lib/net11.0/{name}.dll");
         if (assembly is null)
         {
-            yield return $"{name} has no net10.0 assembly.";
+            yield return $"{name} has no net11.0 assembly.";
             yield break;
         }
         using var content = new MemoryStream();

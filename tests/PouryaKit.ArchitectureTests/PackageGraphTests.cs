@@ -34,21 +34,18 @@ public sealed class PackageGraphTests
             RestoredPackage.All.Count
         );
         // EF Core arrives in Postgres only through its provider, and Domain in Web only through Cqrs.
-        Assert.Contains(
-            Restored("PouryaKit.Persistence.Postgres").Packages,
-            arrived => arrived.Id == "Microsoft.EntityFrameworkCore"
+        Assert.Contains(Restored("PouryaKit.Persistence.Postgres").Packages, arrived =>
+            arrived.Id == "Microsoft.EntityFrameworkCore"
         );
         Assert.Contains("PouryaKit.Domain", Restored("PouryaKit.Web").Projects);
         // The S3 provider's closure is AWSSDK.S3 over AWSSDK.Core, both Apache-2.0, and the Options stack; Azure Blob's
         // takes Azure.Core with Blobs. The storage contract references Cqrs for the one-provider check its providers
         // register (#128); the Email contract stays on Domain alone, its provider taking Cqrs (#147).
-        Assert.Contains(
-            Restored("PouryaKit.Storage.S3").Packages,
-            arrived => arrived is { Id: "AWSSDK.Core", Expression: "Apache-2.0" }
+        Assert.Contains(Restored("PouryaKit.Storage.S3").Packages, arrived =>
+            arrived is { Id: "AWSSDK.Core", Expression: "Apache-2.0" }
         );
-        Assert.Contains(
-            Restored("PouryaKit.Storage.AzureBlob").Packages,
-            arrived => arrived is { Id: "Azure.Core", Expression: "MIT" }
+        Assert.Contains(Restored("PouryaKit.Storage.AzureBlob").Packages, arrived =>
+            arrived is { Id: "Azure.Core", Expression: "MIT" }
         );
         Assert.Equal(
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Domain"],
@@ -56,18 +53,15 @@ public sealed class PackageGraphTests
         );
         Assert.Equal(["PouryaKit.Domain"], Restored("PouryaKit.Email").Projects);
         // Marten brings Weasel and NetTopologySuite, permissive, and Npgsql at the Kit's line (#131).
-        Assert.Contains(
-            Restored("PouryaKit.Persistence.Marten").Packages,
-            arrived => arrived is { Id: "NetTopologySuite", Expression: "BSD-3-Clause" }
+        Assert.Contains(Restored("PouryaKit.Persistence.Marten").Packages, arrived =>
+            arrived is { Id: "NetTopologySuite", Expression: "BSD-3-Clause" }
         );
-        Assert.Contains(
-            Restored("PouryaKit.Persistence.Marten").Packages,
-            arrived => arrived is { Id: "Weasel.Postgresql", Expression: "MIT" }
+        Assert.Contains(Restored("PouryaKit.Persistence.Marten").Packages, arrived =>
+            arrived is { Id: "Weasel.Postgresql", Expression: "MIT" }
         );
         // Aspire's hosting packages arrive in the AppHost-only package, where they are allowed, and there alone (#130).
-        Assert.Contains(
-            Restored("PouryaKit.Aspire").Packages,
-            arrived => arrived.Id == "Aspire.Hosting"
+        Assert.Contains(Restored("PouryaKit.Aspire").Packages, arrived =>
+            arrived.Id == "Aspire.Hosting"
         );
     }
 
@@ -315,7 +309,7 @@ public sealed class PackageGraphTests
 
         Assert.Equal(
             [
-                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions]; section C allows [Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.DependencyInjection.Abstractions, Microsoft.Extensions.Hosting.Abstractions, Microsoft.Extensions.Logging.Abstractions].",
+                "PouryaKit.Cqrs references the packages [MediatR, Microsoft.Extensions.DependencyInjection]; section C allows [Microsoft.Extensions.DependencyInjection].",
             ],
             PackageGraph.Violations(
                 cqrs with
@@ -331,13 +325,11 @@ public sealed class PackageGraphTests
     {
         var nuspec = XDocument.Parse(
             """
-            <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net10.0">
+            <package><metadata><id>PouryaKit.Persistence.Dapper</id><dependencies><group targetFramework="net11.0">
               <dependency id="PouryaKit.Core" version="0.1.0-preview.1" />
               <dependency id="PouryaKit.Cqrs" version="0.1.0-preview.1" />
               <dependency id="Dapper" version="2.1.89" />
               <dependency id="Npgsql" version="10.0.3" />
-              <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="10.0.12" />
-              <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="10.0.12" />
             </group></dependencies></metadata></package>
             """
         );
@@ -347,11 +339,9 @@ public sealed class PackageGraphTests
             .Descendants()
             .Single(element => element.Name.LocalName == "group")
             .Add(new XElement("dependency", new XAttribute("id", "Microsoft.EntityFrameworkCore")));
-        Assert.Contains(
-            PackageGraph.Violations(RestoredPackage.FromNuspec(nuspec)),
-            violation =>
-                violation.Contains("references the packages", StringComparison.Ordinal)
-                && violation.Contains("Microsoft.EntityFrameworkCore", StringComparison.Ordinal)
+        Assert.Contains(PackageGraph.Violations(RestoredPackage.FromNuspec(nuspec)), violation =>
+            violation.Contains("references the packages", StringComparison.Ordinal)
+            && violation.Contains("Microsoft.EntityFrameworkCore", StringComparison.Ordinal)
         );
     }
 

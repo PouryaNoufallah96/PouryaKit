@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a7353a2b3cc57dec4c963c011973d0ee6c282f6c",
+      "revision": "e2d4941dd6a450ea199470e58cf13e937cf44f0f",
       "link_mode": "web"
     }
   },
@@ -70,8 +70,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 32,
-          "end_line": 42,
+          "line": 29,
+          "end_line": 34,
           "label": "its row"
         }
       ]
@@ -92,7 +92,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 70,
+          "line": 53,
           "label": "references Domain only"
         },
         {
@@ -125,8 +125,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 71,
-          "end_line": 74,
+          "line": 54,
+          "end_line": 57,
           "label": "references Core, Cqrs, Messaging"
         },
         {
@@ -159,8 +159,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 49,
-          "end_line": 56,
+          "line": 38,
+          "end_line": 44,
           "label": "its row"
         }
       ]
@@ -181,8 +181,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 75,
-          "end_line": 78,
+          "line": 58,
+          "end_line": 61,
           "label": "references Wolverine and Persistence.EFCore"
         },
         {
@@ -215,8 +215,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 79,
-          "end_line": 82,
+          "line": 62,
+          "end_line": 65,
           "label": "references Wolverine"
         },
         {
@@ -249,8 +249,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 106,
-          "end_line": 119,
+          "line": 89,
+          "end_line": 102,
           "label": "its row"
         },
         {
@@ -289,8 +289,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 246,
-          "end_line": 263,
+          "line": 220,
+          "end_line": 237,
           "label": "Wolverine and RabbitMq keep no database"
         }
       ]
@@ -339,8 +339,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 160,
-          "end_line": 164,
+          "line": 135,
+          "end_line": 139,
           "label": "references Web, Persistence.EFCore, Npgsql"
         },
         {
@@ -372,8 +372,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 89,
-          "end_line": 93,
+          "line": 72,
+          "end_line": 76,
           "label": "its row"
         }
       ]
@@ -394,8 +394,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 192,
-          "end_line": 195,
+          "line": 166,
+          "end_line": 169,
           "label": "references Cqrs, Persistence, Marten, Npgsql"
         },
         {
@@ -428,7 +428,7 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 48,
+          "line": 37,
           "label": "its row"
         }
       ]
@@ -449,8 +449,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 196,
-          "end_line": 199,
+          "line": 170,
+          "end_line": 173,
           "label": "references Wolverine and Persistence.Marten"
         },
         {
@@ -462,7 +462,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Marten/WolverineMartenHostApplicationBuilderExtensions.cs",
           "line": 39,
-          "end_line": 119,
+          "end_line": 117,
           "label": "one store, keyed Marten Receipts"
         }
       ]
@@ -483,8 +483,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 218,
-          "end_line": 221,
+          "line": 192,
+          "end_line": 195,
           "label": "references Wolverine, WolverineFx.Postgresql"
         },
         {
@@ -496,7 +496,7 @@
         {
           "path": "src/PouryaKit.Messaging.Wolverine.Sagas/Storage/SagaStorage.cs",
           "line": 33,
-          "end_line": 104,
+          "end_line": 102,
           "label": "a step claimed in its own transaction"
         }
       ]

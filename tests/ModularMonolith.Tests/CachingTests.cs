@@ -581,14 +581,12 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.True(renamed.IsSuccess);
         Assert.Equal("Desk lamp", read);
-        Assert.Contains(
-            Fixture.Logs.Entries,
-            entry =>
-                entry.Level == LogLevel.Error
-                && entry.Message.StartsWith(
-                    $"Evicting the cache tag product:{lamp} failed",
-                    StringComparison.Ordinal
-                )
+        Assert.Contains(Fixture.Logs.Entries, entry =>
+            entry.Level == LogLevel.Error
+            && entry.Message.StartsWith(
+                $"Evicting the cache tag product:{lamp} failed",
+                StringComparison.Ordinal
+            )
         );
     }
 

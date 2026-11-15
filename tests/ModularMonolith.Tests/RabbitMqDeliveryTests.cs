@@ -1005,9 +1005,8 @@ public sealed class RabbitMqDeliveryTests(BrokerFixture broker)
         );
         Assert.Equal(
             sent,
-            Assert.Single(
-                ProbedIntegrationEventHandler.Received,
-                received => received.Id == sent.Id
+            Assert.Single(ProbedIntegrationEventHandler.Received, received =>
+                received.Id == sent.Id
             )
         );
         var body = Assert.Single(

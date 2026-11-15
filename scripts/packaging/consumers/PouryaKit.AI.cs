@@ -30,11 +30,8 @@ services.Configure<PouryaKitAIOptions>(ai =>
 });
 services.AddSingleton<IChatGuardrail, NoGuardrail>();
 Func<IGatewayProcessor<OrdersModule>, OperationContext, AIFunction> getOrder = (orders, run) =>
-    orders.Tool(
-        "GetOrder",
-        "Finds one order by its id.",
-        run,
-        (OrderToFind order) => new GetOrderQuery(order.OrderId)
+    orders.Tool("GetOrder", "Finds one order by its id.", run, (OrderToFind order) =>
+        new GetOrderQuery(order.OrderId)
     );
 Func<IChatClient, IAgentSessionStore, IMcpServers, AIFunction, Task<string>> ask = async (
     chat,

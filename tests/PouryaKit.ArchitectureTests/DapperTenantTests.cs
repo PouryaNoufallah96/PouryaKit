@@ -14,23 +14,24 @@ namespace PouryaKit.ArchitectureTests;
 // lease binds, never a value the handler passes (#155).
 public sealed class DapperTenantTests
 {
-    private static readonly Dictionary<string, ModuleRules.TenantTable> TenantTables = new(
-        Sample.Models.SelectMany(module => module.Value.SelectMany(ModuleRules.TenantTablesOf))
-    );
+    private static readonly Dictionary<string, ModuleRules.TenantTable> TenantTables =
+    [
+        with(
+            Sample.Models.SelectMany(module => module.Value.SelectMany(ModuleRules.TenantTablesOf))
+        ),
+    ];
 
     // Catalog's tables and the Offending Module's ledger, a tenant-scoped aggregate with parts, as its model maps them.
-    private static readonly Dictionary<string, ModuleRules.TenantTable> WithParts = new([
-        .. TenantTables,
-        .. ModuleRules.TenantTablesOf(LedgerModel()),
-    ]);
+    private static readonly Dictionary<string, ModuleRules.TenantTable> WithParts =
+    [
+        with([.. TenantTables, .. ModuleRules.TenantTablesOf(LedgerModel())]),
+    ];
 
     private static IModel LedgerModel()
     {
         var options = new DbContextOptionsBuilder()
-            .UseNpgsql(
-                "Host=localhost;Database=architecture-tests",
-                npgsql =>
-                    npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "offending")
+            .UseNpgsql("Host=localhost;Database=architecture-tests", npgsql =>
+                npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "offending")
             )
             .UseSnakeCaseNamingConvention()
             .Options;
@@ -238,9 +239,8 @@ public sealed class DapperTenantTests
             )
         );
         // The rule judged Catalog's reads: GetProduct's, and ListProducts' SELECT and COUNT; a migration's SQL is not a read.
-        var catalog = Assert.Single(
-            Sample.TenantScopedModules,
-            module => module.GetName().Name == "Catalog"
+        var catalog = Assert.Single(Sample.TenantScopedModules, module =>
+            module.GetName().Name == "Catalog"
         );
         Assert.Equal(
             ["GetProductQueryHandler", "ListProductsQueryHandler", "ListProductsQueryHandler"],

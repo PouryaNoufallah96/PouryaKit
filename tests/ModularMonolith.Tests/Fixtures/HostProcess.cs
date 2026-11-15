@@ -24,8 +24,7 @@ internal sealed class HostProcess : IDisposable
         var root = new DirectoryInfo(AppContext.BaseDirectory);
         while (!File.Exists(Path.Combine(root.FullName, "PouryaKit.slnx")))
         {
-            root =
-                root.Parent
+            root = root.Parent
                 ?? throw new InvalidOperationException(
                     "The tests do not run inside the repository."
                 );

@@ -53,11 +53,9 @@ public sealed class TemplateTests
         Assert.Empty(ModularityIn(monolith));
         Assert.NotEmpty(ModularityIn(Generated(Modular)));
         // The rule reads the smoke test, which runs on PouryaKit.Testing and names none of the Modularity it depends on.
-        Assert.Contains(
-            monolith,
-            file =>
-                file.Path.EndsWith(".Tests.csproj", StringComparison.Ordinal)
-                && file.Text.Contains("\"PouryaKit.Testing\"", StringComparison.Ordinal)
+        Assert.Contains(monolith, file =>
+            file.Path.EndsWith(".Tests.csproj", StringComparison.Ordinal)
+            && file.Text.Contains("\"PouryaKit.Testing\"", StringComparison.Ordinal)
         );
         var endpoint = PackedSample.Single(file =>
             file.Path.EndsWith("/CreateCategoryEndpoint.cs", StringComparison.Ordinal)
@@ -98,15 +96,12 @@ public sealed class TemplateTests
         var modular = Generated(Modular);
 
         Assert.Empty(AIIn(Generated(Monolith)));
-        Assert.Contains(
-            modular,
-            file =>
-                file.Path
-                == "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs"
+        Assert.Contains(modular, file =>
+            file.Path
+            == "src/Modules/Catalog/Catalog/Products/Features/AskAboutProducts/AskAboutProductsCommandHandler.cs"
         );
-        Assert.Contains(
-            modular,
-            file => file.Path == "src/ModularMonolith.Host/CardNumberGuardrail.cs"
+        Assert.Contains(modular, file =>
+            file.Path == "src/ModularMonolith.Host/CardNumberGuardrail.cs"
         );
         var guardrail = PackedSample.Single(file =>
             file.Path == "ModularMonolith.Host/CardNumberGuardrail.cs"
@@ -262,18 +257,13 @@ public sealed class TemplateTests
             (Service, inventory),
         ];
 
-        Assert.All(
-            hosts,
-            pair =>
-            {
-                var host = Own(pair.Template)
-                    .Single(file =>
-                        file.Text.Contains("app.UseRouting();", StringComparison.Ordinal)
-                    );
-                Assert.Empty(PipelineDifferences(host, pair.Sample));
-                Assert.Contains("app.MapDefaultEndpoints();", host.Text, StringComparison.Ordinal);
-            }
-        );
+        Assert.All(hosts, pair =>
+        {
+            var host = Own(pair.Template)
+                .Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
+            Assert.Empty(PipelineDifferences(host, pair.Sample));
+            Assert.Contains("app.MapDefaultEndpoints();", host.Text, StringComparison.Ordinal);
+        });
         var monolith = Own(Monolith)
             .Single(file => file.Text.Contains("app.UseRouting();", StringComparison.Ordinal));
         Assert.Equal(
@@ -360,17 +350,15 @@ public sealed class TemplateTests
             ),
         ];
 
-        Assert.All(
-            projects,
-            project =>
-                Assert.Empty(
-                    ReferenceDifferences(
-                        project.Path,
-                        File.ReadAllText(Path.Combine(Content, project.Template, project.Path)),
-                        File.ReadAllText(Path.Combine(SampleRoot, project.Sample)),
-                        project.Dropped
-                    )
+        Assert.All(projects, project =>
+            Assert.Empty(
+                ReferenceDifferences(
+                    project.Path,
+                    File.ReadAllText(Path.Combine(Content, project.Template, project.Path)),
+                    File.ReadAllText(Path.Combine(SampleRoot, project.Sample)),
+                    project.Dropped
                 )
+            )
         );
         var catalog = XDocument.Load(
             Path.Combine(Content, Modular, "src/Modules/Catalog/Catalog/Catalog.csproj")
@@ -403,18 +391,13 @@ public sealed class TemplateTests
 
         Assert.Equal(derivation, DerivedSymbol(Modular, "serviceName").Derivation);
         Assert.Equal(derivation, DerivedSymbol(Service, "serviceName").Derivation);
-        Assert.All(
-            [Monolith, Modular, Service],
-            template =>
-            {
-                Assert.Empty(UnderivedServiceNames(Generated(template), token));
-                Assert.Contains(
-                    Generated(template),
-                    file =>
-                        file.Text.Contains($"serviceName: \"{token}\"", StringComparison.Ordinal)
-                );
-            }
-        );
+        Assert.All([Monolith, Modular, Service], template =>
+        {
+            Assert.Empty(UnderivedServiceNames(Generated(template), token));
+            Assert.Contains(Generated(template), file =>
+                file.Text.Contains($"serviceName: \"{token}\"", StringComparison.Ordinal)
+            );
+        });
         Assert.Equal(
             [
                 "src/ModularMonolith.Host/Program.cs passes the service name ModularMonolith; pass modular-monolith, which the template's serviceName symbol derives into a valid queue name from any project name.",
@@ -438,15 +421,12 @@ public sealed class TemplateTests
         var (token, _) = DerivedSymbol(Monolith, "projectName");
         var sourceName = SourceName(Monolith);
 
-        Assert.All(
-            [Monolith, Modular, Service],
-            template =>
-                Assert.Empty(FilesOutsideTheSolution(Generated(template), sourceName, token))
+        Assert.All([Monolith, Modular, Service], template =>
+            Assert.Empty(FilesOutsideTheSolution(Generated(template), sourceName, token))
         );
         // The rule reads what the sources select: the shared Inventory project, which the service's solution names.
-        Assert.Contains(
-            Generated(Service),
-            file => file.Path == "src/Modules/Inventory/Inventory/Inventory.csproj"
+        Assert.Contains(Generated(Service), file =>
+            file.Path == "src/Modules/Inventory/Inventory/Inventory.csproj"
         );
         var shared = Own(Shared);
         Assert.Equal(
@@ -491,17 +471,13 @@ public sealed class TemplateTests
     [Fact]
     public void Each_generated_host_routes_before_it_rate_limits()
     {
-        Assert.All(
-            [Monolith, Modular],
-            template =>
-            {
-                Assert.Empty(RateLimitersBeforeRouting(Generated(template)));
-                Assert.Contains(
-                    Generated(template),
-                    file => file.Text.Contains("app.UseRateLimiter();", StringComparison.Ordinal)
-                );
-            }
-        );
+        Assert.All([Monolith, Modular], template =>
+        {
+            Assert.Empty(RateLimitersBeforeRouting(Generated(template)));
+            Assert.Contains(Generated(template), file =>
+                file.Text.Contains("app.UseRateLimiter();", StringComparison.Ordinal)
+            );
+        });
         Assert.Equal(
             [
                 "src/ModularMonolith.Host/Program.cs calls UseRouting() after UseRateLimiter(); route first, or the rate limit ignores the exemption of /alive and the Actor an anonymous endpoint names.",
@@ -524,13 +500,11 @@ public sealed class TemplateTests
 
         Assert.Empty(RepositoriesTaken(own, PackedSample));
         // The rule reads the Composition Root, which registers the sample's repository and takes none.
-        Assert.Contains(
-            own,
-            file =>
-                file.Text.Contains(
-                    "AddScoped<IProductRepository, ProductRepository>()",
-                    StringComparison.Ordinal
-                )
+        Assert.Contains(own, file =>
+            file.Text.Contains(
+                "AddScoped<IProductRepository, ProductRepository>()",
+                StringComparison.Ordinal
+            )
         );
         var endpoint = own.Single(file =>
             file.Path.EndsWith("/RenameProductEndpoint.cs", StringComparison.Ordinal)
@@ -582,19 +556,14 @@ public sealed class TemplateTests
         Assert.Equal(sourceName, SourceName(Service));
         // The engine replaces every form of the sourceName in content, each a casing of it, so a token holding one breaks.
         Assert.DoesNotContain(sourceName, token, StringComparison.OrdinalIgnoreCase);
-        Assert.All(
-            [Monolith, Modular, Service],
-            template =>
-            {
-                Assert.Empty(ProjectPathDefects(Generated(template), sourceName, token));
-                Assert.Contains(
-                    Generated(template),
-                    file =>
-                        file.Path.EndsWith(".slnx", StringComparison.Ordinal)
-                        && file.Text.Contains(token, StringComparison.Ordinal)
-                );
-            }
-        );
+        Assert.All([Monolith, Modular, Service], template =>
+        {
+            Assert.Empty(ProjectPathDefects(Generated(template), sourceName, token));
+            Assert.Contains(Generated(template), file =>
+                file.Path.EndsWith(".slnx", StringComparison.Ordinal)
+                && file.Text.Contains(token, StringComparison.Ordinal)
+            );
+        });
         var generated = Generated(Modular);
         var solution = generated.Single(file => file.Path == "ModularMonolith.slnx");
         var host = generated.Single(file =>
@@ -648,19 +617,15 @@ public sealed class TemplateTests
             .Single()
             .Value;
 
-        Assert.All(
-            [Monolith, Modular, Service],
-            template =>
-                Assert.Empty(
-                    VersionDifferences(
-                        template,
-                        File.ReadAllText(
-                            Path.Combine(Content, template, "Directory.Packages.props")
-                        ),
-                        kit,
-                        token
-                    )
+        Assert.All([Monolith, Modular, Service], template =>
+            Assert.Empty(
+                VersionDifferences(
+                    template,
+                    File.ReadAllText(Path.Combine(Content, template, "Directory.Packages.props")),
+                    kit,
+                    token
                 )
+            )
         );
         var changed = XDocument.Load(Path.Combine(Content, Modular, "Directory.Packages.props"));
         changed

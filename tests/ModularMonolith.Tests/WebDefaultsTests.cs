@@ -1,6 +1,5 @@
 using System.IO.Compression;
 using System.Net;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -459,14 +458,12 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         );
         var request = await client.SendAsync(Get(origin), TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(
-            preflight.Headers,
-            header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
+        Assert.DoesNotContain(preflight.Headers, header =>
+            header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
         );
         Assert.Equal(HttpStatusCode.OK, request.StatusCode);
-        Assert.DoesNotContain(
-            request.Headers,
-            header => header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
+        Assert.DoesNotContain(request.Headers, header =>
+            header.Key.StartsWith("Access-Control-", StringComparison.OrdinalIgnoreCase)
         );
     }
 

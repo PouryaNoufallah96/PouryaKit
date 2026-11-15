@@ -114,7 +114,7 @@ jobs:
           export NUGET_HTTP_CACHE_PATH="$consumer/http-cache" NUGET_PLUGINS_CACHE_PATH="$consumer/plugin-cache"
           # A library package is referenced at its exact version; a package of inventory kind "template" is installed instead.
           {
-            echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup>'
+            echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup><ItemGroup>'
             jq -r --arg version "$version" '.packages[] | select(.kind != "template") | "<PackageReference Include=\"" + .id + "\" Version=\"[" + $version + "]\" />"' scripts/packaging/inventory.json
             echo '</ItemGroup></Project>'
           } > "$consumer/Consumer.csproj"
