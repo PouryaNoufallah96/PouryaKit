@@ -28,12 +28,10 @@ It extends [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web). A Mo
 Declare the Module's versions in its Composition Root, as the Proving Sample's Catalog does:
 
 ```csharp
-module.AddPouryaKitApiVersions(
-    "/catalog",
-    versions =>
-        versions
-            .HasDeprecatedApiVersion(new ApiVersion(1, 0))
-            .HasApiVersion(new ApiVersion(2, 0))
+module.AddPouryaKitApiVersions("/catalog", versions =>
+    versions
+        .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+        .HasApiVersion(new ApiVersion(2, 0))
 );
 ```
 

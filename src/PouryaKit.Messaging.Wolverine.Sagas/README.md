@@ -27,10 +27,8 @@ It builds on [`PouryaKit.Messaging.Wolverine`](https://www.nuget.org/packages/Po
 Declare the saga, with its system Actor, in the Composition Root, as the Kit's tests do:
 
 ```csharp
-module.AddPouryaKitSaga<FulfilmentSaga>(
-    Fulfilment,
-    systemActor: Fulfilment,
-    saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+module.AddPouryaKitSaga<FulfilmentSaga>(Fulfilment, systemActor: Fulfilment, saga =>
+    saga.Input<OrderPlacedV1>(placed => placed.OrderId)
         .Input<PaymentReceivedV1>(paid => paid.OrderId)
         .Input<PaymentReceivedV2>(paid => paid.OrderId)
         .Timeout<FulfilmentTimeout>()
