@@ -489,8 +489,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
-    // Observed at start, at the first read: Wolverine's options, built while the Host resolves its hosted services, read
-    // the schedule before ValidateOnStart runs.
+    // Observed at start, by ValidateOnStart, which the Host runs before it resolves its hosted services, so before
+    // Wolverine's options read the schedule.
     [Theory]
     [InlineData(
         null,
@@ -521,6 +521,7 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
 
         Assert.Equal(typeof(PouryaKitMessagingOptions), thrown.OptionsType);
         Assert.Equal([failure], thrown.Failures);
+        Assert.Contains("Microsoft.Extensions.Options.StartupValidator", thrown.StackTrace);
     }
 
     // A zero delay retries a failed delivery at once, the shortest valid schedule: an empty one is refused (the theory
@@ -534,8 +535,8 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
         await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
-    // Observed at start, at the first read, as the retry schedule's: the message store's settings are read when Wolverine's
-    // options are built, before the store is reached.
+    // Observed at start, by ValidateOnStart, as the retry schedule's: before Wolverine's options read the stale time and
+    // before the store is reached.
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -564,6 +565,7 @@ public sealed class MisconfiguredHostTests(AppFixture app) : HostTest<AppFixture
             ],
             thrown.Failures
         );
+        Assert.Contains("Microsoft.Extensions.Options.StartupValidator", thrown.StackTrace);
     }
 
     // Ticket #97. Bound from configuration, as the Hosts bind their sunsets, beside the sample's valid 1.0 one. Observed at
