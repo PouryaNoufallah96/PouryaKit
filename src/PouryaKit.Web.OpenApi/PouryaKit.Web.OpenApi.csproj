@@ -9,7 +9,12 @@
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Http" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Its build targets flow to the Host: its source generator, which reaches the Host anyway, intercepts a call of
+    the Host's own AddOpenApi, and only those targets enable its interceptors. -->
+    <PackageReference
+      Include="Microsoft.AspNetCore.OpenApi"
+      PrivateAssets="contentfiles;analyzers"
+    />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
   <ItemGroup>

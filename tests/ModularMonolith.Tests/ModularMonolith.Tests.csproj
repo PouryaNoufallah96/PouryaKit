@@ -3,8 +3,8 @@
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <!-- The OpenAPI package's source generator, which intercepts AddOpenApi, reaches this project through the project
-    references, but not its build targets, which set this property; a project that references the package directly gets
-    it from the package. -->
+    references, but not its build targets, which set this property: PouryaKit.Web.OpenApi lets them flow to a project
+    that references it, such as a Host, and this one references it only through the sample's Hosts. -->
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
   </PropertyGroup>
   <ItemGroup>

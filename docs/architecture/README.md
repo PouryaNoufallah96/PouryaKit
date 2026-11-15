@@ -651,7 +651,7 @@ Seams later packages build on:
 
 ## PouryaKit.Web.OpenApi
 
-Optional API versions, OpenAPI documents and the Scalar reference. It references `PouryaKit.Web`, the ASP.NET Core shared framework and these MIT packages: `Asp.Versioning.Http` 10.2.3, `Asp.Versioning.Mvc.ApiExplorer` 10.2.1 (which brings `Asp.Versioning.Mvc` 10.2.1), `Microsoft.AspNetCore.OpenApi` 11.0.0 (which brings `Microsoft.OpenApi` 3.x) and `Scalar.AspNetCore` 2.18.3. No Swagger generator is in its closure, and neither is `Asp.Versioning.OpenApi`, whose 10.2.3 caps `Microsoft.OpenApi` below 3: the package names the documents itself (2026-11-15).
+Optional API versions, OpenAPI documents and the Scalar reference. It references `PouryaKit.Web`, the ASP.NET Core shared framework and these MIT packages: `Asp.Versioning.Http` 10.2.3, `Asp.Versioning.Mvc.ApiExplorer` 10.2.1 (which brings `Asp.Versioning.Mvc` 10.2.1), `Microsoft.AspNetCore.OpenApi` 11.0.0 (which brings `Microsoft.OpenApi` 3.x) and `Scalar.AspNetCore` 2.18.3. No Swagger generator is in its closure, and neither is `Asp.Versioning.OpenApi`, whose 10.2.3 caps `Microsoft.OpenApi` below 3: the package names the documents itself (2026-11-15). `Microsoft.AspNetCore.OpenApi`'s build targets flow to a project that references the package, such as a Host: the package's source generator reaches the Host anyway and intercepts a call of the Host's own `AddOpenApi`, and only those targets enable its interceptors (CS9137 without them).
 
 | Concern | Types |
 |---|---|

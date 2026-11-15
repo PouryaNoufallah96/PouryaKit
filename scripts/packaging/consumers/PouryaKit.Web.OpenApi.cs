@@ -8,7 +8,8 @@ System.Type[] types = [typeof(PouryaKitOpenApiOptions)];
 
 // The packed Web.OpenApi registered and mapped as a Host and a Module's Composition Root would: the Host's API
 // versioning with a configured sunset, a Module's declared versions, its documents and the Scalar reference, and a
-// document the Host adds itself, which builds with no InterceptorsNamespaces of its own.
+// document of the Host's own, whose AddOpenApi the OpenAPI source generator intercepts: it compiles only because the
+// package lets Microsoft.AspNetCore.OpenApi's build targets, which enable those interceptors, flow to the Host.
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddPouryaKitWeb();
 builder.Services.AddPouryaKitOpenApi(openApi =>
