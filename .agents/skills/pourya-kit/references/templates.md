@@ -87,7 +87,7 @@ Two checks guard this path:
 cd Acme.Shop
 dotnet tool restore
 # ConnectionStrings:app in src/Acme.Shop.Host/appsettings.json names this PostgreSQL: localhost:5432, user and password postgres.
-docker run -d --name acme-shop-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18.6
+docker run -d --name acme-shop-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:18.7
 dotnet ef database update --project src/Modules/Catalog/Catalog --startup-project src/Acme.Shop.Host --context CatalogDbContext
 # The modular monolith also migrates Billing (BillingDbContext) and Inventory (InventoryDbContext) the same way; Ledger needs no migration.
 # The service migrates Inventory alone: --project src/Modules/Inventory/Inventory --context InventoryDbContext.
@@ -99,7 +99,7 @@ dotnet run --project src/Acme.Shop.Host
 curl -H "Authorization: Bearer <token>" http://localhost:5080/catalog/v2/products
 ```
 
-- PostgreSQL runs in Docker from the image the Kit's tests use, `postgres:18.6`, on the port and with the user and password the generated `appsettings.json` names (`Host=localhost;Port=5432;...;Username=postgres;Password=postgres`). The database need not exist: `dotnet ef database update` creates a missing one, `app` in the monolith and the modular monolith and `inventory` in the service, before it applies the first migration. `docker rm -f -v acme-shop-postgres` removes the container and its data.
+- PostgreSQL runs in Docker from the image the Kit's tests use, `postgres:18.7`, on the port and with the user and password the generated `appsettings.json` names (`Host=localhost;Port=5432;...;Username=postgres;Password=postgres`). The database need not exist: `dotnet ef database update` creates a missing one, `app` in the monolith and the modular monolith and `inventory` in the service, before it applies the first migration. `docker rm -f -v acme-shop-postgres` removes the container and its data.
 - The Host applies no migrations at startup; they are the Host's, as [persistence.md](persistence.md) says.
 - Without `Authentication:Schemes:Bearer` the Host does not start. `dotnet user-jwts create --claim tenant=<name>` fills it for development and prints a token: it writes the issuer and the launch profile's URLs as audiences into the Host's `appsettings.Development.json`, which each template generates empty for it, since the tool writes nothing without one, and the signing key into the Host's user secrets, whose id it adds to the Host's project file; Catalog is tenant-scoped in the monolith and the modular monolith ([multi-tenancy.md](multi-tenancy.md)), so a token without the `tenant` claim gets 403 `Tenant.Required` from every Catalog command and query; in production, configure the issuer, audiences and signing keys of the real identity provider.
 - The `https` launch profile runs in Development on `https://localhost:7080` and `http://localhost:5080` (the service's on 7081 and 5081), where `/health`, the OpenAPI documents and the Scalar reference are mapped, beside `/alive`, which every environment maps. In the monolith and the modular monolith the https URL serves REST and gRPC; on the http URL a gRPC call fails with `HTTP_1_1_REQUIRED`, since a listener without TLS negotiates no HTTP/2 ([grpc.md](grpc.md)). A token's `sub` is the Actor, its `tenant` the tenant, and its `permission` claims the Actor's permissions.

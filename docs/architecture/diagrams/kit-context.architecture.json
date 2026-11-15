@@ -361,8 +361,8 @@
         },
         {
           "path": "src/PouryaKit.Email.MailKit/MailKitEmailSender.cs",
-          "line": 26,
-          "end_line": 41,
+          "line": 27,
+          "end_line": 42,
           "label": "a connection per send"
         }
       ]

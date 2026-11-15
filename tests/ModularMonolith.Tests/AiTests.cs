@@ -31,7 +31,7 @@ namespace ModularMonolith.Tests;
 public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixture>
 {
     private const string OllamaProbe = "POURYAKIT_OLLAMA_PROBE";
-    private const string OllamaImage = "ollama/ollama:0.40.6";
+    private const string OllamaImage = "ollama/ollama:0.40.16";
     private const string OllamaModel = "qwen2.5:0.5b";
 
     private static readonly Actor Ada = Actor.Person("ada");

@@ -28,12 +28,12 @@ namespace ModularMonolith.Tests.Fixtures;
 /// </summary>
 public sealed class BrokerFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.6")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.7")
         // Each pair of Hosts opens pools of its own.
         .WithCommand("-c", "track_commit_timestamp=on", "-c", "max_connections=1000")
         .Build();
 
-    private readonly RabbitMqContainer _rabbit = new RabbitMqBuilder("rabbitmq:4.3.6").Build();
+    private readonly RabbitMqContainer _rabbit = new RabbitMqBuilder("rabbitmq:4.4.0").Build();
 
     public async ValueTask InitializeAsync() =>
         await Task.WhenAll(_postgres.StartAsync(), _rabbit.StartAsync());

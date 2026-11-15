@@ -15,10 +15,10 @@ public static class AspireDistributedApplicationBuilderExtensions
     // The tags the Kit's Testcontainers fixtures run, so local infrastructure is what the tests prove. RabbitMQ's carries no
     // management plugin.
     private const string Registry = "docker.io";
-    private const string PostgresTag = "18.6";
-    private const string RedisTag = "8.10.1";
-    private const string RabbitMqTag = "4.3.6";
-    private const string OllamaTag = "0.40.6";
+    private const string PostgresTag = "18.7";
+    private const string RedisTag = "8.10.3";
+    private const string RabbitMqTag = "4.4.0";
+    private const string OllamaTag = "0.40.16";
 
     extension(IDistributedApplicationBuilder builder)
     {

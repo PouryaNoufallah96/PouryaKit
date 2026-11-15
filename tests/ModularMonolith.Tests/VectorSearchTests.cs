@@ -21,7 +21,7 @@ public sealed class VectorSearchTests(AppFixture app, VectorFixture vectors)
     : IClassFixture<VectorFixture>
 {
     private const string OllamaProbe = "POURYAKIT_OLLAMA_PROBE";
-    private const string OllamaImage = "ollama/ollama:0.40.6";
+    private const string OllamaImage = "ollama/ollama:0.40.16";
 
     // AiTests' chat model, qwen2.5:0.5b, serves no embeddings on this Ollama: its runner answers 501, "This server does not
     // support embeddings", so the probe pulls an embedding model.

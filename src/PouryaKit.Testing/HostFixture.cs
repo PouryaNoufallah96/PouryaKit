@@ -29,7 +29,7 @@ public abstract class HostFixture : IAsyncLifetime
 {
     private static readonly TimeSpan DeliveryTimeout = TimeSpan.FromSeconds(30);
 
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.6")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.7")
         .WithCommand("-c", "track_commit_timestamp=on")
         .Build();
 

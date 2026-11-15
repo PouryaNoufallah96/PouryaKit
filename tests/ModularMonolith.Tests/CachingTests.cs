@@ -593,7 +593,7 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
     [Fact]
     public async Task With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler()
     {
-        await using var redis = new RedisBuilder("redis:8.10.1").Build();
+        await using var redis = new RedisBuilder("redis:8.10.3").Build();
         await redis.StartAsync(TestContext.Current.CancellationToken);
         string[] arguments = [$"--ConnectionStrings:cache={redis.GetConnectionString()}"];
         await using var first = AppFixture.ComposeHost(

@@ -2,7 +2,6 @@ using System.Buffers;
 using System.Globalization;
 using System.Text;
 using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace PouryaKit.Reporting;
 
@@ -10,15 +9,15 @@ namespace PouryaKit.Reporting;
 // text as written. A cell that starts with =, +, -, @, a tab or a carriage return is written with a leading apostrophe,
 // so a spreadsheet application opening the file does not run it as a formula, unless the whole cell is a number in the
 // invariant culture, such as -4 or +1,250.50, which stays a number. An empty field is quoted, so the empty row of a
-// one-column table is not a blank line a reader skips.
+// one-column table is not a blank line a reader skips, and so is a field that starts or ends with a space, but not one
+// that starts or ends with a tab, as CsvHelper's own whitespace quoting would: the bytes the Kit wrote on CsvHelper 33.
 internal static class CsvReport
 {
     private static readonly SearchValues<char> FormulaStarts = SearchValues.Create("=+-@\t\r");
 
-    private static readonly CsvConfiguration Configuration = new(CultureInfo.InvariantCulture)
+    private static readonly CsvWriterOptions Options = new()
     {
-        ShouldQuote = args =>
-            string.IsNullOrEmpty(args.Field) || ConfigurationFunctions.ShouldQuote(args),
+        ShouldQuote = (field, _, _, _) => field.IsEmpty || field[0] == ' ' || field[^1] == ' ',
     };
 
     public static byte[] Render(ReportTable table)
@@ -31,14 +30,14 @@ internal static class CsvReport
                 leaveOpen: true
             )
         )
-        using (var csv = new CsvWriter(writer, Configuration))
+        using (var csv = CsvWriter.Create(writer, Options))
         {
             foreach (var column in table.Columns)
             {
                 csv.WriteField(Escaped(column.Header));
             }
 
-            csv.NextRecord();
+            csv.EndRecord();
             foreach (var row in table.Rows)
             {
                 foreach (var cell in row)
@@ -46,7 +45,7 @@ internal static class CsvReport
                     csv.WriteField(Escaped(cell));
                 }
 
-                csv.NextRecord();
+                csv.EndRecord();
             }
         }
 
