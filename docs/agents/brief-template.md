@@ -25,7 +25,7 @@ Repository: `<repository root>`. Integration branch: `<integration branch>`. You
 
 ## Dependencies
 
-Make one bounded check of NuGet metadata for each package you add or bump: the newest version of its own channel compatible with .NET 11, so a stable pin takes the newest stable and never a preview, rc or alpha, and a permissive licence (ADR 0002). Record it in your report. Every version goes in `Directory.Packages.props`. Versions the main session checked on <date>: <package and version, one per package>.
+Make one bounded check of NuGet metadata for each package you add or bump: the newest version of its own channel compatible with .NET 11, so a stable pin takes the newest stable and never a preview, rc or alpha, but for the exception `docs/packages.md` records under "Temporary prerelease dependencies", and a permissive licence (ADR 0002). Record it in your report. Every version goes in `Directory.Packages.props`. Versions the main session checked on <date>: <package and version, one per package>.
 
 ## A new package (where the ticket adds one)
 
