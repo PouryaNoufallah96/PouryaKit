@@ -412,6 +412,43 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
+    // Catalog's realtime endpoint, on both paths, and the Stub's: an item's data is the pushed event's JSON as text, and
+    // no other operation streams.
+    [Fact]
+    public async Task A_realtime_endpoint_describes_its_200_as_an_event_stream_with_an_item_schema_in_every_version()
+    {
+        const string eventStream =
+            """{"description":"OK","content":{"text/event-stream":{"itemSchema":{"required":["data"],"type":"object","properties":{"data":{"type":"string"},"event":{"type":"string"},"id":{"type":"string"}}}}}}""";
+        using var client = Unversioned(Fixture.Client());
+
+        foreach (var version in new[] { "v1", "v2" })
+        {
+            var document = await DocumentAsync(client, version);
+
+            Assert.Equal(
+                [
+                    ("/catalog/events get", eventStream),
+                    ($"/catalog/{version}/events get", eventStream),
+                    ("/stub/realtime get", eventStream),
+                ],
+                Operations(document)
+                    .Where(operation =>
+                        operation.Body.GetProperty("responses").TryGetProperty("200", out var ok)
+                        && ok.TryGetProperty("content", out var content)
+                        && content.TryGetProperty("text/event-stream", out _)
+                    )
+                    .Select(operation =>
+                        (
+                            operation.Name,
+                            JsonSerializer.Serialize(
+                                operation.Body.GetProperty("responses").GetProperty("200")
+                            )
+                        )
+                    )
+            );
+        }
+    }
+
     [Fact]
     public async Task An_operation_protected_by_a_scheme_the_document_cannot_state_carries_no_requirement()
     {
