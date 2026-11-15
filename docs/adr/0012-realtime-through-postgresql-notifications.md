@@ -73,12 +73,20 @@ client of another instance.
 - **A connection list in the process**, as both references keep, rejected: it loses delivery across instances.
 - **SignalR, or a second push channel**, rejected by I.6 answer 4. "No second push channel" is read against SignalR
   beside SSE; a database signal between instances is not a channel to a client.
+- **`pg_notify` after the commit, on a separate connection**, rejected: it would avoid the commit lock below, but the
+  push would no longer commit with its delivery. A process that stops between the commit and the notification loses
+  the push, and the retry finds its Receipt and runs nothing, so it is never sent.
 
 ## Consequences
 
 - A Host scales out with no change: every instance hears every push.
 - A push costs one statement in its delivery's transaction and one notification per instance; PostgreSQL's
   notification queue (8 GB in a standard installation) fails a committing transaction when it is full.
+- Pushing deliveries commit one at a time. A transaction that ran `pg_notify` takes PostgreSQL's notification lock
+  (`PreCommit_Notify` in `async.c`, a lock on database 0) before it commits and holds it until the commit ends, so
+  pushing transactions on the whole server commit in turn. A transaction that does not push, an Operation's commit and
+  its Outbox rows included, never takes the lock. Push from deliveries whose rate this bounds, not one push per row of
+  a high-volume stream.
 - Identical pushes on one channel in one transaction arrive once: PostgreSQL folds them.
 - The Hosts of one database share the PostgreSQL channel, so two applications on one database name their Channels
   apart.
