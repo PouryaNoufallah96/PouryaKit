@@ -1,0 +1,137 @@
+tests/PouryaKit.Reporting.Tests/ReportTextTests.cs
+  s_56c78af6bca6cd::t_e8ee28bdf76890 1-18
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_a0fb843ffe85d9 211
+  s_56c78af6bca6cd::t_47e5069e3af99b 649
+tests/ModularMonolith.Tests/TypeKeyTests.cs
+  s_56c78af6bca6cd::t_3057f1c7ac79c3 47
+src/PouryaKit.Persistence.EFCore/Idempotency/IdempotencyKeyCleanup.cs
+  s_56c78af6bca6cd::t_cbd651ad593135 23-24
+tests/PouryaKit.ArchitectureTests/PackageArtifactTests.cs
+  s_56c78af6bca6cd::t_74c148073de8a8 317-326
+  s_56c78af6bca6cd::t_50048bb171edb4 327
+src/PouryaKit.Persistence.Marten/MartenIdempotencyKeyCleanup.cs
+  s_56c78af6bca6cd::t_16301521fa7dd2 25-26
+scripts/packaging/validate.py
+  s_56c78af6bca6cd::t_2dbfa8ce384ac9 380
+src/PouryaKit.Web/Defaults/PouryaKitCompressionOptions.cs
+  s_56c78af6bca6cd::t_5a14afc3d793fa 4
+  s_56c78af6bca6cd::t_7efc1c17b303ef 5-6
+src/PouryaKit.Persistence.EFCore/UnitOfWork/TrackedState.cs
+  s_56c78af6bca6cd::t_03ee247d4cfb52 30-34
+src/PouryaKit.Web.OpenApi/BearerSecurity.cs
+  s_56c78af6bca6cd::t_3f6c3e4060c874 34
+tests/ModularMonolith.Tests/JwtBearerTests.cs
+  s_56c78af6bca6cd::t_d5b7fda4bd3506 266-281
+tests/ModularMonolith.Tests/GrpcTests.cs
+  s_56c78af6bca6cd::t_fa15d890e6e330 612-613,632-634,646-647
+  s_56c78af6bca6cd::t_50048bb171edb4 627-631
+  s_56c78af6bca6cd::t_0b5538c557c4e0 648
+samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs
+  s_56c78af6bca6cd::t_5f209e51a14052 82-83
+  s_56c78af6bca6cd::t_0ad0ed17c9be9b 33
+  s_56c78af6bca6cd::t_b5fe8b868db769 58-59
+  s_56c78af6bca6cd::t_21359d8ae79d22 95,101
+src/PouryaKit.Web/ProblemResponses/UnexpectedExceptionHandler.cs
+  s_56c78af6bca6cd::t_9a1d6f51a54d2e 17
+tests/ModularMonolith.Tests/AgentRunTests.cs
+  s_56c78af6bca6cd::t_42fed74f0f56df 570,646
+tests/ModularMonolith.Tests/McpTests.cs
+  s_56c78af6bca6cd::t_8d17041ebc4145 512,514,516-517,519
+tests/ModularMonolith.Tests/SagaTests.cs
+  s_56c78af6bca6cd::t_42fed74f0f56df 1431
+src/PouryaKit.Caching/HybridQueryCache.cs
+  s_56c78af6bca6cd::t_30bcf6dfbead32 76-79,82-85
+  s_56c78af6bca6cd::t_9b6c5b39420b9a 179-181,183
+  s_56c78af6bca6cd::t_b568c86612c46e 106
+  s_56c78af6bca6cd::t_438db1727708cd 56
+tests/ModularMonolith.Tests/HostRecipeTests.cs
+  s_56c78af6bca6cd::t_8bed8d67ede92e 7
+  s_56c78af6bca6cd::t_cf9dc39263158e 103-128
+  s_56c78af6bca6cd::t_622d90c0c6bd74 578,606
+  s_56c78af6bca6cd::t_449a9ac29aa292 560,566-568,577,579
+  s_56c78af6bca6cd::t_59ef349dddca59 607-609,615
+docs/packages.md
+  s_56c78af6bca6cd::t_7298ef6a61a449 9
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_d4e173e7436faf 32,37-38,195-196,223-224,229-230
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_5a86c2680e5bba 15,26,34
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_56c78af6bca6cd::t_d4e173e7436faf 133-134,325-326,332,337-338
+tests/ModularMonolith.Tests/WebDefaultsTests.cs
+  s_56c78af6bca6cd::t_4253284995c789 19
+  s_56c78af6bca6cd::t_58472699511642 390-392,396-415
+  s_56c78af6bca6cd::t_edbe5ae56abea4 526-532
+  s_56c78af6bca6cd::t_1bc86db87f975c 1
+  s_56c78af6bca6cd::t_d83bc9ec44ac0e 131-135,139,144-146,149-169,175-195
+  s_56c78af6bca6cd::t_ab895db0d4832e 487,490,494-497
+  s_56c78af6bca6cd::t_3a40941dc7140b 196-197,416-417,498-499
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_56c78af6bca6cd::t_9b3d070b54eddd 196
+src/PouryaKit.Web/Defaults/ActorRateLimiting.cs
+  s_56c78af6bca6cd::t_50048bb171edb4 61-66,73-74
+  s_56c78af6bca6cd::t_eb29411405de08 16-17
+  s_56c78af6bca6cd::t_a9d15cbcde5e19 14-15
+  s_56c78af6bca6cd::t_22e24b478c0cc7 58-60,67-68,70-72,75
+  s_56c78af6bca6cd::t_0dcd4e70d825bc 1
+  s_56c78af6bca6cd::t_be4f4335510375 69
+src/PouryaKit.Reporting/ReportLayout.cs
+  s_56c78af6bca6cd::t_402db0b5e37c3e 24-26,28
+tests/ModularMonolith.Tests/Fixtures/RecordingDistributedCache.cs
+  s_56c78af6bca6cd::t_bcdd5ccb1d4ee9 1-14,19-20,34-68
+  s_56c78af6bca6cd::t_b8eb663ba83c32 15-18,21-33
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_d4e173e7436faf 218-219
+.editorconfig
+  s_56c78af6bca6cd::t_0325f813dec772 34-45
+docs/architecture/diagrams/http-command.sequence.json
+  s_56c78af6bca6cd::t_d4e173e7436faf 63-64,178,183-184
+tests/ModularMonolith.Tests/AiTests.cs
+  s_56c78af6bca6cd::t_50048bb171edb4 91
+  s_56c78af6bca6cd::t_42fed74f0f56df 119
+.agents/skills/pourya-kit/references/reporting.md
+  s_56c78af6bca6cd::t_608a5ecfc69f91 72
+.agents/skills/pourya-kit/references/web.md
+  s_56c78af6bca6cd::t_e711f05d065817 336
+  s_56c78af6bca6cd::t_a53017c48ee42f 337
+src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs
+  s_56c78af6bca6cd::t_20307c7ac414e8 9-10
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_56c78af6bca6cd::t_1fd299b25920ae 77
+  s_56c78af6bca6cd::t_608a5ecfc69f91 85
+tests/ModularMonolith.Tests/CachingTests.cs
+  s_56c78af6bca6cd::t_50048bb171edb4 652-656
+  s_56c78af6bca6cd::t_037751399b3c7a 437-438,440-441
+  s_56c78af6bca6cd::t_3057f1c7ac79c3 439,442-445
+  s_56c78af6bca6cd::t_460d0d61835d9c 657,659-660,667
+  s_56c78af6bca6cd::t_d6a66c44428231 397-398,403-411,415,420,423,429-431,435-436
+src/PouryaKit.Grpc/Clients/GrpcClientServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_2badb3a8277bae 44-47
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_56c78af6bca6cd::t_42fed74f0f56df 492
+src/PouryaKit.Reporting/Pdf/PdfReport.cs
+  s_56c78af6bca6cd::t_9fa4c8e6d9d7af 71-75
+scripts/packaging/test_validation.py
+  s_56c78af6bca6cd::t_3df2684d944a38 211-219
+src/PouryaKit.Web/Defaults/PouryaKitRateLimitOptions.cs
+  s_56c78af6bca6cd::t_200ff3a66d5c2f 11-12
+src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_083c07e37e5aa6 66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "65505cae66b4104c3283980bb3241d3c23dd2072",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
