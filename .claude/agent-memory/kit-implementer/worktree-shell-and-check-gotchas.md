@@ -118,5 +118,9 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - A harness-made worktree refuses any `git -C <main checkout>`, and an Edit whose path names the main checkout ("Edit the worktree copy"). Neither is worth working around: a refused Edit wrote nothing. `git` joined by `;` to a `pnpm` line and piped into `grep` was refused as too complex: run git on its own line.
 
+## The waiter's cap under a busy lock (#213, 2026-11-15)
+
+- **`wait-docker-quiet.sh -- <command>` gives up after 60 minutes by default** (exit 2, the command never started): behind other agents' validations, a verify script that runs the three Docker suites one waiter each lost the first after an hour and queued the rest again. Run the suites and `validate.py` from one script under one waiter with a longer cap (`wait-docker-quiet.sh 300 -- sh <script>`), plain `dotnet test` inside, and the non-Docker verify steps before it; put any red-run mutation first in that script so the tree is restored before the validation checks it is clean.
+
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].
