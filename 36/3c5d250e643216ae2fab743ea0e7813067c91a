@@ -1,0 +1,38 @@
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_3529354fc6f9e2::t_85d3ce61eab7bf 13
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_3529354fc6f9e2::t_e3d091e6eff4d6 15
+.claude/agent-memory/kit-implementer/ai-and-gateway-tool-facts.md
+  s_3529354fc6f9e2::t_417be2b11c730b 40
+.claude/agent-memory/kit-implementer/templates-packaging-and-publication-facts.md
+  s_3529354fc6f9e2::t_8729f5af9bd051 17
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_3529354fc6f9e2::t_2f66f5990b3933 38
+  s_3529354fc6f9e2::t_a5d2636b37ba34 95
+.claude/agent-memory/kit-implementer/persistence-and-dapper-facts.md
+  s_3529354fc6f9e2::t_694363082ed768 33
+  s_3529354fc6f9e2::t_f3387c290b4e2a 35
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_3529354fc6f9e2::t_48e9554bff21ee 3
+  s_3529354fc6f9e2::t_9963b263eb5075 44-48
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_6bf31ea42bd620 11
+.claude/agent-memory/kit-implementer/cqrs-and-modularity-facts.md
+  s_3529354fc6f9e2::t_4ddb96204b24ab 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "363c5d250e643216ae2fab743ea0e7813067c91a",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
