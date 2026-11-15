@@ -167,7 +167,7 @@ An agent's history is its `InMemoryChatHistoryProvider`, kept in the session; a 
 // The last messages of the conversation each turn sends the model, its tool calls and their results left out.
 private const int HistoryLength = 20;
 
-#pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
+#pragma warning disable MEAI001 // Microsoft.Extensions.AI 11.0's reducers are experimental.
 ChatHistoryProvider = new InMemoryChatHistoryProvider(new() { ChatReducer = new MessageCountingChatReducer(HistoryLength) }),
 #pragma warning restore MEAI001
 ```
@@ -353,7 +353,7 @@ internal sealed class SearchPassagesQueryHandler(IVectorStore vectors) : QueryHa
 - Of an MCP server's tools, resources and prompts, the Kit gives a run its tools only. A tool listed from a session that has since ended, as when the server's process crashed, fails its calls as a function that throws does, the model told the call failed: only a new listing reaches the server connected again.
 - Each Gateway tool call is its own Operation and commits on its own: a run that fails later, or whose handler then fails, undoes no call that already committed.
 - An agent that keeps its session through the Unit of Work runs in a command, which holds its transaction, and its connection, while the model answers, as the sample's agent does: a slow model holds them.
-- The reducers are experimental in Microsoft.Extensions.AI 10.11 (`MEAI001`), and a streamed call is not streamed while a guardrail is registered.
+- The reducers are experimental in Microsoft.Extensions.AI 11.0 (`MEAI001`), and a streamed call is not streamed while a guardrail is registered.
 - The model decides which tools to call and with what arguments; the Kit decides only what each call may do.
 
 ## Testing

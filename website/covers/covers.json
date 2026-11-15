@@ -1,6 +1,6 @@
 {
   "kit": {
-    "eyebrow": ".NET 10",
+    "eyebrow": ".NET 11",
     "title": "PouryaKit",
     "tagline": "Modular monoliths whose Feature code holds only business behaviour"
   },

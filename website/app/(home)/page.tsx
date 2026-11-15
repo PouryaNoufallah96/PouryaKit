@@ -96,7 +96,7 @@ export default function HomePage() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-20 px-4 py-16 md:py-24">
       <section className="flex flex-col items-start gap-6">
         <div className="flex flex-wrap gap-2">
-          <Badge label=".NET" value="10" />
+          <Badge label=".NET" value="11" />
           <Badge label="nuget" value={install.version} />
           <Badge label="licence" value="MIT" />
         </div>

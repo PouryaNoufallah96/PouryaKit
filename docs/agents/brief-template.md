@@ -25,7 +25,7 @@ Repository: `<repository root>`. Integration branch: `<integration branch>`. You
 
 ## Dependencies
 
-Make one bounded check of NuGet metadata for each package you add or bump: the current stable version compatible with .NET 10, and a permissive licence (ADR 0002). Record it in your report. Every version goes in `Directory.Packages.props`. Versions the main session checked on <date>: <package and version, one per package>.
+Make one bounded check of NuGet metadata for each package you add or bump: the newest version of its own channel compatible with .NET 11, so a stable pin takes the newest stable and never a preview, rc or alpha, and a permissive licence (ADR 0002). Record it in your report. Every version goes in `Directory.Packages.props`. Versions the main session checked on <date>: <package and version, one per package>.
 
 ## A new package (where the ticket adds one)
 
@@ -48,9 +48,14 @@ dotnet test --project tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
 dotnet test --project tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
 python3 .agents/scripts/check-ai-setup.py
 python3 .agents/scripts/check-docs.py
+pnpm --dir website install --frozen-lockfile
+pnpm --dir website test
+pnpm --dir website lint
+pnpm --dir website build
+pnpm --dir website sync-public --check
 ```
 
-Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths: the main session asks it with `python3 scripts/packaging/validate.py --since <tip> --plan` on the ticket's expected paths when it matters for scheduling, and a brief never predicts it.
+The five `pnpm` lines are the docs site's gates every ticket runs, and a ticket that changes the site's packages or covers adds the `check-licences` or `covers` step of CI's `website` job: the site is built from the Kit's sources, so a package README's C# lines and a page's `#region` are checked against the files they quote, and a change under `src/`, `samples/` or `tests/` can break the site. Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths: the main session asks it with `python3 scripts/packaging/validate.py --since <tip> --plan` on the ticket's expected paths when it matters for scheduling, and a brief never predicts it.
 
 ## Commit, then package validation
 

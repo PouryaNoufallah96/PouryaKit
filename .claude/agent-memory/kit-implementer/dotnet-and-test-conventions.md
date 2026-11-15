@@ -15,7 +15,7 @@ metadata:
 - `nuget.config` clears sources to nuget.org only: with central package management plus TreatWarningsAsErrors, a second source without mapping turns NU1507 into a restore error.
 - xUnit analyzer xUnit1051 is an error under TreatWarningsAsErrors: any test call to a method taking a CancellationToken must pass `TestContext.Current.CancellationToken`.
 - Ticket #7 (2026-10-05): Cqrs and Validation test projects reference `Microsoft.Extensions.DependencyInjection` (10.0.12, test-only, recorded as a deviation) to build a strict container; logging in tests is an own `ILogger<>` open-generic stand-in or `NullLogger<>`, never `Microsoft.Extensions.Logging`.
-- CI's setup-dotnet reads global.json; `rollForward: latestPatch` maps to `10.0.4xx`, `latestFeature` would float to any 10.0.
+- CI's setup-dotnet reads global.json; `rollForward: latestPatch` keeps the pin's feature band (`10.0.4xx` on 10.0.402, `11.0.1xx` on 11.0.100, which hosted CI had not yet run on 2026-11-15), `latestFeature` would float to any band of that `major.minor` (any 11.0 now).
 - `Assert.Throws<T>(() => { ...; throw ...; })` binds the `Func<Task>` overload (CS0619 under xunit.v3); pass a `static void` local function instead.
 - **xUnit truncates a long string list in a failure.** To see a rule's full output once, temporarily `Assert.Fail(string.Join("\n", list))`, then restore from a scratchpad copy.
 - An `AsyncLocal` write inside an awaited async method never flows back to the caller, so asserting `DomainClock.Current` after awaiting the dispatcher cannot fail; test binding restore synchronously (`tests/ModularMonolith.Tests/TestClockTests.cs`).
@@ -26,7 +26,7 @@ metadata:
 - A full `dotnet build PouryaKit.slnx --no-incremental` takes about 2 s on this machine with a warm compiler server and still compiles all 27 projects (count `bincore/csc` lines at `-v:n`). Not a sign that compilation was skipped.
 - `new[] { ... }` assigned to `var` or used in `foreach` has no target type, so IDE0300 correctly ignores it.
 - `brew install actionlint` works on this machine (2026-10-06).
-- C# 14 `field` keyword on a get-only property assigned in only one of two constructors (`Result<T>.Value`) fails with CS9264 under nullable; `[field: MaybeNull]` plus `field!` in the getter fixes it. Assigning a get-only `field`-backed property in a constructor writes the backing field.
+- The `field` keyword on a get-only property assigned in only one of two constructors (`Result<T>.Value`) fails with CS9264 under nullable (re-probed on C# 15, SDK 11.0.100, 2026-11-15); `[field: MaybeNull]` plus `field!` in the getter fixes it. Assigning a get-only `field`-backed property in a constructor writes the backing field.
 - A `ref struct` implementing `IDisposable` works with `using` and inside a non-async lambda or local function.
 - `ImmutableDictionary<,>.Empty` in a field initialiser trips IDE0301 under TreatWarningsAsErrors; write `[]`.
 - **xUnit1069 (#75, 2026-10-09):** a `[Fact(Timeout = …)]` whose body never names `TestContext.Current.CancellationToken` fails the build. Helpers that use the token inside do not count; a test whose waits all have deadlines can take a plain `[Fact]`, as most broker tests do.
@@ -88,7 +88,7 @@ metadata:
 
 ## Counting containers and sharing a fixture (#87, 2026-10-10; xunit.v3 4.0.1, Testcontainers 4.15.0)
 
-- **Testcontainers' `ConsoleLogger` lines never reach `dotnet test`'s output in MTP mode**, even with `--output Detailed`. Run the built test executable with xunit's native filters instead (`bin/Debug/net10.0/ModularMonolith.Tests -class <FQN> -class <FQN> -noColor`): it prints `[testcontainers.org …] Docker container <id> created` per container, and the readiness lines tell the images apart (`pg_isready` for PostgreSQL, `rabbitmqctl add_vhost` for RabbitMQ); the first container is the resource reaper.
+- **Testcontainers' `ConsoleLogger` lines never reach `dotnet test`'s output in MTP mode**, even with `--output Detailed`. Run the built test executable with xunit's native filters instead (`bin/Debug/net11.0/ModularMonolith.Tests -class <FQN> -class <FQN> -noColor`): it prints `[testcontainers.org …] Docker container <id> created` per container, and the readiness lines tell the images apart (`pg_isready` for PostgreSQL, `rabbitmqctl add_vhost` for RabbitMQ); the first container is the resource reaper.
 - **A collection fixture on xunit.v3 4.0.1:** `[CollectionDefinition(DisableParallelization = true)] public sealed class X : ICollectionFixture<F>;` with `[Collection<X>]` on each class (the generic attribute compiles); `CollectionBehavior.CollectionPerAssembly` still honours it, and a disabled-parallelization collection runs alone. Removing `IClassFixture<F>` keeps the primary-constructor parameter `F`.
 - **Moving a private helper into a shared static class strands `using System.Text.Json;`** in each caller that only used `JsonElement` in the helper's signature (IDE0005, five files at once); `using static <Fixtures class>` keeps every call site unchanged.
 

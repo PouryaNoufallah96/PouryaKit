@@ -46,7 +46,7 @@ internal sealed class AskAboutProductsCommandHandler(
         #endregion
         var store = new ProductConversations(conversations, context);
         var key = ProductConversations.KeyOf(context);
-#pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
+#pragma warning disable MEAI001 // Microsoft.Extensions.AI 11.0's reducers are experimental.
         var agent = chat.AsAIAgent(
             new ChatClientAgentOptions
             {

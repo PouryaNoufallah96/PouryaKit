@@ -1,6 +1,6 @@
 # PouryaKit
 
-A reusable .NET 10 foundation for modular monoliths built from vertical slices. What is built, and where each part is documented: `README.md`.
+A reusable .NET 11 foundation for modular monoliths built from vertical slices. What is built, and where each part is documented: `README.md`.
 
 ## Read first
 

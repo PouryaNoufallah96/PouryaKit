@@ -12,9 +12,10 @@ indent_size = 4
 [*.{csproj,props,slnx,json,yml,yaml,toml,sh,ts,js}]
 indent_size = 2
 
-# The C# 14 and .NET 10 idioms of .claude/rules/kit-code.md that have an analyzer in the SDK. EnforceCodeStyleInBuild
-# runs them in every build, and TreatWarningsAsErrors makes a warning fail it. Extension members, TimeProvider and
-# Guid.CreateVersion7 have no analyzer; review still judges those.
+# The C# 15 and .NET 11 idioms of .claude/rules/kit-code.md that have an analyzer in the SDK. EnforceCodeStyleInBuild
+# runs them in every build, and TreatWarningsAsErrors makes a warning fail it. Extension members, TimeProvider,
+# Guid.CreateVersion7 and closed types have no analyzer, and IDE0410 reports a goto, not a flag variable; review still
+# judges those.
 [*.cs]
 # Collection expressions
 dotnet_diagnostic.IDE0028.severity = warning

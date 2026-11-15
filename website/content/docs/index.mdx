@@ -1,11 +1,11 @@
 ---
 title: What is PouryaKit
-description: A reusable .NET 10 foundation for modular monoliths, in which Feature code holds only business behaviour.
+description: A reusable .NET 11 foundation for modular monoliths, in which Feature code holds only business behaviour.
 ---
 
 ## What it is
 
-PouryaKit is a set of NuGet packages and `dotnet new` templates for applications built as a [Host](/docs/reference/glossary#host) of [Modules](/docs/reference/glossary#module) on .NET 10 and PostgreSQL. Each Module is a business boundary that owns its data, its rules and its public [Contracts](/docs/reference/glossary#contracts).
+PouryaKit is a set of NuGet packages and `dotnet new` templates for applications built as a [Host](/docs/reference/glossary#host) of [Modules](/docs/reference/glossary#module) on .NET 11 and PostgreSQL. Each Module is a business boundary that owns its data, its rules and its public [Contracts](/docs/reference/glossary#contracts).
 
 Inside a Module, your code is [Features](/docs/reference/glossary#feature). A Feature supplies the aggregate, the command or query, its validator and handler, its data access and its endpoint. The Kit runs everything around it: it dispatches the [Operation](/docs/reference/glossary#operation), validates it, owns its single commit in the [Unit of Work](/docs/reference/glossary#unit-of-work), runs its reactions and delivers its [Integration Events](/docs/reference/glossary#integration-event) and [Snapshots](/docs/reference/glossary#snapshot) to other Modules.
 
@@ -19,7 +19,7 @@ The packages are MIT-licensed. The Kit's source repository is private, so a pack
 
 ## When to use it
 
-Start a new .NET 10 application on the Kit when its business code should be split into Modules that each own their data, and you want the commit, the Outbox, the deliveries between Modules and the checks on your composition handled for you. One Module is a fine start: the [monolith template](/docs/templates/monolith) grows into a [modular monolith](/docs/templates/modular-monolith) when a second Module arrives, and a Module can later run as a [service](/docs/templates/service) of its own.
+Start a new .NET 11 application on the Kit when its business code should be split into Modules that each own their data, and you want the commit, the Outbox, the deliveries between Modules and the checks on your composition handled for you. One Module is a fine start: the [monolith template](/docs/templates/monolith) grows into a [modular monolith](/docs/templates/modular-monolith) when a second Module arrives, and a Module can later run as a [service](/docs/templates/service) of its own.
 
 ## A Feature
 
@@ -34,7 +34,7 @@ The handler that renames a product in the [Proving Sample](/docs/reference/gloss
 
 ### Check the prerequisites
 
-The .NET 10 SDK and Docker; [Prerequisites](/docs/get-started/prerequisites) lists what each step needs.
+The .NET 11 SDK and Docker; [Prerequisites](/docs/get-started/prerequisites) lists what each step needs.
 
 </Step>
 <Step>
