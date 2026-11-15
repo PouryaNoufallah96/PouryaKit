@@ -143,6 +143,10 @@ Check the merged code before relying on a design note. Each section names its ti
 **Why:** each cost a run, a design detour or a wrong claim in a provenance record, or would have let a test pass vacuously; #9 to #18 build on these seams.
 **How to apply:** start from these when touching Persistence.*, Persistence.Dapper, the Unit of Work seam, conflicts, test migrations, paging, Dapper parameters or EF predicates; re-verify when bumping EF/Npgsql. Related: [[cqrs-and-modularity-facts]], [[snapshot-and-scheduled-command-facts]], [[dotnet-and-test-conventions]].
 
+## A deadlock inside the save (#215, 2026-11-15; EF Core and provider 11.0.0-rc.3)
+
+- **A deterministic deadlock in `SaveChanges`:** `ConflictTests`' race harness with two Operations, each sending the Stub's `LockProductCommand` (plain-SQL `select … for update` on one product's row, changing nothing, so the other's version token still matches) and then renaming the other product; released together, the two saves' UPDATEs wait on each other and PostgreSQL aborts one with 40P01 after `deadlock_timeout`. Locking with a write that changes the row would give a real version conflict and pass for the wrong reason. Assert the outcome by walking `InnerException` to the `PostgresException`: EF Core 10 and 11 wrap it in different layers. The Unit of Work now maps only a `DbUpdateConcurrencyException` with no inner exception ([[dotnet-11-migration-facts]]).
+
 ## Number sequences: cancellation (#146, 2026-10-16; Npgsql 10.0.3)
 
 - **Cheapest cancellation shape:** `HoldChangeCommand` with an unreleased `Hold`, run with a linked `CancellationTokenSource`'s token; wait for `Changed`, cancel, and the handler's `Released.Task.WaitAsync(ct)` throws, so the Unit of Work rolls back. Assert `ThrowsAnyAsync<OperationCanceledException>`.
