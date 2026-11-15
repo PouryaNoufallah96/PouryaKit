@@ -1,0 +1,72 @@
+tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
+  s_56c78af6bca6cd::t_06e0669b2292c9 5-8
+src/PouryaKit.Web.OpenApi/WebOpenApiServiceCollectionExtensions.cs
+  s_56c78af6bca6cd::t_6b569572a92faf 81-91
+  s_56c78af6bca6cd::t_50531f9a55bf48 34-36
+  s_56c78af6bca6cd::t_3777809cfd5c76 3
+  s_56c78af6bca6cd::t_a479c6f0fab718 50
+.agents/skills/pourya-kit/references/openapi.md
+  s_56c78af6bca6cd::t_31ecac1997a1d9 3,12,137-138,142-143
+src/PouryaKit.Web.OpenApi/PouryaKit.Web.OpenApi.csproj
+  s_56c78af6bca6cd::t_7af4ead43e89a0 11
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_56c78af6bca6cd::t_e3d482b50c305d 14
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_56c78af6bca6cd::t_e32d60e08720e1 10
+docs/architecture/README.md
+  s_56c78af6bca6cd::t_65cdc21255025e 654,663-665,669
+src/PouryaKit.Web.OpenApi/README.md
+  s_56c78af6bca6cd::t_ab7a83b0cf2f67 52
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_56c78af6bca6cd::t_0454d907573032 19
+Directory.Packages.props
+  s_56c78af6bca6cd::t_1483b9719208fd 34
+  s_56c78af6bca6cd::t_f151756b1f26f7 13
+tests/ModularMonolith.Tests/OpenApiTests.cs
+  s_56c78af6bca6cd::t_b9c66105a2fe1c 677
+  s_56c78af6bca6cd::t_56dae92a000f8f 420-428,439,463,475,484-499,501-512
+  s_56c78af6bca6cd::t_2769b27950218c 852-863
+  s_56c78af6bca6cd::t_3fbb590132e592 156-159,429-438,440-462,464-474,476-483
+  s_56c78af6bca6cd::t_0b95f1f0fd0808 15
+  s_56c78af6bca6cd::t_cedb900101bd04 255-265,267-271,273-277
+  s_56c78af6bca6cd::t_322926bbcec029 266,272,500
+  s_56c78af6bca6cd::t_f6dc52ffc8ae79 513
+  s_56c78af6bca6cd::t_7d229a9c14741b 140-155,160-189
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_56c78af6bca6cd::t_a315ab58631cd6 81
+website/distribution/manifest.sha256
+  s_56c78af6bca6cd::t_bb65d5a5b9b8b1 21
+.claude/agent-memory/kit-implementer/web-security-and-openapi-facts.md
+  s_56c78af6bca6cd::t_5a410668e39c58 160-168
+docs/architecture/diagrams/execution-core.architecture.json
+  s_56c78af6bca6cd::t_e32d60e08720e1 10
+docs/foundation-review.md
+  s_56c78af6bca6cd::t_a315ab58631cd6 273,869
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_56c78af6bca6cd::t_e32d60e08720e1 10
+src/PouryaKit.Web.OpenApi/ApiVersionDocuments.cs
+  s_56c78af6bca6cd::t_3fbb590132e592 128-133,155-161
+  s_56c78af6bca6cd::t_f0c1d04fc3be58 1-127,134-154,162-203
+docs/architecture/diagrams/kit-context.architecture.json
+  s_56c78af6bca6cd::t_e32d60e08720e1 10
+scripts/packaging/consumers/PouryaKit.Web.OpenApi.cs
+  s_56c78af6bca6cd::t_a315ab58631cd6 10-11,23
+src/PouryaKit.Web.OpenApi/WebOpenApiEndpointRouteBuilderExtensions.cs
+  s_56c78af6bca6cd::t_c9634748507769 28-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b3681a1fa9853d6fd82cf66064c12315796f061",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
