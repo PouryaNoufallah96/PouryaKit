@@ -1,6 +1,6 @@
 ---
 name: dotnet-11-migration-facts
-description: The .NET 11 retarget (SDK 11.0.100, net11.0, C# 15) - what SDK 11 forces in the build, CSharpier 1.4.0's reformat and the diagrams it moves, the shared framework's Microsoft.Extensions packages, and the held EF Core and OpenAPI line
+description: The .NET 11 retarget (SDK 11.0.100, net11.0, C# 15) - what SDK 11 forces in the build, CSharpier 1.4.0's reformat and the diagrams it moves, the shared framework's Microsoft.Extensions packages, the held EF Core and OpenAPI line, and the Host start order Hosting 11.0.0 reversed
 metadata:
   type: project
 ---
@@ -40,6 +40,11 @@ Check the merged code before relying on a note. Each section names its ticket, i
 - **A version in a comment the skill quotes**: `ai.md`'s fence copies the sample handler's `#pragma` comment, so the comment, its two test copies and the skill's prose move together (a `.cs` comment needs a scope grant). `Microsoft.Extensions.AI` 11.0.0 keeps the reducers `[Experimental("MEAI001")]` (`ilspycmd -t Microsoft.Extensions.AI.MessageCountingChatReducer`).
 - **Pins against prose, mechanically**: `scratchpad/p214/literals.py <worktree>` lists every `<package id> <version>` literal in the architecture document, `docs/packages.md`, the skill, the site pages and the package READMEs against `Directory.Packages.props` and the tool manifest; `literals_records.py` does the plan and the ADRs and says whether the line carries a 2026-11-15 note. "Since WolverineFx 6.51.0" and "on WolverineFx 6.46.0, not checked since" are history, not pins.
 - **A memory version tag is a record**: re-tag only what a check re-observed (name the check and date), correct a recipe path that moved (`bin/Debug/net11.0`, a net11.0 scratch consumer), and drop only a language-version label that dates a feature.
+
+## Settling the facts #214 left open (2026-11-15; SDK 11.0.100, Microsoft.Extensions.Hosting 11.0.0)
+
+- **Hosting 11.0.0 reversed `Host.StartAsync`'s first two steps**: the startup validation (`ValidateOnStart`, and the new `IAsyncStartupValidator`) now runs before the hosted services are resolved, so before Wolverine's options and the Kit's `IWolverineExtension`s; 10.0.12 resolved them first. `StartingAsync`, where the Kit's startup checks run, still comes after both. A re-tag pass that only compares a cited type's name across versions misses an order change: diff the method body (`ilspycmd -t Microsoft.Extensions.Hosting.Internal.Host` on both packages). Details in [[wolverine-runtime-and-delivery-facts]] (Timing).
+- **A closure claim is read from the restored graph**, not the nuspec: on net11.0 NuGet prunes every dependency `Microsoft.NETCore.App` 11.0.0 ships (`packagesToPrune` in `obj/project.assets.json`), so Npgsql 10.0.3 restores with none. `dotnet restore <one csproj>` in the worktree, then walk `targets["net11.0"]` (`scratchpad/memre/closure.py <assets> <id>` prints what only that id reaches). List an assembly's types one assembly per command (`ilspycmd -l c <dll> | grep`): two in one line give unlabelled output.
 
 **Why:** the retarget touched about 170 files; each of these cost a probe or a second run.
 **How to apply:** for any later step of the .NET 11 move (#209 to #217), a new package on SDK 11, or a CSharpier bump. Related: [[templates-packaging-and-publication-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].
