@@ -1,0 +1,25 @@
+scripts/packaging/validate.py
+  s_3529354fc6f9e2::t_9c4896bfbaaad9 416
+scripts/packaging/test_validation.py
+  s_3529354fc6f9e2::t_0046293de4dc29 205-207
+docs/packages.md
+  s_3529354fc6f9e2::t_8926469896d3a8 76
+docs/architecture/diagrams/ci-and-publication.workflow.json
+  s_3529354fc6f9e2::t_cffc866d74cf86 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0d587a2ca32a6fb06077619eb5ca64b852cd0d9",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
