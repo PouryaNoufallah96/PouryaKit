@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/snapshot-and-scheduled-command-facts.md
+  s_3529354fc6f9e2::t_2f6107d3011828 106-110
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_3529354fc6f9e2::t_df4987b02bd2fe 62
+  s_3529354fc6f9e2::t_ebefc808049c64 58-61,63
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_6a434808f37b33 12
+  s_3529354fc6f9e2::t_884a8cdba154df 29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a833c50f117049e1e255999cfe58333af659c8f8",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
