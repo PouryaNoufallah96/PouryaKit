@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.IO.Compression;
 using System.Net;
@@ -394,7 +395,8 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(HttpStatusCode.OK, (await waiting).StatusCode);
     }
 
-    // A refusal names the seconds left in its window as the limiter counts them, not the window's length.
+    // A refusal names the seconds left in its window as the limiter counts them, not the window's length, rounded up, so a
+    // caller that waits that long is not refused again a fraction of a second early.
     [Fact]
     public async Task A_refusal_tells_the_caller_in_retry_after_the_seconds_left_in_its_window()
     {
@@ -405,15 +407,19 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         await host.StartAsync(TestContext.Current.CancellationToken);
         using var ada = AppFixture.ClientOf(host, "ada");
 
+        // Started before the first request creates ada's partition and its window, stopped after the refusal is read: it
+        // spans at least the limiter's own count, so the time it leaves of the 600 is never more than the time left.
+        var spanned = Stopwatch.StartNew();
         var first = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
         await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken);
         var refused = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
+        spanned.Stop();
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.False(first.Headers.Contains("Retry-After"));
         await ProblemAsync(refused, HttpStatusCode.TooManyRequests);
-        // At least the second and a half waited is gone from the 600, and less than a minute unless the run stalled.
-        Assert.InRange(RetryAfterSeconds(refused), 540, 599);
+        // Rounded up, never below the time left; and at least the second and a half waited is gone from the 600.
+        Assert.InRange(RetryAfterSeconds(refused), 600 - spanned.Elapsed.TotalSeconds, 599);
     }
 
     // An application that set its own rejection handler before AddPouryaKitWeb keeps it beside the Kit's Retry-After.
@@ -558,7 +564,7 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         response.Headers.TryGetValues(name, out var values) ? string.Join(',', values) : null;
 
     // Retry-After as a whole number of seconds, the form the Kit writes.
-    private static int RetryAfterSeconds(HttpResponseMessage response) =>
+    private static double RetryAfterSeconds(HttpResponseMessage response) =>
         int.Parse(
             Assert.Single(response.Headers.GetValues("Retry-After")),
             CultureInfo.InvariantCulture
