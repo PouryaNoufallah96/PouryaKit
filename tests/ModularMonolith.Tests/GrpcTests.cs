@@ -71,7 +71,10 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
             );
             var seenBySecond = second.Services.GetRequiredService<CatalogQuestionContexts>().Seen;
             var seenByFirst = first.Services.GetRequiredService<CatalogQuestionContexts>().Seen;
+            // The second Host is disposed before the first one stops: a stopped Host keeps its connection pools open until
+            // then, and a graceful stop opens about fifty at once.
             await second.StopAsync(TestContext.Current.CancellationToken);
+            await second.DisposeAsync();
             await first.StopAsync(TestContext.Current.CancellationToken);
 
             Assert.Equal((product.ToString(), Name(product)), (toSecond.Id, toSecond.Name));

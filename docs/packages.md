@@ -20,12 +20,25 @@ Each nupkg contains `LICENSE` with the Kit's MIT text, source commit metadata wi
 
 ## Held packages
 
-Every third-party pin in `Directory.Packages.props` is its newest stable version on nuget.org but these, each held below it until the event that releases it:
+Every third-party pin in `Directory.Packages.props` is its newest stable version on nuget.org but these, each held below it until the event that releases it, and the EF Core line, which runs on release candidates for now ([Temporary prerelease dependencies](#temporary-prerelease-dependencies)):
 
 | Package | Held at | Newest stable | Why | Released by |
 |---|---|---|---|---|
 | `PDFsharp-MigraDoc` | 6.2.4 | 6.5.0 | 6.2.4 is its last MIT release: 6.5.0 and later are `AGPL-3.0-only`, which `LicenceTests` refuses (ADR 0002) | Nothing: a permanent ceiling, unless the PDF renderer is replaced |
-| `Microsoft.EntityFrameworkCore.Relational` and `.Design`, and the `dotnet-ef` tool | 10.0.15 | 11.0.0 | `Npgsql.EntityFrameworkCore.PostgreSQL` has no stable 11, and its 10.0.3 and `EFCore.NamingConventions` 10.0.1 each require EF Core below 11 | A stable `Npgsql.EntityFrameworkCore.PostgreSQL` 11 |
+
+## Temporary prerelease dependencies
+
+No stable PostgreSQL provider for EF Core 11 exists yet, so the Kit's EF Core line runs on the provider's release candidate and the EF Core release candidate it pins, by the owner's decision of 2026-11-15: a prerelease package is allowed where no stable version serves, if it works and brings no significant compatibility or reliability issue. Each moves to its stable version when the stable `Npgsql.EntityFrameworkCore.PostgreSQL` 11.0.0 ships, with `EFCore.NamingConventions` 11 or, while that lags, the owner's override of 10.0.1 past its cap: that cap refuses EF Core 11.0.0 (NU1107).
+
+| Package | Version | Why no stable version serves |
+|---|---|---|
+| `Npgsql.EntityFrameworkCore.PostgreSQL` | 11.0.0-rc.3 | None of 11 is stable. The stable 10.0.3 requires EF Core below 11 and fails on EF Core 11 at run time: its JSON type mapping calls an EF Core constructor that 11 no longer has |
+| `Microsoft.EntityFrameworkCore.Relational` and `.Design` | 11.0.0-rc.3.26522.148 | 11.0.0 is stable, but the provider's release candidate requires EF Core and EF Core Relational at exactly this version, so 11.0.0 fails the restore (NU1608) |
+| The `dotnet-ef` tool | 11.0.0-rc.3.26522.148 | It runs with the Hosts' EF Core Design, this version |
+
+They bring EF Core itself, `Microsoft.EntityFrameworkCore`, with its abstractions and analyzers packages at the same version. These six packages are the only prereleases in any closure: `PackageGraph` refuses any other in a Kit package's restored closure and in every clean consumer's. EF Core's release candidate also asks for `Microsoft.Extensions.Logging`, `Microsoft.Extensions.Caching.Memory` and `Microsoft.Extensions.DependencyModel` at its own version, and the stable Roslyn 5.9.0 EF Core Design brings asks for the prerelease analyzer `Microsoft.CodeAnalysis.Analyzers` 5.9.0-1.26328.17, each as a minimum a stable version satisfies. So `PouryaKit.Persistence.EFCore` references `Microsoft.Extensions.Logging` and `Microsoft.Extensions.Caching.Memory` 11.0.0, where EF Core enters the Kit, and `PouryaKit.Messaging.Wolverine.EFCore` references `Microsoft.Extensions.DependencyModel` 11.0.0 and `Microsoft.CodeAnalysis.Analyzers` 5.12.0, where Design does; their nuspecs carry these stable floors to every consumer, and the four leave when EF Core is stable. `EFCore.NamingConventions` 10.0.1, its newest, admits the release candidate below its cap of 11.0.0, so it needs no override for now.
+
+Tested on 2026-11-15, all on these versions: every test project, the Gateway suite three times, `dotnet ef migrations has-pending-model-changes` answering "No changes" for the five migrated models (so no table, column, key or index name moved), and the package validation, whose clean consumers and generated templates restore the packed packages with no override of their own. The risk a release candidate leaves: the provider's code may still change before its stable release, as it did between earlier release candidates and EF Core 11.0.0, so the stable version is tested again before it replaces this one. A project that references EF Core 11.0.0 beside the Kit meets the provider's exact pin and fails its restore until then.
 
 ## Clean consumers
 

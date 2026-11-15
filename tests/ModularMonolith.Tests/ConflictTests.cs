@@ -7,6 +7,7 @@ using Catalog.Products.Features.RenameProduct;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
+using Npgsql;
 using PouryaKit.Cqrs;
 using PouryaKit.Domain;
 using PouryaKit.Persistence;
@@ -73,6 +74,86 @@ public sealed class ConflictTests(AppFixture app) : HostTest<AppFixture>(app)
             await Fixture.RowsAsync("select name, version from catalog.products")
         );
         Assert.Equal(["held first"], await HeldMarksAsync());
+    }
+
+    // Each Operation locks one product's row and renames the other, so their saves wait on each other until PostgreSQL ends
+    // the deadlock by aborting one of them. Neither changed what the other loaded: the aborted one fails with the database's
+    // error, as any other the Unit of Work does not map, and not with a conflict its caller could resolve by reloading.
+    [Fact(Timeout = 60_000)]
+    public async Task Two_operations_whose_saves_deadlock_commit_once_and_the_other_fails_with_the_deadlock_not_a_conflict()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var (category, lamp) = await CreateLampAsync();
+        var desk = Guid.CreateVersion7();
+        await Fixture
+            .Gateway<CatalogModule>()
+            .SendAsync(new CreateProductCommand(desk, category, "Desk"), cancellationToken);
+        Hold first = new("held first"),
+            second = new("held second");
+        var firstRun = RunHeldAsync(LockThenRename(lamp, desk, "Desk 2"), first, cancellationToken);
+        var secondRun = RunHeldAsync(
+            LockThenRename(desk, lamp, "Lamp 2"),
+            second,
+            cancellationToken
+        );
+        await Task.WhenAll(first.Changed.Task, second.Changed.Task).WaitAsync(cancellationToken);
+
+        first.Released.SetResult();
+        second.Released.SetResult();
+        Task[] runs = [firstRun, secondRun];
+        await Task.WhenAll(runs)
+            .ConfigureAwait(
+                ConfigureAwaitOptions.SuppressThrowing
+                    | ConfigureAwaitOptions.ContinueOnCapturedContext
+            );
+
+        Assert.Equal(
+            ["committed", $"threw {PostgresErrorCodes.DeadlockDetected}"],
+            [.. new[] { Outcome(firstRun), Outcome(secondRun) }.Order(StringComparer.Ordinal)]
+        );
+        // The commit that won renamed the other Operation's product; the aborted one left nothing, its mark included.
+        (string Mark, string[] Names) won = firstRun.IsCompletedSuccessfully
+            ? ("held first", ["Desk 2", "Lamp"])
+            : ("held second", ["Desk", "Lamp 2"]);
+        Assert.Equal([won.Mark], await HeldMarksAsync());
+        Assert.Equal(
+            won.Names,
+            (await Fixture.RowsAsync("select name from catalog.products order by name")).Select(
+                row => (string)row[0]
+            )
+        );
+
+        static Func<IDispatcher, CancellationToken, Task<Result>> LockThenRename(
+            Guid locked,
+            Guid renamed,
+            string name
+        ) =>
+            async (dispatcher, ct) =>
+            {
+                await dispatcher.SendAsync(new LockProductCommand(locked), ct);
+                return await dispatcher.SendAsync(new RenameProductCommand(renamed, name), ct);
+            };
+
+        // The database's error is wrapped by EF Core and its provider, in layers they choose.
+        static string Outcome(Task<Result> run)
+        {
+            if (run.Exception?.InnerException is not { } thrown)
+            {
+                return run.Result.IsSuccess
+                    ? "committed"
+                    : string.Join(", ", run.Result.Errors.Select(error => error.Code));
+            }
+
+            for (var cause = thrown; cause is not null; cause = cause.InnerException)
+            {
+                if (cause is PostgresException database)
+                {
+                    return $"threw {database.SqlState}";
+                }
+            }
+
+            return $"threw {thrown}";
+        }
     }
 
     [Fact]

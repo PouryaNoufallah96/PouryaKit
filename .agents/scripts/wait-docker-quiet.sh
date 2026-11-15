@@ -8,8 +8,8 @@
 #   (default 60; exits 2 when the cap is reached before the command starts, 64 on a usage error)
 #   .agents/scripts/wait-docker-quiet.sh 90 -- python3 scripts/packaging/validate.py --no-fetch --since <tip> --output <dir>
 #
-# One Docker host serves every implementer and validation of a session: PostgreSQL's 100-connection default fails
-# concurrent suites with 53300, and two validations starve each other. A wait alone reserves nothing: two agents that see
+# One Docker host serves every implementer and validation of a session: a validation run beside other suites has failed
+# on Docker timeouts alone, and two validations starve each other. A wait alone reserves nothing: two agents that see
 # one suite end both start theirs, so the full suite and validate.py run under the lock. A process counts by what it
 # runs, never by a line that names it: a shell that chains this script with its command (`sh -c "wait-docker-quiet.sh &&
 # dotnet test ..."`) holds the same words, and matching such lines made two waiters block each other until the cap.

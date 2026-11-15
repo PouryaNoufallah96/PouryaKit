@@ -596,3 +596,23 @@ each amendment above keeps the version it was read on.
   type ([issue 5295](https://github.com/JasperFx/wolverine/issues/5295)); a Kit Host registers none, so its one store
   still takes the Outbox's envelopes. [Issue 4923](https://github.com/JasperFx/wolverine/issues/4923) is still open, so
   two different Hosts still never share a store's schema.
+
+## Amendment (2026-11-15: EF Core 11, and Roslyn where its Design meets the runtime compiler)
+
+The decision above stands. EF Core moves to 11, on the PostgreSQL provider's release candidate and the EF Core release
+candidate it requires, which `docs/packages.md` records as temporary dependencies. "Pinned versions and licences" stays
+as the record of what Spike S1 ran on.
+
+- **Where EF Core Design comes from.** `WolverineFx.EntityFrameworkCore` 6.64.0 still asks only for
+  `Microsoft.EntityFrameworkCore.Design` 10.0.4 or later, and NuGet takes the lowest version a range admits, so that
+  source put EF Core Design 10 beside EF Core 11 in every closure above it. `PouryaKit.Messaging.Wolverine.EFCore`
+  references Design itself, at the Kit's EF Core line, and its nuspec carries it to every consumer. Design 11 asks for
+  `Microsoft.CodeAnalysis.CSharp`, `.CSharp.Workspaces` and `.Workspaces.MSBuild` 5.9.0 or later.
+- **Where Design meets the runtime compiler.** `WolverineFx.RuntimeCompilation`, through `JasperFx.RuntimeCompiler`
+  5.1.0, still asks for the `Microsoft.CodeAnalysis` and `Microsoft.CodeAnalysis.Scripting` meta-packages at 5.0.0 or
+  later, and Roslyn's packages pin each other exactly, so beside Design 11 the restore fails with NU1608. Each project
+  that references the compiler references `Microsoft.CodeAnalysis`, `Microsoft.CodeAnalysis.Scripting` and
+  `Microsoft.CodeAnalysis.Workspaces.MSBuild` 5.12.0 beside it: `PouryaKit.Testing`, as this record's exception allows,
+  and each Host in the same Debug group as the compiler, so a Release build takes neither. Without the third,
+  `Workspaces.MSBuild` resolves 5.9.0, which pins `Workspaces.Common` at 5.9.0 against 5.12.0's: NU1608. Handler code
+  compiled at run time on 5.12.0 in the Gateway tests (`CodeGenerationTests`) and in the Saga tests' child process.

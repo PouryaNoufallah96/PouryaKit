@@ -77,6 +77,7 @@ public sealed class PackageGraphTests
         Assert.Equal(
             [
                 "PouryaKit.Persistence.Dapper's closure holds Microsoft.EntityFrameworkCore.Relational, which section C keeps out of it.",
+                "PouryaKit.Persistence.Dapper's closure holds Microsoft.EntityFrameworkCore.Relational 1.0.0, below EF Core 11.",
             ],
             PackageGraph.Violations(
                 dapper with
@@ -282,6 +283,72 @@ public sealed class PackageGraphTests
         );
     }
 
+    // WolverineFx.EntityFrameworkCore asks only for EF Core Design 10.0.4 or later, so a closure can hold an older EF Core
+    // package beside the Kit's (#215). The rule compares majors, by EF Core's own ids.
+    [Fact]
+    public void A_closure_with_an_ef_core_package_of_an_older_major_is_rejected()
+    {
+        var testing = Restored("PouryaKit.Testing");
+        // Allowed as restored: EF Core 11's own packages, a release candidate included, and packages that only name it.
+        Assert.Contains(testing.Packages, arrived => arrived.Id == "Microsoft.EntityFrameworkCore");
+        Assert.Contains(testing.Packages, arrived => arrived.Id == "EFCore.NamingConventions");
+        Assert.Contains(testing.Packages, arrived =>
+            arrived.Id == "WolverineFx.EntityFrameworkCore"
+        );
+        Assert.Contains(testing.Packages, arrived =>
+            arrived.Id == "Ardalis.Specification.EntityFrameworkCore"
+        );
+
+        Assert.Equal(
+            [
+                "PouryaKit.Testing's closure holds Microsoft.EntityFrameworkCore 10.0.15, below EF Core 11.",
+                "PouryaKit.Testing's closure holds Microsoft.EntityFrameworkCore.Design 10.0.4, below EF Core 11.",
+            ],
+            PackageGraph.Violations(
+                testing with
+                {
+                    Packages =
+                    [
+                        .. testing.Packages,
+                        Arrived("Microsoft.EntityFrameworkCore.Design", "10.0.4"),
+                        Arrived("Microsoft.EntityFrameworkCore", "10.0.15"),
+                    ],
+                }
+            )
+        );
+    }
+
+    // EF Core's release candidate asks for runtime libraries at their release candidate too, as minimums a stable version
+    // satisfies (#215). The rule admits only the provider and EF Core's own packages it pins.
+    [Fact]
+    public void A_closure_with_a_prerelease_outside_the_temporary_ef_core_set_is_rejected()
+    {
+        var efCore = Restored("PouryaKit.Persistence.EFCore");
+        // Allowed as restored, until the stable provider ships: EF Core's own release candidate.
+        Assert.Contains(efCore.Packages, arrived =>
+            arrived.Id == "Microsoft.EntityFrameworkCore"
+            && arrived.Version.Contains('-', StringComparison.Ordinal)
+        );
+
+        Assert.Equal(
+            [
+                "PouryaKit.Persistence.EFCore's closure holds Microsoft.Extensions.Logging 11.0.0-rc.3.26522.148, a prerelease outside the temporary EF Core set.",
+            ],
+            PackageGraph.Violations(
+                efCore with
+                {
+                    Packages =
+                    [
+                        .. efCore.Packages.Where(arrived =>
+                            arrived.Id != "Microsoft.Extensions.Logging"
+                        ),
+                        Arrived("Microsoft.Extensions.Logging", "11.0.0-rc.3.26522.148"),
+                    ],
+                }
+            )
+        );
+    }
+
     [Fact]
     public void The_sample_hosts_run_without_the_optional_localization()
     {
@@ -348,5 +415,6 @@ public sealed class PackageGraphTests
     private static RestoredPackage Restored(string name) =>
         Assert.Single(RestoredPackage.All, package => package.Name == name);
 
-    private static PackageLicence Arrived(string id) => new(id, "1.0.0", "MIT");
+    private static PackageLicence Arrived(string id, string version = "1.0.0") =>
+        new(id, version, "MIT");
 }

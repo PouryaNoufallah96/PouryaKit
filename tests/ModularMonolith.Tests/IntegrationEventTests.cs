@@ -218,12 +218,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         long committedBeforeDeath = -1;
         List<object[]> afterDeath = [];
 
-        using (
-            var hold = DeliveryProbes.HoldAfterCommit(
-                typeof(InventoryModule),
-                InventorySubscription
-            )
-        )
+        var hold = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), InventorySubscription);
+        try
         {
             await Fixture.WaitForDeliveriesAsync(
                 async () =>
@@ -242,6 +238,10 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                         (WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()
                     ).StopMode = StopMode.Quick;
                     await dying.StopAsync(TestContext.Current.CancellationToken);
+                    // Disposed before the next Host starts: a stopped Host keeps its connection pools open until then,
+                    // where a killed process leaves none open. Read after the disposal, so what the new Host finds is
+                    // what a killed process leaves.
+                    await dying.DisposeAsync();
                     afterDeath = await Fixture.RowsAsync(
                         $"select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{InventorySubscription}/'"
                     );
@@ -254,6 +254,11 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                 },
                 TestContext.Current.CancellationToken
             );
+        }
+        finally
+        {
+            // The held delivery never continues, as in a process that was killed.
+            hold.Abandon();
         }
 
         Assert.Equal(1L, committedBeforeDeath);

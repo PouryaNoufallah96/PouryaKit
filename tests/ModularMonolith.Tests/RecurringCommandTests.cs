@@ -306,7 +306,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         }
         finally
         {
+            // The starting Host is disposed before the running one stops: a stopped Host keeps its connection pools open
+            // until then, and a graceful stop opens about fifty at once.
             await starting.StopAsync(TestContext.Current.CancellationToken);
+            await starting.DisposeAsync();
             await running.StopAsync(TestContext.Current.CancellationToken);
         }
 

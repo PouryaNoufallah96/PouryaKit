@@ -12,9 +12,13 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
   <!-- Development compiles Wolverine's handler code at run time with Roslyn from this package; a Release build loads what
-       the codegen write command generated, so its publish carries no runtime compiler (ADR 0004). -->
+       the codegen write command generated, so its publish carries no runtime compiler (ADR 0004). The Microsoft.CodeAnalysis
+       references raise its Roslyn packages, which pin each other exactly, to the line EF Core Design 11 needs. -->
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Scripting" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ModularMonolith.Tests.Sagas.csproj" />

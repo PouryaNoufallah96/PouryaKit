@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "93866a339305c1731c0479b660dd4c61fac3f94a",
+      "revision": "dc22b3717059b2edb0fc5f6a22ce735754dc0228",
       "link_mode": "web"
     }
   },
@@ -356,8 +356,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 21,
-          "end_line": 196,
+          "line": 24,
+          "end_line": 215,
           "label": "the allowed references"
         },
         {
@@ -384,8 +384,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 54,
-          "end_line": 65,
+          "line": 60,
+          "end_line": 79,
           "label": "only the Messaging.Wolverine packages"
         },
         {

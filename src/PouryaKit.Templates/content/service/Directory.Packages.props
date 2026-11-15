@@ -24,8 +24,17 @@
     <PackageVersion Include="Grpc.Core.Api" Version="2.85.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.85.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="11.0.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.CodeAnalysis" Version="5.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Scripting" Version="5.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.12.0" />
+    <PackageVersion
+      Include="Microsoft.EntityFrameworkCore.Design"
+      Version="11.0.0-rc.3.26522.148"
+    />
+    <PackageVersion
+      Include="Microsoft.EntityFrameworkCore.Relational"
+      Version="11.0.0-rc.3.26522.148"
+    />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="11.0.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.21.0" />

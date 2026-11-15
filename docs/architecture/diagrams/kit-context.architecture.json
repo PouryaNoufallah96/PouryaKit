@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "6af6fbc434050af314448f8fef4b585ccf158e9f",
+      "revision": "dc22b3717059b2edb0fc5f6a22ce735754dc0228",
       "link_mode": "web"
     }
   },
@@ -62,8 +62,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 113,
-          "end_line": 117,
+          "line": 132,
+          "end_line": 136,
           "label": "references no Kit package: runs no Operation"
         },
         {
@@ -130,8 +130,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
-          "line": 15,
-          "end_line": 34,
+          "line": 19,
+          "end_line": 38,
           "label": "references the Kit's projects"
         }
       ]
@@ -198,8 +198,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
-          "line": 20,
-          "end_line": 30,
+          "line": 24,
+          "end_line": 34,
           "label": "references the Kit's projects"
         }
       ]
@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 246,
-          "end_line": 251,
+          "line": 265,
+          "end_line": 270,
           "label": "no Kit package references Redis"
         }
       ]
@@ -450,8 +450,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 21,
-          "end_line": 196,
+          "line": 24,
+          "end_line": 215,
           "label": "their allowed references"
         }
       ]
