@@ -31,7 +31,9 @@ public abstract class HostFixture : IAsyncLifetime
     private static readonly TimeSpan DeliveryTimeout = TimeSpan.FromSeconds(30);
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.7")
-        .WithCommand("-c", "track_commit_timestamp=on")
+        // A Host's graceful stop opens about 50 connections at once, and this server serves the fixture's Host and every
+        // Host a test composes beside it.
+        .WithCommand("-c", "track_commit_timestamp=on", "-c", "max_connections=1000")
         .Build();
 
     private IHost? _host;

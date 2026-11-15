@@ -297,7 +297,7 @@
         {
           "path": "src/PouryaKit.Testing/HostFixture.cs",
           "line": 33,
-          "end_line": 35,
+          "end_line": 37,
           "label": "the fixture's PostgreSQL container"
         },
         {
