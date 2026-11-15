@@ -61,6 +61,7 @@ internal sealed class Product : AggregateRoot<ProductId>
 - Check `IsSuccess` or `IsFailure` before reading `Value`; reading it from a failure throws. No conversion turns a Result into its value, and a null value throws instead of becoming a success.
 - Give each Error a stable code (`Product.NameRequired`), a message and a kind through its factory: `Validation`, `NotFound`, `Conflict`, `Forbidden` or `Unexpected`. Never an HTTP status; the Web package maps kinds to statuses ([web.md](web.md)). A validation Error may name the input it is about as its target: `Error.Validation(code, message, "Name")`.
 - Declare a Business Area's Errors once, as static fields.
+- An expected failure is an Error of a failed Result, never a case of a union or a `closed` type: the Kit answers a failure from its Errors, over HTTP, gRPC and a tool call alike. A `closed` record fits a fixed family the Module's own code branches over, such as the steps of a price: a `switch` that names every case, adds a `null` arm where the input can be null and has no discard turns a new case into a build error. A `closed` type or a union that is stored or sent needs its JSON metadata and a round-trip test: through its base a `closed` type serializes as `{}`, a union carries no discriminator, and neither reads back.
 
 ## Typed IDs
 

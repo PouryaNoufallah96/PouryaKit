@@ -306,7 +306,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     public async Task A_counting_reducer_keeps_the_history_a_run_sends_to_its_last_messages()
     {
         ai.Stub.Script(ChatReply.Text("1."), ChatReply.Text("2."), ChatReply.Text("3."));
-#pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
+#pragma warning disable MEAI001 // Microsoft.Extensions.AI 11.0's reducers are experimental.
         var agent = Chat.AsAIAgent(
             new ChatClientAgentOptions
             {
@@ -338,7 +338,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
             ChatReply.Text("The user counted to one."),
             ChatReply.Text("2.")
         );
-#pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
+#pragma warning disable MEAI001 // Microsoft.Extensions.AI 11.0's reducers are experimental.
         var agent = Chat.AsAIAgent(
             new ChatClientAgentOptions
             {
