@@ -4,6 +4,7 @@ using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -413,6 +414,39 @@ public sealed class WebDefaultsTests(AppFixture app) : HostTest<AppFixture>(app)
         await ProblemAsync(refused, HttpStatusCode.TooManyRequests);
         // At least the second and a half waited is gone from the 600, and less than a minute unless the run stalled.
         Assert.InRange(RetryAfterSeconds(refused), 540, 599);
+    }
+
+    // An application that set its own rejection handler before AddPouryaKitWeb keeps it beside the Kit's Retry-After.
+    [Fact]
+    public async Task A_rejection_handler_the_application_set_first_still_runs_beside_retry_after()
+    {
+        await using var host = Compose(
+            builder =>
+                builder.Services.Insert(
+                    0,
+                    ServiceDescriptor.Singleton<IConfigureOptions<RateLimiterOptions>>(
+                        new ConfigureOptions<RateLimiterOptions>(limiter =>
+                            limiter.OnRejected = (context, _) =>
+                            {
+                                context.HttpContext.Response.Headers["X-Rejected-By"] =
+                                    "application";
+                                return ValueTask.CompletedTask;
+                            }
+                        )
+                    )
+                ),
+            RateLimit(permitLimit: 1, window: "00:10:00", queueLimit: 0)
+        );
+        host.MapGet("/limited", () => "served");
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var ada = AppFixture.ClientOf(host, "ada");
+
+        await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
+        var refused = await ada.GetAsync("/limited", TestContext.Current.CancellationToken);
+
+        await ProblemAsync(refused, HttpStatusCode.TooManyRequests);
+        Assert.Equal("application", Header(refused, "X-Rejected-By"));
+        Assert.InRange(RetryAfterSeconds(refused), 1, 600);
     }
 
     // The limiter partitions the request by the Actor of the Operation Context the endpoint then begins its Operation
