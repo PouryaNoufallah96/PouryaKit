@@ -1,0 +1,19 @@
+.agents/scripts/wait-docker-quiet.sh
+  s_3529354fc6f9e2::t_b49de7f98d4e6f 11-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c3aab93c5e9adde2f10e147fabd76683e1a50458",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
