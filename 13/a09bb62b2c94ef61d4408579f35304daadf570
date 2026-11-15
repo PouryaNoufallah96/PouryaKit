@@ -1,0 +1,21 @@
+src/PouryaKit.Messaging.Wolverine.Sagas/README.md
+  s_56c78af6bca6cd::t_d5533c545a815d 30-31
+src/PouryaKit.Web.OpenApi/README.md
+  s_56c78af6bca6cd::t_05b32901414618 31-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13a09bb62b2c94ef61d4408579f35304daadf570",
+  "prompts": {},
+  "sessions": {
+    "s_56c78af6bca6cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e38c723a-1017-4656-b947-a7b4e34b7105",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
