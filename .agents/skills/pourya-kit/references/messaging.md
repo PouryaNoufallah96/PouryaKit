@@ -681,7 +681,8 @@ public sealed class DeadLetterTriage(IWolverineRuntime runtime)
 ```
 
 - Replaying marks the dead letter for replay; the store's next recovery poll moves it back to its subscription's queue, with its attempts counted from zero. Only that subscription's handler runs: the other subscriptions of the message are not delivered again. If it fails again, it is retried and set aside again.
-- A replay never applies a message twice. A delivery replayed after one of its attempts committed, such as one set aside again by hand, finds its Receipt and does nothing, so replaying the same delivery twice applies it once.
+- An archived dead letter (`IDeadLetters.ArchiveMatchingAsync`) is still found by its id, but queries and replays leave it out, so the triage above neither lists nor replays it until it is restored. `ReplayMatchingAsync` reports in `Affected` how many dead letters it marked for replay.
+- A replay never applies a message twice. A delivery replayed after one of its attempts committed finds its Receipt and does nothing, so replaying the same delivery twice applies it once. Wolverine refuses to set a delivery aside while its inbox still shows it handled, but it keeps that row only for a while after handling; the Receipt is kept.
 - Fix the cause before replaying: a replay into the same failure only uses up the retries again.
 
 ## The message store
