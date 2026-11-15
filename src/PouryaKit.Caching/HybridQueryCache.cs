@@ -53,7 +53,7 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
             stored = await cache.GetOrCreateAsync(
                 Key(context, query.GetType(), cacheable.CacheKey),
                 (running: _running, tags, handle, endRead),
-                static async (run, ct) =>
+                static async (run, entry, ct) =>
                 {
                     // HybridCache stamps an entry when its run starts and stamps it again when the factory returns if one
                     // of its tags was evicted meanwhile, so an answer read before a commit would outlive the commit's
@@ -73,10 +73,16 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
                         var serialized = JsonSerializer.Serialize(result.Value, Json);
                         run.endRead();
                         // Checked last: an eviction landing between this check and HybridCache's own store is not seen,
-                        // and a caller that joined after the commit still receives this answer, for that call only.
+                        // and a caller that joined after the commit still receives this answer, for that call only. An
+                        // evicted run stores nothing, in this Host's memory or in a distributed cache, and HybridCache
+                        // still hands its answer to every caller that shared it. The Kit's entry options set no flags, so
+                        // the entry's are null, and a lifted |= would leave them null and the answer stored.
                         if (read.Evicted)
                         {
-                            throw new NotStored(serialized);
+                            entry.Flags =
+                                (entry.Flags ?? HybridCacheEntryFlags.None)
+                                | HybridCacheEntryFlags.DisableLocalCacheWrite
+                                | HybridCacheEntryFlags.DisableDistributedCacheWrite;
                         }
 
                         return serialized;
@@ -97,12 +103,7 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
         }
         catch (NotStored refused)
         {
-            if (refused.Answer is not { } answer)
-            {
-                return refused.Errors;
-            }
-
-            stored = answer;
+            return refused.Errors;
         }
 
         return JsonSerializer.Deserialize<TResponse>(stored, Json)!;
@@ -175,16 +176,10 @@ internal sealed partial class HybridQueryCache(HybridCache cache, ILogger<Hybrid
         }
     }
 
-    // Thrown by the factory, so HybridCache stores nothing; every caller that shared the run receives it: the failure,
-    // or the answer of a run a commit evicted one of its tags during, which each caller reads back as from an entry.
-    private sealed class NotStored : Exception
+    // Thrown by the factory for a failure, so HybridCache stores nothing and every caller that shared the run receives
+    // its Errors.
+    private sealed class NotStored(ImmutableArray<Error> errors) : Exception
     {
-        public NotStored(ImmutableArray<Error> errors) => Errors = errors;
-
-        public NotStored(string answer) => Answer = answer;
-
-        public ImmutableArray<Error> Errors { get; }
-
-        public string? Answer { get; }
+        public ImmutableArray<Error> Errors { get; } = errors;
     }
 }

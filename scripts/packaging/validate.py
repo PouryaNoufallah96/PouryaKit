@@ -377,7 +377,7 @@ def validate(output, *, fetch=True):
     (output / "evaluated-projects.json").write_text(json.dumps(evaluated, indent=2))
     inventory_controls(packages, evaluated, output / "inventory-controls.log")
     run(["dotnet", "build", "PouryaKit.slnx", "-c", "Release", "-p:ContinuousIntegrationBuild=true"], log=output / "build.log")
-    tests = test_totals(run(["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build"], log=output / "runtime-tests.log"))
+    tests = test_totals(run(["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build", "--timeout", "45m"], log=output / "runtime-tests.log"))
     version = properties(ROOT / "src/PouryaKit.Domain/PouryaKit.Domain.csproj", ["MinVerVersion", "PackageVersion"], target="MinVer")
     if version["MinVerVersion"] != version["PackageVersion"]:
         raise RuntimeError(f"MinVer/build version mismatch: {version}")

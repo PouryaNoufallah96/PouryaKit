@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using PouryaKit.Cqrs;
 
@@ -64,13 +63,8 @@ public static class JwtBearerServiceCollectionExtensions
                 .PostConfigure<IOptions<PouryaKitJwtBearerOptions>>(
                     (bearer, names) => VerifiedClaims.NormalizeIn(bearer, names.Value)
                 )
+                .Validate<JwtBearerValidation>()
                 .ValidateOnStart();
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<
-                    IValidateOptions<JwtBearerOptions>,
-                    JwtBearerValidation
-                >()
-            );
             return authentication;
         }
     }

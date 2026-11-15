@@ -41,13 +41,10 @@ public static class GrpcClientServiceCollectionExtensions
                 return new ClientBuilder(name, services);
             }
 
-            services.AddOptions<PouryaKitGrpcClientOptions>(name).ValidateOnStart();
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<
-                    IValidateOptions<PouryaKitGrpcClientOptions>,
-                    ClientOptionsValidation
-                >()
-            );
+            services
+                .AddOptions<PouryaKitGrpcClientOptions>(name)
+                .Validate<ClientOptionsValidation>()
+                .ValidateOnStart();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>()
             );

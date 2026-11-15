@@ -27,10 +27,11 @@ public sealed class TrackedState : IDisposable
         }
 
         _entries = [.. dbContext.ChangeTracker.Entries().Select(EntryState.Of)];
-        _entities = new HashSet<object>(
-            _entries.Select(entry => entry.Entry.Entity),
-            ReferenceEqualityComparer.Instance
-        );
+        _entities =
+        [
+            with(ReferenceEqualityComparer.Instance),
+            .. _entries.Select(entry => entry.Entry.Entity),
+        ];
         _includeQueryLoads = includeQueryLoads;
         if (includeQueryLoads)
         {

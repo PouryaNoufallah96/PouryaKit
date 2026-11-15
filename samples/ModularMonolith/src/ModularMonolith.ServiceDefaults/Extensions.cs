@@ -30,6 +30,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -54,6 +55,8 @@ public static class Extensions
     private const string OtlpEndpoint = "OTEL_EXPORTER_OTLP_ENDPOINT";
     private const string NpgsqlSource = "Npgsql";
     private const string ChatClientSource = "Experimental.Microsoft.Extensions.AI";
+    private const string RuntimeMeter = "System.Runtime";
+    private const string MemoryCacheMeter = "Microsoft.Extensions.Caching.Memory.MemoryCache";
 
     extension<TBuilder>(TBuilder builder)
         where TBuilder : IHostApplicationBuilder
@@ -76,7 +79,8 @@ public static class Extensions
             return builder;
         }
 
-        // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient and the runtime,
+        // The Kit's source and meter (OperationTelemetry.SourceName) beside ASP.NET Core, HttpClient, the runtime's own
+        // meter and the memory cache's, whose statistics it turns on (HybridCache keeps its local entries there),
         // Npgsql's own source, a span for each database command under the Operation that sends it (what AddNpgsql() of
         // Npgsql.OpenTelemetry adds, without that package), and Microsoft.Extensions.AI's source and meter, a span and a
         // duration for each call the Host's chat client makes to its model; add "Wolverine" to the sources to export
@@ -88,14 +92,15 @@ public static class Extensions
                 logging.IncludeFormattedMessage = true;
                 logging.IncludeScopes = true;
             });
+            builder.Services.Configure<MemoryCacheOptions>(cache => cache.TrackStatistics = true);
             builder
                 .Services.AddOpenTelemetry()
                 .WithMetrics(metrics =>
                     metrics
                         .AddMeter(OperationTelemetry.SourceName, ChatClientSource)
+                        .AddMeter(RuntimeMeter, MemoryCacheMeter)
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
-                        .AddRuntimeInstrumentation()
                 )
                 .WithTracing(tracing =>
                     tracing

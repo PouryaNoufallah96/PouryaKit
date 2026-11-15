@@ -6,16 +6,12 @@ namespace PouryaKit.Security.JwtBearer;
 
 // Checks the bearer scheme's options as they end, after every Configure and PostConfigure, so a setting the
 // configuration binder or the application changed later cannot weaken them unnoticed. An authority or metadata address
-// supplies the issuer and the signing keys from its discovery document.
+// supplies the issuer and the signing keys from its discovery document. Registered for the bearer scheme's name only, so
+// another JwtBearerOptions name the application adds is not the Kit's to check.
 internal sealed class JwtBearerValidation : IValidateOptions<JwtBearerOptions>
 {
     public ValidateOptionsResult Validate(string? name, JwtBearerOptions options)
     {
-        if (name != JwtBearerDefaults.AuthenticationScheme)
-        {
-            return ValidateOptionsResult.Skip;
-        }
-
         var token = options.TokenValidationParameters;
         var discovered = options.ConfigurationManager is not null;
         List<string> failures = [];

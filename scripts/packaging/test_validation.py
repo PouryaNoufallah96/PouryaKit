@@ -208,6 +208,15 @@ class TemplateConsumerTests(unittest.TestCase):
                          [call.args[0] for call in production.call_args_list])
 
 
+class RuntimeTestRunTests(unittest.TestCase):
+    def test_the_release_test_run_stops_after_45_minutes_inside_the_hosted_jobs_60(self):
+        """A hung suite then ends with the test platform's own exit code, and its log is kept, before the job is killed."""
+        with tempfile.TemporaryDirectory() as folder:
+            commands, _, _ = validation(folder, {})
+        self.assertEqual([["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build", "--timeout", "45m"]],
+                         [command for command in commands if command[:3] == ["dotnet", "test", "PouryaKit.slnx"]])
+
+
 class ConsumerCacheTests(unittest.TestCase):
     def test_isolated_caches_are_outside_the_consumer_source_glob(self):
         with tempfile.TemporaryDirectory() as folder:

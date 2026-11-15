@@ -609,6 +609,8 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(Name(product), reply.Name);
     }
 
+    // Each client's options are checked under its own name, once, whatever other clients the Host registers, and the
+    // options of a name no client has are not checked at all.
     [Fact]
     public async Task A_client_without_a_positive_deadline_fails_the_start()
     {
@@ -622,6 +624,14 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
                 builder.Services.Configure<PouryaKitGrpcClientOptions>(Client, options =>
                     options.Deadline = TimeSpan.Zero
                 );
+                builder.Services.Configure<PouryaKitGrpcClientOptions>("replica", options =>
+                {
+                    options.Address = new Uri("http://replica.local");
+                    options.Deadline = Deadline;
+                });
+                builder.Services.AddPouryaKitGrpcClient<ProductService.ProductServiceClient>(
+                    "replica"
+                );
             }
         );
 
@@ -632,6 +642,9 @@ public sealed class GrpcTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal(
             [$"PouryaKitGrpcClientOptions.Deadline of the gRPC client {Client} is not positive."],
             refused.Failures
+        );
+        Assert.Null(
+            host.Services.GetRequiredService<IOptions<PouryaKitGrpcClientOptions>>().Value.Address
         );
     }
 

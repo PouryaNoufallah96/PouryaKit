@@ -88,10 +88,7 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
         );
         // What each call answered reached the model: the product, as Catalog's GetProduct returns it.
         Assert.All(ai.Stub.ToolResultsOf(1), result =>
-            Assert.Equal(
-                name,
-                JsonDocument.Parse(result).RootElement.GetProperty("name").GetString()
-            )
+            Assert.Equal(name, JsonElement.Parse(result).GetProperty("name").GetString())
         );
     }
 
@@ -119,7 +116,7 @@ public sealed class AiTests(AppFixture app, AiFixture ai) : IClassFixture<AiFixt
         );
 
         Assert.Equal("I may not.", response.Text);
-        var failed = JsonDocument.Parse(Assert.Single(ai.Stub.ToolResultsOf(1))).RootElement;
+        var failed = JsonElement.Parse(Assert.Single(ai.Stub.ToolResultsOf(1)));
         Assert.Equal(
             PermissionErrors.Denied.Code,
             Assert

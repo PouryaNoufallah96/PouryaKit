@@ -6,7 +6,7 @@ Run from a clean committed checkout with the SDK in `global.json`, Python 3.11 o
 python3 scripts/packaging/validate.py
 ```
 
-To preserve evidence at a chosen location, pass `--output /absolute/path/to/new-evidence-directory`. Use a fresh directory outside the checkout: one that already holds files is refused before any work unless `--keep` is passed, since a PASS removes the directory with everything in it. The default is a new system temporary directory. The command fetches origin's tags, completes shallow history, evaluates packability, builds Release once with `ContinuousIntegrationBuild=true`, runs the existing tests with `--no-build`, and packs that output with `--no-build`. A failure stops the path before a manifest is written. The command never publishes packages or creates a tag in the Kit repository.
+To preserve evidence at a chosen location, pass `--output /absolute/path/to/new-evidence-directory`. Use a fresh directory outside the checkout: one that already holds files is refused before any work unless `--keep` is passed, since a PASS removes the directory with everything in it. The default is a new system temporary directory. The command fetches origin's tags, completes shallow history, evaluates packability, builds Release once with `ContinuousIntegrationBuild=true`, runs the existing tests with `--no-build` and a run-level `--timeout 45m`, so a hung suite ends with the test platform's own exit code inside the hosted job's 60 minutes, and packs that output with `--no-build`. A failure stops the path before a manifest is written. The command never publishes packages or creates a tag in the Kit repository.
 
 `--no-fetch` skips the fetch and rejects shallow repositories, so use it only when the complete history and tags are already fetched, as CI does ([CI guidance](ci.md)).
 
@@ -26,7 +26,6 @@ Every third-party pin in `Directory.Packages.props` is its newest stable version
 |---|---|---|---|---|
 | `PDFsharp-MigraDoc` | 6.2.4 | 6.5.0 | 6.2.4 is its last MIT release: 6.5.0 and later are `AGPL-3.0-only`, which `LicenceTests` refuses (ADR 0002) | Nothing: a permanent ceiling, unless the PDF renderer is replaced |
 | `Microsoft.EntityFrameworkCore.Relational` and `.Design`, and the `dotnet-ef` tool | 10.0.15 | 11.0.0 | `Npgsql.EntityFrameworkCore.PostgreSQL` has no stable 11, and its 10.0.3 and `EFCore.NamingConventions` 10.0.1 each require EF Core below 11 | A stable `Npgsql.EntityFrameworkCore.PostgreSQL` 11 |
-| `OpenTelemetry.Instrumentation.Runtime` | 1.20.1 | 1.21.0 | The service defaults' runtime metrics are moving to .NET's own `System.Runtime` meter, which needs no package | The service defaults reading the `System.Runtime` meter, which removes the package |
 
 ## Clean consumers
 

@@ -215,8 +215,8 @@
         },
         {
           "path": "src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs",
-          "line": 15,
-          "end_line": 33,
+          "line": 14,
+          "end_line": 32,
           "label": "standard JWT bearer scheme"
         },
         {

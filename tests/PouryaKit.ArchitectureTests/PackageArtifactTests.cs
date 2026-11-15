@@ -314,19 +314,17 @@ public sealed class PackageArtifactTests
                 ),
                 TestContext.Current.CancellationToken
             );
-            var start = new ProcessStartInfo("dotnet")
-            {
-                WorkingDirectory = folder,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-            foreach (var argument in new[] { "build", project, "-c", "Release", "-v:q" })
-                start.ArgumentList.Add(argument);
-            using var build = Process.Start(start)!;
-            var stdout = build.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
-            var stderr = build.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
-            await build.WaitForExitAsync(TestContext.Current.CancellationToken);
-            Assert.True(build.ExitCode == 0, await stdout + await stderr);
+            var build = await Process.RunAndCaptureTextAsync(
+                new ProcessStartInfo("dotnet")
+                {
+                    WorkingDirectory = folder,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    ArgumentList = { "build", project, "-c", "Release", "-v:q" },
+                },
+                TestContext.Current.CancellationToken
+            );
+            Assert.True(build.ExitStatus.ExitCode == 0, build.StandardOutput + build.StandardError);
 
             using var stream = new MemoryStream();
             using var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);

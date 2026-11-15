@@ -21,9 +21,11 @@ public sealed record ReportLayout(string Title, ReportTable Table)
     public ReportBranding Branding { get; init; } = new();
 }
 
-/// <summary>A heading or a paragraph of a report's introduction.</summary>
+/// <summary>
+/// A heading or a paragraph of a report's introduction, and nothing else: an application cannot add a third kind.
+/// </summary>
 /// <param name="Text">The text, drawn as given.</param>
-public abstract record ReportText(string Text);
+public closed record ReportText(string Text);
 
 /// <summary>A heading of a report's introduction.</summary>
 /// <param name="Text">The heading's text.</param>
