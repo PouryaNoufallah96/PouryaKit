@@ -25,7 +25,10 @@ public static class WebOpenApiEndpointRouteBuilderExtensions
             ArgumentNullException.ThrowIfNull(routes);
 
             var documents = routes.MapGroup("");
-            documents.MapOpenApi().WithDocumentPerVersion();
+            // AV0030 asks for Asp.Versioning.OpenApi's WithDocumentPerVersion; ApiVersionDocuments names the documents.
+#pragma warning disable AV0030
+            documents.MapOpenApi();
+#pragma warning restore AV0030
             documents.MapScalarApiReference(
                 (scalar, httpContext) =>
                 {
