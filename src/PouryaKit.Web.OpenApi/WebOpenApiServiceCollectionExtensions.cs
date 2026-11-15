@@ -1,6 +1,6 @@
-using System.Globalization;
 using Asp.Versioning;
 using Asp.Versioning.Builder;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -31,8 +31,9 @@ public static class WebOpenApiServiceCollectionExtensions
         /// authentication schemes its policy names, or else the Host's default one, as far as each is a JWT bearer
         /// scheme, which the document states as HTTP bearer; a scheme of any other handler is left out, and an operation
         /// that allows anonymous callers requires none. An operation whose endpoint calls <c>RequireIdempotencyKey()</c>
-        /// declares the required <c>Idempotency-Key</c> header. <c>MapPouryaKitOpenApi</c> serves them. A second call
-        /// adds only its <paramref name="configure"/>.
+        /// declares the required <c>Idempotency-Key</c> header. A document the Host adds itself with ASP.NET Core's
+        /// <c>AddOpenApi</c> gets none of this. <c>MapPouryaKitOpenApi</c> serves them. A second call adds only its
+        /// <paramref name="configure"/>.
         /// </summary>
         public IServiceCollection AddPouryaKitOpenApi(
             Action<PouryaKitOpenApiOptions>? configure = null
@@ -46,7 +47,7 @@ public static class WebOpenApiServiceCollectionExtensions
                 options.Configure(configure);
             }
 
-            // Asp.Versioning's AddOpenApi appends its delegate on every call: a second one would run each transformer twice.
+            // A second call adds only its configure.
             if (
                 services.Any(descriptor =>
                     descriptor.ImplementationType == typeof(SunsetValidation)
@@ -76,19 +77,18 @@ public static class WebOpenApiServiceCollectionExtensions
                 {
                     explorer.GroupNameFormat = "'v'VVV";
                     explorer.SubstituteApiVersionInUrl = true;
-                })
-                .AddOpenApi(document =>
-                {
-                    document.Document.AddOperationTransformer<BearerSecurity>();
-                    document.Document.AddOperationTransformer<IdempotencyKeyParameter>();
-                    // The library's own notices say "was" or "will be" by comparing the date with the current time.
-                    document.DocumentDescription.DeprecationNotice = _ =>
-                        "This API version is deprecated.";
-                    document.DocumentDescription.SunsetNotice = sunset =>
-                        sunset.Date is { } date
-                            ? $"Its sunset date is {date.ToString("R", CultureInfo.InvariantCulture)}."
-                            : null;
                 });
+            services.AddOpenApiCore();
+            services.TryAddEnumerable([
+                ServiceDescriptor.Singleton<
+                    IAdditionalOpenApiDocumentNameResolver,
+                    ApiVersionDocuments
+                >(),
+                ServiceDescriptor.Singleton<
+                    IPostConfigureOptions<OpenApiOptions>,
+                    ApiVersionDocuments
+                >(),
+            ]);
             services
                 .AddOptions<ApiVersioningOptions>()
                 .Configure<IOptions<PouryaKitOpenApiOptions>>(

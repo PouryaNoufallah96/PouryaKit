@@ -48,7 +48,7 @@ public sealed class NamespaceTests
     // the global namespace, the GeneratedRegex output in System.Text.RegularExpressions.Generated (Messaging), and the
     // OpenAPI XML comment generator's output in Microsoft.AspNetCore.OpenApi.Generated and
     // System.Runtime.CompilerServices (Web.OpenApi). The one exception is JasperFx's event model manifest, which
-    // JasperFx.SourceGenerator 2.91.0 (WolverineFx 6.52.0's) writes into every assembly that sees JasperFx.Events,
+    // JasperFx.SourceGenerator 2.102.0 (WolverineFx 6.64.0's) writes into every assembly that sees JasperFx.Events,
     // marked only by an auto-generated comment, so it is left out by its full name.
     private static IEnumerable<string> Violations(Assembly package) =>
         from type in package.GetTypes()

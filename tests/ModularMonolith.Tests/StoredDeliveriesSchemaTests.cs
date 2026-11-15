@@ -49,6 +49,8 @@ public sealed class StoredDeliveriesSchemaTests(AppFixture app) : HostTest<AppFi
                 create table {quotedSchema}.wolverine_outgoing_envelopes (id uuid);
                 create table {quotedSchema}.wolverine_dead_letters
                     (id uuid, received_at text, message_type text, replayable bool);
+                create table {quotedSchema}.wolverine_dead_letter_history (id uuid);
+                insert into {quotedSchema}.wolverine_dead_letter_history values ('{replay}');
                 insert into {quotedSchema}.wolverine_incoming_envelopes values
                     ('{incoming}', 'local://tests.handled/', 'tests.incoming.v1', 'Handled'),
                     ('{pendingIncoming}', 'local://tests.pending/', 'tests.incoming.v1', 'Incoming');
@@ -120,6 +122,7 @@ public sealed class StoredDeliveriesSchemaTests(AppFixture app) : HostTest<AppFi
                             select (select count(*) from {quotedSchema}.wolverine_incoming_envelopes)
                                 + (select count(*) from {quotedSchema}.wolverine_outgoing_envelopes)
                                 + (select count(*) from {quotedSchema}.wolverine_dead_letters)
+                                + (select count(*) from {quotedSchema}.wolverine_dead_letter_history)
                             """,
                             connection
                         )

@@ -49,7 +49,7 @@ app.MapPouryaKitOpenApi().AllowAnonymous();
 
 - Versions by URL segment and by header, on one endpoint.
 - A deprecated version that announces its configured sunset.
-- ASP.NET Core's own OpenAPI document for each version, and no Swagger generator.
+- ASP.NET Core's own OpenAPI 3.2 document for each version, and no Swagger generator.
 - The Scalar API reference over them.
 
 > [!WARNING]
