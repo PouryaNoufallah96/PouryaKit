@@ -4,6 +4,9 @@
     <PackageTags>wolverine;efcore;outbox</PackageTags>
   </PropertyGroup>
   <ItemGroup>
+    <!-- WolverineFx.EntityFrameworkCore depends on EF Core Design 10.0.4 or later, and NuGet takes the lowest: this
+         carries the Kit's EF Core line to every consumer instead. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="WolverineFx.EntityFrameworkCore" />
     <PackageReference Include="WolverineFx.Postgresql" />
   </ItemGroup>

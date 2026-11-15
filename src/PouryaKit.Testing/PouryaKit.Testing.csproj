@@ -9,6 +9,10 @@
     <PackageReference Include="Testcontainers.PostgreSql" />
     <!-- A test Host runs in Development, where Wolverine compiles its handler code at run time, from any build (ADR 0004). -->
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
+    <!-- Its Roslyn packages, which pin each other exactly, raised to the line EF Core Design 11 needs. -->
+    <PackageReference Include="Microsoft.CodeAnalysis" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Scripting" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" />
     <PackageReference Include="xunit.v3.extensibility.core" />
   </ItemGroup>
   <ItemGroup>

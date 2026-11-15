@@ -69,7 +69,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 34,
+          "end_line": 38,
           "label": "its references"
         }
       ]
@@ -137,7 +137,7 @@
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 8,
-          "end_line": 30,
+          "end_line": 34,
           "label": "its references"
         }
       ]

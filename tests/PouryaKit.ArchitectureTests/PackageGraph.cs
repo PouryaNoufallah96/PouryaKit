@@ -1,8 +1,11 @@
+using System.Globalization;
+
 namespace PouryaKit.ArchitectureTests;
 
 /// <summary>
 /// Plan section C, "Allowed references", as amended on 2026-10-05 and by G.4, as the checks a restored Kit package must
-/// pass: its direct references are exactly the table's, and its full closure keeps out what the table keeps out.
+/// pass: its direct references are exactly the table's, and its full closure keeps out what the table keeps out and
+/// holds no EF Core package of an older major than the Kit's.
 /// </summary>
 internal static class PackageGraph
 {
@@ -55,9 +58,14 @@ internal static class PackageGraph
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Messaging"],
             ["WolverineFx"]
         ),
+        // EF Core Design at the Kit's line, over the 10.0.4 or later WolverineFx.EntityFrameworkCore asks for (#215).
         ["PouryaKit.Messaging.Wolverine.EFCore"] = new(
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
-            ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
+            [
+                "Microsoft.EntityFrameworkCore.Design",
+                "WolverineFx.EntityFrameworkCore",
+                "WolverineFx.Postgresql",
+            ]
         ),
         ["PouryaKit.Messaging.Wolverine.RabbitMq"] = new(
             ["PouryaKit.Messaging.Wolverine"],
@@ -98,6 +106,11 @@ internal static class PackageGraph
                 "xunit.v3.extensibility.core",
                 "Microsoft.Extensions.TimeProvider.Testing",
                 "WolverineFx.RuntimeCompilation",
+                // The runtime compiler's Roslyn packages, which pin each other exactly, at the line EF Core Design 11
+                // needs (#215).
+                "Microsoft.CodeAnalysis",
+                "Microsoft.CodeAnalysis.Scripting",
+                "Microsoft.CodeAnalysis.Workspaces.MSBuild",
             ]
         ),
         // Storage references Cqrs for the one-provider composition check both providers register through it (#128).
@@ -358,7 +371,27 @@ internal static class PackageGraph
         {
             yield return $"{package.Name}'s closure holds the packages [{Listed(package.RuntimePackages.Select(arrived => arrived.Id))}]; it must hold none.";
         }
+
+        // One EF Core line: a package of EF Core's own below its major, beside it, is a second EF Core (#215).
+        foreach (
+            var arrived in package
+                .RuntimePackages.Where(IsEfCoreBelowTheKitsMajor)
+                .OrderBy(arrived => arrived.Id, StringComparer.Ordinal)
+        )
+        {
+            yield return $"{package.Name}'s closure holds {arrived.Id} {arrived.Version}, below EF Core {EfCoreMajor}.";
+        }
     }
+
+    private const int EfCoreMajor = 11;
+
+    // By id, EF Core's own packages only, and by major: 11.0.0-rc.3 is EF Core 11, though it sorts below 11.0.0.
+    private static bool IsEfCoreBelowTheKitsMajor(PackageLicence arrived) =>
+        (
+            arrived.Id == "Microsoft.EntityFrameworkCore"
+            || arrived.Id.StartsWith("Microsoft.EntityFrameworkCore.", StringComparison.Ordinal)
+        )
+        && int.Parse(arrived.Version.Split('.')[0], CultureInfo.InvariantCulture) < EfCoreMajor;
 
     private static string Listed(IEnumerable<string> names) =>
         string.Join(", ", names.Order(StringComparer.Ordinal));
