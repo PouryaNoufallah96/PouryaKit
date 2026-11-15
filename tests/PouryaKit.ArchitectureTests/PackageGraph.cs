@@ -68,7 +68,7 @@ internal static class PackageGraph
                 "Microsoft.EntityFrameworkCore.Design",
                 "WolverineFx.EntityFrameworkCore",
                 "WolverineFx.Postgresql",
-                // Stable floors over the prereleases EF Core Design's release candidate asks for at least (#215).
+                // Stable floors over the prereleases EF Core Design's rc.3 and its Roslyn 5.9.0 ask for at least (#215).
                 "Microsoft.CodeAnalysis.Analyzers",
                 "Microsoft.Extensions.DependencyModel",
             ]
