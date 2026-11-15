@@ -1,0 +1,29 @@
+.claude/agent-memory/kit-implementer/wolverine-runtime-and-delivery-facts.md
+  s_3529354fc6f9e2::t_d607ca9237efa0 38
+  s_3529354fc6f9e2::t_4fb541c8a586f6 95
+.claude/agent-memory/kit-implementer/composition-check-facts.md
+  s_3529354fc6f9e2::t_5bf3ae9737d6fa 15
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_b6defb3a49ba2b 29
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_3529354fc6f9e2::t_c369581f8c4abb 15
+  s_3529354fc6f9e2::t_3c63de8007b22c 46
+.claude/agent-memory/kit-implementer/docs-verification-tools.md
+  s_3529354fc6f9e2::t_f438de3dd11a98 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09ff0864c2ed0b70b7257b845692339107769b94",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
