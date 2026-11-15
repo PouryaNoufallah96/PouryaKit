@@ -396,6 +396,9 @@ public sealed class NotificationTests(AppFixture app) : HostTest<AppFixture>(app
                     (WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()
                 ).StopMode = StopMode.Quick;
                 await dying.StopAsync(TestContext.Current.CancellationToken);
+                // Disposed before the next Host starts: a stopped Host keeps its connection pools open until then, where
+                // a killed process leaves none open.
+                await dying.DisposeAsync();
                 // A bounded wait for something that must not happen: the fixture's Host, alive throughout, polls the
                 // store several times and leaves the dead Host's delivery where it is.
                 await Task.Delay(

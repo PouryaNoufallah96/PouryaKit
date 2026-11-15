@@ -750,7 +750,12 @@ public sealed class SagaTests(BrokerFixture broker) : IAsyncLifetime
     [Fact]
     public async Task A_step_committed_before_its_process_is_killed_is_not_applied_again_after_restart()
     {
-        await (await StartAsync()).StopAsync(Token);
+        // The Host that creates the store's tables is disposed before the child starts: a stopped Host keeps its connection
+        // pools open until then.
+        var creating = await StartAsync();
+        await creating.StopAsync(Token);
+        _hosts.Remove(creating);
+        creating.Dispose();
         await RowsAsync(
             """
             create function wolverine.refuse_payment_mark() returns trigger language plpgsql as $$
