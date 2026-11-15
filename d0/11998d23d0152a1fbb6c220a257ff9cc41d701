@@ -1,0 +1,25 @@
+.claude/rules/kit-code.md
+  s_3529354fc6f9e2::t_a35e94ed12164d 23
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_0a0f168f79ac01 12
+docs/agents/brief-template.md
+  s_3529354fc6f9e2::t_35467aad10400f 58
+.agents/skills/pourya-kit/references/domain-primitives.md
+  s_3529354fc6f9e2::t_4604f76eca4be7 64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d011998d23d0152a1fbb6c220a257ff9cc41d701",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
