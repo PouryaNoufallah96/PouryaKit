@@ -1,0 +1,38 @@
+.agents/skills/pourya-kit/references/templates.md
+  s_3529354fc6f9e2::t_d42486caec0476 144
+.agents/skills/pourya-kit/references/messaging.md
+  s_3529354fc6f9e2::t_1dead18fefbc2b 93,99-101
+docs/packages.md
+  s_3529354fc6f9e2::t_b8fb205a4346b9 23,28-34,36-38,40-41
+  s_3529354fc6f9e2::t_0421091554898d 39
+  s_3529354fc6f9e2::t_55701686013f7a 35
+docs/agents/brief-template.md
+  s_3529354fc6f9e2::t_1267c0446431ea 28
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_c5b34e1bf1183f 17,32-33
+.agents/skills/pourya-kit/references/testing.md
+  s_3529354fc6f9e2::t_49a7a6a3b0ee66 64
+docs/architecture/README.md
+  s_3529354fc6f9e2::t_ea04ce96df0cb7 444
+  s_3529354fc6f9e2::t_93b1e165409e3e 690
+  s_3529354fc6f9e2::t_9704a3bcaf7a4e 568
+  s_3529354fc6f9e2::t_450f8707179130 750
+docs/adr/0004-commit-through-wolverine-ef-outbox.md
+  s_3529354fc6f9e2::t_c3eda4d87af3dd 599-618
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3191489fec6b83e77888ea5d22a1d7f236bddd91",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
