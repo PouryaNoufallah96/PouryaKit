@@ -567,3 +567,32 @@ the record of what Spike S1 ran on, and each amendment above keeps the version i
 - **The namespace rule.** `JasperFx.SourceGenerator` 2.91.0 writes an internal `JasperFx.Generated.DiscoveredEventModels`
   into every assembly that sees `JasperFx.Events`, marked only by an auto-generated comment; `NamespaceTests` leaves it
   out by its full name.
+
+## Amendment (2026-11-15: WolverineFx 6.64.0)
+
+The decision above stands. The six `WolverineFx*` pins move from 6.52.0 to 6.64.0, the latest stable on nuget.org on
+2026-11-15, and `Marten` from 9.53.0 to 9.59.0, since `WolverineFx.Marten` 6.64.0 requires `Marten` 9.58.0 or later;
+Wolverine 7 and Marten 10 are alpha. "Pinned versions and licences" stays as the record of what Spike S1 ran on, and
+each amendment above keeps the version it was read on.
+
+- **What restore moved.** `JasperFx` and `JasperFx.Events` from 2.94.0 and `JasperFx.SourceGenerator` from 2.91.0 to
+  2.102.0, `JasperFx.RuntimeCompiler` from 5.0.0 to 5.1.0, every `Weasel.*` package from 9.46.0 to 9.50.0, and
+  `WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` with the pins, all `MIT`; no package is new and none left.
+  `JasperFx.SourceGenerator` 2.102.0 still writes `JasperFx.Generated.DiscoveredEventModels`, which `NamespaceTests`
+  leaves out by its full name.
+- **The release notes, 6.53.0 to 6.64.0** (`JasperFx/wolverine` releases). None states a breaking API change. Two
+  changes reach the Kit's dead letters, 6.54.0's archive and replay history and 6.63.0's refusal to dead-letter a
+  delivery its inbox shows handled; ADR 0006's amendment on dead letters on WolverineFx 6.64.0 records them. The EF Core half of that
+  6.63.0 change, which treats a commit that applied but reported an error as handled, is in
+  `EfCoreEnvelopeTransaction`'s commit of a handler transaction that marked its inbox row handled; the Unit of Work
+  commits its own transaction, so it does not reach it. 6.63.0's other durability fixes, such as envelope ids that no
+  longer collide between processes on one machine ([pull request 5399](https://github.com/JasperFx/wolverine/pull/5399)),
+  leave the Kit's delivery tests as they were. 6.64.0's single reply queue across `ResetResourceState()` is a RabbitMQ
+  call the Kit never makes.
+- **The sources this record cites, read again at tag `V6.64.0`.** `src/Wolverine/Runtime/Handlers/HandlerGraph.PreBuiltTypes.cs`,
+  `src/Persistence/Wolverine.RDBMS/Durability/BumpStaleIncomingEnvelopesOperation.cs` and
+  `src/Wolverine/Runtime/WorkerQueues/InboxCustody.cs` are unchanged since `V6.52.0`, so the code generation and stale
+  clock amendments hold. `DbContextOutbox` now enrolls in an ancillary store when one is registered for its DbContext
+  type ([issue 5295](https://github.com/JasperFx/wolverine/issues/5295)); a Kit Host registers none, so its one store
+  still takes the Outbox's envelopes. [Issue 4923](https://github.com/JasperFx/wolverine/issues/4923) is still open, so
+  two different Hosts still never share a store's schema.

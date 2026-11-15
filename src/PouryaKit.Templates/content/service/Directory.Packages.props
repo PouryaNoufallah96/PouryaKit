@@ -36,7 +36,7 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.16.0" />
-    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.52.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.64.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.2" />
   </ItemGroup>
 </Project>

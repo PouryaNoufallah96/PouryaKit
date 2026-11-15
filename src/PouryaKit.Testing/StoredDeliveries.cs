@@ -99,12 +99,14 @@ internal sealed class StoredDeliveries(
         }
     }
 
+    // The replay history is one of the store's own tables, which a reset spares, but its rows belong to deliveries:
+    // Wolverine counts a delivery's replays there and clears it with the envelopes.
     public async Task DeleteAllAsync(CancellationToken cancellationToken)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         await using var command = new NpgsqlCommand(
-            $"delete from {_quotedSchema}.wolverine_incoming_envelopes; delete from {_quotedSchema}.wolverine_outgoing_envelopes; delete from {_quotedSchema}.wolverine_dead_letters",
+            $"delete from {_quotedSchema}.wolverine_incoming_envelopes; delete from {_quotedSchema}.wolverine_outgoing_envelopes; delete from {_quotedSchema}.wolverine_dead_letters; delete from {_quotedSchema}.wolverine_dead_letter_history",
             connection
         );
         await command.ExecuteNonQueryAsync(cancellationToken);
