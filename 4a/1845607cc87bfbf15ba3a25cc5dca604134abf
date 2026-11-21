@@ -1,0 +1,21 @@
+docs/packages.md
+  s_3529354fc6f9e2::t_282f8eff8523a0 41
+  s_3529354fc6f9e2::t_968e56f85bd383 43
+  s_3529354fc6f9e2::t_0848daf84d0bb5 28-29,33,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4a1845607cc87bfbf15ba3a25cc5dca604134abf",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
