@@ -1,0 +1,27 @@
+tests/PouryaKit.ArchitectureTests/NamespaceTests.cs
+  s_3529354fc6f9e2::t_e3c7becb6a9487 51
+Directory.Packages.props
+  s_3529354fc6f9e2::t_bb25e569c9ae6b 19,33,89-94
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_3529354fc6f9e2::t_b5cbf6a10e124c 57
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_3529354fc6f9e2::t_b5cbf6a10e124c 52
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_3529354fc6f9e2::t_b5cbf6a10e124c 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a818052d7cafcf82919b2728dd920ad4aed9e003",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
