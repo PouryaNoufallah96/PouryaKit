@@ -1,18 +1,17 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <UserSecretsId>pouryakit-modular-monolith-apphost</UserSecretsId>
-    <!-- The orchestrator comes from NuGet with this SDK, so the AppHost runs with Docker alone and no Aspire CLI. -->
-    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Inventory.Host\Inventory.Host.csproj" />
-    <ProjectReference Include="..\ModularMonolith.Host\ModularMonolith.Host.csproj" />
-    <ProjectReference Include="..\ModularMonolith.ReverseProxy\ModularMonolith.ReverseProxy.csproj" />
-    <ProjectReference
-      Include="..\..\..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj"
-      IsAspireProjectResource="false"
-    />
+    <!-- The orchestrator and the dashboard come from the Aspire CLI bundle: the build takes the bundle of the aspire command
+         on PATH or, with none, has dnx fetch the paired Aspire.Cli from NuGet and extract its bundle. -->
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <!-- AddDotnetProject runs each Host by its path, so the AppHost references none of them. -->
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\PouryaKit.Aspire\PouryaKit.Aspire.csproj" />
   </ItemGroup>
 </Project>

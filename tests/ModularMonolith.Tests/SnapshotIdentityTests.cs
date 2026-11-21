@@ -35,7 +35,8 @@ public sealed class SnapshotIdentityTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public async Task Distinct_binary_keys_apply_both_snapshots_and_keep_identity_after_reload_and_removal()
     {
-        await AssertKeysAsync("binary", ["0102", "0304"], value => Fixture
+        await AssertKeysAsync("binary", ["0102", "0304"], value =>
+            Fixture
                 .Gateway<StubModule>()
                 .SendAsync(
                     new ChangeBinaryKeysCommand(
@@ -46,7 +47,8 @@ public sealed class SnapshotIdentityTests(AppFixture app) : HostTest<AppFixture>
                         value
                     ),
                     TestContext.Current.CancellationToken
-                ));
+                )
+        );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.binary_keys"));
     }
 

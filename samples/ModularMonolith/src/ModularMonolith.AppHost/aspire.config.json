@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "ModularMonolith.AppHost.csproj"
+  }
+}

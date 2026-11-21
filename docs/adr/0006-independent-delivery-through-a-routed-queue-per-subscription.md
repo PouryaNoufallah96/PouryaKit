@@ -1252,3 +1252,11 @@ its subscription and replayed there, and the Kit adds no dead-letter API. The Ki
   `TransportConstants.cs`), the routing by name (`src/Wolverine/Runtime/Routing/`) and the routing search are unchanged
   since `V6.52.0`, and `DurableReceiver.MoveToErrorsAsync` only adds 6.54.0's failure fingerprint, so each amendment above
   that cites them holds.
+
+## Amendment (2026-11-21: WolverineFx 6.64.2)
+
+The decision above stands. The Kit's pins move to WolverineFx 6.64.2 (ADR 0004's WolverineFx 6.64.2 amendment), a
+patch that adds no public API. At tag `V6.64.2` no source this record cites changed since `V6.64.0`: not
+`MessageDatabase.Incoming.cs`, the local queues the reserved names stand for (`LocalTransport.cs`,
+`TransportConstants.cs`), the routing by name and its search, nor `DurableReceiver.cs`. Each amendment above that cites
+them holds, the one on dead letters on WolverineFx 6.64.0 included.

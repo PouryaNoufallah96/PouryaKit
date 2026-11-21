@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Dotnet;
 using Aspire.Hosting.Testing;
 using Catalog.Contracts.Products;
 using Grpc.Core;
@@ -35,9 +36,10 @@ public sealed class AppHostTests
     ];
 
     // The whole model as an allow-list: a dashboard, tracing or logging resource, or one more of anything, is a name here.
-    // Aspire adds a hidden rebuilder beside each project.
+    // Aspire adds a hidden rebuilder beside each project, and one hidden build every project waits for.
     private static readonly string[] Declared =
     [
+        "__dotnet-project-build",
         "bearer-signing-key",
         "broker",
         "cache",
@@ -97,7 +99,7 @@ public sealed class AppHostTests
                 TestContext.Current.CancellationToken
             );
         var proxy = builder
-            .Resources.OfType<ProjectResource>()
+            .Resources.OfType<DotnetProjectResource>()
             .Single(project => project.Name == "reverse-proxy");
         var configuration = new ConfigurationBuilder()
             .AddJsonFile(

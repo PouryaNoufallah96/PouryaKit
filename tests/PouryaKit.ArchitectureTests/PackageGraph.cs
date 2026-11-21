@@ -123,7 +123,7 @@ internal static class PackageGraph
         ["PouryaKit.Storage"] = new(["PouryaKit.Cqrs", "PouryaKit.Domain"], []),
         ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3"]),
         // Apache.Arrow and System.Security.Cryptography.ProtectedData are licence floors over the versions Azure.Storage.Blobs
-        // 12.30.1 brings, which declare no licence expression (#128).
+        // 12.30.2 brings, which declare no licence expression (#128).
         ["PouryaKit.Storage.AzureBlob"] = new(
             ["PouryaKit.Storage"],
             ["Azure.Storage.Blobs", "Apache.Arrow", "System.Security.Cryptography.ProtectedData"]
@@ -180,7 +180,7 @@ internal static class PackageGraph
         ),
         // Semantic search on the Unit of Work's connection, sending embeddings as real[], which the server's pgvector casts (#138).
         ["PouryaKit.AI.Postgres"] = new(["PouryaKit.AI", "PouryaKit.Persistence.Postgres"], []),
-        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.59.0 brings, for the
+        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.62.0 brings, for the
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(
             ["PouryaKit.Cqrs", "PouryaKit.Persistence"],
@@ -404,9 +404,9 @@ internal static class PackageGraph
 
     private const int EfCoreMajor = 11;
 
-    // The prereleases the Kit takes while no stable PostgreSQL provider for EF Core 11 exists (docs/packages.md,
-    // "Temporary prerelease dependencies"): the provider, and EF Core's own packages at the release candidate it pins
-    // exactly. Empty it when the stable provider ships.
+    // The prereleases the Kit takes while the stable EF Core line cannot serve (docs/packages.md, "Temporary prerelease
+    // dependencies"): the provider, and EF Core's own packages at the release candidate it pins exactly. Empty it only when
+    // the stable provider can: it needs Npgsql 11, on which WolverineFx 6.64.2's message store does not start.
     private static readonly HashSet<string> TemporaryPrereleases =
     [
         "Microsoft.EntityFrameworkCore",
