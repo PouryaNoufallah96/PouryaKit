@@ -72,8 +72,8 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.21.0" />
     <PackageVersion Include="PDFsharp-MigraDoc" Version="6.2.4" />
     <PackageVersion Include="Respawn" Version="7.0.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.21.0" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="3.1.1" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="11.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
