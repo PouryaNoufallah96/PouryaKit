@@ -23,7 +23,7 @@ const string Issuer = "modular-monolith-apphost";
 var signingKey = builder.AddParameter("bearer-signing-key", secret: true);
 
 var inventoryHost = builder
-    .AddProject<Projects.Inventory_Host>("inventory")
+    .AddDotnetProject("inventory", "../Inventory.Host/Inventory.Host.csproj")
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/alive")
     .WithReference(inventory, "app")
@@ -40,7 +40,7 @@ var inventoryHost = builder
 // TLS negotiates no HTTP/2, so gRPC needs one of HTTP/2 alone, which REST's HTTP/1.1 callers could not reach. Kestrel takes
 // both as named endpoints, each on the port Aspire's proxy forwards that endpoint to, in place of the URLs Aspire passes.
 var shopHost = builder
-    .AddProject<Projects.ModularMonolith_Host>("modular-monolith")
+    .AddDotnetProject("modular-monolith", "../ModularMonolith.Host/ModularMonolith.Host.csproj")
     .WithHttpEndpoint()
     .WithHttpEndpoint(name: "grpc")
     .WithEndpointsInEnvironment(_ => false)
@@ -90,7 +90,10 @@ if (bool.TryParse(builder.Configuration["LocalAgent"], out var localAgent) && lo
 // Inventory.Host, so the AppHost routes Inventory's paths to that service, whose /alive the proxy probes. A destination
 // names a Host by its resource name, which service discovery resolves through the endpoint WithReference gives the proxy.
 builder
-    .AddProject<Projects.ModularMonolith_ReverseProxy>("reverse-proxy")
+    .AddDotnetProject(
+        "reverse-proxy",
+        "../ModularMonolith.ReverseProxy/ModularMonolith.ReverseProxy.csproj"
+    )
     .WithHttpHealthCheck("/alive")
     .WithReference(inventoryHost)
     .WithReference(shopHost)

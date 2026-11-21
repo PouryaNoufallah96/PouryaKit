@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "80991de02564da3668224fc605914e7785eefa64",
+      "revision": "43e952267e5c0834b0fef7a7cc7f4020f6a9f7d2",
       "link_mode": "web"
     }
   },
@@ -425,14 +425,14 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 25,
-          "end_line": 105,
+          "end_line": 108,
           "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
           "line": 1,
-          "end_line": 18,
-          "label": "Aspire.AppHost.Sdk, both Hosts, the proxy"
+          "end_line": 17,
+          "label": "the Aspire packages, no Host reference"
         }
       ]
     }
