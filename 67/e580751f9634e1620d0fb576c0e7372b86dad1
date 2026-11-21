@@ -1,0 +1,32 @@
+src/PouryaKit.Storage.AzureBlob/PouryaKit.Storage.AzureBlob.csproj
+  s_3529354fc6f9e2::t_f9a4edb0a613fe 8
+tests/PouryaKit.ArchitectureTests/PackageGraph.cs
+  s_3529354fc6f9e2::t_96a89cfeb95e2e 407-409
+  s_3529354fc6f9e2::t_e8e8d7061e4a58 126
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3529354fc6f9e2::t_84e5d044223779 10
+tests/PouryaKit.ArchitectureTests/PackageGraphTests.cs
+  s_3529354fc6f9e2::t_3d66ec31e52abb 327
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3529354fc6f9e2::t_84e5d044223779 10
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3529354fc6f9e2::t_84e5d044223779 10
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3529354fc6f9e2::t_84e5d044223779 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "67e580751f9634e1620d0fb576c0e7372b86dad1",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
