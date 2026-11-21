@@ -1,0 +1,55 @@
+Directory.Packages.props
+  s_3529354fc6f9e2::t_862b0c7879fd1c 8-13
+tests/PouryaKit.Aspire.Tests/AppHostTests.cs
+  s_3529354fc6f9e2::t_499ce8533edc73 8
+  s_3529354fc6f9e2::t_cf36b0b7d7e88b 102
+  s_3529354fc6f9e2::t_712c5f93a70bf6 39,42
+.agents/skills/pourya-kit/references/aspire.md
+  s_3529354fc6f9e2::t_170a160a5de247 74
+  s_3529354fc6f9e2::t_07a61e26bdcf9a 34
+  s_3529354fc6f9e2::t_d20bedf785c819 86
+  s_3529354fc6f9e2::t_7544a1470fb805 50
+  s_3529354fc6f9e2::t_5f19b105d8b58b 14,17,23-24,33
+  s_3529354fc6f9e2::t_6affb96668d1e8 174
+  s_3529354fc6f9e2::t_4c2630502185aa 32
+  s_3529354fc6f9e2::t_dec1e6140823b2 140
+  s_3529354fc6f9e2::t_094ae69147c584 60
+samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj
+  s_3529354fc6f9e2::t_0b97f076a53331 8-9
+  s_3529354fc6f9e2::t_4d310aa812b8a2 1,10-15
+src/PouryaKit.Aspire/README.md
+  s_3529354fc6f9e2::t_fa138f92d549cb 37
+  s_3529354fc6f9e2::t_737737fe4ef3b9 55-57
+docs/architecture/diagrams/proving-sample-and-templates.architecture.json
+  s_3529354fc6f9e2::t_2bb56a0ea1a1e9 428,434
+  s_3529354fc6f9e2::t_3d71925432528b 435
+  s_3529354fc6f9e2::t_ea94ce88c105ed 10
+samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs
+  s_3529354fc6f9e2::t_607a0da72bc490 93-96
+  s_3529354fc6f9e2::t_7c27e1aa878e4c 26
+  s_3529354fc6f9e2::t_a500b1cdfa0bbe 43
+docs/foundation-review.md
+  s_3529354fc6f9e2::t_fdcceb80448c90 283,893
+samples/ModularMonolith/src/ModularMonolith.AppHost/aspire.config.json
+  s_3529354fc6f9e2::t_901fac1758f2e8 1-5
+docs/architecture/README.md
+  s_3529354fc6f9e2::t_6c2fca768af28c 51,225
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_a79586e176386c 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8c02ea27f400c25cbb287dc2c3c619755aa0b30",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "unknown"
+      },
+      "human_author": null
+    }
+  }
+}
