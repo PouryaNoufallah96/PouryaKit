@@ -43,7 +43,8 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var attempts = Journal();
         Assert.Equal(3, attempts.Count);
-        Assert.All(attempts, attempt => Assert.Equal(
+        Assert.All(attempts, attempt =>
+            Assert.Equal(
                 new Dictionary<string, string>
                 {
                     [OperationContextHeaders.ActorId] = "ada",
@@ -53,7 +54,8 @@ public sealed class OutgoingHttpTests(AppFixture app) : HostTest<AppFixture>(app
                     [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
                 },
                 ContextHeaders(attempt)
-            ));
+            )
+        );
     }
 
     [Fact]

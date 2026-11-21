@@ -245,7 +245,7 @@ Each call takes the key the caller chooses and a `CancellationToken`, and return
 
 ## PouryaKit.Storage.S3
 
-The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as MinIO. It references `PouryaKit.Storage`, which holds its composition check, and `AWSSDK.S3` 4.1.0, which brings `AWSSDK.Core` and the SDK's numerics extension, all Apache-2.0, and `System.IO.Hashing` (MIT); its options come with the .NET 11 shared framework.
+The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as MinIO. It references `PouryaKit.Storage`, which holds its composition check, and `AWSSDK.S3` 4.1.2, which brings `AWSSDK.Core` and the SDK's numerics extension, all Apache-2.0, and `System.IO.Hashing` (MIT); its options come with the .NET 11 shared framework.
 
 | Concern | Types |
 |---|---|
@@ -256,7 +256,7 @@ The S3 provider of `IFileStorage`, for AWS S3 and S3-compatible stores such as M
 
 ## PouryaKit.Storage.AzureBlob
 
-The Azure Blob Storage provider of `IFileStorage`, for Azure Blob Storage and Azurite. It references `PouryaKit.Storage`, `Azure.Storage.Blobs` 12.30.1 (MIT; it brings `Azure.Core` and `Azure.Storage.Common`, MIT), and two licence floors over what `Azure.Storage.Blobs` brings without a licence expression: `Apache.Arrow` 23.0.0 (Apache-2.0) and `System.Security.Cryptography.ProtectedData` 11.0.0 (MIT); its options come with the .NET 11 shared framework. No `Azure.Identity`.
+The Azure Blob Storage provider of `IFileStorage`, for Azure Blob Storage and Azurite. It references `PouryaKit.Storage`, `Azure.Storage.Blobs` 12.30.2 (MIT; it brings `Azure.Core` and `Azure.Storage.Common`, MIT), and two licence floors over what `Azure.Storage.Blobs` brings without a licence expression: `Apache.Arrow` 23.0.0 (Apache-2.0) and `System.Security.Cryptography.ProtectedData` 11.0.0 (MIT); its options come with the .NET 11 shared framework. No `Azure.Identity`.
 
 | Concern | Types |
 |---|---|
@@ -289,7 +289,7 @@ The Email Capability's one provider. It references `PouryaKit.Email`, `PouryaKit
 
 ## PouryaKit.ReverseProxy
 
-The Reverse proxy, for a Host of its own process in front of a system's Hosts. It references no Kit package, so no Operation can run in it, which `PackageGraphTests` checks; it references the ASP.NET Core shared framework, `Yarp.ReverseProxy` 2.3.0 and `Microsoft.Extensions.ServiceDiscovery.Yarp` 11.0.0, both MIT.
+The Reverse proxy, for a Host of its own process in front of a system's Hosts. It references no Kit package, so no Operation can run in it, which `PackageGraphTests` checks; it references the ASP.NET Core shared framework, `Yarp.ReverseProxy` 2.3.0 and `Microsoft.Extensions.ServiceDiscovery.Yarp` 11.0.1, both MIT.
 
 | Concern | Types |
 |---|---|
@@ -310,7 +310,7 @@ Optional server-sent events from Notification Handlers. It references `PouryaKit
 
 ## PouryaKit.Reporting
 
-The optional renderer of the Reporting Capability; the report Module that stores and schedules report jobs is [`PouryaKit.Reporting.Module`](#pouryakitreportingmodule). It references `PouryaKit.Domain` alone, and these libraries: `PDFsharp-MigraDoc` 6.2.4 (MIT, the last MIT release of PDFsharp: 6.5.0 is AGPL-3.0-only), `DocumentFormat.OpenXml` 3.5.1 (MIT) and `CsvHelper` 34.0.0 (`MS-PL OR Apache-2.0`), with `System.Security.Cryptography.Pkcs` 11.0.0, a security floor over the 8.0.1 PDFsharp asks for. `PackageGraphTests` keeps QuestPDF, ClosedXML, every AWS and Azure package and `PouryaKit.Storage` out of its closure.
+The optional renderer of the Reporting Capability; the report Module that stores and schedules report jobs is [`PouryaKit.Reporting.Module`](#pouryakitreportingmodule). It references `PouryaKit.Domain` alone, and these libraries: `PDFsharp-MigraDoc` 6.2.4 (MIT, the last MIT release of PDFsharp: 6.5.0 is AGPL-3.0-only), `DocumentFormat.OpenXml` 3.5.1 (MIT) and `CsvHelper` 34.1.0 (`MS-PL OR Apache-2.0`), with `System.Security.Cryptography.Pkcs` 11.0.0, a security floor over the 8.0.1 PDFsharp asks for. `PackageGraphTests` keeps QuestPDF, ClosedXML, every AWS and Azure package and `PouryaKit.Storage` out of its closure.
 
 | Concern | Types |
 |---|---|
@@ -334,7 +334,7 @@ Everything else is internal, in the one namespace `PouryaKit.Reporting.Module`: 
 
 ## PouryaKit.AI
 
-The AI Capability's chat client, embedding generator, Gateway tool, agents and MCP clients. It references `PouryaKit.Cqrs`, `PouryaKit.Modularity`, `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.OpenAI` 11.0.0, which bring the `OpenAI` client (MIT), the Microsoft Agent Framework's `Microsoft.Agents.AI` and `Microsoft.Agents.AI.Workflows` 1.28.0 (MIT), the official MCP C# SDK's client, `ModelContextProtocol.Core` 2.4.0 (Apache-2.0), and `Microsoft.Extensions.Http`; its options come with the .NET 11 shared framework; `PackageGraphTests` keeps `OllamaSharp`, `Azure.AI.OpenAI` and every resilience package out of its closure.
+The AI Capability's chat client, embedding generator, Gateway tool, agents and MCP clients. It references `PouryaKit.Cqrs`, `PouryaKit.Modularity`, `Microsoft.Extensions.AI` and `Microsoft.Extensions.AI.OpenAI` 11.0.1, which bring the `OpenAI` client (MIT), the Microsoft Agent Framework's `Microsoft.Agents.AI` and `Microsoft.Agents.AI.Workflows` 1.28.0 (MIT), the official MCP C# SDK's client, `ModelContextProtocol.Core` 2.4.0 (Apache-2.0), and `Microsoft.Extensions.Http`; its options come with the .NET 11 shared framework; `PackageGraphTests` keeps `OllamaSharp`, `Azure.AI.OpenAI` and every resilience package out of its closure.
 
 | Concern | Types |
 |---|---|

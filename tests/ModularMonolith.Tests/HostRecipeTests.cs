@@ -353,7 +353,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         var received = _downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
         Assert.Equal(3, received.Count);
-        Assert.All(received, request => Assert.Equal(
+        Assert.All(received, request =>
+            Assert.Equal(
                 new Dictionary<string, string>
                 {
                     [OperationContextHeaders.ActorId] = "ada",
@@ -370,7 +371,8 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
                         header => header.Key.ToLowerInvariant(),
                         header => string.Join(",", header.Value)
                     )
-            ));
+            )
+        );
     }
 
     // The unnamed client's pipeline would be the defaults' own ("-standard"), so its replay policy would become that of

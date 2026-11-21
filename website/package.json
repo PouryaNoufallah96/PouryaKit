@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.18.0",
+  "packageManager": "pnpm@12.21.0",
   "engines": {
     "node": ">=26"
   },
@@ -17,11 +17,11 @@
     "test": "node --test scripts/check-licences.test.mjs scripts/covers.test.mjs lib/kit-sources/*.test.ts"
   },
   "dependencies": {
-    "fumadocs-core": "16.19.0",
-    "fumadocs-mdx": "15.6.1",
-    "fumadocs-ui": "16.19.0",
+    "fumadocs-core": "16.19.5",
+    "fumadocs-mdx": "15.6.4",
+    "fumadocs-ui": "16.19.5",
     "github-slugger": "2.0.0",
-    "lucide-react": "1.72.0",
+    "lucide-react": "1.77.0",
     "mdast-util-to-string": "4.0.0",
     "next": "16.4.6",
     "parse-entities": "4.0.2",
@@ -34,7 +34,7 @@
     "unist-util-visit": "5.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "@tailwindcss/postcss": "4.3.5",
     "@types/mdast": "4.0.4",
     "@types/mdx": "2.0.14",
