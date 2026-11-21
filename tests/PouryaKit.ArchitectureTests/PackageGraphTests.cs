@@ -324,7 +324,7 @@ public sealed class PackageGraphTests
     public void A_closure_with_a_prerelease_outside_the_temporary_ef_core_set_is_rejected()
     {
         var efCore = Restored("PouryaKit.Persistence.EFCore");
-        // Allowed as restored, until the stable provider ships: EF Core's own release candidate.
+        // Allowed until the stable EF Core line serves ("Temporary prerelease dependencies"): EF Core's own candidate.
         Assert.Contains(efCore.Packages, arrived =>
             arrived.Id == "Microsoft.EntityFrameworkCore"
             && arrived.Version.Contains('-', StringComparison.Ordinal)
