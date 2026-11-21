@@ -20,5 +20,13 @@ metadata:
 - **execution-core had no free slot:** shifting every component's `pos` y by 130 opened a top row; the page still passed every gate (re-serialize with `json.dumps(indent=2, ensure_ascii=False) + "\n"`, which differs from the source in one indent line only). Parallel tickets adding nodes must apply the shift.
 - The Write tool refuses a file named like a report (`reporting.md`, `report*.md`) as a "report file", even a skill reference: write it from a scratchpad Python script.
 
+## CsvHelper 34 (#209, 2026-11-15; CsvHelper 34.0.0)
+
+- **A rewrite**: `CsvWriterOptions` and `CsvReaderOptions` are records with init properties; `CsvWriter.Create(TextWriter, options)`, `EndRecord()` for `NextRecord()`, one `CsvHelper` namespace. The quoting callback is `CsvShouldQuote(ReadOnlySpan<char> field, Type fieldType, int fieldIndex, long recordIndex)`, asked only of a field that needs no quotes; the package's XML docs and `ilspycmd -t <type>` answer API questions.
+- **Quoting**: the default `WhenNeeded` quotes the separator, a quote, CR and LF, and writes a record whose only field is empty as `""`. `WhenNeededOrWhitespace` also quotes a leading or trailing tab, which 33's default did not (33 quoted edge spaces only). The Kit's 33 bytes come back with `ShouldQuote = field.IsEmpty || field[0] == ' ' || field[^1] == ' '`. Write the raw-bytes test on the old version first, so its expected bytes are measured, not predicted.
+- `decimal.TryParse("\t5", NumberStyles.Number, invariant)` is true (leading white includes tab), so a number with a leading tab passes the formula escape and reaches the writer.
+- **Reader**: `HasHeader` defaults to true (it consumes the first record) and a null `Separator` is detected; a test reading every row sets `Separator = ','` and `HasHeader = false`, then `FieldCount` and `GetString(int)`.
+- It ships a source generator under `analyzers/`; the packed Kit nuspec carries its dependency with `exclude="Build,Analyzers"`, so a consumer gets none.
+
 **Why:** each cost a probe or a rerun in #129.
 **How to apply:** for the report Module (#140), any PDF, spreadsheet or CSV code, any package that bundles a binary asset or licence file, and any new node on a full diagram. Related: [[email-and-provider-package-facts]], [[docs-verification-tools]], [[worktree-shell-and-check-gotchas]].

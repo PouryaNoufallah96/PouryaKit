@@ -113,6 +113,32 @@ public sealed class EmailTests(AppFixture app, MailFixture mail) : IClassFixture
         Assert.Empty(await mail.MailsAsync(text));
     }
 
+    // MimeKit 5 no longer decodes a punycode domain, so the envelope names it as written; the mail names it in its ASCII
+    // form either way, as MimeKit 4 did.
+    [Theory]
+    [InlineData("ada@bücher.example")]
+    [InlineData("ada@xn--bcher-kva.example")]
+    public async Task A_recipient_with_an_internationalised_domain_is_sent_in_either_spelling_named_in_ascii_in_its_to_header(
+        string recipient
+    )
+    {
+        var text = Unique();
+
+        var sent = await mail
+            .Host.Services.GetRequiredService<IEmailSender>()
+            .SendAsync(
+                new EmailMessage(recipient, text, "Sent."),
+                TestContext.Current.CancellationToken
+            );
+
+        Assert.True(sent.IsSuccess);
+        await mail.WaitForMailsAsync(text, 1);
+        Assert.Contains(
+            "To: ada@xn--bcher-kva.example",
+            (await mail.RawAsync(text)).Split('\n').Select(line => line.TrimEnd('\r'))
+        );
+    }
+
     [Fact]
     public async Task A_host_whose_email_security_is_not_a_secure_socket_option_fails_to_start_naming_the_option()
     {

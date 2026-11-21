@@ -1,7 +1,7 @@
 ![PouryaKit.Messaging.Wolverine.Sagas](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/assets-v1/assets/covers/PouryaKit.Messaging.Wolverine.Sagas.png)
 
 [![NuGet](https://img.shields.io/nuget/vpre/PouryaKit.Messaging.Wolverine.Sagas?style=flat-square&logo=nuget&color=615fff)](https://www.nuget.org/packages/PouryaKit.Messaging.Wolverine.Sagas)
-![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)
+![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?style=flat-square&logo=dotnet)
 ![License: MIT](https://img.shields.io/badge/license-MIT-615fff?style=flat-square)
 
 # PouryaKit.Messaging.Wolverine.Sagas
@@ -27,10 +27,8 @@ It builds on [`PouryaKit.Messaging.Wolverine`](https://www.nuget.org/packages/Po
 Declare the saga, with its system Actor, in the Composition Root, as the Kit's tests do:
 
 ```csharp
-module.AddPouryaKitSaga<FulfilmentSaga>(
-    Fulfilment,
-    systemActor: Fulfilment,
-    saga => saga.Input<OrderPlacedV1>(placed => placed.OrderId)
+module.AddPouryaKitSaga<FulfilmentSaga>(Fulfilment, systemActor: Fulfilment, saga =>
+    saga.Input<OrderPlacedV1>(placed => placed.OrderId)
         .Input<PaymentReceivedV1>(paid => paid.OrderId)
         .Input<PaymentReceivedV2>(paid => paid.OrderId)
         .Timeout<FulfilmentTimeout>()

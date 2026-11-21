@@ -25,8 +25,8 @@ import uuid
 import validate
 
 # The images the Kit's fixtures and the generated smoke tests run.
-POSTGRES = "postgres:18.6"
-RABBITMQ = "rabbitmq:4.3.6"
+POSTGRES = "postgres:18.7"
+RABBITMQ = "rabbitmq:4.4.0"
 # Each template the proof runs, and the EF Core Modules its database is migrated for: the Hosts apply no migration, and
 # Ledger's Marten schema is applied when the modular monolith's Host starts (templates.md, "Running the generated Host").
 MODULAR = ("pouryakit-modular-monolith", ("Catalog", "Billing", "Inventory"))

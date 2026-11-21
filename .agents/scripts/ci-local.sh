@@ -10,6 +10,7 @@ evidence=${1:?usage: ci-local.sh <evidence directory outside the checkout>}
 top=$(git rev-parse --show-toplevel)
 cd "$top" || exit 1
 echo "commit $(git rev-parse HEAD) $(date -u +%FT%TZ)"
+echo "node $(node --version); CI's ai-setup and website jobs run Node 26"
 echo "== ai-setup"
 python3 .agents/scripts/check-ai-setup.py; echo "rc=$?"
 python3 .agents/scripts/check-docs.py; echo "rc=$?"

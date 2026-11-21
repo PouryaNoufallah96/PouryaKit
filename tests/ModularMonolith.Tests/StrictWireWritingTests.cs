@@ -103,15 +103,13 @@ public sealed class StrictWireWritingTests(AppFixture app) : HostTest<AppFixture
                 (string)deadLetter[2],
                 StringComparison.Ordinal
             );
-            Assert.Contains(
-                Fixture.Logs.Entries,
-                entry =>
-                    entry.Exception
-                        is WolverineSerializationException { InnerException: JsonException inner }
-                    && inner.Message.Contains(
-                        $"'{typeof(NoteSharedV1).FullName}' doesn't allow getting null values",
-                        StringComparison.Ordinal
-                    )
+            Assert.Contains(Fixture.Logs.Entries, entry =>
+                entry.Exception
+                    is WolverineSerializationException { InnerException: JsonException inner }
+                && inner.Message.Contains(
+                    $"'{typeof(NoteSharedV1).FullName}' doesn't allow getting null values",
+                    StringComparison.Ordinal
+                )
             );
         }
     }

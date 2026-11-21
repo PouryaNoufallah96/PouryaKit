@@ -147,10 +147,8 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
     public async Task A_host_whose_retention_is_infinite_keeps_every_key()
     {
         using var clock = new TestClock(Monday);
-        await using var host = Compose(
-            clock,
-            new RecordedLogs(),
-            options => options.Retention = Timeout.InfiniteTimeSpan
+        await using var host = Compose(clock, new RecordedLogs(), options =>
+            options.Retention = Timeout.InfiniteTimeSpan
         );
         int repeat;
         try
@@ -189,13 +187,10 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
                 "No cleanup removed the held key before the repeat read it."
             );
         });
-        await using var host = Compose(
-            clock,
-            new RecordedLogs(),
-            services: services =>
-                services.ConfigureDbContext<StubDbContext>(options =>
-                    options.AddInterceptors(cleanedBetween)
-                )
+        await using var host = Compose(clock, new RecordedLogs(), services: services =>
+            services.ConfigureDbContext<StubDbContext>(options =>
+                options.AddInterceptors(cleanedBetween)
+            )
         );
         int repeat;
         try
@@ -298,16 +293,12 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
     )
     {
         using var clock = new TestClock(Monday);
-        await using var host = Compose(
-            clock,
-            new RecordedLogs(),
-            options =>
-            {
-                options.Retention = retention;
-                options.CleanupInterval = cleanupInterval;
-                options.BatchSize = batchSize;
-            }
-        );
+        await using var host = Compose(clock, new RecordedLogs(), options =>
+        {
+            options.Retention = retention;
+            options.CleanupInterval = cleanupInterval;
+            options.BatchSize = batchSize;
+        });
 
         var failure = await Assert.ThrowsAsync<OptionsValidationException>(() =>
             host.StartAsync(TestContext.Current.CancellationToken)
@@ -321,18 +312,12 @@ public sealed class IdempotencyRetentionTests(AppFixture app) : HostTest<AppFixt
         RecordedLogs logs,
         Action<PouryaKitIdempotencyOptions>? configure = null,
         Action<IServiceCollection>? services = null
-    ) =>
-        AppFixture.ComposeHost(
-            "Development",
-            Fixture.ConnectionString,
-            logs,
-            builder =>
-            {
-                builder.Services.AddSingleton<TimeProvider>(clock.Time);
-                builder.Services.Configure(configure ?? (_ => { }));
-                services?.Invoke(builder.Services);
-            }
-        );
+    ) => AppFixture.ComposeHost("Development", Fixture.ConnectionString, logs, builder =>
+        {
+            builder.Services.AddSingleton<TimeProvider>(clock.Time);
+            builder.Services.Configure(configure ?? (_ => { }));
+            services?.Invoke(builder.Services);
+        });
 
     // The Notifications the Host's runs stored are delivered before it stops, by whichever Host takes them; it stops
     // whatever that wait does, and the test's await using disposes it.

@@ -202,10 +202,20 @@ class TemplateConsumerTests(unittest.TestCase):
                          [command[:7] for command in commands if command[:2] == ["dotnet", "new"] and command[2] != "install"])
         self.assertEqual([solutions[name] / f"{generated}.slnx" for name, (_, generated) in templates.items()],
                          [command[2] for command in commands if command[:2] == ["dotnet", "build"] and command[2] != "PouryaKit.slnx"])
-        self.assertEqual([solutions[name] / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj" for name, (_, generated) in templates.items()],
-                         [command[3] for command in commands if command[:3] == ["dotnet", "test", "--project"]])
+        self.assertEqual([["dotnet", "test", "--project", solutions[name] / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj", "-c", "Release",
+                           "--no-build", "--timeout", "45m"] for name, (_, generated) in templates.items()],
+                         [command for command in commands if command[:3] == ["dotnet", "test", "--project"]])
         self.assertEqual([solutions[name] / "src" / f"{generated}.Host" for name, (_, generated) in templates.items()],
                          [call.args[0] for call in production.call_args_list])
+
+
+class RuntimeTestRunTests(unittest.TestCase):
+    def test_the_release_test_run_stops_after_45_minutes_inside_the_hosted_jobs_60(self):
+        """A hung suite then ends with the test platform's own exit code, and its log is kept, before the job is killed."""
+        with tempfile.TemporaryDirectory() as folder:
+            commands, _, _ = validation(folder, {})
+        self.assertEqual([["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build", "--timeout", "45m"]],
+                         [command for command in commands if command[:3] == ["dotnet", "test", "PouryaKit.slnx"]])
 
 
 class ConsumerCacheTests(unittest.TestCase):
@@ -368,9 +378,9 @@ class TestTotalsTests(unittest.TestCase):
 
     def test_totals_are_summed_over_every_projects_summary_block(self) -> None:
         output = (
-            "Test run summary: Passed! - tests/A/bin/Release/net10.0/A.dll (net10.0|arm64)\n"
+            "Test run summary: Passed! - tests/A/bin/Release/net11.0/A.dll (net11.0|arm64)\n"
             "  total: 62\n  failed: 0\n  succeeded: 62\n  skipped: 0\n  duration: 2s 744ms\n"
-            "Test run summary: Passed! - tests/B/bin/Release/net10.0/B.dll (net10.0|arm64)\n"
+            "Test run summary: Passed! - tests/B/bin/Release/net11.0/B.dll (net11.0|arm64)\n"
             "  total: 10\n  failed: 0\n  succeeded: 7\n  skipped: 3\n  duration: 1s 1ms\n"
         )
         self.assertEqual("Release tests total 72, succeeded 69, failed 0, skipped 3", test_totals(output))
@@ -379,7 +389,7 @@ class TestTotalsTests(unittest.TestCase):
         """A hosted runner's summary, as it printed it: a colour code can open any line of the block."""
         output = (
             "\x1b[32mTest run summary: Passed!\n"
-            "  tests/A/bin/Release/net10.0/A.dll (net10.0|x64) passed (9m 39s 114ms)\n"
+            "  tests/A/bin/Release/net11.0/A.dll (net11.0|x64) passed (9m 39s 114ms)\n"
             "\n"
             "\x1b[m  total: 1395\n"
             "  failed: 0\n"

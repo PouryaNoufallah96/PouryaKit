@@ -42,8 +42,7 @@ public sealed class SalesReports : IReportRequestAuthorizer, IReportLayouts
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(request);
-        var month =
-            MonthOf(request)
+        var month = MonthOf(request)
             ?? throw new InvalidOperationException(
                 $"The {Kind} report was requested without a month."
             );

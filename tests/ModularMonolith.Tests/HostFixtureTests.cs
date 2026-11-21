@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
@@ -28,6 +29,37 @@ public sealed class HostFixtureTests
         await Assert.ThrowsAnyAsync<NpgsqlException>(() => OpenAsync(database));
     }
 
+    // A Module before its first migration: the fixture starts its Host and applies nothing for it.
+    [Fact]
+    public async Task A_host_whose_dbcontext_has_no_migration_yet_starts_with_nothing_applied()
+    {
+        var fixture = new UnmigratedFixture();
+        try
+        {
+            await fixture.InitializeAsync();
+
+            Assert.True(
+                fixture
+                    .Host.Services.GetRequiredService<IHostApplicationLifetime>()
+                    .ApplicationStarted.IsCancellationRequested
+            );
+            await using var connection = new NpgsqlConnection(fixture.ConnectionString);
+            await connection.OpenAsync(TestContext.Current.CancellationToken);
+            await using var drafts = new NpgsqlCommand(
+                "select to_regclass('\"Drafts\"') is null",
+                connection
+            );
+            Assert.Equal(
+                true,
+                await drafts.ExecuteScalarAsync(TestContext.Current.CancellationToken)
+            );
+        }
+        finally
+        {
+            await fixture.DisposeAsync();
+        }
+    }
+
     private static async Task OpenAsync(string connectionString)
     {
         await using var connection = new NpgsqlConnection(connectionString);
@@ -40,6 +72,27 @@ public sealed class HostFixtureTests
 
         protected override IHost CreateHost(string connectionString) => Created;
     }
+
+    private sealed class UnmigratedFixture : HostFixture
+    {
+        protected override IHost CreateHost(string connectionString)
+        {
+            var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+            builder.Services.AddDbContext<UnmigratedDbContext>(options =>
+                options.UseNpgsql(connectionString)
+            );
+            return builder.Build();
+        }
+    }
+
+    // A model with a table and no migration that creates it.
+    private sealed class UnmigratedDbContext(DbContextOptions<UnmigratedDbContext> options)
+        : DbContext(options)
+    {
+        public DbSet<Draft> Drafts => Set<Draft>();
+    }
+
+    private sealed record Draft(Guid Id);
 
     // A Host with no services, as a WebApplication disposable both ways, whose stop fails; it records how it is disposed.
     private sealed class StopFailingHost : IHost, IAsyncDisposable

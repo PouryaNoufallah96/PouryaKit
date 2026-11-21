@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -10,8 +11,9 @@ using Microsoft.Extensions.Options;
 namespace PouryaKit.Web;
 
 // The global limiter of ASP.NET Core's rate limiting, partitioned by the Actor the request's Operation runs as, which
-// HttpCallerContext resolves for both. A rejection sets 429 and writes nothing, so the status code pages AddPouryaKitWeb adds answer it as
-// the same problem response as every other failure.
+// HttpCallerContext resolves for both. A rejection sets 429 and Retry-After, the seconds the limiter says are left in the
+// window, rounded up, and writes nothing, so the status code pages AddPouryaKitWeb adds answer it as the same problem
+// response as every other failure. An OnRejected the application set before the Kit's runs after it.
 internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOptions>
 {
     // A request no Actor resolves for: an unauthenticated caller of an endpoint that names no anonymous Actor, or a caller
@@ -52,6 +54,24 @@ internal sealed class ActorRateLimiting : IValidateOptions<PouryaKitRateLimitOpt
                             )
                     );
                     limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                    var rejected = limiter.OnRejected;
+                    limiter.OnRejected = (context, cancellationToken) =>
+                    {
+                        if (
+                            context.Lease.TryGetMetadata(
+                                MetadataName.RetryAfter,
+                                out var retryAfter
+                            )
+                        )
+                        {
+                            context.HttpContext.Response.Headers.RetryAfter = (
+                                (int)Math.Ceiling(retryAfter.TotalSeconds)
+                            ).ToString(CultureInfo.InvariantCulture);
+                        }
+
+                        return rejected?.Invoke(context, cancellationToken)
+                            ?? ValueTask.CompletedTask;
+                    };
                 }
             );
         services.AddOptions<PouryaKitRateLimitOptions>().ValidateOnStart();

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,8 +30,10 @@ public abstract class HostFixture : IAsyncLifetime
 {
     private static readonly TimeSpan DeliveryTimeout = TimeSpan.FromSeconds(30);
 
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.6")
-        .WithCommand("-c", "track_commit_timestamp=on")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.7")
+        // A Host's graceful stop opens about 50 connections at once, and this server serves the fixture's Host and every
+        // Host a test composes beside it.
+        .WithCommand("-c", "track_commit_timestamp=on", "-c", "max_connections=1000")
         .Build();
 
     private IHost? _host;
@@ -57,8 +60,9 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Waits until every delivery an earlier test caused has finished, then deletes every row except the migrations
-    /// history and the message store's own tables, in every schema, and every stored delivery, delayed commands not yet
-    /// due included. A Module whose tables share the store's schema is reset like any other.
+    /// history and the message store's own tables, in every schema, and every stored delivery with the replays recorded
+    /// for it, delayed commands not yet due included. A Module whose tables share the store's schema is reset like any
+    /// other.
     /// </summary>
     public async Task ResetAsync(CancellationToken cancellationToken = default)
     {
@@ -107,8 +111,8 @@ public abstract class HostFixture : IAsyncLifetime
     )
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var store =
-            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
+        var store = Deliveries()
+            ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
 
         var outcome = await operation();
@@ -141,8 +145,9 @@ public abstract class HostFixture : IAsyncLifetime
         ).WaitUntilSettledAsync(DeliveryTimeout, cancellationToken);
 
     /// <summary>
-    /// Every delivery the message store has set aside as a dead letter, read through Wolverine's dead-letter storage as
-    /// an application inspects it. Each test starts with none, so these are what its Operations caused.
+    /// Every delivery the message store has set aside as a dead letter and not archived, read through Wolverine's
+    /// dead-letter storage as an application inspects it. Each test starts with none, so these are what its Operations
+    /// caused.
     /// </summary>
     public async Task<IReadOnlyList<DeadLetter>> DeadLettersAsync(
         CancellationToken cancellationToken = default
@@ -165,8 +170,9 @@ public abstract class HostFixture : IAsyncLifetime
 
     /// <summary>
     /// Replays <paramref name="deadLetter"/> through Wolverine, which moves it back to its subscription's queue, where only
-    /// that subscription's handler runs, then waits until it is handled or set aside again. Fails when it is not a dead
-    /// letter, so a replay never passes on nothing.
+    /// that subscription's handler runs, then waits until it is handled or set aside again. Fails unless Wolverine replays
+    /// exactly that dead letter, such as when it is not a dead letter or is archived, which Wolverine leaves out of a
+    /// replay, so a replay never passes on nothing.
     /// </summary>
     public async Task ReplayAsync(
         DeadLetter deadLetter,
@@ -175,14 +181,27 @@ public abstract class HostFixture : IAsyncLifetime
     {
         ArgumentNullException.ThrowIfNull(deadLetter);
         var storage = DeadLetterStorage();
-        if (await storage.DeadLetterEnvelopeByIdAsync(deadLetter.Id) is null)
+        // An archived dead letter is still found by its id, so only the count Wolverine marked for replay tells a replay
+        // that will move the delivery from one that moves nothing.
+        var replayed = await storage.ReplayMatchingAsync(
+            new DeadLetterEnvelopeQuery([deadLetter.Id]),
+            cancellationToken
+        );
+        if (replayed.Affected is not 1)
         {
             throw new DeliveryAssertionException(
-                $"The delivery {deadLetter.Id} to {deadLetter.Subscription} is not a dead letter, so there is nothing to replay."
+                await storage.DeadLetterEnvelopeByIdAsync(deadLetter.Id) switch
+                {
+                    null =>
+                        $"The delivery {deadLetter.Id} to {deadLetter.Subscription} is not a dead letter, so there is nothing to replay.",
+                    { ArchivedAt: not null } =>
+                        $"The dead letter {deadLetter.Id} of {deadLetter.Subscription} is archived, and Wolverine leaves an archived dead letter out of a replay, so there is nothing to replay.",
+                    _ =>
+                        $"Wolverine marked {replayed.Affected?.ToString(CultureInfo.InvariantCulture) ?? "an unreported number of"} dead letters for replay instead of the dead letter {deadLetter.Id} of {deadLetter.Subscription} alone.",
+                }
             );
         }
 
-        await storage.ReplayAsync(new DeadLetterEnvelopeQuery([deadLetter.Id]), cancellationToken);
         await WaitUntilDeliveredAsync(cancellationToken);
     }
 
@@ -201,8 +220,8 @@ public abstract class HostFixture : IAsyncLifetime
     )
     {
         ArgumentNullException.ThrowIfNull(operation);
-        var store =
-            Deliveries() ?? throw new InvalidOperationException("The Host stores no deliveries.");
+        var store = Deliveries()
+            ?? throw new InvalidOperationException("The Host stores no deliveries.");
         var before = await SettledIdsAsync(store, cancellationToken);
         using var handedOut = new SentEnvelopes(
             Host.Services.GetRequiredService<IWolverineRuntime>()
@@ -242,7 +261,11 @@ public abstract class HostFixture : IAsyncLifetime
             {
                 var dbContext = (DbContext)
                     scope.ServiceProvider.GetRequiredService(options.ContextType);
-                await dbContext.Database.MigrateAsync(cancellationToken);
+                // A Module before its first migration has none to apply, and EF Core refuses to migrate it.
+                if (dbContext.Database.GetMigrations().Any())
+                {
+                    await dbContext.Database.MigrateAsync(cancellationToken);
+                }
             }
         }
 

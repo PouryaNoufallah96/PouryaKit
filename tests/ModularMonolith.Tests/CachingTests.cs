@@ -394,33 +394,55 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
         Assert.Equal("Desk lamp", await NameAsync(lamp, As("bob")));
     }
 
+    // On a Host with a distributed cache, so the run could store its answer in this Host's memory or in the distributed
+    // cache; it stores it in neither.
     [Fact]
     public async Task A_read_that_began_before_a_committed_rename_and_ended_after_its_eviction_leaves_no_entry_of_the_old_name()
     {
         var lamp = await CreateProductAsync("Lamp");
+        var distributed = new RecordingDistributedCache();
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            Fixture.Logs,
+            builder => builder.Services.AddSingleton<IDistributedCache>(distributed)
+        );
+        await HostFixture.StartHostAsync(host, TestContext.Current.CancellationToken);
+        var catalog = Gateway(host);
         using var joins = new StampedeJoins();
         var hold = new Hold();
 
-        var held = NameAfterHeldReadAsync(lamp, As("ada"), hold);
+        var held = NameAfterHeldReadAsync(catalog, lamp, As("ada"), hold);
         await hold.Changed.Task.WaitAsync(
             TimeSpan.FromSeconds(15),
             TestContext.Current.CancellationToken
         );
-        var joined = NameAsync(lamp, As("ada"));
+        var joined = NameAsync(catalog, lamp, As("ada"));
         await joins.Joined.WaitAsync(TestContext.Current.CancellationToken);
         // The handler has read the old name and not yet returned: its run is in flight while the rename commits and evicts.
-        var renamed = await Catalog.SendAsync(
+        var renamed = await catalog.SendAsync(
             new RenameProductCommand(lamp, "Desk lamp"),
             As("ada"),
             TestContext.Current.CancellationToken
         );
         hold.Released.SetResult();
+        var answered = (await held, await joined);
+        // A stored answer would be read back here, from this Host's memory or from the distributed cache.
+        var read = await NameAsync(catalog, lamp, As("ada"));
 
         Assert.True(renamed.IsSuccess);
-        Assert.Equal("Lamp", await held);
         // The run stores nothing, and the caller that shared it receives its answer all the same.
-        Assert.Equal("Lamp", await joined);
-        Assert.Equal("Desk lamp", await NameAsync(lamp, As("ada")));
+        Assert.Equal(("Lamp", "Lamp"), answered);
+        Assert.Equal("Desk lamp", read);
+        // The one distributed write of an answer is the later read's, which lands after its answer.
+        await distributed.WrittenAsync(IsProductEntry, TestContext.Current.CancellationToken);
+        Assert.Single(distributed.Written, IsProductEntry);
+        await Fixture.WaitUntilDeliveredAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        // An entry's key begins with its query's full name; the eviction also writes its tag's own key.
+        static bool IsProductEntry(string key) =>
+            key.StartsWith(typeof(GetProductQuery).FullName!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -581,21 +603,19 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
 
         Assert.True(renamed.IsSuccess);
         Assert.Equal("Desk lamp", read);
-        Assert.Contains(
-            Fixture.Logs.Entries,
-            entry =>
-                entry.Level == LogLevel.Error
-                && entry.Message.StartsWith(
-                    $"Evicting the cache tag product:{lamp} failed",
-                    StringComparison.Ordinal
-                )
+        Assert.Contains(Fixture.Logs.Entries, entry =>
+            entry.Level == LogLevel.Error
+            && entry.Message.StartsWith(
+                $"Evicting the cache tag product:{lamp} failed",
+                StringComparison.Ordinal
+            )
         );
     }
 
     [Fact]
     public async Task With_redis_a_second_host_reads_the_entry_the_first_stored_without_running_its_handler()
     {
-        await using var redis = new RedisBuilder("redis:8.10.1").Build();
+        await using var redis = new RedisBuilder("redis:8.10.3").Build();
         await redis.StartAsync(TestContext.Current.CancellationToken);
         string[] arguments = [$"--ConnectionStrings:cache={redis.GetConnectionString()}"];
         await using var first = AppFixture.ComposeHost(
@@ -629,15 +649,22 @@ public sealed class CachingTests(AppFixture app) : HostTest<AppFixture>(app)
     private Task<string> NameAsync(Guid product, OperationContext context) =>
         NameAsync(Catalog, product, context);
 
+    private Task<string> NameAfterHeldReadAsync(
+        Guid product,
+        OperationContext context,
+        Hold hold
+    ) => NameAfterHeldReadAsync(Catalog, product, context, hold);
+
     // Arms the probe in this call's flow only, so the rename the test sends meanwhile reads unheld.
-    private async Task<string> NameAfterHeldReadAsync(
+    private static async Task<string> NameAfterHeldReadAsync(
+        IGatewayProcessor<CatalogModule> catalog,
         Guid product,
         OperationContext context,
         Hold hold
     )
     {
         ReadProbe.HoldAfterRead(hold);
-        return await NameAsync(product, context);
+        return await NameAsync(catalog, product, context);
     }
 
     private static async Task<string> NameAsync(

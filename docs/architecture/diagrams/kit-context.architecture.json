@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a7353a2b3cc57dec4c963c011973d0ee6c282f6c",
+      "revision": "67e580751f9634e1620d0fb576c0e7372b86dad1",
       "link_mode": "web"
     }
   },
@@ -29,13 +29,13 @@
         {
           "path": "src/PouryaKit.Security.JwtBearer/JwtBearerValidation.cs",
           "line": 7,
-          "end_line": 51,
+          "end_line": 47,
           "label": "issuer and keys: configured or Authority"
         },
         {
           "path": "src/PouryaKit.Security.JwtBearer/JwtBearerServiceCollectionExtensions.cs",
-          "line": 15,
-          "end_line": 33,
+          "line": 14,
+          "end_line": 32,
           "label": "standard JWT bearer; Host fails to start"
         }
       ]
@@ -62,8 +62,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 138,
-          "end_line": 142,
+          "line": 132,
+          "end_line": 136,
           "label": "references no Kit package: runs no Operation"
         },
         {
@@ -130,8 +130,8 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
-          "line": 15,
-          "end_line": 34,
+          "line": 19,
+          "end_line": 38,
           "label": "references the Kit's projects"
         }
       ]
@@ -192,14 +192,14 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 166,
-          "end_line": 180,
+          "line": 171,
+          "end_line": 185,
           "label": "/alive always; /health in Development"
         },
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
-          "line": 20,
-          "end_line": 30,
+          "line": 24,
+          "end_line": 34,
           "label": "references the Kit's projects"
         }
       ]
@@ -220,14 +220,14 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 91,
-          "end_line": 118,
+          "line": 96,
+          "end_line": 123,
           "label": "Kit source and meter; OTLP when set"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 136,
-          "end_line": 153,
+          "line": 141,
+          "end_line": 158,
           "label": "Serilog's OTLP sink when set"
         },
         {
@@ -327,8 +327,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 272,
-          "end_line": 277,
+          "line": 265,
+          "end_line": 270,
           "label": "no Kit package references Redis"
         }
       ]
@@ -361,8 +361,8 @@
         },
         {
           "path": "src/PouryaKit.Email.MailKit/MailKitEmailSender.cs",
-          "line": 26,
-          "end_line": 41,
+          "line": 27,
+          "end_line": 42,
           "label": "a connection per send"
         }
       ]
@@ -450,8 +450,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 21,
-          "end_line": 222,
+          "line": 24,
+          "end_line": 215,
           "label": "their allowed references"
         }
       ]

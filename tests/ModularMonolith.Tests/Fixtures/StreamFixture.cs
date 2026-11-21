@@ -19,7 +19,7 @@ namespace ModularMonolith.Tests.Fixtures;
 /// </summary>
 public sealed class StreamFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.6")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18.7")
         .WithCommand("-c", "track_commit_timestamp=on", "-c", "max_connections=300")
         .Build();
 

@@ -275,9 +275,8 @@ public sealed class DapperTests(AppFixture app) : HostTest<AppFixture>(app)
     {
         var services = new ServiceCollection().AddPouryaKitDapper("app").AddPouryaKitDapper("APP");
 
-        Assert.Single(
-            services,
-            descriptor => descriptor.ServiceType == typeof(IReadConnectionFactory)
+        Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(IReadConnectionFactory)
         );
     }
 

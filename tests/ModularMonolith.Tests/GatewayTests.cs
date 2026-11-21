@@ -122,9 +122,8 @@ public sealed class GatewayTests(AppFixture app) : HostTest<AppFixture>(app)
             () => _ = gateway.SendAsync(new UnownedCommand(), context, cancellationToken),
         ];
 
-        Assert.All(
-            withoutContext,
-            send => Assert.Equal("context", Assert.Throws<ArgumentNullException>(send).ParamName)
+        Assert.All(withoutContext, send =>
+            Assert.Equal("context", Assert.Throws<ArgumentNullException>(send).ParamName)
         );
         Assert.All(notOwned, send => Assert.Throws<InvalidOperationException>(send));
     }

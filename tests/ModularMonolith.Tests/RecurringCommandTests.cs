@@ -134,25 +134,17 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         // as nothing's continuation, and for no tenant.
         var contexts = DeliveryProbes.ContextsOf(ReconcileStock);
         Assert.NotEmpty(contexts);
-        Assert.All(
-            contexts,
-            context =>
-                Assert.Equal(
-                    (
-                        Actor.System(Reconciler),
-                        (string?)null,
-                        context.OperationId,
-                        (Guid?)null,
-                        false
-                    ),
-                    (
-                        context.Actor,
-                        context.Tenant,
-                        context.CorrelationId,
-                        context.CausationId,
-                        context.IsTrustedContinuation
-                    )
+        Assert.All(contexts, context =>
+            Assert.Equal(
+                (Actor.System(Reconciler), (string?)null, context.OperationId, (Guid?)null, false),
+                (
+                    context.Actor,
+                    context.Tenant,
+                    context.CorrelationId,
+                    context.CausationId,
+                    context.IsTrustedContinuation
                 )
+            )
         );
     }
 
@@ -314,7 +306,10 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         }
         finally
         {
+            // The starting Host is disposed before the running one stops: a stopped Host keeps its connection pools open
+            // until then, and a graceful stop opens about fifty at once.
             await starting.StopAsync(TestContext.Current.CancellationToken);
+            await starting.DisposeAsync();
             await running.StopAsync(TestContext.Current.CancellationToken);
         }
 
@@ -377,15 +372,11 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
 
         // Each occurrence set aside was attempted once more than there are retry delays, and applied nothing.
         Assert.NotEmpty(setAside);
-        Assert.All(
-            setAside,
-            occurrence =>
-                Assert.Equal(
-                    1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
-                    DeliveryProbes
-                        .AttemptsOf(ReconcileStock, ReceiptOf(occurrence.UtcDateTime))
-                        .Count
-                )
+        Assert.All(setAside, occurrence =>
+            Assert.Equal(
+                1 + TestDeliveryServiceCollectionExtensions.RetryDelays.Count,
+                DeliveryProbes.AttemptsOf(ReconcileStock, ReceiptOf(occurrence.UtcDateTime)).Count
+            )
         );
         // What ran came after every occurrence set aside, under the system Actor, each with its Receipt.
         Assert.Equal(
@@ -410,23 +401,18 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     {
         var connectionString = await NewDatabaseAsync();
         var storing = true;
-        await using var host = Compose(
-            connectionString,
-            TimeSpan.FromHours(1),
-            builder =>
-                builder
-                    .Services.AddPouryaKitRecurringCommand(
-                        UnstoredNext,
-                        systemActor: "stub.unstored-next",
-                        occurrence =>
-                            storing
-                                ? new WriteKindChangedNoteCommand($"recurring {occurrence:O}")
-                                : throw new TimeoutException(
-                                    "The test failed to store an occurrence."
-                                ),
-                        typeof(StubModule)
-                    )
-                    .Configure(options => options.Every = TimeSpan.FromSeconds(1))
+        await using var host = Compose(connectionString, TimeSpan.FromHours(1), builder =>
+            builder
+                .Services.AddPouryaKitRecurringCommand(
+                    UnstoredNext,
+                    systemActor: "stub.unstored-next",
+                    occurrence =>
+                        storing
+                            ? new WriteKindChangedNoteCommand($"recurring {occurrence:O}")
+                            : throw new TimeoutException("The test failed to store an occurrence."),
+                    typeof(StubModule)
+                )
+                .Configure(options => options.Every = TimeSpan.FromSeconds(1))
         );
         try
         {
@@ -458,14 +444,12 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 $"select exception_type, exception_message from wolverine.wolverine_dead_letters where received_at = 'local://{UnstoredNext}/'"
             )
         );
-        var logged = Assert.Single(
-            Fixture.Logs.Entries,
-            entry =>
-                entry.Level == LogLevel.Error
-                && entry.Message.Contains(
-                    $"recurring command {UnstoredNext} failed",
-                    StringComparison.Ordinal
-                )
+        var logged = Assert.Single(Fixture.Logs.Entries, entry =>
+            entry.Level == LogLevel.Error
+            && entry.Message.Contains(
+                $"recurring command {UnstoredNext} failed",
+                StringComparison.Ordinal
+            )
         );
         Assert.Equal(
             [typeof(TimeoutException), typeof(InvalidOperationException)],
@@ -541,20 +525,16 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     {
         var connectionString = await NewDatabaseAsync();
         var text = $"stale {Guid.CreateVersion7()}";
-        await using var host = Compose(
-            connectionString,
-            TimeSpan.FromSeconds(2),
-            builder =>
-            {
-                builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
-                    store.InboxStaleTime = TimeSpan.FromMilliseconds(500)
-                );
-                builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
-                    StaleNote,
-                    typeof(StubModule)
-                );
-            }
-        );
+        await using var host = Compose(connectionString, TimeSpan.FromSeconds(2), builder =>
+        {
+            builder.Services.Configure<PouryaKitMessageStoreOptions>(store =>
+                store.InboxStaleTime = TimeSpan.FromMilliseconds(500)
+            );
+            builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
+                StaleNote,
+                typeof(StubModule)
+            );
+        });
         DeliveryProbes.Hold? later = null;
         object[] delayed;
         object[] occurrence;
@@ -747,13 +727,11 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
                 $"select id, exception_type from wolverine.wolverine_dead_letters where {OnQueue}"
             )
         );
-        Assert.Contains(
-            Fixture.Logs.Entries,
-            entry =>
-                entry.Level == LogLevel.Error
-                && entry.Exception is JsonException
-                && entry.Message.Contains($"#{stored[0]}", StringComparison.Ordinal)
-                && entry.Message.Contains($"to local://{ReconcileStock}/", StringComparison.Ordinal)
+        Assert.Contains(Fixture.Logs.Entries, entry =>
+            entry.Level == LogLevel.Error
+            && entry.Exception is JsonException
+            && entry.Message.Contains($"#{stored[0]}", StringComparison.Ordinal)
+            && entry.Message.Contains($"to local://{ReconcileStock}/", StringComparison.Ordinal)
         );
         Assert.Equal(
             [
@@ -778,14 +756,11 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         var text = $"kind {Guid.CreateVersion7()}";
         // Each Host is disposed before the next one starts: a stopped Host keeps its connection pools open until then.
         await using (
-            var delayed = Compose(
-                connectionString,
-                TimeSpan.FromHours(1),
-                builder =>
-                    builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
-                        KindChanged,
-                        typeof(StubModule)
-                    )
+            var delayed = Compose(connectionString, TimeSpan.FromHours(1), builder =>
+                builder.Services.AddPouryaKitDelayedCommand<WriteKindChangedNoteCommand>(
+                    KindChanged,
+                    typeof(StubModule)
+                )
             )
         )
         {
@@ -804,20 +779,15 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         }
 
         await using (
-            var recurring = Compose(
-                connectionString,
-                TimeSpan.FromHours(1),
-                builder =>
-                    builder
-                        .Services.AddPouryaKitRecurringCommand(
-                            KindChanged,
-                            systemActor: "stub.kind-changer",
-                            occurrence => new WriteKindChangedNoteCommand(
-                                $"recurring {occurrence:O}"
-                            ),
-                            typeof(StubModule)
-                        )
-                        .Configure(options => options.Every = TimeSpan.FromHours(1))
+            var recurring = Compose(connectionString, TimeSpan.FromHours(1), builder =>
+                builder
+                    .Services.AddPouryaKitRecurringCommand(
+                        KindChanged,
+                        systemActor: "stub.kind-changer",
+                        occurrence => new WriteKindChangedNoteCommand($"recurring {occurrence:O}"),
+                        typeof(StubModule)
+                    )
+                    .Configure(options => options.Every = TimeSpan.FromHours(1))
             )
         )
         {
@@ -889,21 +859,18 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
     public async Task A_host_whose_first_occurrence_fails_to_store_stops_and_fails_its_start()
     {
         var connectionString = await NewDatabaseAsync();
-        await using var host = Compose(
-            connectionString,
-            TimeSpan.FromHours(1),
-            builder =>
-                builder
-                    .Services.AddPouryaKitRecurringCommand<WriteKindChangedNoteCommand>(
-                        UnstoredFirst,
-                        systemActor: "stub.unstored-first",
-                        _ =>
-                            throw new TimeoutException(
-                                "The test failed to store the first occurrence."
-                            ),
-                        typeof(StubModule)
-                    )
-                    .Configure(options => options.Every = TimeSpan.FromHours(1))
+        await using var host = Compose(connectionString, TimeSpan.FromHours(1), builder =>
+            builder
+                .Services.AddPouryaKitRecurringCommand<WriteKindChangedNoteCommand>(
+                    UnstoredFirst,
+                    systemActor: "stub.unstored-first",
+                    _ =>
+                        throw new TimeoutException(
+                            "The test failed to store the first occurrence."
+                        ),
+                    typeof(StubModule)
+                )
+                .Configure(options => options.Every = TimeSpan.FromHours(1))
         );
 
         var thrown = await Assert.ThrowsAsync<TimeoutException>(() =>
@@ -956,17 +923,11 @@ public sealed class RecurringCommandTests(AppFixture app) : HostTest<AppFixture>
         string connectionString,
         TimeSpan every,
         Action<WebApplicationBuilder>? configure = null
-    ) =>
-        AppFixture.ComposeHost(
-            "Development",
-            connectionString,
-            Fixture.Logs,
-            builder =>
-            {
-                builder.Configuration["Inventory:ReconcileStock:Every"] = every.ToString();
-                configure?.Invoke(builder);
-            }
-        );
+    ) => AppFixture.ComposeHost("Development", connectionString, Fixture.Logs, builder =>
+        {
+            builder.Configuration["Inventory:ReconcileStock:Every"] = every.ToString();
+            configure?.Invoke(builder);
+        });
 
     private async Task<string> NewDatabaseAsync()
     {

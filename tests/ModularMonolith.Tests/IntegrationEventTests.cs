@@ -140,9 +140,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
             ],
             deliveries
         );
-        Assert.DoesNotContain(
-            Received.All,
-            received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
+        Assert.DoesNotContain(Received.All, received =>
+            received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
         );
     }
 
@@ -219,12 +218,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         long committedBeforeDeath = -1;
         List<object[]> afterDeath = [];
 
-        using (
-            var hold = DeliveryProbes.HoldAfterCommit(
-                typeof(InventoryModule),
-                InventorySubscription
-            )
-        )
+        var hold = DeliveryProbes.HoldAfterCommit(typeof(InventoryModule), InventorySubscription);
+        try
         {
             await Fixture.WaitForDeliveriesAsync(
                 async () =>
@@ -243,6 +238,10 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                         (WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()
                     ).StopMode = StopMode.Quick;
                     await dying.StopAsync(TestContext.Current.CancellationToken);
+                    // Disposed before the next Host starts: a stopped Host keeps its connection pools open until then,
+                    // where a killed process leaves none open. Read after the disposal, so what the new Host finds is
+                    // what a killed process leaves.
+                    await dying.DisposeAsync();
                     afterDeath = await Fixture.RowsAsync(
                         $"select status, owner_id <> 0 from wolverine.wolverine_incoming_envelopes where received_at = 'local://{InventorySubscription}/'"
                     );
@@ -255,6 +254,11 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                 },
                 TestContext.Current.CancellationToken
             );
+        }
+        finally
+        {
+            // The held delivery never continues, as in a process that was killed.
+            hold.Abandon();
         }
 
         Assert.Equal(1L, committedBeforeDeath);
@@ -300,13 +304,11 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         );
         // The first attempt gets the published instance; each retry is read back from the store, a new instance, so the
         // identity and time it carries crossed serialisation unchanged.
-        Assert.All(
-            attempts,
-            attempt =>
-                Assert.Equal(
-                    new NoteCopyRequestedV1(requested.Id, requested.OccurredOn, text),
-                    attempt.IntegrationEvent
-                )
+        Assert.All(attempts, attempt =>
+            Assert.Equal(
+                new NoteCopyRequestedV1(requested.Id, requested.OccurredOn, text),
+                attempt.IntegrationEvent
+            )
         );
         Assert.Equal(
             attempts.Count,
@@ -365,9 +367,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         );
 
         var notified = Assert.Single(Notified.For(text));
-        var received = Assert.Single(
-            Received.All,
-            received => received.IntegrationEvent is NoteSharedV1 note && note.Text == text
+        var received = Assert.Single(Received.All, received =>
+            received.IntegrationEvent is NoteSharedV1 note && note.Text == text
         );
         Assert.Equal(
             new NoteSharedV1(shared.Id, shared.OccurredOn, text),
@@ -447,9 +448,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
         );
 
         // Whichever commits first publishes; the other keeps failing until it is set aside.
-        Assert.Single(
-            Received.All,
-            received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
+        Assert.Single(Received.All, received =>
+            received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
         );
         Assert.Equal(
             [("stub.note-shared", false), ("x", false), ("x", true)],
@@ -490,9 +490,8 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
                 "select exception_message from wolverine.wolverine_dead_letters"
             )
         );
-        Assert.DoesNotContain(
-            Received.All,
-            received => received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
+        Assert.DoesNotContain(Received.All, received =>
+            received.IntegrationEvent is NoteSharedV1 shared && shared.Text == text
         );
     }
 
@@ -554,15 +553,11 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
     public void Building_fails_on_a_subscription_to_an_integration_event_no_module_of_the_host_publishes()
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            AppFixture.ComposeHost(
-                "Development",
-                Fixture.ConnectionString,
-                Fixture.Logs,
-                builder =>
-                    builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>(
-                        "tests.unpublished-twin",
-                        typeof(StubModule)
-                    )
+            AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, builder =>
+                builder.Services.Subscribe<TwinV1, TwinIntegrationEventHandler>(
+                    "tests.unpublished-twin",
+                    typeof(StubModule)
+                )
             )
         );
 
@@ -577,28 +572,20 @@ public sealed class IntegrationEventTests(AppFixture app) : HostTest<AppFixture>
     {
         // Built, never started: the build declares the Host's wire names for the process.
         await AppFixture
-            .ComposeHost(
-                "Development",
-                Fixture.ConnectionString,
-                Fixture.Logs,
-                builder =>
-                    builder.Services.Publish<ProcessNamedV1>(
-                        "tests.process-named.v1",
-                        typeof(StubModule)
-                    )
+            .ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, builder =>
+                builder.Services.Publish<ProcessNamedV1>(
+                    "tests.process-named.v1",
+                    typeof(StubModule)
+                )
             )
             .DisposeAsync();
 
         var thrown = Assert.Throws<InvalidOperationException>(() =>
-            AppFixture.ComposeHost(
-                "Development",
-                Fixture.ConnectionString,
-                Fixture.Logs,
-                builder =>
-                    builder.Services.Publish<ProcessNamedV1>(
-                        "tests.process-named.v2",
-                        typeof(StubModule)
-                    )
+            AppFixture.ComposeHost("Development", Fixture.ConnectionString, Fixture.Logs, builder =>
+                builder.Services.Publish<ProcessNamedV1>(
+                    "tests.process-named.v2",
+                    typeof(StubModule)
+                )
             )
         );
 

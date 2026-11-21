@@ -1,8 +1,11 @@
+using System.Globalization;
+
 namespace PouryaKit.ArchitectureTests;
 
 /// <summary>
 /// Plan section C, "Allowed references", as amended on 2026-10-05 and by G.4, as the checks a restored Kit package must
-/// pass: its direct references are exactly the table's, and its full closure keeps out what the table keeps out.
+/// pass: its direct references are exactly the table's, and its full closure keeps out what the table keeps out and
+/// holds no EF Core package of an older major than the Kit's, and no prerelease but the temporary EF Core set.
 /// </summary>
 internal static class PackageGraph
 {
@@ -25,33 +28,24 @@ internal static class PackageGraph
         ["PouryaKit.Domain"] = new([], []),
         ["PouryaKit.Email"] = new(["PouryaKit.Domain"], []),
         // Cqrs is for its composition check (#147).
-        ["PouryaKit.Email.MailKit"] = new(
-            ["PouryaKit.Cqrs", "PouryaKit.Email"],
-            ["MailKit", "Microsoft.Extensions.Options"]
-        ),
+        ["PouryaKit.Email.MailKit"] = new(["PouryaKit.Cqrs", "PouryaKit.Email"], ["MailKit"]),
         // Cqrs builds the Host's validated container and runs its composition checks as it starts (#61, 2026-10-07),
-        // which takes the container's implementation and the Hosting abstractions from Modularity.
+        // which takes the container's implementation from Modularity; the .NET 11 shared framework holds the abstractions.
         ["PouryaKit.Cqrs"] = new(
             ["PouryaKit.Core", "PouryaKit.Domain"],
-            [
-                "Microsoft.Extensions.DependencyInjection",
-                "Microsoft.Extensions.DependencyInjection.Abstractions",
-                "Microsoft.Extensions.Hosting.Abstractions",
-                "Microsoft.Extensions.Logging.Abstractions",
-            ]
+            ["Microsoft.Extensions.DependencyInjection"]
         ),
         ["PouryaKit.Validation"] = new(["PouryaKit.Cqrs"], ["FluentValidation"]),
-        ["PouryaKit.Modularity"] = new(
-            ["PouryaKit.Cqrs"],
-            ["Microsoft.Extensions.Hosting.Abstractions"]
-        ),
+        ["PouryaKit.Modularity"] = new(["PouryaKit.Cqrs"], []),
         ["PouryaKit.Persistence"] = new(["PouryaKit.Domain"], ["Ardalis.Specification"]),
         ["PouryaKit.Persistence.EFCore"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Persistence"],
             [
                 "Microsoft.EntityFrameworkCore.Relational",
                 "Ardalis.Specification.EntityFrameworkCore",
-                "Microsoft.Extensions.Hosting.Abstractions",
+                // Stable floors over the release candidate EF Core asks for at least, while it is one (#215).
+                "Microsoft.Extensions.Caching.Memory",
+                "Microsoft.Extensions.Logging",
             ]
         ),
         ["PouryaKit.Persistence.Postgres"] = new(
@@ -60,21 +54,24 @@ internal static class PackageGraph
         ),
         ["PouryaKit.Persistence.Dapper"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs"],
-            [
-                "Dapper",
-                "Npgsql",
-                "Microsoft.Extensions.Configuration.Abstractions",
-                "Microsoft.Extensions.DependencyInjection.Abstractions",
-            ]
+            ["Dapper", "Npgsql"]
         ),
         ["PouryaKit.Messaging"] = new(["PouryaKit.Domain"], []),
         ["PouryaKit.Messaging.Wolverine"] = new(
             ["PouryaKit.Core", "PouryaKit.Cqrs", "PouryaKit.Messaging"],
             ["WolverineFx"]
         ),
+        // EF Core Design at the Kit's line, over the 10.0.4 or later WolverineFx.EntityFrameworkCore asks for (#215).
         ["PouryaKit.Messaging.Wolverine.EFCore"] = new(
             ["PouryaKit.Messaging.Wolverine", "PouryaKit.Persistence.EFCore"],
-            ["WolverineFx.EntityFrameworkCore", "WolverineFx.Postgresql"]
+            [
+                "Microsoft.EntityFrameworkCore.Design",
+                "WolverineFx.EntityFrameworkCore",
+                "WolverineFx.Postgresql",
+                // Stable floors over the prereleases EF Core Design's rc.3 and its Roslyn 5.9.0 ask for at least (#215).
+                "Microsoft.CodeAnalysis.Analyzers",
+                "Microsoft.Extensions.DependencyModel",
+            ]
         ),
         ["PouryaKit.Messaging.Wolverine.RabbitMq"] = new(
             ["PouryaKit.Messaging.Wolverine"],
@@ -95,7 +92,7 @@ internal static class PackageGraph
             ["PouryaKit.Web"],
             [
                 "Asp.Versioning.Http",
-                "Asp.Versioning.OpenApi",
+                "Asp.Versioning.Mvc.ApiExplorer",
                 "Microsoft.AspNetCore.OpenApi",
                 "Scalar.AspNetCore",
             ],
@@ -115,24 +112,21 @@ internal static class PackageGraph
                 "xunit.v3.extensibility.core",
                 "Microsoft.Extensions.TimeProvider.Testing",
                 "WolverineFx.RuntimeCompilation",
+                // The runtime compiler's Roslyn packages, which pin each other exactly, at the line EF Core Design 11
+                // needs (#215).
+                "Microsoft.CodeAnalysis",
+                "Microsoft.CodeAnalysis.Scripting",
+                "Microsoft.CodeAnalysis.Workspaces.MSBuild",
             ]
         ),
         // Storage references Cqrs for the one-provider composition check both providers register through it (#128).
         ["PouryaKit.Storage"] = new(["PouryaKit.Cqrs", "PouryaKit.Domain"], []),
-        ["PouryaKit.Storage.S3"] = new(
-            ["PouryaKit.Storage"],
-            ["AWSSDK.S3", "Microsoft.Extensions.Options"]
-        ),
+        ["PouryaKit.Storage.S3"] = new(["PouryaKit.Storage"], ["AWSSDK.S3"]),
         // Apache.Arrow and System.Security.Cryptography.ProtectedData are licence floors over the versions Azure.Storage.Blobs
-        // 12.30.1 brings, which declare no licence expression (#128).
+        // 12.30.2 brings, which declare no licence expression (#128).
         ["PouryaKit.Storage.AzureBlob"] = new(
             ["PouryaKit.Storage"],
-            [
-                "Azure.Storage.Blobs",
-                "Microsoft.Extensions.Options",
-                "Apache.Arrow",
-                "System.Security.Cryptography.ProtectedData",
-            ]
+            ["Azure.Storage.Blobs", "Apache.Arrow", "System.Security.Cryptography.ProtectedData"]
         ),
         ["PouryaKit.Localization"] = new(["PouryaKit.Cqrs"], [], ["Microsoft.AspNetCore.App"]),
         ["PouryaKit.ReverseProxy"] = new(
@@ -181,13 +175,12 @@ internal static class PackageGraph
                 "Microsoft.Extensions.AI",
                 "Microsoft.Extensions.AI.OpenAI",
                 "Microsoft.Extensions.Http",
-                "Microsoft.Extensions.Options",
                 "ModelContextProtocol.Core",
             ]
         ),
         // Semantic search on the Unit of Work's connection, sending embeddings as real[], which the server's pgvector casts (#138).
         ["PouryaKit.AI.Postgres"] = new(["PouryaKit.AI", "PouryaKit.Persistence.Postgres"], []),
-        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.53.0 brings, for the
+        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.62.0 brings, for the
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(
             ["PouryaKit.Cqrs", "PouryaKit.Persistence"],
@@ -384,7 +377,53 @@ internal static class PackageGraph
         {
             yield return $"{package.Name}'s closure holds the packages [{Listed(package.RuntimePackages.Select(arrived => arrived.Id))}]; it must hold none.";
         }
+
+        // One EF Core line: a package of EF Core's own below its major, beside it, is a second EF Core (#215).
+        foreach (
+            var arrived in package
+                .RuntimePackages.Where(IsEfCoreBelowTheKitsMajor)
+                .OrderBy(arrived => arrived.Id, StringComparer.Ordinal)
+        )
+        {
+            yield return $"{package.Name}'s closure holds {arrived.Id} {arrived.Version}, below EF Core {EfCoreMajor}.";
+        }
+
+        // A prerelease only where no stable version serves (#215).
+        foreach (
+            var arrived in package
+                .RuntimePackages.Where(arrived =>
+                    arrived.Version.Contains('-', StringComparison.Ordinal)
+                    && !TemporaryPrereleases.Contains(arrived.Id)
+                )
+                .OrderBy(arrived => arrived.Id, StringComparer.Ordinal)
+        )
+        {
+            yield return $"{package.Name}'s closure holds {arrived.Id} {arrived.Version}, a prerelease outside the temporary EF Core set.";
+        }
     }
+
+    private const int EfCoreMajor = 11;
+
+    // The prereleases the Kit takes while the stable EF Core line cannot serve (docs/packages.md, "Temporary prerelease
+    // dependencies"): the provider, and EF Core's own packages at the release candidate it pins exactly. Empty it only when
+    // the stable provider can: it needs Npgsql 11, on which WolverineFx 6.64.2's message store does not start.
+    private static readonly HashSet<string> TemporaryPrereleases =
+    [
+        "Microsoft.EntityFrameworkCore",
+        "Microsoft.EntityFrameworkCore.Abstractions",
+        "Microsoft.EntityFrameworkCore.Analyzers",
+        "Microsoft.EntityFrameworkCore.Design",
+        "Microsoft.EntityFrameworkCore.Relational",
+        "Npgsql.EntityFrameworkCore.PostgreSQL",
+    ];
+
+    // By id, EF Core's own packages only, and by major: 11.0.0-rc.3 is EF Core 11, though it sorts below 11.0.0.
+    private static bool IsEfCoreBelowTheKitsMajor(PackageLicence arrived) =>
+        (
+            arrived.Id == "Microsoft.EntityFrameworkCore"
+            || arrived.Id.StartsWith("Microsoft.EntityFrameworkCore.", StringComparison.Ordinal)
+        )
+        && int.Parse(arrived.Version.Split('.')[0], CultureInfo.InvariantCulture) < EfCoreMajor;
 
     private static string Listed(IEnumerable<string> names) =>
         string.Join(", ", names.Order(StringComparer.Ordinal));

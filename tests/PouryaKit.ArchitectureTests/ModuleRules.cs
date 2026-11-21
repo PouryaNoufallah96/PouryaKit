@@ -562,10 +562,8 @@ internal static partial class ModuleRules
     {
         var holderTable = StoreOf(holder);
         var pairs = columns
-            .Zip(
-                holderColumns,
-                (column, holderColumn) =>
-                    (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))
+            .Zip(holderColumns, (column, holderColumn) =>
+                (column.GetColumnName(partTable), holderColumn.GetColumnName(holderTable))
             )
             .ToList();
         return pairs.All(pair => pair is (not null, not null))
@@ -1316,16 +1314,16 @@ internal static partial class ModuleRules
     // One statement of a literal, trimmed: PostgreSQL's transaction control, with the optional words each takes.
     [GeneratedRegex(
         """
-            ^(?:
-                (?:begin(?:\s+(?:transaction|work))?|start\s+transaction)
-                    (?:\s*,?\s*(?:isolation\s+level\s+\w+(?:\s+\w+)?|read\s+(?:write|only)|(?:not\s+)?deferrable))*
-              | (?:commit|end|abort|rollback)(?:\s+(?:transaction|work))?(?:\s+and\s+(?:no\s+)?chain)?
-              | rollback(?:\s+(?:transaction|work))?\s+to(?:\s+savepoint)?\s+\w+
-              | savepoint\s+\w+
-              | release(?:\s+savepoint)?\s+\w+
-              | (?:prepare\s+transaction|commit\s+prepared|rollback\s+prepared)\s+'[^']*'
-            )$
-            """,
+        ^(?:
+            (?:begin(?:\s+(?:transaction|work))?|start\s+transaction)
+                (?:\s*,?\s*(?:isolation\s+level\s+\w+(?:\s+\w+)?|read\s+(?:write|only)|(?:not\s+)?deferrable))*
+          | (?:commit|end|abort|rollback)(?:\s+(?:transaction|work))?(?:\s+and\s+(?:no\s+)?chain)?
+          | rollback(?:\s+(?:transaction|work))?\s+to(?:\s+savepoint)?\s+\w+
+          | savepoint\s+\w+
+          | release(?:\s+savepoint)?\s+\w+
+          | (?:prepare\s+transaction|commit\s+prepared|rollback\s+prepared)\s+'[^']*'
+        )$
+        """,
         RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace
     )]
     private static partial Regex TransactionStatement();

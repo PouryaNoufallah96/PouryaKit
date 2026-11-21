@@ -66,18 +66,16 @@ public sealed class CrossProcessTracingTests(BrokerFixture broker)
             [OperationTelemetry.Threw, OperationTelemetry.Succeeded],
             attempts.Select(attempt => Tag(attempt, OperationTelemetry.OutcomeTag))
         );
-        Assert.All(
-            attempts,
-            attempt =>
-                Assert.Equal(
-                    ("InventoryModule", StockItems, publishing.SpanId, TraceState),
-                    (
-                        Tag(attempt, OperationTelemetry.ModuleTag),
-                        Tag(attempt, SubscriptionTag),
-                        PublisherOf(attempt, trace, wolverineListened),
-                        attempt.TraceStateString
-                    )
+        Assert.All(attempts, attempt =>
+            Assert.Equal(
+                ("InventoryModule", StockItems, publishing.SpanId, TraceState),
+                (
+                    Tag(attempt, OperationTelemetry.ModuleTag),
+                    Tag(attempt, SubscriptionTag),
+                    PublisherOf(attempt, trace, wolverineListened),
+                    attempt.TraceStateString
                 )
+            )
         );
         // Each delivery's Operation names its subscription, beside the Deliver command every one of them runs.
         Assert.Equal(Publishing, Tag(publishing, SubscriptionTag));

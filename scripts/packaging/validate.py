@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net10.0/PouryaKit.ArchitectureTests.dll"
+ARCHITECTURE = ROOT / "tests/PouryaKit.ArchitectureTests/bin/Release/net11.0/PouryaKit.ArchitectureTests.dll"
 # The projects a template generates: package content, not projects of this repository.
 TEMPLATE_CONTENT = ROOT / "src/PouryaKit.Templates/content"
 # --since: the only paths whose change cannot reach a package, a template or this validation, because nothing that is
@@ -103,7 +103,7 @@ def inventory_controls(expected, evaluated, output):
 def consumer_config(folder, packages):
     (folder / "global.json").write_text((ROOT / "global.json").read_text())
     (folder / "Directory.Build.props").write_text(
-        '<Project><PropertyGroup><TargetFramework>net10.0</TargetFramework><LangVersion>latest</LangVersion>'
+        '<Project><PropertyGroup><TargetFramework>net11.0</TargetFramework>'
         '<Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>'
         '<TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup></Project>\n')
     (folder / "Directory.Build.targets").write_text("<Project />\n")
@@ -377,7 +377,7 @@ def validate(output, *, fetch=True):
     (output / "evaluated-projects.json").write_text(json.dumps(evaluated, indent=2))
     inventory_controls(packages, evaluated, output / "inventory-controls.log")
     run(["dotnet", "build", "PouryaKit.slnx", "-c", "Release", "-p:ContinuousIntegrationBuild=true"], log=output / "build.log")
-    tests = test_totals(run(["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build"], log=output / "runtime-tests.log"))
+    tests = test_totals(run(["dotnet", "test", "PouryaKit.slnx", "-c", "Release", "--no-build", "--timeout", "45m"], log=output / "runtime-tests.log"))
     version = properties(ROOT / "src/PouryaKit.Domain/PouryaKit.Domain.csproj", ["MinVerVersion", "PackageVersion"], target="MinVer")
     if version["MinVerVersion"] != version["PackageVersion"]:
         raise RuntimeError(f"MinVer/build version mismatch: {version}")
@@ -413,7 +413,7 @@ def validate(output, *, fetch=True):
                 cwd=solution.parent, env=env, log=output / f"consumer-{name}-restore.log")
             run(["dotnet", "build", solution, "-c", "Release", "--no-restore"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-build.log")
             test_project = solution.parent / "tests" / f"{generated}.Tests" / f"{generated}.Tests.csproj"
-            result = run(["dotnet", "test", "--project", test_project, "-c", "Release", "--no-build"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
+            result = run(["dotnet", "test", "--project", test_project, "-c", "Release", "--no-build", "--timeout", "45m"], cwd=solution.parent, env=env, log=output / f"consumer-{name}-test.log")
             passed = re.search(r"succeeded: (\d+)", result)
             failed = re.search(r"failed: (\d+)", result)
             if not passed or not failed or failed.group(1) != "0" or passed.group(1) == "0":

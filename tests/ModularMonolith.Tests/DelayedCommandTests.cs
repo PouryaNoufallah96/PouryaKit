@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularMonolith.Tests.Stub;
 using Npgsql;
 using PouryaKit.Cqrs;
+using PouryaKit.Domain;
 using PouryaKit.Messaging.Wolverine;
 using PouryaKit.Messaging.Wolverine.EFCore;
 using PouryaKit.Modularity;
@@ -39,29 +40,27 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
             "tenant-a",
             Guid.CreateVersion7()
         );
-        await using var dying = AppFixture.ComposeHost(
-            "Development",
-            connectionString,
-            Fixture.Logs
-        );
-        await using var starting = AppFixture.ComposeHost(
-            "Development",
-            connectionString,
-            Fixture.Logs
-        );
-        await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
+        Result opened;
+        // Each Host is disposed before the next one starts: a stopped Host keeps its connection pools open until then,
+        // where a killed process leaves none open.
+        await using (
+            var dying = AppFixture.ComposeHost("Development", connectionString, Fixture.Logs)
+        )
+        {
+            await HostFixture.StartHostAsync(dying, TestContext.Current.CancellationToken);
 
-        var opened = await dying
-            .Services.GetRequiredService<IGatewayProcessor<BillingModule>>()
-            .SendAsync(
-                new OpenQuoteCommand(quote, TimeSpan.FromSeconds(3)),
-                opening,
-                TestContext.Current.CancellationToken
-            );
-        // Wolverine's quick stop neither drains nor gives up what the Host holds, as a killed process leaves it.
-        ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode =
-            StopMode.Quick;
-        await dying.StopAsync(TestContext.Current.CancellationToken);
+            opened = await dying
+                .Services.GetRequiredService<IGatewayProcessor<BillingModule>>()
+                .SendAsync(
+                    new OpenQuoteCommand(quote, TimeSpan.FromSeconds(3)),
+                    opening,
+                    TestContext.Current.CancellationToken
+                );
+            // Wolverine's quick stop neither drains nor gives up what the Host holds, as a killed process leaves it.
+            ((WolverineRuntime)dying.Services.GetRequiredService<IWolverineRuntime>()).StopMode =
+                StopMode.Quick;
+            await dying.StopAsync(TestContext.Current.CancellationToken);
+        }
 
         // Stored with the quote, in its commit, due at its expiry, and owned by no Host.
         var stored = Assert.Single(
@@ -79,17 +78,22 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         Assert.True(opened.IsSuccess);
         Assert.Equal(["Scheduled", 0, true, "Open", true, true], stored[1..]);
 
-        try
+        await using (
+            var starting = AppFixture.ComposeHost("Development", connectionString, Fixture.Logs)
+        )
         {
-            await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
-            await Sql.WaitUntilAsync(
-                connectionString,
-                $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{envelope}' and status = 'Handled')"
-            );
-        }
-        finally
-        {
-            await starting.StopAsync(TestContext.Current.CancellationToken);
+            try
+            {
+                await HostFixture.StartHostAsync(starting, TestContext.Current.CancellationToken);
+                await Sql.WaitUntilAsync(
+                    connectionString,
+                    $"exists (select from wolverine.wolverine_incoming_envelopes where id = '{envelope}' and status = 'Handled')"
+                );
+            }
+            finally
+            {
+                await starting.StopAsync(TestContext.Current.CancellationToken);
+            }
         }
 
         Assert.Equal(
@@ -116,18 +120,11 @@ public sealed class DelayedCommandTests(AppFixture app) : HostTest<AppFixture>(a
         // Every attempt continued the Operation that opened the quote: its Actor, tenant and correlation, caused by it.
         var contexts = DeliveryProbes.ContextsOf(ExpireQuote, envelope);
         Assert.NotEmpty(contexts);
-        Assert.All(
-            contexts,
-            context =>
-                Assert.Equal(
-                    (
-                        opening.Actor,
-                        opening.Tenant,
-                        opening.CorrelationId,
-                        (Guid?)opening.OperationId
-                    ),
-                    (context.Actor, context.Tenant, context.CorrelationId, context.CausationId)
-                )
+        Assert.All(contexts, context =>
+            Assert.Equal(
+                (opening.Actor, opening.Tenant, opening.CorrelationId, (Guid?)opening.OperationId),
+                (context.Actor, context.Tenant, context.CorrelationId, context.CausationId)
+            )
         );
     }
 

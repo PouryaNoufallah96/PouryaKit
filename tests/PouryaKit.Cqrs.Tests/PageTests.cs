@@ -71,9 +71,8 @@ public sealed class PageTests
 
         Assert.Equal([category, category, noon, noon, noon], values);
         // Every time is read as UTC, whatever offset it was given in, so both helpers send the same value.
-        Assert.All(
-            values.OfType<DateTimeOffset>(),
-            time => Assert.Equal(TimeSpan.Zero, time.Offset)
+        Assert.All(values.OfType<DateTimeOffset>(), time =>
+            Assert.Equal(TimeSpan.Zero, time.Offset)
         );
         Assert.Throws<InvalidOperationException>(() =>
             Declaration.ValueOf(new("category", FilterOperator.Equal, 42))
@@ -114,13 +113,11 @@ public sealed class PageTests
             ["eq", "ne", "contains", "startswith", "gt", "gte", "lt", "lte"],
             Enum.GetValues<FilterOperator>().Select(filterOperator => filterOperator.Name)
         );
-        Assert.All(
-            Enum.GetValues<FilterOperator>(),
-            filterOperator =>
-                Assert.True(
-                    FilterOperator.TryParseName(filterOperator.Name, out var parsed)
-                        && parsed == filterOperator
-                )
+        Assert.All(Enum.GetValues<FilterOperator>(), filterOperator =>
+            Assert.True(
+                FilterOperator.TryParseName(filterOperator.Name, out var parsed)
+                    && parsed == filterOperator
+            )
         );
         Assert.False(FilterOperator.TryParseName("Equal", out _));
         Assert.False(FilterOperator.TryParseName(null, out _));

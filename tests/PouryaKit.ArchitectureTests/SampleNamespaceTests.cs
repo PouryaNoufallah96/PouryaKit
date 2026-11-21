@@ -31,9 +31,8 @@ public sealed class SampleNamespaceTests
         // misses must be among the judged.
         Assert.Equal(11, projects.Length);
         var judged = projects.SelectMany(Judged).ToList();
-        Assert.Contains(
-            judged,
-            file => file.Path == "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
+        Assert.Contains(judged, file =>
+            file.Path == "ModularMonolith.Host/LoggedNewProductAnnouncer.cs"
         );
         Assert.Empty(
             judged.SelectMany(file =>

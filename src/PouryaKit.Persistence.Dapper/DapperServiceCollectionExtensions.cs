@@ -62,22 +62,18 @@ public static class DapperServiceCollectionExtensions
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<ICompositionCheck, ReadConnectionCheck>()
             );
-            services.AddKeyedSingleton(
-                typeof(ReadConnectionFactory),
-                (provider, _) =>
-                {
-                    var connectionString =
-                        provider
-                            .GetRequiredService<IConfiguration>()
-                            .GetConnectionString(connectionName)
-                        ?? throw new InvalidOperationException(
-                            $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
-                        );
-                    return connection.Refusal(connectionString) is { } refusal
-                        ? throw new InvalidOperationException(refusal)
-                        : NpgsqlDataSource.Create(connectionString);
-                }
-            );
+            services.AddKeyedSingleton(typeof(ReadConnectionFactory), (provider, _) =>
+            {
+                var connectionString = provider
+                    .GetRequiredService<IConfiguration>()
+                    .GetConnectionString(connectionName)
+                    ?? throw new InvalidOperationException(
+                        $"Dapper reads need the connection string '{connectionName}' in the Host's ConnectionStrings configuration."
+                    );
+                return connection.Refusal(connectionString) is { } refusal
+                    ? throw new InvalidOperationException(refusal)
+                    : NpgsqlDataSource.Create(connectionString);
+            });
             services.AddScoped<IReadConnectionFactory>(provider => new ReadConnectionFactory(
                 provider.GetRequiredKeyedService<NpgsqlDataSource>(typeof(ReadConnectionFactory)),
                 provider.GetService<Operation>()

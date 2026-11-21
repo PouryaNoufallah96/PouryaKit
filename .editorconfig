@@ -12,9 +12,10 @@ indent_size = 4
 [*.{csproj,props,slnx,json,yml,yaml,toml,sh,ts,js}]
 indent_size = 2
 
-# The C# 14 and .NET 10 idioms of .claude/rules/kit-code.md that have an analyzer in the SDK. EnforceCodeStyleInBuild
-# runs them in every build, and TreatWarningsAsErrors makes a warning fail it. Extension members, TimeProvider and
-# Guid.CreateVersion7 have no analyzer; review still judges those.
+# The C# 15 and .NET 11 idioms of .claude/rules/kit-code.md that have an analyzer in the SDK. EnforceCodeStyleInBuild
+# runs them in every build, and TreatWarningsAsErrors makes a warning fail it. Extension members, TimeProvider,
+# Guid.CreateVersion7 and closed types have no analyzer, and IDE0410 reports a goto, not a flag variable; review still
+# judges those.
 [*.cs]
 # Collection expressions
 dotnet_diagnostic.IDE0028.severity = warning
@@ -31,6 +32,18 @@ dotnet_diagnostic.IDE0290.severity = warning
 dotnet_diagnostic.IDE0032.severity = warning
 # System.Threading.Lock
 dotnet_diagnostic.IDE0330.severity = warning
+# Labeled break and continue (C# 15), in place of a flag or goto that leaves nested loops
+dotnet_diagnostic.IDE0410.severity = warning
+# The .NET 11 SDK's rules for shapes the Kit writes: JsonElement.Parse, not JsonDocument.Parse(...).RootElement (CA2026);
+# a Task.Delay cancelled once Task.WhenAny returns (CA2027); no Regex.IsMatch before Regex.Match (CA2028); one
+# Path.Combine or Path.Join, not nested ones (CA1877); a read-only span or memory parameter when nothing writes it
+# (CA1517); no AsParallel in a foreach (CA1876)
+dotnet_diagnostic.CA2026.severity = warning
+dotnet_diagnostic.CA2027.severity = warning
+dotnet_diagnostic.CA2028.severity = warning
+dotnet_diagnostic.CA1877.severity = warning
+dotnet_diagnostic.CA1517.severity = warning
+dotnet_diagnostic.CA1876.severity = warning
 # Unnecessary using directives. The analyzer runs in a build only where the documentation file is generated
 # (GenerateDocumentationFile in Directory.Build.props).
 dotnet_diagnostic.IDE0005.severity = warning

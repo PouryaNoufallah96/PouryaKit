@@ -41,13 +41,11 @@ public sealed class IdempotencyTests
             ],
             Trace(withRequestId)
         );
-        Assert.DoesNotContain(
-            Trace(withoutRequestId),
-            step => step.StartsWith("reserve", StringComparison.Ordinal)
+        Assert.DoesNotContain(Trace(withoutRequestId), step =>
+            step.StartsWith("reserve", StringComparison.Ordinal)
         );
-        Assert.DoesNotContain(
-            Trace(withoutRequestId),
-            step => step.StartsWith("record", StringComparison.Ordinal)
+        Assert.DoesNotContain(Trace(withoutRequestId), step =>
+            step.StartsWith("record", StringComparison.Ordinal)
         );
     }
 
@@ -78,9 +76,8 @@ public sealed class IdempotencyTests
 
         Assert.Contains("does not opt in with [Idempotent]", thrown.Message);
         Assert.DoesNotContain("handle PingCommand", Trace(scope));
-        Assert.DoesNotContain(
-            Trace(scope),
-            step => step.StartsWith("reserve", StringComparison.Ordinal)
+        Assert.DoesNotContain(Trace(scope), step =>
+            step.StartsWith("reserve", StringComparison.Ordinal)
         );
     }
 

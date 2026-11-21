@@ -61,9 +61,8 @@ public sealed class ModuleBoundaryTests
             new HashSet<string>(
                 Sample
                     .RestoredOf(
-                        Assert.Single(
-                            Sample.Modules,
-                            module => module.GetName().Name == "Inventory"
+                        Assert.Single(Sample.Modules, module =>
+                            module.GetName().Name == "Inventory"
                         )
                     )
                     .Projects
@@ -74,9 +73,8 @@ public sealed class ModuleBoundaryTests
     [Fact]
     public void A_module_whose_project_references_another_modules_implementation_is_rejected_though_no_code_uses_it()
     {
-        Assert.DoesNotContain(
-            OffendingModuleAssembly.GetReferencedAssemblies(),
-            reference => reference.Name == "Catalog"
+        Assert.DoesNotContain(OffendingModuleAssembly.GetReferencedAssemblies(), reference =>
+            reference.Name == "Catalog"
         );
 
         var violations = ModuleRules.ReferencesToOtherModules(
@@ -111,9 +109,8 @@ public sealed class ModuleBoundaryTests
     public void Contracts_whose_project_references_the_kit_are_rejected_though_no_code_uses_it()
     {
         var contracts = typeof(OffendingCreatedV1).Assembly;
-        Assert.DoesNotContain(
-            contracts.GetReferencedAssemblies(),
-            reference => reference.Name == "PouryaKit.Domain"
+        Assert.DoesNotContain(contracts.GetReferencedAssemblies(), reference =>
+            reference.Name == "PouryaKit.Domain"
         );
 
         var violations = ModuleRules.ReferencesOfContracts(
@@ -174,13 +171,11 @@ public sealed class ModuleBoundaryTests
             ],
             ModuleRules.PublicTypesOf(sagas, new HashSet<Type>()).Order(StringComparer.Ordinal)
         );
-        Assert.Contains(
-            sagas.GetExportedTypes(),
-            type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentSaga)
+        Assert.Contains(sagas.GetExportedTypes(), type =>
+            type == typeof(ModularMonolith.Tests.Sagas.FulfilmentSaga)
         );
-        Assert.Contains(
-            sagas.GetExportedTypes(),
-            type => type == typeof(ModularMonolith.Tests.Sagas.FulfilmentTimeout)
+        Assert.Contains(sagas.GetExportedTypes(), type =>
+            type == typeof(ModularMonolith.Tests.Sagas.FulfilmentTimeout)
         );
         Assert.Equal(
             [typeof(Offending.Saga.OwnSaga).FullName, typeof(Offending.Saga.OwnTimeout).FullName],

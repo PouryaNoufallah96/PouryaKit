@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using Billing;
 using Billing.Quotes.Features.OpenQuote;
@@ -205,16 +204,12 @@ public sealed class LedgerTests(AppFixture app) : HostTest<AppFixture>(app)
                 $"select pg_xact_commit_timestamp(xmin) from ledger.pouryakit_receipts where subscription = '{Activation}'"
             )
         );
-        Assert.Contains(
-            committed,
-            row =>
-                (string)row[0] == $"local://{Activation}/" && (DateTime)row[1] == openingCommitted
+        Assert.Contains(committed, row =>
+            (string)row[0] == $"local://{Activation}/" && (DateTime)row[1] == openingCommitted
         );
-        Assert.Contains(
-            committed,
-            row =>
-                (string)row[0] == $"local://{BillingSubscription}/"
-                && (DateTime)row[1] == activationCommitted
+        Assert.Contains(committed, row =>
+            (string)row[0] == $"local://{BillingSubscription}/"
+            && (DateTime)row[1] == activationCommitted
         );
         // Billing's quote, the expiry due when it ends and its Receipt, in one commit.
         Assert.Equal(

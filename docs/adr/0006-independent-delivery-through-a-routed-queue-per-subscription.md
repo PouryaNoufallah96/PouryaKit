@@ -1217,3 +1217,46 @@ persisted retry and stale time and delayed commands amendments about the insert 
   `IntegrationEventTests.Concurrent_deliveries_of_one_integration_event_apply_its_effect_once` always did:
   `StreamTests.A_concurrent_duplicate_delivery_waits_for_the_first_receipt_and_never_runs_its_handler` and
   `RecurringCommandTests.A_delayed_command_and_an_occurrence_due_after_the_stale_time_and_handed_out_again_while_they_run_apply_one_effect_each_and_store_one_next_occurrence`.
+
+## Amendment (2026-11-15: dead letters on WolverineFx 6.64.0)
+
+The decision above stands, owner decision 4 included: a dead letter stays in Wolverine's dead-letter storage, found by
+its subscription and replayed there, and the Kit adds no dead-letter API. The Kit's pins move to WolverineFx 6.64.0
+(ADR 0004's WolverineFx 6.64.0 amendment), which changes two things this record relies on.
+
+- **A delivery its inbox shows handled is never dead-lettered** (6.63.0,
+  [issue 5410](https://github.com/JasperFx/wolverine/issues/5410),
+  [pull request 5425](https://github.com/JasperFx/wolverine/pull/5425); `MoveToDeadLetterStorageAsync` in
+  `src/Persistence/Wolverine.RDBMS/MessageDatabase.Incoming.cs` at tag `V6.64.0`). The store leaves the envelope where
+  it is and logs a warning, so a dead letter can no longer delete committed work. The test of a second replay set the
+  replayed, handled delivery aside again with `IMessageInbox.MoveToDeadLetterStorageAsync`, so on 6.64.0 nothing was
+  set aside and it failed. It now deletes the handled row first, with `IMessageInbox.DeleteIncomingEnvelopeAsync`, as
+  the store does once `KeepAfterMessageHandling` (5 minutes by default) has passed, then sets the delivery aside; the
+  second replay hands it out and its Receipt stops the handler. With the Receipt recorded and its answer ignored, the
+  handler runs again and the test fails
+  (`FailingDeliveryTests.A_replayed_dead_letter_runs_only_its_subscription_once_and_its_receipt_makes_a_second_replay_apply_nothing`).
+  Wolverine's refusal lasts only while it keeps the handled row, so the Receipt stays the guarantee.
+- **Archived dead letters** (6.54.0, [pull request 5210](https://github.com/JasperFx/wolverine/pull/5210)). A dead
+  letter can be archived and restored. An archived one is still found by its id, but queries and replays leave it out,
+  and every replay records the delivery's replays in a new table of the store's schema, `wolverine_dead_letter_history`.
+  `HostFixture.ReplayAsync` checked only that the dead letter existed, so for an archived one it returned having
+  replayed nothing. It now replays with `ReplayMatchingAsync` and fails with a `DeliveryAssertionException` unless
+  Wolverine marked exactly that dead letter for replay
+  (`FailingDeliveryTests.Replaying_an_archived_dead_letter_fails_because_wolverine_leaves_it_out_of_a_replay`, red
+  against the earlier helper), and `HostFixture.DeadLettersAsync` reads the dead letters not archived, as an
+  application's query does. The history table is one of the store's own tables, which the reset between tests spares,
+  but its rows belong to deliveries and Wolverine clears it with the envelopes, so the reset deletes its rows with the
+  envelopes and dead letters (`StoredDeliveriesSchemaTests.Message_store_queries_use_the_exact_schema_name`, red without
+  that delete).
+- **The rest, read again at tag `V6.64.0`.** The local queues the reserved names stand for (`LocalTransport.cs`,
+  `TransportConstants.cs`), the routing by name (`src/Wolverine/Runtime/Routing/`) and the routing search are unchanged
+  since `V6.52.0`, and `DurableReceiver.MoveToErrorsAsync` only adds 6.54.0's failure fingerprint, so each amendment above
+  that cites them holds.
+
+## Amendment (2026-11-21: WolverineFx 6.64.2)
+
+The decision above stands. The Kit's pins move to WolverineFx 6.64.2 (ADR 0004's WolverineFx 6.64.2 amendment), a
+patch that adds no public API. At tag `V6.64.2` no source this record cites changed since `V6.64.0`: not
+`MessageDatabase.Incoming.cs`, the local queues the reserved names stand for (`LocalTransport.cs`,
+`TransportConstants.cs`), the routing by name and its search, nor `DurableReceiver.cs`. Each amendment above that cites
+them holds, the one on dead letters on WolverineFx 6.64.0 included.

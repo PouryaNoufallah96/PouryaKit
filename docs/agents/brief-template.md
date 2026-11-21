@@ -25,7 +25,7 @@ Repository: `<repository root>`. Integration branch: `<integration branch>`. You
 
 ## Dependencies
 
-Make one bounded check of NuGet metadata for each package you add or bump: the current stable version compatible with .NET 10, and a permissive licence (ADR 0002). Record it in your report. Every version goes in `Directory.Packages.props`. Versions the main session checked on <date>: <package and version, one per package>.
+Make one bounded check of NuGet metadata for each package you add or bump: the newest version of its own channel compatible with .NET 11, so a stable pin takes the newest stable and never a preview, rc or alpha, but for the exception `docs/packages.md` records under "Temporary prerelease dependencies", and a permissive licence (ADR 0002). Record it in your report. Every version goes in `Directory.Packages.props`. Versions the main session checked on <date>: <package and version, one per package>.
 
 ## A new package (where the ticket adds one)
 
@@ -37,7 +37,7 @@ Follow the last package added (`<package>`, #<ticket>): csproj metadata as its s
 
 ## Tests
 
-`.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One Docker host serves every implementer and validation of the session, and PostgreSQL's 100-connection default fails concurrent suites with 53300: use class filters while you develop, and run the full `ModularMonolith.Tests` run and `validate.py` as the command of `.agents/scripts/wait-docker-quiet.sh -- <command>`. It takes the machine's Docker lock as soon as no other waiter holds it, waits while holding it until no validation or test run holds Docker, then runs the command and exits with its status. A wait alone reserves nothing: two agents that see one suite end both start theirs. One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.
+`.claude/rules/kit-code.md`, "Tests": one test per behaviour that matters, and red once for each guarantee the ticket states, listed under `shown_red`. Gateway and HTTP seams run through `AppFixture` or `HostFixture` against PostgreSQL in Testcontainers. One Docker host serves every implementer and validation of the session: a validation run beside other suites has failed on Docker timeouts alone, and two validations starve each other: use class filters while you develop, and run the full `ModularMonolith.Tests` run and `validate.py` as the command of `.agents/scripts/wait-docker-quiet.sh -- <command>`. It takes the machine's Docker lock as soon as no other waiter holds it, waits while holding it until no validation or test run holds Docker, then runs the command and exits with its status. A wait alone reserves nothing: two agents that see one suite end both start theirs. One class runs with `dotnet test --project <csproj> --filter-class <fully qualified class> --output Detailed`. A test fails when its collaborators return defaults or the promised effect never occurs.
 
 ## Verify (run exactly, after your edits; every command passes in the final run)
 
@@ -48,9 +48,14 @@ dotnet test --project tests/ModularMonolith.Tests/ModularMonolith.Tests.csproj
 dotnet test --project tests/PouryaKit.ArchitectureTests/PouryaKit.ArchitectureTests.csproj
 python3 .agents/scripts/check-ai-setup.py
 python3 .agents/scripts/check-docs.py
+pnpm --dir website install --frozen-lockfile
+pnpm --dir website test
+pnpm --dir website lint
+pnpm --dir website build
+pnpm --dir website sync-public --check
 ```
 
-Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths: the main session asks it with `python3 scripts/packaging/validate.py --since <tip> --plan` on the ticket's expected paths when it matters for scheduling, and a brief never predicts it.
+The five `pnpm` lines are the docs site's gates every ticket runs, and a ticket that changes the site's packages or covers adds the `check-licences` or `covers` step of CI's `website` job: the site is built from the Kit's sources, so a package README's C# lines and a page's `#region` are checked against the files they quote, and a change under `src/`, `samples/` or `tests/` can break the site. Each ticket's brief adds its own test projects. Every command in a brief is copied from a place that runs it, the CI workflow (`.github/workflows/ci.yml`) or an earlier brief whose report shows it passed, never retyped from memory. Whether `validate.py` runs in full or prints `SKIP` is the script's decision from its exempt paths: the main session asks it with `python3 scripts/packaging/validate.py --since <tip> --plan` on the ticket's expected paths when it matters for scheduling, and a brief never predicts it.
 
 ## Commit, then package validation
 

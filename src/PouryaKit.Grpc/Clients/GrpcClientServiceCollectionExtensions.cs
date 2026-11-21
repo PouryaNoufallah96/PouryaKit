@@ -41,13 +41,10 @@ public static class GrpcClientServiceCollectionExtensions
                 return new ClientBuilder(name, services);
             }
 
-            services.AddOptions<PouryaKitGrpcClientOptions>(name).ValidateOnStart();
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<
-                    IValidateOptions<PouryaKitGrpcClientOptions>,
-                    ClientOptionsValidation
-                >()
-            );
+            services
+                .AddOptions<PouryaKitGrpcClientOptions>(name)
+                .Validate<ClientOptionsValidation>()
+                .ValidateOnStart();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<IStartupCheck, GrpcLoopbackCheck>()
             );
@@ -56,13 +53,11 @@ public static class GrpcClientServiceCollectionExtensions
             );
             services.AddSingleton(new GrpcClient(name, typeof(TClient)));
             return services
-                .AddGrpcClient<TClient>(
-                    name,
-                    (provider, client) =>
-                        client.Address = provider
-                            .GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>()
-                            .Get(name)
-                            .Address
+                .AddGrpcClient<TClient>(name, (provider, client) =>
+                    client.Address = provider
+                        .GetRequiredService<IOptionsMonitor<PouryaKitGrpcClientOptions>>()
+                        .Get(name)
+                        .Address
                 )
                 .AddInterceptor(provider => new OperationContextInterceptor(
                     provider

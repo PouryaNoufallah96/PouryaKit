@@ -83,10 +83,8 @@ public sealed class StreamTests(StreamFixture streams)
 
         var refused = Assert.Throws<InvalidOperationException>(() =>
             movedByALaterConfiguration
-                ? streams.Mixed(
-                    _database,
-                    configure: builder =>
-                        builder.Services.ConfigureMarten(options => options.Connection(other))
+                ? streams.Mixed(_database, configure: builder =>
+                    builder.Services.ConfigureMarten(options => options.Connection(other))
                 )
                 : streams.Joined(
                     _database,
@@ -132,19 +130,16 @@ public sealed class StreamTests(StreamFixture streams)
     public void A_snapshot_declared_for_a_stream_fails_the_host_when_it_is_built_naming_the_stream_and_its_module()
     {
         var refused = Assert.Throws<InvalidOperationException>(() =>
-            streams.MartenOnly(
-                _database,
-                services =>
-                    services
-                        .PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>(
-                            "tests.account-snapshot.v1",
-                            typeof(AccountsModule)
-                        )
-                        .PublishSnapshot<
-                            IAggregateRoot,
-                            AggregateSnapshotV1,
-                            AggregateSnapshotMapper
-                        >("tests.aggregate-snapshot.v1", typeof(AccountsModule))
+            streams.MartenOnly(_database, services =>
+                services
+                    .PublishSnapshot<Account, AccountSnapshotV1, AccountSnapshotMapper>(
+                        "tests.account-snapshot.v1",
+                        typeof(AccountsModule)
+                    )
+                    .PublishSnapshot<IAggregateRoot, AggregateSnapshotV1, AggregateSnapshotMapper>(
+                        "tests.aggregate-snapshot.v1",
+                        typeof(AccountsModule)
+                    )
             )
         );
 
@@ -629,27 +624,20 @@ public sealed class StreamTests(StreamFixture streams)
     public async Task A_send_that_fails_after_martens_commit_is_not_the_operations_failure_and_the_store_delivers_it()
     {
         var account = Guid.CreateVersion7();
-        var host = await StartAsync(
-            streams.MartenOnly(
-                _database,
-                services =>
-                {
-                    StaleAfter(TimeSpan.FromSeconds(1))(services);
-                    FailingStreamSend.Install(services);
-                }
-            )
-        );
+        var host = await StartAsync(streams.MartenOnly(_database, services =>
+            {
+                StaleAfter(TimeSpan.FromSeconds(1))(services);
+                FailingStreamSend.Install(services);
+            }));
 
         var opened = await Accounts(host)
             .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
 
         Assert.True(opened.IsSuccess);
         Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
-        Assert.Contains(
-            streams.Logs.Entries,
-            entry =>
-                entry.Level == LogLevel.Warning
-                && entry.Exception?.Message == "The send after the commit failed."
+        Assert.Contains(streams.Logs.Entries, entry =>
+            entry.Level == LogLevel.Warning
+            && entry.Exception?.Message == "The send after the commit failed."
         );
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
     }
@@ -660,29 +648,22 @@ public sealed class StreamTests(StreamFixture streams)
     public async Task A_store_listener_that_fails_after_martens_commit_is_not_the_operations_failure_and_the_store_delivers_it()
     {
         var account = Guid.CreateVersion7();
-        var host = await StartAsync(
-            streams.MartenOnly(
-                _database,
-                services =>
-                {
-                    StaleAfter(TimeSpan.FromSeconds(1))(services);
-                    services.ConfigureMarten(options =>
-                        options.Listeners.Add(new FailingStoreListener(account))
-                    );
-                }
-            )
-        );
+        var host = await StartAsync(streams.MartenOnly(_database, services =>
+            {
+                StaleAfter(TimeSpan.FromSeconds(1))(services);
+                services.ConfigureMarten(options =>
+                    options.Listeners.Add(new FailingStoreListener(account))
+                );
+            }));
 
         var opened = await Accounts(host)
             .SendAsync(new OpenAccountCommand(account, Guid.CreateVersion7()), Context(), Token);
 
         Assert.True(opened.IsSuccess);
         Assert.Equal(1L, await CountAsync(Events(account, "account_opened")));
-        Assert.Contains(
-            streams.Logs.Entries,
-            entry =>
-                entry.Level == LogLevel.Warning
-                && entry.Exception?.Message == "A store listener failed after the commit."
+        Assert.Contains(streams.Logs.Entries, entry =>
+            entry.Level == LogLevel.Warning
+            && entry.Exception?.Message == "A store listener failed after the commit."
         );
         await WaitUntilAsync($"({Events(account, "welcomed")}) = 1");
     }

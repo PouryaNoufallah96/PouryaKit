@@ -567,3 +567,76 @@ the record of what Spike S1 ran on, and each amendment above keeps the version i
 - **The namespace rule.** `JasperFx.SourceGenerator` 2.91.0 writes an internal `JasperFx.Generated.DiscoveredEventModels`
   into every assembly that sees `JasperFx.Events`, marked only by an auto-generated comment; `NamespaceTests` leaves it
   out by its full name.
+
+## Amendment (2026-11-15: WolverineFx 6.64.0)
+
+The decision above stands. The six `WolverineFx*` pins move from 6.52.0 to 6.64.0, the latest stable on nuget.org on
+2026-11-15, and `Marten` from 9.53.0 to 9.59.0, since `WolverineFx.Marten` 6.64.0 requires `Marten` 9.58.0 or later;
+Wolverine 7 and Marten 10 are alpha. "Pinned versions and licences" stays as the record of what Spike S1 ran on, and
+each amendment above keeps the version it was read on.
+
+- **What restore moved.** `JasperFx` and `JasperFx.Events` from 2.94.0 and `JasperFx.SourceGenerator` from 2.91.0 to
+  2.102.0, `JasperFx.RuntimeCompiler` from 5.0.0 to 5.1.0, every `Weasel.*` package from 9.46.0 to 9.50.0, and
+  `WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` with the pins, all `MIT`; no package is new and none left.
+  `JasperFx.SourceGenerator` 2.102.0 still writes `JasperFx.Generated.DiscoveredEventModels`, which `NamespaceTests`
+  leaves out by its full name.
+- **The release notes, 6.53.0 to 6.64.0** (`JasperFx/wolverine` releases). None states a breaking API change. Two
+  changes reach the Kit's dead letters, 6.54.0's archive and replay history and 6.63.0's refusal to dead-letter a
+  delivery its inbox shows handled; ADR 0006's amendment on dead letters on WolverineFx 6.64.0 records them. The EF Core half of that
+  6.63.0 change, which treats a commit that applied but reported an error as handled, is in
+  `EfCoreEnvelopeTransaction`'s commit of a handler transaction that marked its inbox row handled; the Unit of Work
+  commits its own transaction, so it does not reach it. 6.63.0's other durability fixes, such as envelope ids that no
+  longer collide between processes on one machine ([pull request 5399](https://github.com/JasperFx/wolverine/pull/5399)),
+  leave the Kit's delivery tests as they were. 6.64.0's single reply queue across `ResetResourceState()` is a RabbitMQ
+  call the Kit never makes.
+- **The sources this record cites, read again at tag `V6.64.0`.** `src/Wolverine/Runtime/Handlers/HandlerGraph.PreBuiltTypes.cs`,
+  `src/Persistence/Wolverine.RDBMS/Durability/BumpStaleIncomingEnvelopesOperation.cs` and
+  `src/Wolverine/Runtime/WorkerQueues/InboxCustody.cs` are unchanged since `V6.52.0`, so the code generation and stale
+  clock amendments hold. `DbContextOutbox` now enrolls in an ancillary store when one is registered for its DbContext
+  type ([issue 5295](https://github.com/JasperFx/wolverine/issues/5295)); a Kit Host registers none, so its one store
+  still takes the Outbox's envelopes. [Issue 4923](https://github.com/JasperFx/wolverine/issues/4923) is still open, so
+  two different Hosts still never share a store's schema.
+
+## Amendment (2026-11-15: EF Core 11, and Roslyn where its Design meets the runtime compiler)
+
+The decision above stands. EF Core moves to 11, on the PostgreSQL provider's release candidate and the EF Core release
+candidate it requires, which `docs/packages.md` records as temporary dependencies. "Pinned versions and licences" stays
+as the record of what Spike S1 ran on.
+
+- **Where EF Core Design comes from.** `WolverineFx.EntityFrameworkCore` 6.64.0 still asks only for
+  `Microsoft.EntityFrameworkCore.Design` 10.0.4 or later, and NuGet takes the lowest version a range admits, so that
+  source put EF Core Design 10 beside EF Core 11 in every closure above it. `PouryaKit.Messaging.Wolverine.EFCore`
+  references Design itself, at the Kit's EF Core line, and its nuspec carries it to every consumer. Design 11 asks for
+  `Microsoft.CodeAnalysis.CSharp`, `.CSharp.Workspaces` and `.Workspaces.MSBuild` 5.9.0 or later.
+- **Where Design meets the runtime compiler.** `WolverineFx.RuntimeCompilation`, through `JasperFx.RuntimeCompiler`
+  5.1.0, still asks for the `Microsoft.CodeAnalysis` and `Microsoft.CodeAnalysis.Scripting` meta-packages at 5.0.0 or
+  later, and Roslyn's packages pin each other exactly, so beside Design 11 the restore fails with NU1608. Each project
+  that references the compiler references `Microsoft.CodeAnalysis`, `Microsoft.CodeAnalysis.Scripting` and
+  `Microsoft.CodeAnalysis.Workspaces.MSBuild` 5.12.0 beside it: `PouryaKit.Testing`, as this record's exception allows,
+  and each Host in the same Debug group as the compiler, so a Release build takes neither. Without the third,
+  `Workspaces.MSBuild` resolves 5.9.0, which pins `Workspaces.Common` at 5.9.0 against 5.12.0's: NU1608. Handler code
+  compiled at run time on 5.12.0 in the Gateway tests (`CodeGenerationTests`) and in the Saga tests' child process.
+
+## Amendment (2026-11-21: WolverineFx 6.64.2)
+
+The decision above stands. The six `WolverineFx*` pins move from 6.64.0 to 6.64.2, the latest stable on nuget.org on
+2026-11-21, and `Marten` from 9.59.0 to 9.62.0 (ADR 0011's Marten 9.62.0 amendment); Wolverine 7 and Marten 10 are
+still alpha. `Npgsql` stays at 10.0.3, since on Npgsql 11 a Host with `WolverineFx.Postgresql` 6.64.2's message store
+fails when it starts (`docs/packages.md`, "Held packages"). "Pinned versions and licences" stays as the record of what
+Spike S1 ran on, and each amendment above keeps the version it was read on.
+
+- **What restore moved.** `Weasel.Core`, `Weasel.Postgresql` and `Weasel.Storage` from 9.50.0 to 9.51.0, and
+  `WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` with the pins, all `MIT`; `JasperFx`, `JasperFx.Events` and
+  `JasperFx.SourceGenerator` stay at 2.102.0, `JasperFx.RuntimeCompiler` at 5.1.0 and `Weasel.EntityFrameworkCore` at
+  9.50.0. No package is new and none left.
+- **The release notes, 6.64.1 and 6.64.2** (`JasperFx/wolverine` releases): patches of the 6.x line that add no public
+  API, and none reaches a Kit Host. 6.64.1 ends a failed attempt's tracing span before an inline retry, and the Kit's
+  retries are scheduled (`ScheduleRetry`); its other fixes concern native-ack listeners, MySQL's node records, Solo-mode
+  agents on Polecat and SQL Server, and the `codegen` and `describe` commands beside a recurring schedule. 6.64.2 fixes
+  Wolverine.HTTP's form reads, which no Kit Host maps.
+- **The sources this record cites, read again at tag `V6.64.2`.** Of them, only
+  `src/Persistence/Wolverine.RDBMS/DurabilityAgent.cs` changed since `V6.64.0`, where node-record pruning gives MySQL a
+  sweep of its own; the scheduled-job poll and the stale-envelope release are as they were, so the stale clock
+  amendment holds. `WolverineFx.EntityFrameworkCore` 6.64.2 still asks for `Microsoft.EntityFrameworkCore.Design`
+  10.0.4 or later, and `JasperFx.RuntimeCompiler` 5.1.0 for the Roslyn meta-packages at 5.0.0 or later, so the EF Core
+  11 amendment above holds too.

@@ -4,6 +4,7 @@ using System.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http.Resilience;
@@ -81,27 +82,48 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         var delivery = Assert.IsType<Activity>(
             Assert.Single(DeliveryProbes.ActivitiesOf(StockItems).Skip(earlier))
         );
-        Assert.Contains(
-            exported.Activities,
-            activity =>
-                activity.Source.Name == OperationTelemetry.SourceName
-                && activity.SpanId == delivery.SpanId
+        Assert.Contains(exported.Activities, activity =>
+            activity.Source.Name == OperationTelemetry.SourceName
+            && activity.SpanId == delivery.SpanId
         );
         // Each command the delivery's Operation sends to its database is a span of Npgsql's own source, under the Operation's.
-        Assert.Contains(
-            exported.Activities,
-            activity => activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId
+        Assert.Contains(exported.Activities, activity =>
+            activity.Source.Name == "Npgsql" && activity.ParentSpanId == delivery.SpanId
         );
-        Assert.Contains(
-            exported.Durations,
-            duration =>
-                (duration.Module, duration.Operation, duration.Outcome)
-                    == ("InventoryModule", "Deliver", OperationTelemetry.Succeeded)
-                && duration.Count > 0
-                && duration.Sum > 0
+        Assert.Contains(exported.Durations, duration =>
+            (duration.Module, duration.Operation, duration.Outcome)
+                == ("InventoryModule", "Deliver", OperationTelemetry.Succeeded)
+            && duration.Count > 0
+            && duration.Sum > 0
         );
         // The histogram's own bucket boundaries, which the exporter takes with no view of the Host's.
         Assert.All(exported.Durations, duration => Assert.Equal(SecondScale, duration.Boundaries));
+    }
+
+    // The runtime's own meter, with no instrumentation package, and the statistics of the memory cache that holds
+    // HybridCache's local entries, which the recipe turns on.
+    [Fact]
+    public async Task The_service_defaults_export_the_runtimes_metrics_and_the_memory_caches_statistics()
+    {
+        var exported = new ExportedTelemetry();
+        var builder = WebApplication.CreateBuilder(["--environment", "Development"]);
+        builder.WebHost.UseTestServer();
+        builder.AddServiceDefaults();
+        builder.Services.AddMemoryCache();
+        exported.AddTo(builder.Services);
+        await using var host = builder.Build();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        var cache = host.Services.GetRequiredService<IMemoryCache>();
+
+        cache.Set("lamp", "Lamp");
+        _ = cache.TryGetValue("lamp", out _);
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        Assert.Contains(exported.Metrics, metric => metric.Meter == "System.Runtime");
+        Assert.Contains(
+            ("Microsoft.Extensions.Caching.Memory.MemoryCache", "dotnet.cache.requests"),
+            exported.Metrics
+        );
     }
 
     // The database stops taking connections while the Host runs: alter database ... allow_connections false, and its
@@ -277,16 +299,13 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
                 Scalar(logged, "SourceContext") == typeof(IDispatcher).Namespace + ".Dispatcher"
             )
             .ToList();
-        Assert.Contains(
-            dispatched,
-            logged =>
-                logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
-                && Scalar(logged, "Operation") == "Deliver"
+        Assert.Contains(dispatched, logged =>
+            logged.MessageTemplate.Text == "{Operation} succeeded in {ElapsedMilliseconds} ms"
+            && Scalar(logged, "Operation") == "Deliver"
         );
         // The Operation's log scope: the delivery's own id, the correlation of the CreateProduct it continues, its Module.
-        var delivery = Assert.Single(
-            DeliveryProbes.ContextsOf(StockItems),
-            context => context.CorrelationId == created.CorrelationId
+        var delivery = Assert.Single(DeliveryProbes.ContextsOf(StockItems), context =>
+            context.CorrelationId == created.CorrelationId
         );
         Assert.Contains(
             ("Deliver", delivery.OperationId, created.CorrelationId, "InventoryModule"),
@@ -334,27 +353,25 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         var received = _downstream.LogEntries.Select(entry => entry.RequestMessage!).ToList();
         Assert.Equal(3, received.Count);
-        Assert.All(
-            received,
-            request =>
-                Assert.Equal(
-                    new Dictionary<string, string>
-                    {
-                        [OperationContextHeaders.ActorId] = "ada",
-                        [OperationContextHeaders.ActorKind] = nameof(ActorKind.Person),
-                        [OperationContextHeaders.Tenant] = "acme",
-                        [OperationContextHeaders.CorrelationId] = Context.CorrelationId.ToString(),
-                        [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
-                    },
-                    request
-                        .Headers!.Where(header =>
-                            header.Key.StartsWith("pouryakit-", StringComparison.OrdinalIgnoreCase)
-                        )
-                        .ToDictionary(
-                            header => header.Key.ToLowerInvariant(),
-                            header => string.Join(",", header.Value)
-                        )
-                )
+        Assert.All(received, request =>
+            Assert.Equal(
+                new Dictionary<string, string>
+                {
+                    [OperationContextHeaders.ActorId] = "ada",
+                    [OperationContextHeaders.ActorKind] = nameof(ActorKind.Person),
+                    [OperationContextHeaders.Tenant] = "acme",
+                    [OperationContextHeaders.CorrelationId] = Context.CorrelationId.ToString(),
+                    [OperationContextHeaders.CausationId] = Context.OperationId.ToString(),
+                },
+                request
+                    .Headers!.Where(header =>
+                        header.Key.StartsWith("pouryakit-", StringComparison.OrdinalIgnoreCase)
+                    )
+                    .ToDictionary(
+                        header => header.Key.ToLowerInvariant(),
+                        header => string.Join(",", header.Value)
+                    )
+            )
         );
     }
 
@@ -542,10 +559,14 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
     {
         private readonly ConcurrentQueue<Activity> _activities = [];
         private readonly ConcurrentQueue<Duration> _durations = [];
+        private readonly ConcurrentQueue<(string Meter, string Name)> _metrics = [];
 
         public IReadOnlyList<Activity> Activities => [.. _activities];
 
         public IReadOnlyList<Duration> Durations => [.. _durations];
+
+        // Every metric exported, by its meter's name and its own.
+        public IReadOnlyList<(string Meter, string Name)> Metrics => [.. _metrics];
 
         public void AddTo(IServiceCollection services)
         {
@@ -555,7 +576,9 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
                 )
             );
             services.ConfigureOpenTelemetryMeterProvider(metrics =>
-                metrics.AddReader(new BaseExportingMetricReader(new DurationExporter(_durations)))
+                metrics.AddReader(
+                    new BaseExportingMetricReader(new MetricExporter(_durations, _metrics))
+                )
             );
         }
 
@@ -582,13 +605,16 @@ public sealed class HostRecipeTests(BrokerFixture broker) : IDisposable
             }
         }
 
-        private sealed class DurationExporter(ConcurrentQueue<Duration> exported)
-            : BaseExporter<Metric>
+        private sealed class MetricExporter(
+            ConcurrentQueue<Duration> exported,
+            ConcurrentQueue<(string Meter, string Name)> metrics
+        ) : BaseExporter<Metric>
         {
             public override ExportResult Export(in Batch<Metric> batch)
             {
                 foreach (var metric in batch)
                 {
+                    metrics.Enqueue((metric.MeterName, metric.Name));
                     if (metric.Name != OperationTelemetry.DurationName)
                     {
                         continue;

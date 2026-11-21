@@ -66,7 +66,7 @@ metadata:
 - **No self-message** (`from` equal to `to` fails: spans 0px); draw the consequence instead, such as the early return of a refused check.
 - **Sequence `segments` at that width put their labels in the wrong band** (a band's label landed in the band above, one hidden under the first message): validation passes, only a capture shows it. Leave them out.
 - **A transition or message `note` renders inline with its label** and inflates the label box to hundreds of pixels, so every label collides; keep notes out and put the fact in a card.
-- **A packed workflow row has no vertical corridor:** two nodes side by side in one lane sit 8px apart, so pinning `right:left` from a node in the lane below into the next node of the row fails (`workflow/explicit-pin-conflict`), and a node with two vertical edges on one side draws them in one corridor (`composition/ambiguous-corridor`). Give each node at most one vertical edge per side; moving a node into the other lane (the drain between its two checks) fixed what pins and `drop` routes could not.
+- **A packed workflow row has no vertical corridor:** two nodes side by side in one lane sit 8px apart, so pinning `right:left` from a node in the lane below into the next node of the row fails (`workflow/explicit-pin-conflict`), and a node with two vertical edges on one side draws them in one corridor (`composition/ambiguous-corridor`). Give each node at most one vertical edge per side; moving a node into the other lane (the drain between its two checks) fixed what pins and `drop` routes could not. Retargeting an edge across two lanes into a node one column on (host-start's dashed `StartAsync` branch, 2026-11-15): drop its `fromSide` and keep `toSide`, as the diagnostic's `supportedFixes` says, and readable-v2 routes it round the row.
 - **A lifecycle return crossing branches:** `route: "top-channel"` on the return cleared three crossings the receipt's `resolvedCrossovers` named.
 
 ## Spans in the acceptance record (#105, 2026-10-11)
@@ -170,6 +170,10 @@ metadata:
 
 - **The Names rule also reads `website/content/**/*.mdx` (`SITE_PAGE`) and `src/<Id>/README.md` (`PACKAGE_README`, exactly one segment, so a template's content README stays out).** The MDX pages sit in a `pages` dict handed to `check_names` alone: their imports, JSX, route links (`/docs/...`) and JSX lines starting with `|` would fail the links and tables rules. A package README is in `docs` and gets every rule. The summary line still counts Markdown files only. `Docs site` is an `ORDERED_SECTIONS` prefix, so spec #183's acceptance sections go in ticket order after Wave 4's.
 - **A change to `validate.py`'s exempt list (line 23) sits above every range ci-and-publication cites:** stage the diagram with an interim pin to the integration tip, then `repin-diagram.py … --pin-only` to the code commit; editing in place keeps every range where it was.
+
+## Moving the owner's sentences into an amendment (#220, 2026-11-15)
+
+- **An owner's bullets added inside an ADR's sections move as lines, never re-wrapped**: cut them, append `## Amendment (<date>: <subject>)`, "The decision stands.", then the bullets in their original order (a "below" in one may point at the next). Prove it by script, not by reading (`scratchpad/p220/adrproof.py <worktree> [<rev>]`): the result starts with `git show <owner commit>^:<file>` byte for byte, and each `+` line of `git show <owner commit> -- <file>` occurs exactly once.
 
 **Why:** a docs brief requires every snippet to compile and the diagram to stay valid, and none of the repo's checks cover either.
 **How to apply:** at workflow steps 6 and 7 for any ticket, and for any record amendment. Related: [[persistence-and-dapper-facts]], [[worktree-shell-and-check-gotchas]].

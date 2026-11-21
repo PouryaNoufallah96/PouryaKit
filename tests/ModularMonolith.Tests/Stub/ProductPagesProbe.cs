@@ -33,20 +33,14 @@ internal sealed class ProductPages(IUnitOfWork unitOfWork)
         .OrderBy("created", product => product.CreatedAt)
         .ThenBy(product => product.Id)
         .Filter<string>("name", FilterOperator.Equal, name => product => product.Name == name)
-        .Filter<string>(
-            "name",
-            FilterOperator.Contains,
-            name => product => product.Name.Contains(name)
+        .Filter<string>("name", FilterOperator.Contains, name =>
+            product => product.Name.Contains(name)
         )
-        .Filter<Guid>(
-            "category",
-            FilterOperator.Equal,
-            id => product => product.CategoryId == new CategoryId(id)
+        .Filter<Guid>("category", FilterOperator.Equal, id =>
+            product => product.CategoryId == new CategoryId(id)
         )
-        .Filter<DateTimeOffset>(
-            "created",
-            FilterOperator.GreaterThanOrEqual,
-            since => product => product.CreatedAt >= since
+        .Filter<DateTimeOffset>("created", FilterOperator.GreaterThanOrEqual, since =>
+            product => product.CreatedAt >= since
         );
 
     public Task<Page<ProductListItemDto>> PageAsync(

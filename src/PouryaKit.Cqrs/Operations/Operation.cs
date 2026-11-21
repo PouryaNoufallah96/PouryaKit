@@ -209,10 +209,8 @@ public sealed class Operation
 
     internal IDisposable EnterQuery()
     {
-        var reading = new ReadingBoundary(
-            this,
-            _readingState()?.OnlyReading("A query"),
-            () => _runningQueries--
+        var reading = new ReadingBoundary(this, _readingState()?.OnlyReading("A query"), () =>
+            _runningQueries--
         );
         _runningQueries++;
         return reading;
@@ -257,10 +255,8 @@ public sealed class Operation
 
         public void Dispose() =>
             (
-                _boundary ??= new ReadingBoundary(
-                    operation,
-                    guard,
-                    () => operation._readingSteps.Remove(this)
+                _boundary ??= new ReadingBoundary(operation, guard, () =>
+                    operation._readingSteps.Remove(this)
                 )
             ).Dispose();
     }

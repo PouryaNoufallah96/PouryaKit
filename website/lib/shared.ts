@@ -3,7 +3,7 @@ import { SITE_ADDRESS } from './kit-sources/addresses.ts';
 
 export const siteName = 'PouryaKit';
 export const siteDescription =
-  'A reusable .NET 10 foundation for modular monoliths, in which Feature code holds only business behaviour.';
+  'A reusable .NET 11 foundation for modular monoliths, in which Feature code holds only business behaviour.';
 
 export const docsRoute = '/docs';
 const docsMarkdownRoute = '/llms.mdx/docs';

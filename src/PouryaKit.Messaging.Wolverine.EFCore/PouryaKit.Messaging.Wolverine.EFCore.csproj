@@ -4,6 +4,13 @@
     <PackageTags>wolverine;efcore;outbox</PackageTags>
   </PropertyGroup>
   <ItemGroup>
+    <!-- WolverineFx.EntityFrameworkCore depends on EF Core Design 10.0.4 or later, and NuGet takes the lowest: this
+         carries the Kit's EF Core line to every consumer instead. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+    <!-- Stable floors over prereleases EF Core Design brings: the DependencyModel of its rc.3, until its stable release,
+         and the analyzer its Roslyn 5.9.0 asks for, for as long as Design brings Roslyn 5.9.0, as its 11.0.0 does. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
     <PackageReference Include="WolverineFx.EntityFrameworkCore" />
     <PackageReference Include="WolverineFx.Postgresql" />
   </ItemGroup>

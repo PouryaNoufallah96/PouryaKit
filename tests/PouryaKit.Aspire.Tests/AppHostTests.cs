@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Dotnet;
 using Aspire.Hosting.Testing;
 using Catalog.Contracts.Products;
 using Grpc.Core;
@@ -36,9 +36,10 @@ public sealed class AppHostTests
     ];
 
     // The whole model as an allow-list: a dashboard, tracing or logging resource, or one more of anything, is a name here.
-    // Aspire adds a hidden rebuilder beside each project.
+    // Aspire adds a hidden rebuilder beside each project, and one hidden build every project waits for.
     private static readonly string[] Declared =
     [
+        "__dotnet-project-build",
         "bearer-signing-key",
         "broker",
         "cache",
@@ -65,9 +66,9 @@ public sealed class AppHostTests
         Assert.Equal(Declared, Names(builder.Resources));
         Assert.Equal(
             [
-                ("broker", "docker.io/library/rabbitmq:4.3.6", "/var/lib/rabbitmq"),
-                ("cache", "docker.io/library/redis:8.10.1", "/data"),
-                ("postgres", "docker.io/library/postgres:18.6", "/var/lib/postgresql"),
+                ("broker", "docker.io/library/rabbitmq:4.4.0", "/var/lib/rabbitmq"),
+                ("cache", "docker.io/library/redis:8.10.3", "/data"),
+                ("postgres", "docker.io/library/postgres:18.7", "/var/lib/postgresql"),
             ],
             builder
                 .Resources.OfType<ContainerResource>()
@@ -98,7 +99,7 @@ public sealed class AppHostTests
                 TestContext.Current.CancellationToken
             );
         var proxy = builder
-            .Resources.OfType<ProjectResource>()
+            .Resources.OfType<DotnetProjectResource>()
             .Single(project => project.Name == "reverse-proxy");
         var configuration = new ConfigurationBuilder()
             .AddJsonFile(
@@ -154,7 +155,10 @@ public sealed class AppHostTests
         var ollama = builder
             .Resources.OfType<ContainerResource>()
             .Single(container => container.Name == "ollama");
-        Assert.Equal(("ollama", "docker.io/ollama/ollama:0.40.6", "/root/.ollama"), Pinned(ollama));
+        Assert.Equal(
+            ("ollama", "docker.io/ollama/ollama:0.40.16", "/root/.ollama"),
+            Pinned(ollama)
+        );
         Assert.Equal(
             ["ollama_model"],
             ollama.Annotations.OfType<HealthCheckAnnotation>().Select(check => check.Key)
@@ -317,7 +321,7 @@ public sealed class AppHostTests
     {
         Assert.SkipUnless(
             Environment.GetEnvironmentVariable(OllamaProbe) == "1",
-            $"The local agent's start test runs only with {OllamaProbe}=1: it pulls ollama/ollama:0.40.6 and the model qwen2.5:0.5b."
+            $"The local agent's start test runs only with {OllamaProbe}=1: it pulls ollama/ollama:0.40.16 and the model qwen2.5:0.5b."
         );
         // A first run pulls a 7 GB image and the model.
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(

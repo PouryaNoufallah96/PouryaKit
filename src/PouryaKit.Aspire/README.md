@@ -1,7 +1,7 @@
 ![PouryaKit.Aspire](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/assets-v1/assets/covers/PouryaKit.Aspire.png)
 
 [![NuGet](https://img.shields.io/nuget/vpre/PouryaKit.Aspire?style=flat-square&logo=nuget&color=615fff)](https://www.nuget.org/packages/PouryaKit.Aspire)
-![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)
+![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?style=flat-square&logo=dotnet)
 ![License: MIT](https://img.shields.io/badge/license-MIT-615fff?style=flat-square)
 
 # PouryaKit.Aspire
@@ -34,7 +34,7 @@ var shop = postgres.AddDatabase("modular-monolith-db", "modular_monolith");
 var inventory = postgres.AddDatabase("inventory-db", "inventory");
 
 var inventoryHost = builder
-    .AddProject<Projects.Inventory_Host>("inventory")
+    .AddDotnetProject("inventory", "../Inventory.Host/Inventory.Host.csproj")
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/alive")
     .WithReference(inventory, "app")
@@ -51,6 +51,9 @@ var inventoryHost = builder
 
 > [!WARNING]
 > The AppHost applies no migration. The databases it creates hold no table of an EF Core Module until you apply each Module's migrations to them, and no Host applies one at start.
+
+> [!TIP]
+> An Aspire AppHost takes its orchestrator and dashboard from the Aspire CLI bundle. With no `aspire` command installed, its first build fetches the matching CLI from NuGet through `dnx`, so that build needs network access.
 
 ## Learn more
 

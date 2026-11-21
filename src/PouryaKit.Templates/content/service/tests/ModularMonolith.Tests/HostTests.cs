@@ -109,11 +109,9 @@ public sealed class HostTests(App app) : HostTest<App>(app)
         );
 
         Assert.Equal("modular-monolith", options.ServiceName);
-        Assert.Contains(
-            queues,
-            queue =>
-                queue.GetProperty("name").GetString() == "modular-monolith"
-                && queue.GetProperty("consumers").GetInt32() > 0
+        Assert.Contains(queues, queue =>
+            queue.GetProperty("name").GetString() == "modular-monolith"
+            && queue.GetProperty("consumers").GetInt32() > 0
         );
         Assert.Equal(
             [
@@ -146,7 +144,7 @@ public sealed class App : HostFixture, IAsyncLifetime
         RandomNumberGenerator.GetBytes(32)
     );
 
-    private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4.3.6").Build();
+    private readonly RabbitMqContainer _broker = new RabbitMqBuilder("rabbitmq:4.4.0").Build();
 
     // The Host joins the broker as it is composed, so the broker starts first; then HostFixture starts PostgreSQL and the Host.
     async ValueTask IAsyncLifetime.InitializeAsync()

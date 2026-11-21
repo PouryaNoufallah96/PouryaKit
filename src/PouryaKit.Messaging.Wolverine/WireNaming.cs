@@ -23,10 +23,8 @@ internal sealed class WireNaming : IMessageTypeNaming
         IReadOnlyDictionary<Type, string> wireNames,
         IReadOnlySet<Type> received
     ) =>
-        Declare(
-            wireNames,
-            (type, wireName) =>
-                $"{type.FullName} is {(received.Contains(type) ? "received" : "published")} as {wireName}"
+        Declare(wireNames, (type, wireName) =>
+            $"{type.FullName} is {(received.Contains(type) ? "received" : "published")} as {wireName}"
         );
 
     /// <summary>

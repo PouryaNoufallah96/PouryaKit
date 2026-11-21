@@ -1,7 +1,7 @@
 ![PouryaKit.Storage.AzureBlob](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/assets-v1/assets/covers/PouryaKit.Storage.AzureBlob.png)
 
 [![NuGet](https://img.shields.io/nuget/vpre/PouryaKit.Storage.AzureBlob?style=flat-square&logo=nuget&color=615fff)](https://www.nuget.org/packages/PouryaKit.Storage.AzureBlob)
-![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)
+![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?style=flat-square&logo=dotnet)
 ![License: MIT](https://img.shields.io/badge/license-MIT-615fff?style=flat-square)
 
 # PouryaKit.Storage.AzureBlob

@@ -1,7 +1,7 @@
 ![PouryaKit.Web.OpenApi](https://raw.githubusercontent.com/PouryaNoufallah96/pouryakit-pub/assets-v1/assets/covers/PouryaKit.Web.OpenApi.png)
 
 [![NuGet](https://img.shields.io/nuget/vpre/PouryaKit.Web.OpenApi?style=flat-square&logo=nuget&color=615fff)](https://www.nuget.org/packages/PouryaKit.Web.OpenApi)
-![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet)
+![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?style=flat-square&logo=dotnet)
 ![License: MIT](https://img.shields.io/badge/license-MIT-615fff?style=flat-square)
 
 # PouryaKit.Web.OpenApi
@@ -28,12 +28,10 @@ It extends [`PouryaKit.Web`](https://www.nuget.org/packages/PouryaKit.Web). A Mo
 Declare the Module's versions in its Composition Root, as the Proving Sample's Catalog does:
 
 ```csharp
-module.AddPouryaKitApiVersions(
-    "/catalog",
-    versions =>
-        versions
-            .HasDeprecatedApiVersion(new ApiVersion(1, 0))
-            .HasApiVersion(new ApiVersion(2, 0))
+module.AddPouryaKitApiVersions("/catalog", versions =>
+    versions
+        .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+        .HasApiVersion(new ApiVersion(2, 0))
 );
 ```
 
@@ -51,7 +49,7 @@ app.MapPouryaKitOpenApi().AllowAnonymous();
 
 - Versions by URL segment and by header, on one endpoint.
 - A deprecated version that announces its configured sunset.
-- ASP.NET Core's own OpenAPI document for each version, and no Swagger generator.
+- ASP.NET Core's own OpenAPI 3.2 document for each version, and no Swagger generator.
 - The Scalar API reference over them.
 
 > [!WARNING]

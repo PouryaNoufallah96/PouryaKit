@@ -106,3 +106,16 @@ clears it when the handler returns, whether it succeeded, failed or threw, befor
 pushes and publishes, and a Domain Event Handler of what it changed throws at either publisher, as it would anywhere
 else. `RealtimeTests.A_domain_event_handler_of_a_notification_handlers_change_cannot_push_or_publish_while_the_handler_can`
 holds it.
+
+## Amendment (2026-11-15: pushing deliveries commit one at a time)
+
+The decision stands.
+
+- **`pg_notify` after the commit, on a separate connection**, rejected: it would avoid the commit lock below, but the
+  push would no longer commit with its delivery. A process that stops between the commit and the notification loses
+  the push, and the retry finds its Receipt and runs nothing, so it is never sent.
+- Pushing deliveries commit one at a time. A transaction that ran `pg_notify` takes PostgreSQL's notification lock
+  (`PreCommit_Notify` in `async.c`, a lock on database 0) before it commits and holds it until the commit ends, so
+  pushing transactions on the whole server commit in turn. A transaction that does not push, an Operation's commit and
+  its Outbox rows included, never takes the lock. Push from deliveries whose rate this bounds, not one push per row of
+  a high-volume stream.

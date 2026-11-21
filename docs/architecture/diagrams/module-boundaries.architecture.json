@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "a7353a2b3cc57dec4c963c011973d0ee6c282f6c",
+      "revision": "67e580751f9634e1620d0fb576c0e7372b86dad1",
       "link_mode": "web"
     }
   },
@@ -68,8 +68,8 @@
         },
         {
           "path": "src/PouryaKit.Modularity/GatewayProcessor.cs",
-          "line": 56,
-          "end_line": 75,
+          "line": 50,
+          "end_line": 69,
           "label": "new scope, Operation begun with its Module"
         },
         {
@@ -103,13 +103,13 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 28,
-          "end_line": 66,
+          "end_line": 64,
           "label": "declares data, Features, publications"
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 144,
-          "end_line": 155,
+          "line": 141,
+          "end_line": 152,
           "label": "the Module's only public type"
         }
       ]
@@ -170,8 +170,8 @@
         },
         {
           "path": "src/PouryaKit.Web/Endpoints/WebEndpointRouteBuilderExtensions.cs",
-          "line": 197,
-          "end_line": 211,
+          "line": 199,
+          "end_line": 212,
           "label": "the request's Operation Context"
         }
       ]
@@ -233,7 +233,7 @@
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
           "line": 50,
-          "end_line": 94,
+          "end_line": 92,
           "label": "no reference to another Module's code"
         },
         {
@@ -272,8 +272,8 @@
         },
         {
           "path": "tests/PouryaKit.ArchitectureTests/ModuleBoundaryTests.cs",
-          "line": 96,
-          "end_line": 131,
+          "line": 94,
+          "end_line": 128,
           "label": "nothing of the Kit, no Module"
         }
       ]
@@ -356,8 +356,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 21,
-          "end_line": 222,
+          "line": 24,
+          "end_line": 215,
           "label": "the allowed references"
         },
         {
@@ -384,8 +384,8 @@
       "sources": [
         {
           "path": "tests/PouryaKit.ArchitectureTests/PackageGraph.cs",
-          "line": 71,
-          "end_line": 82,
+          "line": 60,
+          "end_line": 79,
           "label": "only the Messaging.Wolverine packages"
         },
         {

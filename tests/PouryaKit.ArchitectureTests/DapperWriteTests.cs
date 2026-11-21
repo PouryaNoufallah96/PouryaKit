@@ -37,9 +37,8 @@ public sealed class DapperWriteTests
                 ModuleRules.WritesToAggregateTables(module, AggregateTables)
             )
         );
-        var inventory = Assert.Single(
-            Sample.Modules,
-            module => module.GetName().Name == "Inventory"
+        var inventory = Assert.Single(Sample.Modules, module =>
+            module.GetName().Name == "Inventory"
         );
         Assert.Equal(
             [

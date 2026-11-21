@@ -19,9 +19,10 @@ internal sealed class McpServerConnections(
 ) : IMcpServers, IAsyncDisposable
 {
     private readonly Lock _lock = new();
-    private readonly Dictionary<string, Task<McpClient>> _clients = new(
-        StringComparer.OrdinalIgnoreCase
-    );
+    private readonly Dictionary<string, Task<McpClient>> _clients =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
+    ];
     private readonly CancellationTokenSource _disposing = new();
     private bool _disposed;
 

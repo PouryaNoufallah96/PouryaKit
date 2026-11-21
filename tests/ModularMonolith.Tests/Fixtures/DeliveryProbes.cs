@@ -155,23 +155,19 @@ internal static class DeliveryProbes
     public static void Install(IServiceCollection services)
     {
         services.AddScoped<DeliveredSubscription>();
-        Decorate<IUnitOfWorkOutbox>(
-            services,
-            (provider, outbox) =>
-                new RecordedOutbox(
-                    outbox,
-                    provider.GetRequiredService<Operation>(),
-                    provider.GetRequiredService<DeliveredSubscription>()
-                )
+        Decorate<IUnitOfWorkOutbox>(services, (provider, outbox) =>
+            new RecordedOutbox(
+                outbox,
+                provider.GetRequiredService<Operation>(),
+                provider.GetRequiredService<DeliveredSubscription>()
+            )
         );
-        Decorate<IReceipts>(
-            services,
-            (provider, receipts) =>
-                new HeldReceipts(
-                    receipts,
-                    provider.GetRequiredService<DeliveredSubscription>(),
-                    provider.GetRequiredService<OperationContext>
-                )
+        Decorate<IReceipts>(services, (provider, receipts) =>
+            new HeldReceipts(
+                receipts,
+                provider.GetRequiredService<DeliveredSubscription>(),
+                provider.GetRequiredService<OperationContext>
+            )
         );
     }
 

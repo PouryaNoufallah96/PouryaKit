@@ -68,10 +68,8 @@ public sealed class DomainEventDrain
 
             foreach (var domainEvent in raised)
             {
-                var invoker = Invokers.GetOrAdd(
-                    domainEvent.GetType(),
-                    static type =>
-                        (Invoker)Activator.CreateInstance(typeof(Invoker<>).MakeGenericType(type))!
+                var invoker = Invokers.GetOrAdd(domainEvent.GetType(), static type =>
+                    (Invoker)Activator.CreateInstance(typeof(Invoker<>).MakeGenericType(type))!
                 );
                 await invoker.Invoke(this, domainEvent, cancellationToken);
                 if (_operation.IsRollbackOnly)

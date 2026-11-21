@@ -326,3 +326,41 @@ latest stable when this amendment was made; the Spike's "Pinned versions and lic
 relies on: the snapshot bracket and caller-owned transaction fix of 9.47.0 concern an aggregate projected
 asynchronously, and a Stream is folded from its events at load; and 9.52.0's `mt_event_projection_floors` table is one
 more object of the schema Marten applies at start.
+
+## Amendment (2026-11-15: Marten 9.59.0 and WolverineFx.Marten 6.64.0)
+
+The decision above stands. `Marten` moves from 9.53.0 to 9.59.0 and `WolverineFx.Marten` from 6.52.0 to 6.64.0, the
+latest stable on 2026-11-15; `WolverineFx.Marten` 6.64.0 requires `Marten` 9.58.0 or later (ADR 0004's WolverineFx
+6.64.0 amendment). Marten still brings `Npgsql` 9.0.4, through `Weasel.Postgresql` 9.50.0, below the Kit's line.
+
+- **Marten's release notes, 9.54.0 to 9.59.0.** 9.55.0's culture fix for document aliases and 9.57.0's compaction and
+  masking fixes concern features the Kit does not use; 9.58.0 fixes per-tenant rebuilds, cursor paging and an async
+  fetch that folded events onto a document the session could reach, and 9.59.0 adds tag queries and projection
+  diagnostics. 9.57.0 adds `opts.Events.AutoDiscoverTagTypes`, an opt-out of the automatic registration of tag types,
+  which `UsePouryaKitMarten` leaves at its default. `StreamTests` and `LedgerTests`, typed IDs in a Stream's events
+  included, pass unchanged.
+- **The sources item 1 and item 14 cite, read again at tag `V6.64.0`.** `src/Persistence/Wolverine.Marten/MartenEnvelopeTransaction.cs`
+  is unchanged since `V6.52.0`. `src/Wolverine/Persistence/MessageStoreCollection.cs` now gives a store that is not
+  the main one an agent Uri with its port when two databases would share one
+  ([issue 5435](https://github.com/JasperFx/wolverine/issues/5435)); the main store, the one a Kit Host keeps, is
+  untouched, so the one-store invariant holds.
+
+## Amendment (2026-11-21: Marten 9.62.0 and WolverineFx.Marten 6.64.2)
+
+The decision above stands. `Marten` moves from 9.59.0 to 9.62.0 and `WolverineFx.Marten` from 6.64.0 to 6.64.2, the
+latest stable on 2026-11-21 (ADR 0004's WolverineFx 6.64.2 amendment); `WolverineFx.Marten` 6.64.2 still requires
+`Marten` 9.58.0 or later. Marten still brings `Npgsql` 9.0.4, through `Weasel.Postgresql` 9.51.0, below the Kit's line.
+
+- **Marten's release notes, 9.60.0 to 9.62.0.** 9.60.0 attributes a failed save to the operation that failed: a
+  `FetchForWriting` version conflict in the same save as a `StartStream` now throws
+  `EventStreamUnexpectedMaxEventIdException`, a `ConcurrencyException`, where it threw an
+  `ExistingStreamIdCollisionException`. `MartenUnitOfWork` returns the same concurrency conflict for both, so an
+  Operation's outcome is unchanged. 9.60.0 also makes `mt_get_next_hi` an atomic increment, one more change to the
+  schema Marten applies at start, and fixes LINQ translations a Stream's load does not use. 9.61.0 and 9.62.0 fix tenancy
+  across several databases and HiLo ids; the Kit's store keeps every tenant in one database (conjoined), and a Stream's
+  id is a Guid. `StreamTests` and `LedgerTests` pass unchanged.
+- **The sources this record cites.** At tag `V9.62.0`, `src/Marten/Internal/Sessions/DocumentSessionBase.SaveChanges.cs`
+  and `ExternalTransaction.cs` changed only in which operation's exception transform a failed batch takes: the
+  listeners still run in order after the commit, and the external transaction still rolls back on a failed batch. At
+  tag `V6.64.2`, `src/Persistence/Wolverine.Marten/MartenEnvelopeTransaction.cs` and
+  `src/Wolverine/Persistence/MessageStoreCollection.cs` are unchanged since `V6.64.0`.

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Asp.Versioning;
@@ -11,8 +10,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi;
 using ModularMonolith.Tests.Unversioned;
 using PouryaKit.Cqrs;
 using PouryaKit.Testing;
@@ -137,6 +138,67 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         Assert.False(v2.TryGetProperty("x-api-versioning", out _));
     }
 
+    // Policies the Host states on Asp.Versioning's own options, not through the Kit's sunsets: a deprecation policy of
+    // 1.0 beside its configured sunset, and a sunset of 2.0 with no date, whose link names a media, a language and an
+    // extension attribute. A link to anything but an HTML page is in the extension only.
+    [Fact]
+    public async Task A_versions_deprecation_and_sunset_policies_reach_its_document_the_deprecations_first()
+    {
+        const string deprecation = "https://example.com/catalog/api-v1-deprecation";
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder =>
+                builder.Services.Configure<ApiVersioningOptions>(versioning =>
+                {
+                    versioning
+                        .Policies.Deprecate(new ApiVersion(1, 0))
+                        .Link(deprecation)
+                        .Type("text/html");
+                    versioning
+                        .Policies.Deprecate(new ApiVersion(1, 0))
+                        .Link($"{deprecation}.json")
+                        .Type("application/json")
+                        .Title("Deprecation");
+                    var sunset = new LinkHeaderValue(
+                        new Uri("https://example.com/catalog/api-v2-sunset"),
+                        "sunset"
+                    )
+                    {
+                        Title = "Sunset of 2.0",
+                        Type = "text/html",
+                        Media = "screen",
+                    };
+                    sunset.Languages.Add("en");
+                    sunset.Extensions.Add("x-audience", "partners");
+                    versioning.Policies.Sunset(new ApiVersion(2, 0)).Per(new SunsetPolicy(sunset));
+                })
+        );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var client = Unversioned(AppFixture.ClientOf(host));
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        Assert.Equal(
+            $"This API version is deprecated. Its sunset date is {ConfiguredSunset}.\n\n### Links\n\n- {deprecation}\n\n- {ConfiguredSunsetLink}\n",
+            v1.GetProperty("info").GetProperty("description").GetString()
+        );
+        Assert.Equal(
+            $$"""{"links":[{"type":"text/html","rel":"deprecation","url":"{{deprecation}}"},{"title":"Deprecation","type":"application/json","rel":"deprecation","url":"{{deprecation}}.json"},{"type":"text/html","rel":"sunset","url":"{{ConfiguredSunsetLink}}"}]}""",
+            JsonSerializer.Serialize(v1.GetProperty("x-api-versioning"))
+        );
+        Assert.Equal(
+            "\n\n### Links\n\n- [Sunset of 2.0](https://example.com/catalog/api-v2-sunset)",
+            v2.GetProperty("info").GetProperty("description").GetString()
+        );
+        Assert.Equal(
+            """{"links":[{"title":"Sunset of 2.0","type":"text/html","rel":"sunset","url":"https://example.com/catalog/api-v2-sunset","media":"screen","lang":["en"],"x-audience":"partners"}]}""",
+            JsonSerializer.Serialize(v2.GetProperty("x-api-versioning"))
+        );
+    }
+
     [Fact]
     public async Task Each_supported_version_has_a_document_of_the_operations_it_serves()
     {
@@ -163,9 +225,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             CatalogOperations(v1).Select(operation => operation.Name)
         );
-        Assert.All(
-            CatalogOperations(v1),
-            operation => Assert.True(operation.Body.GetProperty("deprecated").GetBoolean())
+        Assert.All(CatalogOperations(v1), operation =>
+            Assert.True(operation.Body.GetProperty("deprecated").GetBoolean())
         );
         Assert.Equal("2.0", v2.GetProperty("info").GetProperty("version").GetString());
         Assert.Equal(
@@ -187,9 +248,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             ],
             CatalogOperations(v2).Select(operation => operation.Name)
         );
-        Assert.All(
-            CatalogOperations(v2),
-            operation => Assert.False(operation.Body.TryGetProperty("deprecated", out _))
+        Assert.All(CatalogOperations(v2), operation =>
+            Assert.False(operation.Body.TryGetProperty("deprecated", out _))
         );
         // An unversioned path takes its version from the header.
         Assert.Contains(
@@ -202,6 +262,68 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                 parameter.GetProperty("name").GetString() == "api-version"
                 && parameter.GetProperty("in").GetString() == "header"
         );
+    }
+
+    // A v1 client that sends 2.0 on an unversioned path reaches another contract, so each document refuses the other's.
+    [Fact]
+    public async Task The_api_version_header_of_each_document_admits_its_own_version_alone_and_says_what_it_is()
+    {
+        using var client = Unversioned(Fixture.Client());
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        Assert.Equal(
+            [
+                """{"name":"api-version","in":"header","description":"The requested API version","required":true,"schema":{"enum":["1.0"],"type":"string"}}""",
+            ],
+            ApiVersionHeadersOf(v1)
+        );
+        Assert.Equal(
+            [
+                """{"name":"api-version","in":"header","description":"The requested API version","required":true,"schema":{"enum":["2.0"],"type":"string"}}""",
+            ],
+            ApiVersionHeadersOf(v2)
+        );
+    }
+
+    // An endpoint may bind a query parameter of the same name as the version header, which stays as the endpoint binds it.
+    [Fact]
+    public async Task A_query_parameter_named_api_version_stays_unconstrained_beside_the_version_header()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs()
+        );
+        host.MapGet("/query-named-version", ([FromQuery(Name = "api-version")] string named) =>
+                named
+            )
+            .WithApiVersionSet(
+                host.NewApiVersionSet()
+                    .HasDeprecatedApiVersion(new ApiVersion(1, 0))
+                    .HasApiVersion(new ApiVersion(2, 0))
+                    .Build()
+            );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var client = Unversioned(AppFixture.ClientOf(host));
+
+        var v1 = await DocumentAsync(client, "v1");
+        var v2 = await DocumentAsync(client, "v2");
+
+        foreach (var (document, version) in new[] { (v1, "1.0"), (v2, "2.0") })
+        {
+            Assert.Equal(
+                $$$"""[{"name":"api-version","in":"query","required":true,"schema":{"type":"string"}},{"name":"api-version","in":"header","description":"The requested API version","required":true,"schema":{"enum":["{{{version}}}"],"type":"string"}}]""",
+                JsonSerializer.Serialize(
+                    document
+                        .GetProperty("paths")
+                        .GetProperty("/query-named-version")
+                        .GetProperty("get")
+                        .GetProperty("parameters")
+                )
+            );
+        }
     }
 
     [Fact]
@@ -290,6 +412,43 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
+    // Catalog's realtime endpoint, on both paths, and the Stub's: an item's data is the pushed event's JSON as text, and
+    // no other operation streams.
+    [Fact]
+    public async Task A_realtime_endpoint_describes_its_200_as_an_event_stream_with_an_item_schema_in_every_version()
+    {
+        const string eventStream =
+            """{"description":"OK","content":{"text/event-stream":{"itemSchema":{"required":["data"],"type":"object","properties":{"data":{"type":"string"},"event":{"type":"string"},"id":{"type":"string"}}}}}}""";
+        using var client = Unversioned(Fixture.Client());
+
+        foreach (var version in new[] { "v1", "v2" })
+        {
+            var document = await DocumentAsync(client, version);
+
+            Assert.Equal(
+                [
+                    ("/catalog/events get", eventStream),
+                    ($"/catalog/{version}/events get", eventStream),
+                    ("/stub/realtime get", eventStream),
+                ],
+                Operations(document)
+                    .Where(operation =>
+                        operation.Body.GetProperty("responses").TryGetProperty("200", out var ok)
+                        && ok.TryGetProperty("content", out var content)
+                        && content.TryGetProperty("text/event-stream", out _)
+                    )
+                    .Select(operation =>
+                        (
+                            operation.Name,
+                            JsonSerializer.Serialize(
+                                operation.Body.GetProperty("responses").GetProperty("200")
+                            )
+                        )
+                    )
+            );
+        }
+    }
+
     [Fact]
     public async Task An_operation_protected_by_a_scheme_the_document_cannot_state_carries_no_requirement()
     {
@@ -298,10 +457,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         // The fixture's default scheme is its test scheme, not a JWT bearer one.
         var v2 = await DocumentAsync(client, "v2");
 
-        Assert.All(
-            Operations(v2),
-            operation =>
-                Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name)
+        Assert.All(Operations(v2), operation =>
+            Assert.False(operation.Body.TryGetProperty("security", out _), operation.Name)
         );
         Assert.False(
             v2.TryGetProperty("components", out var components)
@@ -348,8 +505,100 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         );
     }
 
-    // Asp.Versioning appends its document delegate on every call; the Kit's second call adds none, so each transformer
-    // runs once.
+    // A document the Host adds itself states the Idempotency-Key and the bearer scheme its own way; the Kit's transformers
+    // would add a second key and a second requirement to it.
+    [Fact]
+    public async Task A_document_the_host_adds_itself_keeps_its_parameters_and_security_as_the_host_wrote_them()
+    {
+        await using var host = AppFixture.ComposeHost(
+            "Development",
+            Fixture.ConnectionString,
+            new RecordedLogs(),
+            builder => builder.Services.AddOpenApi("host", document =>
+                {
+                    document.AddOperationTransformer(
+                        (operation, context, _) =>
+                        {
+                            if (
+                                context
+                                    .Description.ActionDescriptor.EndpointMetadata.OfType<IdempotencyKeyRequirement>()
+                                    .Any()
+                            )
+                            {
+                                operation.Parameters ??= [];
+                                operation.Parameters.Add(
+                                    new OpenApiParameter
+                                    {
+                                        Name = IdempotencyKeyRequirement.Header,
+                                        In = ParameterLocation.Header,
+                                        Required = true,
+                                        Description = "The key as the Host states it.",
+                                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                                    }
+                                );
+                                operation.Security ??= [];
+                                operation.Security.Add(
+                                    new OpenApiSecurityRequirement
+                                    {
+                                        [
+                                            new OpenApiSecuritySchemeReference(
+                                                "Bearer",
+                                                context.Document
+                                            )
+                                        ] = [],
+                                    }
+                                );
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    );
+                    document.AddDocumentTransformer(
+                        (openApi, _, _) =>
+                        {
+                            openApi.Components ??= new OpenApiComponents();
+                            openApi.Components.SecuritySchemes ??=
+                                new Dictionary<string, IOpenApiSecurityScheme>();
+                            openApi.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+                            {
+                                Type = SecuritySchemeType.Http,
+                                Scheme = "bearer",
+                                BearerFormat = "JWT",
+                            };
+                            return Task.CompletedTask;
+                        }
+                    );
+                })
+        );
+        host.MapPost("/host-owned", () => "owned")
+            .RequireIdempotencyKey()
+            .RequireAuthorization(
+                new AuthorizeAttribute
+                {
+                    AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
+                }
+            );
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        using var anonymous = Unversioned(AppFixture.ClientOf(host));
+
+        var owned = await DocumentAsync(anonymous, "host");
+
+        var operation = owned.GetProperty("paths").GetProperty("/host-owned").GetProperty("post");
+        Assert.Equal(
+            """[{"name":"Idempotency-Key","in":"header","description":"The key as the Host states it.","required":true,"schema":{"type":"string"}}]""",
+            JsonSerializer.Serialize(operation.GetProperty("parameters"))
+        );
+        Assert.Equal(
+            """[{"Bearer":[]}]""",
+            JsonSerializer.Serialize(operation.GetProperty("security"))
+        );
+        Assert.Equal(
+            """{"Bearer":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}}""",
+            JsonSerializer.Serialize(owned.GetProperty("components").GetProperty("securitySchemes"))
+        );
+    }
+
+    // The documents' transformers are registered once however often the Host calls it, so each runs once.
     [Fact]
     public async Task A_second_registration_of_the_api_versions_and_documents_adds_nothing()
     {
@@ -446,9 +695,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
         await using var host = PlainHost(services =>
         {
             services.AddPouryaKitOpenApi();
-            services.AddPouryaKitApiVersions(
-                "/plians",
-                versions => versions.HasApiVersion(new ApiVersion(1, 0))
+            services.AddPouryaKitApiVersions("/plians", versions =>
+                versions.HasApiVersion(new ApiVersion(1, 0))
             );
         });
 
@@ -471,9 +719,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
             services =>
             {
                 services.AddPouryaKitOpenApi();
-                services.AddPouryaKitApiVersions(
-                    "/plians",
-                    versions => versions.HasApiVersion(new ApiVersion(1, 0))
+                services.AddPouryaKitApiVersions("/plians", versions =>
+                    versions.HasApiVersion(new ApiVersion(1, 0))
                 );
             },
             installChecks: false
@@ -496,7 +743,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
 
         var page = await client.GetAsync("/scalar/", TestContext.Current.CancellationToken);
         var html = await page.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var sources = JsonDocument.Parse(Sources().Match(html).Groups[1].Value).RootElement;
+        var sources = JsonElement.Parse(Sources().Match(html).Groups[1].Value);
 
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
         Assert.Equal("text/html", page.Content.Headers.ContentType?.MediaType);
@@ -515,6 +762,7 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                 TestContext.Current.CancellationToken
             );
             Assert.Equal(version, document.GetProperty("info").GetProperty("version").GetString());
+            Assert.Equal("3.2.0", document.GetProperty("openapi").GetString());
         }
     }
 
@@ -541,9 +789,8 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
     {
         var thrown = Assert.Throws<InvalidOperationException>(() =>
             PlainHost(services =>
-                services.AddPouryaKitApiVersions(
-                    "/plain",
-                    versions => versions.HasApiVersion(new ApiVersion(1, 0))
+                services.AddPouryaKitApiVersions("/plain", versions =>
+                    versions.HasApiVersion(new ApiVersion(1, 0))
                 )
             )
         );
@@ -689,6 +936,18 @@ public sealed partial class OpenApiTests(AppFixture app) : HostTest<AppFixture>(
                 .Cast<JsonElement?>()
                 .SingleOrDefault()
             : null;
+
+    // Each distinct api-version parameter of the document's operations, as compact JSON.
+    private static IEnumerable<string> ApiVersionHeadersOf(JsonElement document) =>
+        Operations(document)
+            .SelectMany(operation =>
+                operation.Body.TryGetProperty("parameters", out var parameters)
+                    ? parameters.EnumerateArray()
+                    : []
+            )
+            .Where(parameter => parameter.GetProperty("name").GetString() == "api-version")
+            .Select(parameter => JsonSerializer.Serialize(parameter))
+            .Distinct();
 
     private static bool RequiresBearer(JsonElement operation) =>
         operation.TryGetProperty("security", out var security)

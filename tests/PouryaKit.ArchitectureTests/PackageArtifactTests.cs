@@ -235,10 +235,10 @@ public sealed class PackageArtifactTests
             Directory
                 .GetParent(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar))!
                 .Name,
-            "net10.0",
+            "net11.0",
             "PouryaKit.Domain.dll"
         );
-        using (var writer = archive.CreateEntry("lib/net10.0/PouryaKit.Domain.dll").Open())
+        using (var writer = archive.CreateEntry("lib/net11.0/PouryaKit.Domain.dll").Open())
         using (var input = File.OpenRead(assembly))
             input.CopyTo(writer);
         var sourceLink = Directory
@@ -288,7 +288,7 @@ public sealed class PackageArtifactTests
                 project,
                 """
                 <Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>
-                  <TargetFramework>net10.0</TargetFramework><DebugType>embedded</DebugType>
+                  <TargetFramework>net11.0</TargetFramework><DebugType>embedded</DebugType>
                   <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries><EnableSourceLink>false</EnableSourceLink>
                   <SourceLink>$(MSBuildProjectDirectory)/bad-map.json</SourceLink>
                 </PropertyGroup></Project>
@@ -314,26 +314,24 @@ public sealed class PackageArtifactTests
                 ),
                 TestContext.Current.CancellationToken
             );
-            var start = new ProcessStartInfo("dotnet")
-            {
-                WorkingDirectory = folder,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-            foreach (var argument in new[] { "build", project, "-c", "Release", "-v:q" })
-                start.ArgumentList.Add(argument);
-            using var build = Process.Start(start)!;
-            var stdout = build.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
-            var stderr = build.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
-            await build.WaitForExitAsync(TestContext.Current.CancellationToken);
-            Assert.True(build.ExitCode == 0, await stdout + await stderr);
+            var build = await Process.RunAndCaptureTextAsync(
+                new ProcessStartInfo("dotnet")
+                {
+                    WorkingDirectory = folder,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    ArgumentList = { "build", project, "-c", "Release", "-v:q" },
+                },
+                TestContext.Current.CancellationToken
+            );
+            Assert.True(build.ExitStatus.ExitCode == 0, build.StandardOutput + build.StandardError);
 
             using var stream = new MemoryStream();
             using var archive = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true);
-            using (var target = archive.CreateEntry("lib/net10.0/PouryaKit.Domain.dll").Open())
+            using (var target = archive.CreateEntry("lib/net11.0/PouryaKit.Domain.dll").Open())
             using (
                 var input = File.OpenRead(
-                    Path.Combine(source, "bin", "Release", "net10.0", "PouryaKit.Domain.dll")
+                    Path.Combine(source, "bin", "Release", "net11.0", "PouryaKit.Domain.dll")
                 )
             )
                 input.CopyTo(target);
@@ -436,7 +434,7 @@ public sealed class PackageArtifactTests
                     {
                         targets = new Dictionary<string, object>
                         {
-                            ["net10.0"] = new Dictionary<string, object>
+                            ["net11.0"] = new Dictionary<string, object>
                             {
                                 ["PouryaKit.Messaging.Wolverine.EFCore/1.0.0"] = new
                                 {
@@ -476,7 +474,7 @@ public sealed class PackageArtifactTests
                 )
             );
             var shipped = XDocument.Parse(
-                """<package><metadata><id>PouryaKit.Messaging.Wolverine.EFCore</id><dependencies><group targetFramework="net10.0"><dependency id="WolverineFx.EntityFrameworkCore" version="6.46.0" /></group></dependencies></metadata></package>"""
+                """<package><metadata><id>PouryaKit.Messaging.Wolverine.EFCore</id><dependencies><group targetFramework="net11.0"><dependency id="WolverineFx.EntityFrameworkCore" version="6.46.0" /></group></dependencies></metadata></package>"""
             );
 
             var restored = RestoredPackage.InConsumer(shipped, assets);

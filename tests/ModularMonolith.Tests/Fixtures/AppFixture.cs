@@ -40,16 +40,11 @@ public sealed class AppFixture : HostFixture
     internal static StreamCommitProbe StreamCommits { get; } = new();
 
     protected override IHost CreateHost(string connectionString) =>
-        ComposeHost(
-            "Development",
-            connectionString,
-            Logs,
-            builder =>
-            {
-                TenantProbes.Receive(builder.Services);
-                StreamCommitProbe.Install(builder.Services, StreamCommits);
-            }
-        );
+        ComposeHost("Development", connectionString, Logs, builder =>
+        {
+            TenantProbes.Receive(builder.Services);
+            StreamCommitProbe.Install(builder.Services, StreamCommits);
+        });
 
     /// <summary>
     /// The application as the tests host it, in <paramref name="environment"/>, built but not started;

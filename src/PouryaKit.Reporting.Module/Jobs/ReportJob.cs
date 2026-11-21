@@ -62,7 +62,7 @@ internal sealed class ReportJob : AggregateRoot<ReportJobId>
             Id = id,
             Kind = request.Kind,
             Format = request.Format,
-            Parameters = new(request.Parameters),
+            Parameters = [with(request.Parameters)],
             RequestedBy = requester.Actor.Id,
             RequestedByKind = requester.Actor.Kind,
             Tenant = requester.Tenant,

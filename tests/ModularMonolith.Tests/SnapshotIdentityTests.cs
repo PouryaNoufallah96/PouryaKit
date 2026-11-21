@@ -18,16 +18,13 @@ public sealed class SnapshotIdentityTests(AppFixture app) : HostTest<AppFixture>
             100
         );
         var second = first.AddMilliseconds(100);
-        await AssertKeysAsync(
-            "timestamp",
-            [Text(first.Ticks), Text(second.Ticks)],
-            value =>
-                Fixture
-                    .Gateway<StubModule>()
-                    .SendAsync(
-                        new ChangeTimestampKeysCommand([first, second], value),
-                        TestContext.Current.CancellationToken
-                    )
+        await AssertKeysAsync("timestamp", [Text(first.Ticks), Text(second.Ticks)], value =>
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(
+                    new ChangeTimestampKeysCommand([first, second], value),
+                    TestContext.Current.CancellationToken
+                )
         );
         Assert.Equal(
             0L,
@@ -38,22 +35,19 @@ public sealed class SnapshotIdentityTests(AppFixture app) : HostTest<AppFixture>
     [Fact]
     public async Task Distinct_binary_keys_apply_both_snapshots_and_keep_identity_after_reload_and_removal()
     {
-        await AssertKeysAsync(
-            "binary",
-            ["0102", "0304"],
-            value =>
-                Fixture
-                    .Gateway<StubModule>()
-                    .SendAsync(
-                        new ChangeBinaryKeysCommand(
-                            [
-                                [1, 2],
-                                [3, 4],
-                            ],
-                            value
-                        ),
-                        TestContext.Current.CancellationToken
-                    )
+        await AssertKeysAsync("binary", ["0102", "0304"], value =>
+            Fixture
+                .Gateway<StubModule>()
+                .SendAsync(
+                    new ChangeBinaryKeysCommand(
+                        [
+                            [1, 2],
+                            [3, 4],
+                        ],
+                        value
+                    ),
+                    TestContext.Current.CancellationToken
+                )
         );
         Assert.Equal(0L, await Fixture.ScalarAsync<long>("select count(*) from stub.binary_keys"));
     }

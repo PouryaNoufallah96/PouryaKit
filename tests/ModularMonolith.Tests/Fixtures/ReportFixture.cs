@@ -32,7 +32,7 @@ public sealed class ReportFixture(AppFixture app) : IAsyncLifetime
     private const string SecretKey = "kit-secret-key";
     private const ushort S3Port = 9000;
 
-    private readonly IContainer _store = new ContainerBuilder("rustfs/rustfs:1.0.2")
+    private readonly IContainer _store = new ContainerBuilder("rustfs/rustfs:1.0.5")
         .WithEnvironment("RUSTFS_ACCESS_KEY", AccessKey)
         .WithEnvironment("RUSTFS_SECRET_KEY", SecretKey)
         .WithPortBinding(S3Port, true)

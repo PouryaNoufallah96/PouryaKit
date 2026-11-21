@@ -13,62 +13,47 @@ public sealed class FilterField
     > Types = new Dictionary<Type, (string, Func<string, object?>)>
     {
         [typeof(string)] = ("text", text => text),
-        [typeof(Guid)] = (
-            "uuid",
-            text => Guid.TryParse(text, CultureInfo.InvariantCulture, out var value) ? value : null
+        [typeof(Guid)] = ("uuid", text =>
+            Guid.TryParse(text, CultureInfo.InvariantCulture, out var value) ? value : null
         ),
-        [typeof(int)] = (
-            "whole number",
-            text =>
-                int.TryParse(
-                    text,
-                    NumberStyles.AllowLeadingSign,
-                    CultureInfo.InvariantCulture,
-                    out var value
-                )
-                    ? value
-                    : null
+        [typeof(int)] = ("whole number", text =>
+            int.TryParse(
+                text,
+                NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out var value
+            )
+                ? value
+                : null
         ),
-        [typeof(long)] = (
-            "whole number",
-            text =>
-                long.TryParse(
-                    text,
-                    NumberStyles.AllowLeadingSign,
-                    CultureInfo.InvariantCulture,
-                    out var value
-                )
-                    ? value
-                    : null
+        [typeof(long)] = ("whole number", text =>
+            long.TryParse(
+                text,
+                NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out var value
+            )
+                ? value
+                : null
         ),
-        [typeof(decimal)] = (
-            "number",
-            text =>
-                decimal.TryParse(
-                    text,
-                    NumberStyles.Number,
-                    CultureInfo.InvariantCulture,
-                    out var value
-                )
-                    ? value
-                    : null
+        [typeof(decimal)] = ("number", text =>
+            decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
+                ? value
+                : null
         ),
-        [typeof(bool)] = (
-            "true or false",
-            text => bool.TryParse(text, out var value) ? value : null
+        [typeof(bool)] = ("true or false", text =>
+            bool.TryParse(text, out var value) ? value : null
         ),
         // A time without an offset is UTC, so the same text means the same instant on every Host.
-        [typeof(DateTimeOffset)] = (
-            "date and time",
-            text =>
-                DateTimeOffset.TryParse(
-                    text,
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.AssumeUniversal,
-                    out var value
-                )
-                    ? value
-                    : null
+        [typeof(DateTimeOffset)] = ("date and time", text =>
+            DateTimeOffset.TryParse(
+                text,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal,
+                out var value
+            )
+                ? value
+                : null
         ),
     }.ToFrozenDictionary();
 

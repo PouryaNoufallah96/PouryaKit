@@ -40,9 +40,8 @@ internal sealed partial class Dispatcher(
     public Task<Result> SendAsync(Command command, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-        var invoker = Invokers.GetOrAdd(
-            command.GetType(),
-            static type => Create(typeof(CommandInvoker<>), type)
+        var invoker = Invokers.GetOrAdd(command.GetType(), static type =>
+            Create(typeof(CommandInvoker<>), type)
         );
         return ((Invoker<Result>)invoker).Invoke(this, command, cancellationToken);
     }
@@ -54,9 +53,8 @@ internal sealed partial class Dispatcher(
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(command);
-        var invoker = Invokers.GetOrAdd(
-            command.GetType(),
-            static type => Create(typeof(CommandInvoker<,>), type, typeof(TResponse))
+        var invoker = Invokers.GetOrAdd(command.GetType(), static type =>
+            Create(typeof(CommandInvoker<,>), type, typeof(TResponse))
         );
         return ((Invoker<Result<TResponse>>)invoker).Invoke(this, command, cancellationToken);
     }
@@ -68,9 +66,8 @@ internal sealed partial class Dispatcher(
         where TResponse : notnull
     {
         ArgumentNullException.ThrowIfNull(query);
-        var invoker = Invokers.GetOrAdd(
-            query.GetType(),
-            static type => Create(typeof(QueryInvoker<,>), type, typeof(TResponse))
+        var invoker = Invokers.GetOrAdd(query.GetType(), static type =>
+            Create(typeof(QueryInvoker<,>), type, typeof(TResponse))
         );
         return ((Invoker<Result<TResponse>>)invoker).Invoke(this, query, cancellationToken);
     }
@@ -290,8 +287,7 @@ internal sealed partial class Dispatcher(
             return await handle(services, commandOrQuery, cancellationToken);
         }
 
-        var unitOfWork =
-            services.GetService<IUnitOfWork>()
+        var unitOfWork = services.GetService<IUnitOfWork>()
             ?? throw new InvalidOperationException(
                 "No IUnitOfWork is registered, so a command cannot run. Register the Unit of Work of a persistence package."
             );
@@ -387,8 +383,7 @@ internal sealed partial class Dispatcher(
             );
         }
 
-        var store =
-            services.GetService<IIdempotencyStore>()
+        var store = services.GetService<IIdempotencyStore>()
             ?? throw new InvalidOperationException(
                 $"{typeof(TCommand).Name} opts in with [Idempotent] and runs with a request id, but no IIdempotencyStore is registered to keep its key. Register a Unit of Work that keeps keys, such as PouryaKit.Persistence.EFCore's."
             );

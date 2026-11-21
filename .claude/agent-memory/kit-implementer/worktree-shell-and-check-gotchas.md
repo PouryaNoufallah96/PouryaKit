@@ -118,5 +118,15 @@ The worktree base and the one-git-command rule are in the role file; these are w
 
 - A harness-made worktree refuses any `git -C <main checkout>`, and an Edit whose path names the main checkout ("Edit the worktree copy"). Neither is worth working around: a refused Edit wrote nothing. `git` joined by `;` to a `pnpm` line and piped into `grep` was refused as too complex: run git on its own line.
 
+## Upstream clones and long waits in an isolated worktree (#210, 2026-11-15)
+
+- **An upstream clone in the scratchpad:** `git -C <absolute clone path> <command>` alone on its line passes; the same with `cd <clone> &&`, a relative `-C`, or a pipe into another git is refused as unverifiable. Write a scratchpad Python script for several `git diff`/`git show` calls.
+- **A foreground Bash call moves to the background after about 180 s** whatever its `timeout`, and a subagent cannot end its turn to wait: run the long job with `run_in_background`, then wait in slices of `sh <waiter> & sleep 160; <read the log>` (a `sleep` with a following command passes), or arm `Monitor` on the log.
+
+## The waiter's cap under a busy lock (#213, 2026-11-15)
+
+- **`wait-docker-quiet.sh -- <command>` gives up after 60 minutes by default** (exit 2, the command never started): behind other agents' validations, a verify script that runs the three Docker suites one waiter each lost the first after an hour and queued the rest again. Run the suites and `validate.py` from one script under one waiter with a longer cap (`wait-docker-quiet.sh 300 -- sh <script>`), plain `dotnet test` inside, and the non-Docker verify steps before it; put any red-run mutation first in that script so the tree is restored before the validation checks it is clean.
+- **Merging the integration tip into a ticket branch through the hooks, no `--no-verify`:** when two sides' diagram pins conflict only in the revision line, keep your revision, then check `check-docs.py --staged`. A source whose merged text equals HEAD's is not staged, so the tip's changes to its cited files fail it; give it an interim pin to your pre-merge head (`repin-diagram.py … --pin-only`). Once staged, the hook exempts every cited file the merge brings and judges only yours against your own revision. Pin each to the merge commit in the next commit. First list the cited files both sides changed: their ranges need a remap, the rest merge right.
+
 **Why:** each cost a retry in tickets #4 to #63 or the retro packages.
 **How to apply:** when a shell command is refused, when the integration branch moves, when a brief's scope misses a file, or when touching skills, settings, the check script or this memory. Related: [[merge-ci-and-workflow-tooling-facts]], [[dotnet-and-test-conventions]], [[templates-packaging-and-publication-facts]].

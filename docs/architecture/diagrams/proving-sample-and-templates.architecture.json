@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/PouryaNoufallah96/PouryaKit.git",
-      "revision": "580bad810a6528e78d0bf52218dbd7e48d0f2eb5",
+      "revision": "f8c02ea27f400c25cbb287dc2c3c619755aa0b30",
       "link_mode": "web"
     }
   },
@@ -29,7 +29,7 @@
         {
           "path": "tests/ModularMonolith.Tests/Fixtures/AppFixture.cs",
           "line": 28,
-          "end_line": 92,
+          "end_line": 87,
           "label": "hosts ModularMonolith.Host"
         },
         {
@@ -69,7 +69,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/ModularMonolith.Host.csproj",
           "line": 5,
-          "end_line": 34,
+          "end_line": 38,
           "label": "its references"
         }
       ]
@@ -97,7 +97,7 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.Host/SalesReports.cs",
           "line": 15,
-          "end_line": 89,
+          "end_line": 88,
           "label": "the Host's one report kind"
         },
         {
@@ -130,14 +130,14 @@
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 166,
-          "end_line": 180,
+          "line": 171,
+          "end_line": 185,
           "label": "/alive always; /health in Development"
         },
         {
           "path": "samples/ModularMonolith/src/Inventory.Host/Inventory.Host.csproj",
           "line": 8,
-          "end_line": 30,
+          "end_line": 34,
           "label": "its references"
         }
       ]
@@ -221,7 +221,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Catalog/Catalog/CatalogModule.cs",
           "line": 30,
-          "end_line": 66,
+          "end_line": 64,
           "label": "publishes v1, v2 and the Snapshot"
         },
         {
@@ -255,7 +255,7 @@
         {
           "path": "samples/ModularMonolith/src/Modules/Inventory/Inventory/InventoryModule.cs",
           "line": 23,
-          "end_line": 55,
+          "end_line": 54,
           "label": "three subscriptions; a recurring command"
         },
         {
@@ -322,20 +322,20 @@
       "sources": [
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 45,
-          "end_line": 77,
+          "line": 46,
+          "end_line": 80,
           "label": "the service defaults recipes"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/ModularMonolith.ServiceDefaults.csproj",
           "line": 5,
-          "end_line": 24,
+          "end_line": 23,
           "label": "EF Core Relational, OpenTelemetry, Serilog"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.ServiceDefaults/Extensions.cs",
-          "line": 123,
-          "end_line": 131,
+          "line": 128,
+          "end_line": 136,
           "label": "liveness and readiness checks"
         }
       ]
@@ -425,14 +425,14 @@
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/Program.cs",
           "line": 25,
-          "end_line": 105,
+          "end_line": 108,
           "label": "the Hosts and grpc endpoint, the proxy, Ollama"
         },
         {
           "path": "samples/ModularMonolith/src/ModularMonolith.AppHost/ModularMonolith.AppHost.csproj",
           "line": 1,
-          "end_line": 18,
-          "label": "Aspire.AppHost.Sdk, both Hosts, the proxy"
+          "end_line": 17,
+          "label": "the Aspire packages, no Host reference"
         }
       ]
     }

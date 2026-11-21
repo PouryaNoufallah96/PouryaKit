@@ -12,28 +12,31 @@ namespace PouryaKit.Messaging.Wolverine;
 /// </summary>
 internal sealed class Subscriptions : IWireNames
 {
-    // The local queues Wolverine keeps for itself (LocalTransport, TransportConstants): 6.52.0 creates all but "system",
+    // The local queues Wolverine keeps for itself (LocalTransport, TransportConstants): 6.64.2 creates all but "system",
     // which 6.46.0 created and TransportConstants still names, and holds "agents" in memory; none of them is a
     // subscription's durable queue. DurableQueuesCheck verifies the queues Wolverine built, so a name a later Wolverine
     // reserves fails the Host's start too.
-    private static readonly FrozenSet<string> ReservedQueues = FrozenSet.Create(
-        StringComparer.OrdinalIgnoreCase,
+    private static readonly FrozenSet<string> ReservedQueues =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
         "agents",
         "default",
         "durable",
         "replies",
         "scheduled",
-        "system"
-    );
+        "system",
+    ];
 
-    private readonly Dictionary<string, Subscription> _byName = new(
-        StringComparer.OrdinalIgnoreCase
-    );
+    private readonly Dictionary<string, Subscription> _byName =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
+    ];
 
     // The wire name of every Domain Event delivered as a Notification and of every Integration Event published.
-    private readonly Dictionary<string, Type> _typeByWireName = new(
-        StringComparer.OrdinalIgnoreCase
-    );
+    private readonly Dictionary<string, Type> _typeByWireName =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
+    ];
     private readonly Dictionary<Type, Publication> _publications = [];
 
     // Every published Snapshot contract, by its type.
@@ -120,11 +123,11 @@ internal sealed class Subscriptions : IWireNames
     /// </summary>
     public void Add(IReadOnlyList<Subscription> subscriptions, List<string> problems)
     {
-        Dictionary<string, Subscription> byName = new(_byName, StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, Type> typeByWireName = new(
-            _typeByWireName,
-            StringComparer.OrdinalIgnoreCase
-        );
+        Dictionary<string, Subscription> byName = [with(_byName, StringComparer.OrdinalIgnoreCase)];
+        Dictionary<string, Type> typeByWireName =
+        [
+            with(_typeByWireName, StringComparer.OrdinalIgnoreCase),
+        ];
         foreach (var subscription in subscriptions)
         {
             // An Integration Event's wire name is declared where it is published. A derived subscription name starts
@@ -355,7 +358,7 @@ internal sealed class Subscriptions : IWireNames
     /// <summary>
     /// A problem for each message type of the Host that Wolverine would also route where another type is routed: to the
     /// subscriptions of a subscribed type, and to wherever a transport between Hosts sends a published type, such as its
-    /// exchange on a broker. Wolverine 6.52.0 routes a type to every message whose wire name, name or full name equals
+    /// exchange on a broker. Wolverine 6.64.2 routes a type to every message whose wire name, name or full name equals
     /// that type's full name, ignoring case (<c>Subscription.Matches</c>, <c>RoutingScope.Type</c>). A v2 published under
     /// the full name of its v1 would reach every v1 subscription, and every Host that receives v1.
     /// </summary>

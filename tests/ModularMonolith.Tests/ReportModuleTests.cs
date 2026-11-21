@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using ModularMonolith.Host;
@@ -60,13 +59,11 @@ public sealed class ReportModuleTests(ReportFixture reports) : IClassFixture<Rep
             .Reports.LaidOut.Where(context => context.CorrelationId == request.CorrelationId)
             .ToList();
         Assert.NotEmpty(laidOut);
-        Assert.All(
-            laidOut,
-            context =>
-                Assert.Equal(
-                    (Actor.Person("ada"), Tenant, true),
-                    (context.Actor, context.Tenant, context.IsTrustedContinuation)
-                )
+        Assert.All(laidOut, context =>
+            Assert.Equal(
+                (Actor.Person("ada"), Tenant, true),
+                (context.Actor, context.Tenant, context.IsTrustedContinuation)
+            )
         );
     }
 

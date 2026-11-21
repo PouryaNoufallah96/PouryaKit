@@ -104,9 +104,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 
         Assert.Equal("Looked it up.", answer);
         Assert.True(parts.Count > 1, "The answer arrived whole, not streamed.");
-        Assert.All(
-            ai.Stub.Requests,
-            request => Assert.True(request.GetProperty("stream").GetBoolean())
+        Assert.All(ai.Stub.Requests, request =>
+            Assert.True(request.GetProperty("stream").GetBoolean())
         );
         AssertEachCallContinues(run, calls: AiFixture.MaximumIterations);
         Assert.Equal(
@@ -307,7 +306,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     public async Task A_counting_reducer_keeps_the_history_a_run_sends_to_its_last_messages()
     {
         ai.Stub.Script(ChatReply.Text("1."), ChatReply.Text("2."), ChatReply.Text("3."));
-#pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
+#pragma warning disable MEAI001 // Microsoft.Extensions.AI 11.0's reducers are experimental.
         var agent = Chat.AsAIAgent(
             new ChatClientAgentOptions
             {
@@ -339,7 +338,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
             ChatReply.Text("The user counted to one."),
             ChatReply.Text("2.")
         );
-#pragma warning disable MEAI001 // Microsoft.Extensions.AI 10.11's reducers are experimental.
+#pragma warning disable MEAI001 // Microsoft.Extensions.AI 11.0's reducers are experimental.
         var agent = Chat.AsAIAgent(
             new ChatClientAgentOptions
             {
@@ -568,10 +567,9 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         }
 
         // What the tool's Operation ran with, as it answered the model: the occurrence's system Actor, continued.
-        var call = JsonDocument.Parse(stub.ToolResultsOf(1)[0]).RootElement;
-        var occurrence = Assert.Single(
-            DeliveryProbes.ContextsOf(Digest),
-            context => context.OperationId == call.GetProperty("causationId").GetGuid()
+        var call = JsonElement.Parse(stub.ToolResultsOf(1)[0]);
+        var occurrence = Assert.Single(DeliveryProbes.ContextsOf(Digest), context =>
+            context.OperationId == call.GetProperty("causationId").GetGuid()
         );
         Assert.Equal(Actor.System(DigestAgent), occurrence.Actor);
         Assert.Equal(
@@ -612,11 +610,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
                 Instructions,
                 tools:
                 [
-                    stub.Tool(
-                        "ReadStampLedger",
-                        "Reads the stamp ledger.",
-                        run,
-                        (NoArguments _) => new ReadStampLedgerQuery()
+                    stub.Tool("ReadStampLedger", "Reads the stamp ledger.", run, (NoArguments _) =>
+                        new ReadStampLedgerQuery()
                     ),
                 ]
             );
@@ -648,7 +643,7 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         else
         {
             var denied = Assert.Single(
-                JsonDocument.Parse(answered).RootElement.GetProperty("errors").EnumerateArray()
+                JsonElement.Parse(answered).GetProperty("errors").EnumerateArray()
             );
             Assert.Equal(PermissionErrors.Denied.Code, denied.GetProperty("code").GetString());
         }
@@ -788,9 +783,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
             TestContext.Current.CancellationToken
         );
         Assert.Equal($"It is the {name}.", answered.Value);
-        Assert.DoesNotContain(
-            ai.Stub.Requests,
-            request => request.GetRawText().Contains(CardNumber, StringComparison.Ordinal)
+        Assert.DoesNotContain(ai.Stub.Requests, request =>
+            request.GetRawText().Contains(CardNumber, StringComparison.Ordinal)
         );
     }
 
@@ -970,25 +964,19 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
 
         // The call to the model is a chat span inside function invocation's, which the command's activity holds.
         var trace = exported.Of(upstream.TraceId);
-        var command = Assert.Single(
-            trace,
-            activity =>
-                activity.Source.Name == OperationTelemetry.SourceName
-                && Equals(
-                    activity.GetTagItem(OperationTelemetry.OperationTag),
-                    nameof(AskAboutProductsCommand)
-                )
+        var command = Assert.Single(trace, activity =>
+            activity.Source.Name == OperationTelemetry.SourceName
+            && Equals(
+                activity.GetTagItem(OperationTelemetry.OperationTag),
+                nameof(AskAboutProductsCommand)
+            )
         );
-        var invocation = Assert.Single(
-            trace,
-            activity =>
-                activity.Source.Name == ChatSource && activity.OperationName == "orchestrate_tools"
+        var invocation = Assert.Single(trace, activity =>
+            activity.Source.Name == ChatSource && activity.OperationName == "orchestrate_tools"
         );
-        var call = Assert.Single(
-            trace,
-            activity =>
-                activity.Source.Name == ChatSource
-                && activity.OperationName.StartsWith("chat ", StringComparison.Ordinal)
+        var call = Assert.Single(trace, activity =>
+            activity.Source.Name == ChatSource
+            && activity.OperationName.StartsWith("chat ", StringComparison.Ordinal)
         );
         Assert.Equal(
             (command.SpanId, invocation.SpanId),
@@ -1027,27 +1015,25 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
     {
         var seen = SeenBy(ai.Host, run);
         Assert.Equal(calls, seen.Count);
-        Assert.All(
-            seen,
-            call =>
-                Assert.Equal(
-                    (
-                        run.Actor,
-                        run.Tenant,
-                        run.CorrelationId,
-                        (Guid?)run.OperationId,
-                        (string?)null,
-                        true
-                    ),
-                    (
-                        call.Actor,
-                        call.Tenant,
-                        call.CorrelationId,
-                        call.CausationId,
-                        call.RequestId,
-                        call.IsTrustedContinuation
-                    )
+        Assert.All(seen, call =>
+            Assert.Equal(
+                (
+                    run.Actor,
+                    run.Tenant,
+                    run.CorrelationId,
+                    (Guid?)run.OperationId,
+                    (string?)null,
+                    true
+                ),
+                (
+                    call.Actor,
+                    call.Tenant,
+                    call.CorrelationId,
+                    call.CausationId,
+                    call.RequestId,
+                    call.IsTrustedContinuation
                 )
+            )
         );
         Assert.Equal(
             calls + 1,
@@ -1087,11 +1073,8 @@ public sealed class AgentRunTests(AppFixture app, AiFixture ai) : IClassFixture<
         IGatewayProcessor<CatalogModule> catalog,
         OperationContext run
     ) =>
-        catalog.Tool(
-            "GetProduct",
-            "Finds one product by its id.",
-            run,
-            (ProductToFind product) => new GetProductQuery(product.ProductId)
+        catalog.Tool("GetProduct", "Finds one product by its id.", run, (ProductToFind product) =>
+            new GetProductQuery(product.ProductId)
         );
 
     private WebApplication GuardedHost(Guardrail guardrail) =>

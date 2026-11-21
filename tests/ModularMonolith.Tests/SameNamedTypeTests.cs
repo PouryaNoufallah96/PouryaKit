@@ -27,15 +27,11 @@ public sealed class SameNamedTypeTests(AppFixture app) : HostTest<AppFixture>(ap
         var ours = new HandlingAssemblyQuery("lamp");
         var theirs = SameNamedFeatures.Query("lamp");
 
-        var first = await RunAsync(
-            services,
-            context,
-            dispatcher => dispatcher.QueryAsync(ours, TestContext.Current.CancellationToken)
+        var first = await RunAsync(services, context, dispatcher =>
+            dispatcher.QueryAsync(ours, TestContext.Current.CancellationToken)
         );
-        var second = await RunAsync(
-            services,
-            context,
-            dispatcher => dispatcher.QueryAsync(theirs, TestContext.Current.CancellationToken)
+        var second = await RunAsync(services, context, dispatcher =>
+            dispatcher.QueryAsync(theirs, TestContext.Current.CancellationToken)
         );
 
         Assert.Equal(ours.GetType().FullName, theirs.GetType().FullName);
@@ -51,15 +47,11 @@ public sealed class SameNamedTypeTests(AppFixture app) : HostTest<AppFixture>(ap
         var ours = new NameHandlingAssemblyCommand();
         var theirs = SameNamedFeatures.Command();
 
-        var first = await RunAsync(
-            services,
-            context,
-            dispatcher => dispatcher.SendAsync(ours, TestContext.Current.CancellationToken)
+        var first = await RunAsync(services, context, dispatcher =>
+            dispatcher.SendAsync(ours, TestContext.Current.CancellationToken)
         );
-        var second = await RunAsync(
-            services,
-            context,
-            dispatcher => dispatcher.SendAsync(theirs, TestContext.Current.CancellationToken)
+        var second = await RunAsync(services, context, dispatcher =>
+            dispatcher.SendAsync(theirs, TestContext.Current.CancellationToken)
         );
 
         Assert.Equal(ours.GetType().FullName, theirs.GetType().FullName);

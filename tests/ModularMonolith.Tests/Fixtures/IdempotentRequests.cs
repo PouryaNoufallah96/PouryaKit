@@ -1,5 +1,3 @@
-using System.Net.Http.Json;
-
 namespace ModularMonolith.Tests.Fixtures;
 
 /// <summary>Requests to an endpoint that requires an <c>Idempotency-Key</c>, as its clients send them.</summary>

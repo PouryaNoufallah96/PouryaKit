@@ -114,7 +114,7 @@ consumer="$work/consumer"; mkdir -p "$consumer/templates"
 cp "$work/NuGet.Config" "$consumer/templates/NuGet.Config"
 export NUGET_HTTP_CACHE_PATH="$consumer/http-cache" NUGET_PLUGINS_CACHE_PATH="$consumer/plugin-cache"
 {
-  echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup>'
+  echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup><ItemGroup>'
   for id in $ids; do
     test "$id" = PouryaKit.Templates || echo "<PackageReference Include=\"$id\" Version=\"[$version]\" />"
   done

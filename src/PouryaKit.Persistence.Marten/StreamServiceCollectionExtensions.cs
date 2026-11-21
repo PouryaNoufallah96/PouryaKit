@@ -50,9 +50,8 @@ public static class StreamServiceCollectionExtensions
             );
             if (module is not null)
             {
-                services.TryAddKeyedScoped<IIdempotencyStore>(
-                    module,
-                    (provider, _) => NewKeys(provider)
+                services.TryAddKeyedScoped<IIdempotencyStore>(module, (provider, _) =>
+                    NewKeys(provider)
                 );
             }
             else

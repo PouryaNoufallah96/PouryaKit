@@ -221,13 +221,11 @@ internal sealed class PouryaKitModelConvention(PouryaKitDbContext dbContext)
                 var holderType = foreignKey.PrincipalEntityType.ClrType;
                 var holder = Expression.Parameter(holderType, "holder");
                 var sameKey = foreignKey
-                    .PrincipalKey.Properties.Zip(
-                        foreignKey.Properties,
-                        (key, reference) =>
-                            Expression.Equal(
-                                PropertyOf(holder, key, reference.ClrType),
-                                PropertyOf(part, reference, reference.ClrType)
-                            )
+                    .PrincipalKey.Properties.Zip(foreignKey.Properties, (key, reference) =>
+                        Expression.Equal(
+                            PropertyOf(holder, key, reference.ClrType),
+                            PropertyOf(part, reference, reference.ClrType)
+                        )
                     )
                     .Aggregate(Expression.AndAlso);
                 var held = Expression.Call(

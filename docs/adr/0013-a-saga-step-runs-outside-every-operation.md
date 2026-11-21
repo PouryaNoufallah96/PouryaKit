@@ -380,3 +380,24 @@ which offers no supported option for it either (the amendment above). The Spike'
 `V6.52.0` the route search the Kit's `SagaRouteSource` relies on is unchanged for a source that is not pass-through
 (`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335`; 6.49.0 added `IPassThroughMessageRouteSource`, which the
 Kit does not implement), and `SagaTests` passes.
+
+## Amendment (2026-11-15: WolverineFx 6.64.0)
+
+The decision above stands, and so does the refusal of a Saga beside Marten: the Kit's pins move to WolverineFx 6.64.0
+(ADR 0004's WolverineFx 6.64.0 amendment), which offers no supported option for it either. At tag `V6.64.0`,
+`docs/guide/durability/sagas.md` and `src/Wolverine/Persistence/Sagas/LightweightSagaPersistenceFrameProvider.cs` are
+unchanged since `V6.52.0`, and `src/Persistence/Wolverine.Marten/Persistence/Sagas/MartenPersistenceFrameProvider.cs`
+changed only where it hands an idempotency claim its session's commit frame, so Marten's saga storage still takes
+every saga type. The route search `SagaRouteSource` relies on (`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335`)
+is unchanged, and the comment that cites it names `V6.64.0`. 6.60.0 makes Wolverine's own path from generated saga
+code to its table honour a registered table name ([pull request 5304](https://github.com/JasperFx/wolverine/pull/5304));
+a Kit step replaces that path with the Kit's helper (`SagaStorage.EnrollAndFetchSagaStorage`), which names each saga's
+table itself, so the fix changes nothing here and removes no Kit code. `SagaTests` passes.
+
+## Amendment (2026-11-21: WolverineFx 6.64.2)
+
+The decision above stands, and so does the refusal of a Saga beside Marten: the Kit's pins move to WolverineFx 6.64.2
+(ADR 0004's WolverineFx 6.64.2 amendment), a patch that adds no public API. At tag `V6.64.2`,
+`docs/guide/durability/sagas.md`, both saga frame providers and the route search `SagaRouteSource` relies on
+(`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335`) are unchanged since `V6.64.0`, and the comment that cites
+it names `V6.64.2`. `SagaTests` passes.
