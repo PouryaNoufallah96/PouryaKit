@@ -1,0 +1,25 @@
+.agents/skills/pourya-kit/references/aspire.md
+  s_3529354fc6f9e2::t_19e24d02620da3 34
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_3529354fc6f9e2::t_bd0c2ef45b4b5e 65
+docs/packages.md
+  s_3529354fc6f9e2::t_79b6946a3bd625 28
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_bdaf27e457fad6 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "133fcf6e183431d53daefa2486d0fadfc5c819c6",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
