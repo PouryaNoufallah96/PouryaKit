@@ -1,0 +1,33 @@
+src/PouryaKit.Templates/content/service/Directory.Packages.props
+  s_3529354fc6f9e2::t_81e4cd28c3eabd 43
+.agents/skills/pourya-kit/references/host-recipes.md
+  s_3529354fc6f9e2::t_4349b51eca9db6 85
+docs/architecture/README.md
+  s_3529354fc6f9e2::t_4349b51eca9db6 654
+Directory.Packages.props
+  s_3529354fc6f9e2::t_81e4cd28c3eabd 75-76
+docs/foundation-review.md
+  s_3529354fc6f9e2::t_4349b51eca9db6 869
+src/PouryaKit.Templates/content/monolith/Directory.Packages.props
+  s_3529354fc6f9e2::t_81e4cd28c3eabd 49
+src/PouryaKit.Templates/content/modular/Directory.Packages.props
+  s_3529354fc6f9e2::t_81e4cd28c3eabd 54
+website/distribution/manifest.sha256
+  s_3529354fc6f9e2::t_0486858f31a68e 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "29e2047be301072cad2c344b44fdf29058e93e74",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
