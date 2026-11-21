@@ -1,0 +1,33 @@
+docs/architecture/diagrams/kit-context.architecture.json
+  s_3529354fc6f9e2::t_69a0f642908005 10
+docs/architecture/diagrams/messaging-and-delivery.architecture.json
+  s_3529354fc6f9e2::t_69a0f642908005 10
+docs/architecture/diagrams/module-boundaries.architecture.json
+  s_3529354fc6f9e2::t_69a0f642908005 10
+docs/architecture/diagrams/execution-core.html
+  s_3529354fc6f9e2::t_69a0f642908005 4985
+docs/architecture/diagrams/messaging-and-delivery.html
+  s_3529354fc6f9e2::t_69a0f642908005 4985
+docs/architecture/diagrams/module-boundaries.html
+  s_3529354fc6f9e2::t_69a0f642908005 4985
+docs/architecture/diagrams/execution-core.architecture.json
+  s_3529354fc6f9e2::t_69a0f642908005 10
+docs/architecture/diagrams/kit-context.html
+  s_3529354fc6f9e2::t_69a0f642908005 4985
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d5008337e08b6191dada6a280fc9cebc42b282c",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
