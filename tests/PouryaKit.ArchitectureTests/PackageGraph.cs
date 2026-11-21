@@ -180,7 +180,7 @@ internal static class PackageGraph
         ),
         // Semantic search on the Unit of Work's connection, sending embeddings as real[], which the server's pgvector casts (#138).
         ["PouryaKit.AI.Postgres"] = new(["PouryaKit.AI", "PouryaKit.Persistence.Postgres"], []),
-        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.59.0 brings, for the
+        // The Stream write model's Unit of Work (#131): Npgsql is the Kit's line over the 9.0.4 Marten 9.62.0 brings, for the
         // Kit's statements it runs on its own transaction; Messaging is not needed, the Outbox step being a seam.
         ["PouryaKit.Persistence.Marten"] = new(
             ["PouryaKit.Cqrs", "PouryaKit.Persistence"],

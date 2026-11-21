@@ -616,3 +616,27 @@ as the record of what Spike S1 ran on.
   and each Host in the same Debug group as the compiler, so a Release build takes neither. Without the third,
   `Workspaces.MSBuild` resolves 5.9.0, which pins `Workspaces.Common` at 5.9.0 against 5.12.0's: NU1608. Handler code
   compiled at run time on 5.12.0 in the Gateway tests (`CodeGenerationTests`) and in the Saga tests' child process.
+
+## Amendment (2026-11-21: WolverineFx 6.64.2)
+
+The decision above stands. The six `WolverineFx*` pins move from 6.64.0 to 6.64.2, the latest stable on nuget.org on
+2026-11-21, and `Marten` from 9.59.0 to 9.62.0 (ADR 0011's Marten 9.62.0 amendment); Wolverine 7 and Marten 10 are
+still alpha. `Npgsql` stays at 10.0.3, since on Npgsql 11 a Host with `WolverineFx.Postgresql` 6.64.2's message store
+fails when it starts (`docs/packages.md`, "Held packages"). "Pinned versions and licences" stays as the record of what
+Spike S1 ran on, and each amendment above keeps the version it was read on.
+
+- **What restore moved.** `Weasel.Core`, `Weasel.Postgresql` and `Weasel.Storage` from 9.50.0 to 9.51.0, and
+  `WolverineFx.RDBMS` and `WolverineFx.Newtonsoft` with the pins, all `MIT`; `JasperFx`, `JasperFx.Events` and
+  `JasperFx.SourceGenerator` stay at 2.102.0, `JasperFx.RuntimeCompiler` at 5.1.0 and `Weasel.EntityFrameworkCore` at
+  9.50.0. No package is new and none left.
+- **The release notes, 6.64.1 and 6.64.2** (`JasperFx/wolverine` releases): patches of the 6.x line that add no public
+  API, and none reaches a Kit Host. 6.64.1 ends a failed attempt's tracing span before an inline retry, and the Kit's
+  retries are scheduled (`ScheduleRetry`); its other fixes concern native-ack listeners, MySQL's node records, Solo-mode
+  agents on Polecat and SQL Server, and the `codegen` and `describe` commands beside a recurring schedule. 6.64.2 fixes
+  Wolverine.HTTP's form reads, which no Kit Host maps.
+- **The sources this record cites, read again at tag `V6.64.2`.** Of them, only
+  `src/Persistence/Wolverine.RDBMS/DurabilityAgent.cs` changed since `V6.64.0`, where node-record pruning gives MySQL a
+  sweep of its own; the scheduled-job poll and the stale-envelope release are as they were, so the stale clock
+  amendment holds. `WolverineFx.EntityFrameworkCore` 6.64.2 still asks for `Microsoft.EntityFrameworkCore.Design`
+  10.0.4 or later, and `JasperFx.RuntimeCompiler` 5.1.0 for the Roslyn meta-packages at 5.0.0 or later, so the EF Core
+  11 amendment above holds too.

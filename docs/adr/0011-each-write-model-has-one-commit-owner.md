@@ -344,3 +344,23 @@ latest stable on 2026-11-15; `WolverineFx.Marten` 6.64.0 requires `Marten` 9.58.
   the main one an agent Uri with its port when two databases would share one
   ([issue 5435](https://github.com/JasperFx/wolverine/issues/5435)); the main store, the one a Kit Host keeps, is
   untouched, so the one-store invariant holds.
+
+## Amendment (2026-11-21: Marten 9.62.0 and WolverineFx.Marten 6.64.2)
+
+The decision above stands. `Marten` moves from 9.59.0 to 9.62.0 and `WolverineFx.Marten` from 6.64.0 to 6.64.2, the
+latest stable on 2026-11-21 (ADR 0004's WolverineFx 6.64.2 amendment); `WolverineFx.Marten` 6.64.2 still requires
+`Marten` 9.58.0 or later. Marten still brings `Npgsql` 9.0.4, through `Weasel.Postgresql` 9.51.0, below the Kit's line.
+
+- **Marten's release notes, 9.60.0 to 9.62.0.** 9.60.0 attributes a failed save to the operation that failed: a
+  `FetchForWriting` version conflict in the same save as a `StartStream` now throws
+  `EventStreamUnexpectedMaxEventIdException`, a `ConcurrencyException`, where it threw an
+  `ExistingStreamIdCollisionException`. `MartenUnitOfWork` returns the same concurrency conflict for both, so an
+  Operation's outcome is unchanged. 9.60.0 also makes `mt_get_next_hi` an atomic increment, one more change to the
+  schema Marten applies at start, and fixes LINQ translations a Stream's load does not use. 9.61.0 and 9.62.0 fix tenancy
+  across several databases and HiLo ids; the Kit's store keeps every tenant in one database (conjoined), and a Stream's
+  id is a Guid. `StreamTests` and `LedgerTests` pass unchanged.
+- **The sources this record cites.** At tag `V9.62.0`, `src/Marten/Internal/Sessions/DocumentSessionBase.SaveChanges.cs`
+  and `ExternalTransaction.cs` changed only in which operation's exception transform a failed batch takes: the
+  listeners still run in order after the commit, and the external transaction still rolls back on a failed batch. At
+  tag `V6.64.2`, `src/Persistence/Wolverine.Marten/MartenEnvelopeTransaction.cs` and
+  `src/Wolverine/Persistence/MessageStoreCollection.cs` are unchanged since `V6.64.0`.

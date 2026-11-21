@@ -393,3 +393,11 @@ is unchanged, and the comment that cites it names `V6.64.0`. 6.60.0 makes Wolver
 code to its table honour a registered table name ([pull request 5304](https://github.com/JasperFx/wolverine/pull/5304));
 a Kit step replaces that path with the Kit's helper (`SagaStorage.EnrollAndFetchSagaStorage`), which names each saga's
 table itself, so the fix changes nothing here and removes no Kit code. `SagaTests` passes.
+
+## Amendment (2026-11-21: WolverineFx 6.64.2)
+
+The decision above stands, and so does the refusal of a Saga beside Marten: the Kit's pins move to WolverineFx 6.64.2
+(ADR 0004's WolverineFx 6.64.2 amendment), a patch that adds no public API. At tag `V6.64.2`,
+`docs/guide/durability/sagas.md`, both saga frame providers and the route search `SagaRouteSource` relies on
+(`src/Wolverine/Runtime/WolverineRuntime.Routing.cs:315-335`) are unchanged since `V6.64.0`, and the comment that cites
+it names `V6.64.2`. `SagaTests` passes.

@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Marten" />
-    <!-- The Unit of Work runs the Kit's statements on Npgsql itself; Marten 9.59.0 brings 9.0.4, the Kit's line is 10. -->
+    <!-- The Unit of Work runs the Kit's statements on Npgsql itself; Marten 9.62.0 brings 9.0.4, the Kit's line is 10. -->
     <PackageReference Include="Npgsql" />
   </ItemGroup>
   <ItemGroup>
