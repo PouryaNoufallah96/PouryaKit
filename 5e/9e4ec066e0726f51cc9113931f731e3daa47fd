@@ -1,0 +1,25 @@
+.claude/agent-memory/kit-implementer/MEMORY.md
+  s_3529354fc6f9e2::t_071679e9df12d7 29
+  s_3529354fc6f9e2::t_d24460d477f9f7 22
+.claude/agent-memory/kit-implementer/dotnet-11-migration-facts.md
+  s_3529354fc6f9e2::t_541acb5e493a91 79-85
+.claude/agent-memory/kit-implementer/aspire-apphost-facts.md
+  s_3529354fc6f9e2::t_9357bf8ce7c250 3
+  s_3529354fc6f9e2::t_80ee56ebb4b9a5 60-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5e9e4ec066e0726f51cc9113931f731e3daa47fd",
+  "prompts": {},
+  "sessions": {
+    "s_3529354fc6f9e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "15e3d76b-381e-436e-87d5-8a0cab952e45",
+        "model": "unknown"
+      },
+      "human_author": "pouryanf <pouryanoufallah@yahoo.com>"
+    }
+  }
+}
